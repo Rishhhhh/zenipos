@@ -155,6 +155,16 @@ export default function Admin() {
               </p>
             </Card>
           </Link>
+
+          <Link to="/admin/crm">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Users className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">CRM & Loyalty</h3>
+              <p className="text-muted-foreground">
+                Manage customers and loyalty programs
+              </p>
+            </Card>
+          </Link>
         </div>
 
         {/* Future Features Placeholders */}

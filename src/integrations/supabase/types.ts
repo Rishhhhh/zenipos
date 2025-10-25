@@ -44,6 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_visit: string | null
+          id: string
+          last_visit: string | null
+          loyalty_points: number | null
+          name: string | null
+          phone: string | null
+          total_orders: number | null
+          total_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          first_visit?: string | null
+          id?: string
+          last_visit?: string | null
+          loyalty_points?: number | null
+          name?: string | null
+          phone?: string | null
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          first_visit?: string | null
+          id?: string
+          last_visit?: string | null
+          loyalty_points?: number | null
+          name?: string | null
+          phone?: string | null
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           created_at: string | null
@@ -161,6 +203,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      loyalty_ledger: {
+        Row: {
+          balance_after: number
+          created_at: string | null
+          customer_id: string
+          id: string
+          order_id: string | null
+          performed_by: string | null
+          points_delta: number
+          reason: string | null
+          transaction_type: Database["public"]["Enums"]["loyalty_transaction_type"]
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          order_id?: string | null
+          performed_by?: string | null
+          points_delta: number
+          reason?: string | null
+          transaction_type: Database["public"]["Enums"]["loyalty_transaction_type"]
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          order_id?: string | null
+          performed_by?: string | null
+          points_delta?: number
+          reason?: string | null
+          transaction_type?: Database["public"]["Enums"]["loyalty_transaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_ledger_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_rules: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          rule_name: string
+          rule_type: string
+          rule_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          rule_name: string
+          rule_type: string
+          rule_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          rule_name?: string
+          rule_type?: string
+          rule_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       menu_categories: {
         Row: {
@@ -799,9 +922,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_discount_from_points: {
+        Args: { points: number }
+        Returns: number
+      }
+      calculate_points_earned: { Args: { amount: number }; Returns: number }
+      credit_loyalty_points: {
+        Args: {
+          customer_id_param: string
+          order_id_param: string
+          points_param: number
+        }
+        Returns: undefined
+      }
       decrement_inventory_on_order: {
         Args: { order_id_param: string }
         Returns: undefined
+      }
+      get_customer_loyalty_stats: {
+        Args: { customer_id_param: string }
+        Returns: {
+          avg_order_value: number
+          current_balance: number
+          days_since_last_visit: number
+          total_orders: number
+          total_points_earned: number
+          total_points_redeemed: number
+          total_spent: number
+        }[]
       }
       get_low_stock_items: {
         Args: never
@@ -815,6 +963,18 @@ export type Database = {
           unit: string
         }[]
       }
+      get_top_loyal_customers: {
+        Args: { limit_count?: number }
+        Returns: {
+          id: string
+          loyalty_points: number
+          name: string
+          phone: string
+          redemption_rate: number
+          total_orders: number
+          total_spent: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -825,6 +985,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "cashier" | "kitchen"
+      loyalty_transaction_type:
+        | "earned"
+        | "redeemed"
+        | "bonus"
+        | "expired"
+        | "adjusted"
       order_status: "pending" | "preparing" | "done" | "cancelled"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
@@ -968,6 +1134,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "cashier", "kitchen"],
+      loyalty_transaction_type: [
+        "earned",
+        "redeemed",
+        "bonus",
+        "expired",
+        "adjusted",
+      ],
       order_status: ["pending", "preparing", "done", "cancelled"],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/store/cart";
 import { QrCode } from "lucide-react";
+import { CustomerLoyaltyPanel } from "@/components/customer/CustomerLoyaltyPanel";
 
 export default function CustomerScreen() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -76,9 +77,14 @@ export default function CustomerScreen() {
           )}
         </Card>
 
+        {/* Loyalty Panel */}
+        {items.length > 0 && (
+          <CustomerLoyaltyPanel sessionId={sessionId || ''} total={total} />
+        )}
+
         {/* Tip Selection */}
         {items.length > 0 && (
-          <Card className="p-6 mb-6">
+          <Card className="p-6 mb-6 mt-6">
             <h2 className="text-lg font-semibold mb-4 text-foreground">Add Tip</h2>
             <div className="grid grid-cols-4 gap-3 mb-4">
               {[15, 18, 20].map(percent => (

@@ -139,6 +139,31 @@ export function PaymentModal({
         .update({ status: 'done' })
         .eq('id', orderId);
 
+      // Get order details to check for customer
+      const { data: order } = await supabase
+        .from('orders')
+        .select('customer_id, total')
+        .eq('id', orderId)
+        .single();
+
+      // If customer linked, credit loyalty points
+      if (order?.customer_id) {
+        const pointsEarned = Math.floor(order.total * 10); // RM 1 = 10 points
+        
+        const { error: loyaltyError } = await supabase.rpc('credit_loyalty_points', {
+          customer_id_param: order.customer_id,
+          points_param: pointsEarned,
+          order_id_param: orderId,
+        });
+
+        if (!loyaltyError) {
+          toast({
+            title: 'Loyalty Points Earned!',
+            description: `+${pointsEarned} points added to account`,
+          });
+        }
+      }
+
       // Log audit
       await supabase.from('audit_log').insert({
         actor: user.id,

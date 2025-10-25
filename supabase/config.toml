@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.inventory-forecast]
 verify_jwt = true
+
+[functions.loyalty-insights]
+verify_jwt = true
