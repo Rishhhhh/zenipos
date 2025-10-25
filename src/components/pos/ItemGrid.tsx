@@ -1,5 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { ImageIcon } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 
 interface MenuItem {
@@ -9,6 +11,8 @@ interface MenuItem {
   sku: string | null;
   price: number;
   in_stock: boolean;
+  image_url: string | null;
+  description: string | null;
 }
 
 interface ItemGridProps {
@@ -41,18 +45,52 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
         {filteredItems.map(item => (
           <Card
             key={item.id}
-            className="p-4 cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col h-32"
-            onClick={() => onAddItem({
-              menu_item_id: item.id,
-              name: item.name,
-              price: Number(item.price),
-            })}
+            className={`p-0 cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col h-40 overflow-hidden relative ${
+              !item.in_stock ? 'opacity-60' : ''
+            }`}
+            onClick={() => {
+              if (item.in_stock) {
+                onAddItem({
+                  menu_item_id: item.id,
+                  name: item.name,
+                  price: Number(item.price),
+                });
+              }
+            }}
           >
-            <h3 className="font-medium text-foreground line-clamp-2">{item.name}</h3>
-            <p className="text-xs text-muted-foreground mt-1">{item.sku}</p>
-            <p className="text-lg font-semibold text-primary mt-auto">
-              ${Number(item.price).toFixed(2)}
-            </p>
+            {/* Image */}
+            {item.image_url ? (
+              <img
+                src={item.image_url}
+                alt={item.name}
+                className="w-full h-24 object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-24 bg-muted flex items-center justify-center">
+                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="p-3 flex flex-col flex-1">
+              <h3 className="font-medium text-foreground text-sm line-clamp-1">{item.name}</h3>
+              {item.description && (
+                <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                  {item.description}
+                </p>
+              )}
+              <p className="text-lg font-semibold text-primary mt-auto">
+                RM {Number(item.price).toFixed(2)}
+              </p>
+            </div>
+
+            {/* Status Badge */}
+            {!item.in_stock && (
+              <Badge variant="destructive" className="absolute top-2 right-2">
+                Unavailable
+              </Badge>
+            )}
           </Card>
         ))}
       </div>

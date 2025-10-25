@@ -8,6 +8,7 @@ import POS from "./pages/POS";
 import CustomerScreen from "./pages/CustomerScreen";
 import KDS from "./pages/KDS";
 import Admin from "./pages/Admin";
+import MenuManagement from "./pages/admin/MenuManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/customer/:sessionId" element={<CustomerScreen />} />
           <Route path="/kds" element={<KDS />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/menu" element={<MenuManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

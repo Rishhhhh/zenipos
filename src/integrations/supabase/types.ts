@@ -102,9 +102,11 @@ export type Database = {
       }
       menu_items: {
         Row: {
+          archived: boolean | null
           category_id: string | null
           cost: number | null
           created_at: string | null
+          description: string | null
           id: string
           image_url: string | null
           in_stock: boolean | null
@@ -113,11 +115,14 @@ export type Database = {
           sku: string | null
           tax_rate: number | null
           track_inventory: boolean | null
+          updated_at: string | null
         }
         Insert: {
+          archived?: boolean | null
           category_id?: string | null
           cost?: number | null
           created_at?: string | null
+          description?: string | null
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
@@ -126,11 +131,14 @@ export type Database = {
           sku?: string | null
           tax_rate?: number | null
           track_inventory?: boolean | null
+          updated_at?: string | null
         }
         Update: {
+          archived?: boolean | null
           category_id?: string | null
           cost?: number | null
           created_at?: string | null
+          description?: string | null
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
@@ -139,6 +147,7 @@ export type Database = {
           sku?: string | null
           tax_rate?: number | null
           track_inventory?: boolean | null
+          updated_at?: string | null
         }
         Relationships: [
           {

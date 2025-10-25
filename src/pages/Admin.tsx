@@ -121,13 +121,15 @@ export default function Admin() {
             </Card>
           </Link>
 
-          <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-muted">
-            <Settings className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Settings</h3>
-            <p className="text-muted-foreground">
-              Configure system preferences
-            </p>
-          </Card>
+          <Link to="/admin/menu">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <UtensilsCrossed className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Menu Management</h3>
+              <p className="text-muted-foreground">
+                Manage categories, items, and pricing
+              </p>
+            </Card>
+          </Link>
         </div>
 
         {/* Future Features Placeholders */}
