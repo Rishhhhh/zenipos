@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { EvaluationResult } from '@/lib/promotions/evaluator';
 
 export interface CartItem {
   id: string;
@@ -15,6 +16,7 @@ interface CartState {
   items: CartItem[];
   tax_rate: number;
   discount: number;
+  appliedPromotions: EvaluationResult[];
   
   // Actions
   setSessionId: (id: string) => void;
@@ -22,10 +24,13 @@ interface CartState {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  applyPromotions: (results: EvaluationResult[]) => void;
+  clearPromotions: () => void;
   
   // Computed
   getSubtotal: () => number;
   getTax: () => number;
+  getDiscount: () => number;
   getTotal: () => number;
 }
 
@@ -34,6 +39,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   items: [],
   tax_rate: 0.08, // 8% default tax
   discount: 0,
+  appliedPromotions: [],
   
   setSessionId: (id) => set({ sessionId: id }),
   
@@ -71,7 +77,11 @@ export const useCartStore = create<CartState>((set, get) => ({
     };
   }),
   
-  clearCart: () => set({ items: [], sessionId: crypto.randomUUID() }),
+  clearCart: () => set({ items: [], sessionId: crypto.randomUUID(), appliedPromotions: [] }),
+  
+  applyPromotions: (results) => set({ appliedPromotions: results }),
+  
+  clearPromotions: () => set({ appliedPromotions: [] }),
   
   getSubtotal: () => {
     const { items } = get();
@@ -83,8 +93,12 @@ export const useCartStore = create<CartState>((set, get) => ({
     return get().getSubtotal() * tax_rate;
   },
   
+  getDiscount: () => {
+    const { appliedPromotions } = get();
+    return appliedPromotions.reduce((sum, result) => sum + result.discount, 0);
+  },
+  
   getTotal: () => {
-    const { discount } = get();
-    return get().getSubtotal() + get().getTax() - discount;
+    return get().getSubtotal() + get().getTax() - get().getDiscount();
   }
 }));

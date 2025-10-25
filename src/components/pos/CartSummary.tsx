@@ -1,14 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Minus, Plus, Send, ShoppingCart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Minus, Plus, Send, ShoppingCart, Tag } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
+import type { EvaluationResult } from "@/lib/promotions/evaluator";
 
 interface CartSummaryProps {
   items: CartItem[];
   subtotal: number;
   tax: number;
   total: number;
+  discount?: number;
+  appliedPromotions?: EvaluationResult[];
   onUpdateQuantity: (id: string, quantity: number) => void;
   onSendToKDS: () => void;
   isSending: boolean;
@@ -19,6 +23,8 @@ export function CartSummary({
   subtotal,
   tax,
   total,
+  discount = 0,
+  appliedPromotions = [],
   onUpdateQuantity,
   onSendToKDS,
   isSending,
@@ -75,12 +81,37 @@ export function CartSummary({
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-medium">${subtotal.toFixed(2)}</span>
         </div>
+        
+        {/* Promotions */}
+        {appliedPromotions.length > 0 && (
+          <div className="space-y-1">
+            {appliedPromotions.map((promo, idx) => (
+              <div key={idx} className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-3 w-3 text-success" />
+                  <span className="text-success font-medium">{promo.message}</span>
+                </div>
+                <span className="text-success font-medium">
+                  -${promo.discount.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Tax (8%)</span>
           <span className="font-medium">${tax.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-lg font-bold">
-          <span>Total</span>
+          <div className="flex items-center gap-2">
+            <span>Total</span>
+            {appliedPromotions.length > 0 && (
+              <Badge variant="default" className="bg-success text-white">
+                Promo Applied
+              </Badge>
+            )}
+          </div>
           <span>${total.toFixed(2)}</span>
         </div>
         

@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Tag } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MenuItem {
   id: string;
@@ -23,9 +25,25 @@ interface ItemGridProps {
 }
 
 export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridProps) {
+  // Fetch active promotions
+  const { data: promotions } = useQuery({
+    queryKey: ['promotions', 'active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('*')
+        .eq('active', true);
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60000,
+  });
+  
   const filteredItems = items?.filter(item => 
     !categoryId || item.category_id === categoryId
   ) || [];
+  
+  const hasActivePromos = promotions && promotions.length > 0;
   
   if (isLoading) {
     return (
@@ -86,11 +104,17 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
             </div>
 
             {/* Status Badge */}
-            {!item.in_stock && (
-              <Badge variant="destructive" className="absolute top-2 right-2">
-                Unavailable
-              </Badge>
-            )}
+                  {!item.in_stock && (
+                    <Badge variant="destructive" className="absolute top-2 right-2">
+                      Unavailable
+                    </Badge>
+                  )}
+                  {item.in_stock && hasActivePromos && (
+                    <Badge variant="default" className="absolute top-2 left-2 bg-success text-white">
+                      <Tag className="h-3 w-3 mr-1" />
+                      Promo
+                    </Badge>
+                  )}
           </Card>
         ))}
       </div>

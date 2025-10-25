@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { usePromotions } from "@/lib/hooks/usePromotions";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
@@ -11,10 +12,13 @@ import { ItemGrid } from "@/components/pos/ItemGrid";
 import { CartSummary } from "@/components/pos/CartSummary";
 
 export default function POS() {
-  const { items, addItem, updateQuantity, clearCart, getSubtotal, getTax, getTotal, sessionId } = useCartStore();
+  const { items, addItem, updateQuantity, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
+  
+  // Auto-evaluate promotions
+  usePromotions();
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -50,6 +54,7 @@ export default function POS() {
 
       const subtotal = getSubtotal();
       const tax = getTax();
+      const discount = getDiscount();
       const total = getTotal();
 
       // Create order
@@ -59,7 +64,13 @@ export default function POS() {
           session_id: sessionId,
           subtotal,
           tax,
+          discount,
           total,
+          applied_promotions: appliedPromotions.map(p => ({
+            id: p.promotion.id,
+            name: p.promotion.name,
+            discount: p.discount,
+          })),
           created_by: user.id,
         })
         .select()
@@ -142,6 +153,8 @@ export default function POS() {
             subtotal={getSubtotal()}
             tax={getTax()}
             total={getTotal()}
+            discount={getDiscount()}
+            appliedPromotions={appliedPromotions}
             onUpdateQuantity={updateQuantity}
             onSendToKDS={() => sendToKDS.mutate()}
             isSending={sendToKDS.isPending}

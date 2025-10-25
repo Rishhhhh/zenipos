@@ -10,7 +10,8 @@ import {
   UtensilsCrossed, 
   Users, 
   Settings,
-  TrendingUp
+  TrendingUp,
+  Tag
 } from "lucide-react";
 
 export default function Admin() {
@@ -127,6 +128,19 @@ export default function Admin() {
               <h3 className="text-xl font-semibold mb-2 text-foreground">Menu Management</h3>
               <p className="text-muted-foreground">
                 Manage categories, items, and pricing
+              </p>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Management Tools */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <Link to="/admin/promotions">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Tag className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Promotions</h3>
+              <p className="text-muted-foreground">
+                Create and manage promotional offers
               </p>
             </Card>
           </Link>

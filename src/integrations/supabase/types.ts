@@ -209,6 +209,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          applied_promotions: Json | null
           created_at: string | null
           created_by: string | null
           customer_id: string | null
@@ -224,6 +225,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          applied_promotions?: Json | null
           created_at?: string | null
           created_by?: string | null
           customer_id?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          applied_promotions?: Json | null
           created_at?: string | null
           created_by?: string | null
           customer_id?: string | null
@@ -299,6 +302,90 @@ export type Database = {
           },
         ]
       }
+      promotion_usage: {
+        Row: {
+          applied_at: string | null
+          discount_amount: number
+          id: string
+          order_id: string | null
+          promotion_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          discount_amount: number
+          id?: string
+          order_id?: string | null
+          promotion_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          promotion_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_usage_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          priority: number | null
+          rules: Json
+          stackable: boolean | null
+          start_date: string | null
+          type: Database["public"]["Enums"]["promotion_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          priority?: number | null
+          rules: Json
+          stackable?: boolean | null
+          start_date?: string | null
+          type: Database["public"]["Enums"]["promotion_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          priority?: number | null
+          rules?: Json
+          stackable?: boolean | null
+          start_date?: string | null
+          type?: Database["public"]["Enums"]["promotion_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       stations: {
         Row: {
           active: boolean | null
@@ -338,6 +425,11 @@ export type Database = {
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      promotion_type:
+        | "BUY_X_GET_Y"
+        | "PERCENT_OFF"
+        | "TIME_RANGE_DISCOUNT"
+        | "HAPPY_HOUR"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -469,6 +561,12 @@ export const Constants = {
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],
       payment_status: ["pending", "completed", "failed", "refunded"],
+      promotion_type: [
+        "BUY_X_GET_Y",
+        "PERCENT_OFF",
+        "TIME_RANGE_DISCOUNT",
+        "HAPPY_HOUR",
+      ],
     },
   },
 } as const
