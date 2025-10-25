@@ -1,3 +1,29 @@
+# Restaurant POS System - Phase 1a
+
+Modern, minimalist restaurant Point of Sale system with real-time kitchen display and dual-screen operation.
+
+## Features (Phase 1a)
+
+- **Point of Sale (POS)**: Three-panel layout with categories, menu items, and cart
+- **Kitchen Display System (KDS)**: Real-time order queue with elapsed timers
+- **Customer Screen**: Mirrored cart view with tip selection and QR payment placeholder
+- **Admin Dashboard**: Command center with stats and quick actions
+- **Real-time Sync**: Supabase Realtime for <1s order updates
+- **Offline-Ready**: Optimistic cart updates with Zustand state management
+
+## Tech Stack
+
+- React 18 + TypeScript
+- Vite for fast builds
+- Tailwind CSS with pastel design tokens
+- shadcn/ui components
+- Supabase (Lovable Cloud) for backend
+- React Query for server state
+- Zustand for cart state
+- date-fns for time formatting
+
+---
+
 # Welcome to your Lovable project
 
 ## Project info
