@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.employee-anomaly-detection]
 verify_jwt = true
+
+[functions.report-insights]
+verify_jwt = true
