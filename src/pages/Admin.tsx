@@ -179,15 +179,17 @@ export default function Admin() {
             </Card>
           </Link>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Analytics & Reports
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              Coming in Phase 2: Sales reports, trends, and insights
-            </p>
-          </Card>
+          <Link to="/admin/reports">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Analytics & Reports
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                View KPI dashboards and generate reports
+              </p>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>

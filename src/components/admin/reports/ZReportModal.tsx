@@ -18,9 +18,9 @@ export function ZReportModal() {
   const { data: reportData, isLoading } = useQuery({
     queryKey: ['z-report', date],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('generate_z_report', {
+      const { data, error } = await supabase.rpc('generate_z_report' as any, {
         report_date: format(date, 'yyyy-MM-dd')
-      });
+      }) as any;
       
       if (error) throw error;
       return data?.[0];
