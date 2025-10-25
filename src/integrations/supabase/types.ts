@@ -125,22 +125,34 @@ export type Database = {
         Row: {
           active: boolean | null
           created_at: string | null
+          email: string | null
+          hire_date: string | null
           id: string
           name: string
+          pay_rate: number | null
+          phone: string | null
           pin: string
         }
         Insert: {
           active?: boolean | null
           created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
           id?: string
           name: string
+          pay_rate?: number | null
+          phone?: string | null
           pin: string
         }
         Update: {
           active?: boolean | null
           created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
           id?: string
           name?: string
+          pay_rate?: number | null
+          phone?: string | null
           pin?: string
         }
         Relationships: []
@@ -734,6 +746,74 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          break_minutes: number | null
+          clock_in_at: string
+          clock_out_at: string | null
+          closed_by: string | null
+          created_at: string | null
+          discounts_given: number | null
+          employee_id: string
+          id: string
+          notes: string | null
+          orders_processed: number | null
+          refunds_count: number | null
+          status: string | null
+          total_hours: number | null
+          total_sales: number | null
+          updated_at: string | null
+          user_id: string | null
+          voids_count: number | null
+        }
+        Insert: {
+          break_minutes?: number | null
+          clock_in_at?: string
+          clock_out_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          discounts_given?: number | null
+          employee_id: string
+          id?: string
+          notes?: string | null
+          orders_processed?: number | null
+          refunds_count?: number | null
+          status?: string | null
+          total_hours?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          voids_count?: number | null
+        }
+        Update: {
+          break_minutes?: number | null
+          clock_in_at?: string
+          clock_out_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          discounts_given?: number | null
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          orders_processed?: number | null
+          refunds_count?: number | null
+          status?: string | null
+          total_hours?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          voids_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stations: {
         Row: {
           active: boolean | null
@@ -927,6 +1007,7 @@ export type Database = {
         Returns: number
       }
       calculate_points_earned: { Args: { amount: number }; Returns: number }
+      close_shift: { Args: { shift_id_param: string }; Returns: undefined }
       credit_loyalty_points: {
         Args: {
           customer_id_param: string
@@ -939,6 +1020,7 @@ export type Database = {
         Args: { order_id_param: string }
         Returns: undefined
       }
+      get_active_shift: { Args: { employee_id_param: string }; Returns: string }
       get_customer_loyalty_stats: {
         Args: { customer_id_param: string }
         Returns: {
@@ -961,6 +1043,20 @@ export type Database = {
           reorder_point: number
           sku: string
           unit: string
+        }[]
+      }
+      get_shift_summary: {
+        Args: { shift_id_param: string }
+        Returns: {
+          clock_in: string
+          clock_out: string
+          discounts: number
+          employee_name: string
+          hours_worked: number
+          orders: number
+          refunds: number
+          sales: number
+          voids: number
         }[]
       }
       get_top_loyal_customers: {

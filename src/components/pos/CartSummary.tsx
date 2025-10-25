@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, CreditCard, ShoppingCart, Tag } from "lucide-react";
+import { Minus, Plus, CreditCard, ShoppingCart, Tag, Trash2 } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import type { EvaluationResult } from "@/lib/promotions/evaluator";
+import { ManagerPinModal } from "@/components/pos/ManagerPinModal";
 
 interface CartSummaryProps {
   items: CartItem[];
@@ -14,6 +16,7 @@ interface CartSummaryProps {
   discount?: number;
   appliedPromotions?: EvaluationResult[];
   onUpdateQuantity: (id: string, quantity: number) => void;
+  onVoidItem: (id: string, managerId?: string) => Promise<void>;
   onSendToKDS: () => void;
   isSending: boolean;
 }
@@ -26,9 +29,25 @@ export function CartSummary({
   discount = 0,
   appliedPromotions = [],
   onUpdateQuantity,
+  onVoidItem,
   onSendToKDS,
   isSending,
 }: CartSummaryProps) {
+  const [showManagerPin, setShowManagerPin] = useState(false);
+  const [voidingItemId, setVoidingItemId] = useState<string | null>(null);
+
+  const handleVoidClick = (itemId: string) => {
+    setVoidingItemId(itemId);
+    setShowManagerPin(true);
+  };
+
+  const handleManagerAuthorized = async (managerId: string) => {
+    if (voidingItemId) {
+      await onVoidItem(voidingItemId, managerId);
+      setVoidingItemId(null);
+    }
+  };
+
   return (
     <div className="h-full bg-card p-4 flex flex-col">
       <h2 className="text-lg font-semibold mb-4 text-foreground">Cart</h2>
@@ -67,6 +86,14 @@ export function CartSummary({
                       onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                     >
                       <Plus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 touch-target text-destructive"
+                      onClick={() => handleVoidClick(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -125,6 +152,13 @@ export function CartSummary({
           {isSending ? 'Processing...' : 'Process Payment'}
         </Button>
       </div>
+
+      <ManagerPinModal
+        open={showManagerPin}
+        onOpenChange={setShowManagerPin}
+        onSuccess={handleManagerAuthorized}
+        action="Void Item"
+      />
     </div>
   );
 }

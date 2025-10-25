@@ -3,27 +3,59 @@ import { useCartStore } from "@/lib/store/cart";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePromotions } from "@/lib/hooks/usePromotions";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { LogIn, LogOut, Clock } from "lucide-react";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
 import { ItemGrid } from "@/components/pos/ItemGrid";
 import { CartSummary } from "@/components/pos/CartSummary";
 import { PaymentModal } from "@/components/pos/PaymentModal";
+import { EmployeeClockInModal } from "@/components/pos/EmployeeClockInModal";
+import { EmployeeClockOutModal } from "@/components/pos/EmployeeClockOutModal";
 
 export default function POS() {
-  const { items, addItem, updateQuantity, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [currentOrderNumber, setCurrentOrderNumber] = useState<string | null>(null);
+  const [showClockInModal, setShowClockInModal] = useState(false);
+  const [showClockOutModal, setShowClockOutModal] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
+  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
+  const [shiftElapsed, setShiftElapsed] = useState<string>('00:00');
   
   // Auto-evaluate promotions
   usePromotions();
+
+  // Update shift timer
+  useEffect(() => {
+    if (!currentShiftId) return;
+
+    const interval = setInterval(async () => {
+      const { data: shift } = await supabase
+        .from('shifts')
+        .select('clock_in_at')
+        .eq('id', currentShiftId)
+        .single();
+
+      if (shift) {
+        const elapsed = Date.now() - new Date(shift.clock_in_at).getTime();
+        const hours = Math.floor(elapsed / (1000 * 60 * 60));
+        const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+        setShiftElapsed(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+      }
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [currentShiftId]);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -150,6 +182,27 @@ export default function POS() {
 
   return (
     <div className="kiosk-layout">
+      {/* Clock In/Out Header */}
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+        {currentEmployee && (
+          <Badge variant="secondary" className="text-sm">
+            <Clock className="h-3 w-3 mr-1" />
+            {currentEmployee.name} - {shiftElapsed}
+          </Badge>
+        )}
+        {!currentShiftId ? (
+          <Button onClick={() => setShowClockInModal(true)} size="sm">
+            <LogIn className="h-4 w-4 mr-2" />
+            Clock In
+          </Button>
+        ) : (
+          <Button onClick={() => setShowClockOutModal(true)} variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            Clock Out
+          </Button>
+        )}
+      </div>
+
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} minSize={15}>
           <CategoryList
@@ -182,6 +235,7 @@ export default function POS() {
             discount={getDiscount()}
             appliedPromotions={appliedPromotions}
             onUpdateQuantity={updateQuantity}
+            onVoidItem={voidItem}
             onSendToKDS={() => sendToKDS.mutate()}
             isSending={sendToKDS.isPending}
           />
@@ -197,6 +251,26 @@ export default function POS() {
         onPaymentSuccess={() => {
           clearCart();
           queryClient.invalidateQueries({ queryKey: ['orders'] });
+        }}
+      />
+
+      <EmployeeClockInModal
+        open={showClockInModal}
+        onOpenChange={setShowClockInModal}
+        onSuccess={(employee, shiftId) => {
+          setCurrentEmployee(employee);
+          setCurrentShiftId(shiftId);
+        }}
+      />
+
+      <EmployeeClockOutModal
+        open={showClockOutModal}
+        onOpenChange={setShowClockOutModal}
+        shiftId={currentShiftId || ''}
+        onSuccess={() => {
+          setCurrentEmployee(null);
+          setCurrentShiftId(null);
+          setShiftElapsed('00:00');
         }}
       />
     </div>

@@ -22,6 +22,7 @@ interface CartState {
   setSessionId: (id: string) => void;
   addItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
   removeItem: (id: string) => void;
+  voidItem: (id: string, managerId?: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   applyPromotions: (results: EvaluationResult[]) => void;
@@ -65,6 +66,27 @@ export const useCartStore = create<CartState>((set, get) => ({
   removeItem: (id) => set((state) => ({
     items: state.items.filter(i => i.id !== id)
   })),
+  
+  voidItem: async (id, managerId) => {
+    const item = get().items.find(i => i.id === id);
+    if (!item) return;
+    
+    // Log void action to audit
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    await supabase.from('audit_log').insert({
+      actor: managerId || user?.id,
+      action: 'void_item',
+      entity: 'cart',
+      entity_id: id,
+      diff: { item_name: item.name, quantity: item.quantity, price: item.price },
+    });
+    
+    set((state) => ({
+      items: state.items.filter(i => i.id !== id)
+    }));
+  },
   
   updateQuantity: (id, quantity) => set((state) => {
     if (quantity <= 0) {

@@ -167,17 +167,17 @@ export default function Admin() {
           </Link>
         </div>
 
-        {/* Future Features Placeholders */}
+        {/* Additional Features */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Staff Management
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              Coming in Phase 2: Employee roles, time tracking, and permissions
-            </p>
-          </Card>
+          <Link to="/admin/employees">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Users className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Employee Management</h3>
+              <p className="text-muted-foreground">
+                Manage staff, roles, and time tracking
+              </p>
+            </Card>
+          </Link>
 
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
