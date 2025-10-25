@@ -79,6 +79,30 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          pin: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          pin: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          pin?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           created_at: string | null
@@ -266,6 +290,7 @@ export type Database = {
           id: string
           method: Database["public"]["Enums"]["payment_method"]
           order_id: string | null
+          provider: string | null
           provider_ref: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           tip: number | null
@@ -277,6 +302,7 @@ export type Database = {
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
           order_id?: string | null
+          provider?: string | null
           provider_ref?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           tip?: number | null
@@ -288,6 +314,7 @@ export type Database = {
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           order_id?: string | null
+          provider?: string | null
           provider_ref?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           tip?: number | null
@@ -386,6 +413,103 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_templates: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          template: string
+          type: string
+          updated_at: string | null
+          width_mm: number
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          template: string
+          type: string
+          updated_at?: string | null
+          width_mm: number
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          template?: string
+          type?: string
+          updated_at?: string | null
+          width_mm?: number
+        }
+        Relationships: []
+      }
+      refunds: {
+        Row: {
+          amount: number
+          authorized_by: string | null
+          completed_at: string | null
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          order_id: string
+          payment_id: string
+          provider_ref: string | null
+          reason: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          authorized_by?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          order_id: string
+          payment_id: string
+          provider_ref?: string | null
+          reason?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          authorized_by?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          order_id?: string
+          payment_id?: string
+          provider_ref?: string | null
+          reason?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stations: {
         Row: {
           active: boolean | null
@@ -413,14 +537,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "manager" | "cashier" | "kitchen"
       order_status: "pending" | "preparing" | "done" | "cancelled"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
@@ -557,6 +720,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "manager", "cashier", "kitchen"],
       order_status: ["pending", "preparing", "done", "cancelled"],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],

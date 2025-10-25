@@ -1,3 +1,6 @@
+import { DuitNowProvider } from './providers/DuitNowProvider';
+import { TouchNGoProvider } from './providers/TouchNGoProvider';
+
 export interface PaymentRequest {
   amount: number;
   currency: string;
@@ -104,18 +107,22 @@ export class BillPLZProvider implements PaymentProvider {
 
 // Factory function
 export function createPaymentProvider(
-  provider: 'stripe' | 'billplz' = 'stripe',
-  apiKey?: string
+  provider: 'duitnow' | 'tng' | 'stripe' | 'billplz' = 'duitnow',
+  config?: { merchantId?: string; apiKey?: string }
 ): PaymentProvider {
   switch (provider) {
+    case 'duitnow':
+      return new DuitNowProvider(config?.merchantId, config?.apiKey);
+    case 'tng':
+      return new TouchNGoProvider(config?.merchantId, config?.apiKey);
     case 'stripe':
-      return new StripeProvider(apiKey);
+      return new StripeProvider(config?.apiKey);
     case 'billplz':
-      return new BillPLZProvider(apiKey);
+      return new BillPLZProvider(config?.apiKey);
     default:
-      return new StripeProvider(apiKey);
+      return new DuitNowProvider();
   }
 }
 
 // Default instance
-export const paymentProvider = createPaymentProvider('stripe');
+export const paymentProvider = createPaymentProvider('duitnow');

@@ -1,1 +1,4 @@
 project_id = "eiutjobcaojpnlzgqhis"
+
+[functions.validate-manager-pin]
+verify_jwt = true

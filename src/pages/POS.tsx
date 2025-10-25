@@ -5,17 +5,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { usePromotions } from "@/lib/hooks/usePromotions";
+import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
 import { ItemGrid } from "@/components/pos/ItemGrid";
 import { CartSummary } from "@/components/pos/CartSummary";
+import { PaymentModal } from "@/components/pos/PaymentModal";
 
 export default function POS() {
   const { items, addItem, updateQuantity, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [currentOrderNumber, setCurrentOrderNumber] = useState<string | null>(null);
   
   // Auto-evaluate promotions
   usePromotions();
@@ -105,13 +110,34 @@ export default function POS() {
 
       return order;
     },
-    onSuccess: () => {
+    onSuccess: (order) => {
       toast({
         title: "Order sent to KDS",
         description: `${items.length} items sent to kitchen`,
       });
-      clearCart();
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      
+      // Auto-print kitchen ticket
+      const kitchenTicket = generate80mmKitchenTicket({
+        order_id: order.id,
+        order_number: order.id.substring(0, 8),
+        station: 'MAIN KITCHEN',
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity,
+        })),
+        subtotal: getSubtotal(),
+        tax: getTax(),
+        total: getTotal(),
+        timestamp: new Date(),
+      });
+      console.log('🍳 Auto-printing kitchen ticket:', kitchenTicket);
+      
+      // Open payment modal instead of clearing cart immediately
+      setCurrentOrderId(order.id);
+      setCurrentOrderNumber(order.id.substring(0, 8));
+      setShowPaymentModal(true);
     },
     onError: (error) => {
       toast({
@@ -161,6 +187,18 @@ export default function POS() {
           />
         </ResizablePanel>
       </ResizablePanelGroup>
+      
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        orderId={currentOrderId || ''}
+        orderNumber={currentOrderNumber || ''}
+        total={getTotal()}
+        onPaymentSuccess={() => {
+          clearCart();
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+        }}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, Send, ShoppingCart, Tag } from "lucide-react";
+import { Minus, Plus, CreditCard, ShoppingCart, Tag } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import type { EvaluationResult } from "@/lib/promotions/evaluator";
 
@@ -121,8 +121,8 @@ export function CartSummary({
           onClick={onSendToKDS}
           disabled={items.length === 0 || isSending}
         >
-          <Send className="h-4 w-4 mr-2" />
-          {isSending ? 'Sending...' : 'Send to KDS'}
+          <CreditCard className="h-4 w-4 mr-2" />
+          {isSending ? 'Processing...' : 'Process Payment'}
         </Button>
       </div>
     </div>
