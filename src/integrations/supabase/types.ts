@@ -14,33 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_command_history: {
+        Row: {
+          command: string
+          confidence: number | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          intent: string | null
+          language: string | null
+          result: Json | null
+          status: string | null
+          tools_used: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          command: string
+          confidence?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          intent?: string | null
+          language?: string | null
+          result?: Json | null
+          status?: string | null
+          tools_used?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          command?: string
+          confidence?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          intent?: string | null
+          language?: string | null
+          result?: Json | null
+          status?: string | null
+          tools_used?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
           actor: string | null
+          ai_context: Json | null
+          approved_by: string | null
+          classification: string | null
           created_at: string | null
           diff: Json | null
           entity: string
           entity_id: string | null
           id: string
+          requires_approval: boolean | null
         }
         Insert: {
           action: string
           actor?: string | null
+          ai_context?: Json | null
+          approved_by?: string | null
+          classification?: string | null
           created_at?: string | null
           diff?: Json | null
           entity: string
           entity_id?: string | null
           id?: string
+          requires_approval?: boolean | null
         }
         Update: {
           action?: string
           actor?: string | null
+          ai_context?: Json | null
+          approved_by?: string | null
+          classification?: string | null
           created_at?: string | null
           diff?: Json | null
           entity?: string
           entity_id?: string | null
           id?: string
+          requires_approval?: boolean | null
         }
         Relationships: []
       }

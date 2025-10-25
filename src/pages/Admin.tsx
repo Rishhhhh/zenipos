@@ -12,7 +12,8 @@ import {
   Settings,
   TrendingUp,
   Tag,
-  Package
+  Package,
+  Brain
 } from "lucide-react";
 
 export default function Admin() {
@@ -168,7 +169,7 @@ export default function Admin() {
         </div>
 
         {/* Additional Features */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link to="/admin/employees">
             <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
               <Users className="h-12 w-12 text-primary mb-4" />
@@ -180,13 +181,21 @@ export default function Admin() {
           </Link>
 
           <Link to="/admin/reports">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Analytics & Reports
-              </h3>
-              <p className="text-muted-foreground text-sm">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <TrendingUp className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Analytics & Reports</h3>
+              <p className="text-muted-foreground">
                 View KPI dashboards and generate reports
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/ai-history">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Brain className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">AI Command History</h3>
+              <p className="text-muted-foreground">
+                View all AI assistant interactions and approvals
               </p>
             </Card>
           </Link>

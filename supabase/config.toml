@@ -9,6 +9,15 @@ verify_jwt = true
 [functions.loyalty-insights]
 verify_jwt = true
 
+[functions.ai-orchestrator]
+verify_jwt = true
+
+[functions.voice-to-text]
+verify_jwt = true
+
+[functions.execute-approved-action]
+verify_jwt = true
+
 [functions.employee-anomaly-detection]
 verify_jwt = true
 
