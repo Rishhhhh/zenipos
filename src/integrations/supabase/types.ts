@@ -838,6 +838,60 @@ export type Database = {
           },
         ]
       }
+      performance_metrics: {
+        Row: {
+          browser: string | null
+          cls: number | null
+          connection_type: string | null
+          created_at: string | null
+          device_type: string | null
+          duration_ms: number | null
+          exceeded_budget: boolean | null
+          fcp: number | null
+          fid: number | null
+          id: string
+          lcp: number | null
+          metric_type: string
+          page_path: string | null
+          tti: number | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          cls?: number | null
+          connection_type?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_ms?: number | null
+          exceeded_budget?: boolean | null
+          fcp?: number | null
+          fid?: number | null
+          id?: string
+          lcp?: number | null
+          metric_type: string
+          page_path?: string | null
+          tti?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          cls?: number | null
+          connection_type?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_ms?: number | null
+          exceeded_budget?: boolean | null
+          fcp?: number | null
+          fid?: number | null
+          id?: string
+          lcp?: number | null
+          metric_type?: string
+          page_path?: string | null
+          tti?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       promotion_usage: {
         Row: {
           applied_at: string | null
@@ -1303,6 +1357,42 @@ export type Database = {
         }
         Relationships: []
       }
+      system_health: {
+        Row: {
+          check_type: string
+          checked_at: string | null
+          details: Json | null
+          error_count: number | null
+          id: string
+          response_time_ms: number | null
+          service_name: string
+          status: string
+          success_rate: number | null
+        }
+        Insert: {
+          check_type: string
+          checked_at?: string | null
+          details?: Json | null
+          error_count?: number | null
+          id?: string
+          response_time_ms?: number | null
+          service_name: string
+          status: string
+          success_rate?: number | null
+        }
+        Update: {
+          check_type?: string
+          checked_at?: string | null
+          details?: Json | null
+          error_count?: number | null
+          id?: string
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
+          success_rate?: number | null
+        }
+        Relationships: []
+      }
       user_branches: {
         Row: {
           branch_id: string
@@ -1508,6 +1598,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_performance_metric: {
+        Args: {
+          _budget_ms: number
+          _device_type?: string
+          _duration_ms: number
+          _metric_type: string
+          _page_path: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

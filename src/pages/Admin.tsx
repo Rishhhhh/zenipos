@@ -14,7 +14,9 @@ import {
   Tag,
   Package,
   Brain,
-  Store
+  Store,
+  Activity,
+  Zap
 } from "lucide-react";
 
 export default function Admin() {
@@ -217,6 +219,26 @@ export default function Admin() {
               <h3 className="text-xl font-semibold mb-2 text-foreground">AI Command History</h3>
               <p className="text-muted-foreground">
                 View all AI assistant interactions and approvals
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/system-health">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Activity className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">System Health</h3>
+              <p className="text-muted-foreground">
+                Monitor service status and uptime
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/performance">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Zap className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Performance Metrics</h3>
+              <p className="text-muted-foreground">
+                Track page load times and budgets
               </p>
             </Card>
           </Link>

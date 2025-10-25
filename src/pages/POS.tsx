@@ -3,6 +3,7 @@ import { useCartStore } from "@/lib/store/cart";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { useState, useEffect } from "react";
 import { usePromotions } from "@/lib/hooks/usePromotions";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
@@ -19,6 +20,9 @@ import { EmployeeClockInModal } from "@/components/pos/EmployeeClockInModal";
 import { EmployeeClockOutModal } from "@/components/pos/EmployeeClockOutModal";
 
 export default function POS() {
+  // Track performance for this page
+  usePerformanceMonitor('POS');
+  
   const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
