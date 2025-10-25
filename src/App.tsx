@@ -15,6 +15,8 @@ import CRMDashboard from "./pages/admin/CRMDashboard";
 import EmployeeManagement from "./pages/admin/EmployeeManagement";
 import ReportsDashboard from "./pages/admin/ReportsDashboard";
 import AIHistoryDashboard from "./pages/admin/AIHistoryDashboard";
+import BranchManagement from "./pages/admin/BranchManagement";
+import ManagerDashboard from "./pages/ManagerDashboard";
 import NotFound from "./pages/NotFound";
 import { AppHeader } from "./components/layout/AppHeader";
 
@@ -47,6 +49,8 @@ const App = () => (
           <Route path="/admin/employees" element={<EmployeeManagement />} />
           <Route path="/admin/reports" element={<ReportsDashboard />} />
           <Route path="/admin/ai-history" element={<AIHistoryDashboard />} />
+          <Route path="/admin/branches" element={<BranchManagement />} />
+          <Route path="/admin/manager" element={<ManagerDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

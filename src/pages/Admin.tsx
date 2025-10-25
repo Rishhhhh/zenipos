@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Tag,
   Package,
-  Brain
+  Brain,
+  Store
 } from "lucide-react";
 
 export default function Admin() {
@@ -169,7 +170,27 @@ export default function Admin() {
         </div>
 
         {/* Additional Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Link to="/admin/branches">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Store className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Branch Management</h3>
+              <p className="text-muted-foreground">
+                Manage multiple locations and access control
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/manager">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <TrendingUp className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Manager Dashboard</h3>
+              <p className="text-muted-foreground">
+                Multi-branch analytics and oversight
+              </p>
+            </Card>
+          </Link>
+
           <Link to="/admin/employees">
             <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
               <Users className="h-12 w-12 text-primary mb-4" />

@@ -59,3 +59,40 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// Push notification handler
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  
+  const options = {
+    body: data.body || 'New notification',
+    icon: data.icon || '/placeholder.svg',
+    badge: data.badge || '/placeholder.svg',
+    vibrate: [200, 100, 200],
+    data: data.data || {},
+    tag: data.tag || 'default',
+    requireInteraction: data.requireInteraction || false,
+    actions: [
+      { action: 'view', title: 'View' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(
+      data.title || 'Restaurant POS',
+      options
+    )
+  );
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'view') {
+    event.waitUntil(
+      clients.openWindow('/admin/manager')
+    );
+  }
+});
