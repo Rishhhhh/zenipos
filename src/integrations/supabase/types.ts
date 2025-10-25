@@ -103,6 +103,65 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_items: {
+        Row: {
+          category: string | null
+          cost_per_unit: number | null
+          created_at: string | null
+          current_qty: number | null
+          expiry_alert_days: number | null
+          id: string
+          name: string
+          reorder_point: number | null
+          reorder_qty: number | null
+          sku: string | null
+          storage_location: string | null
+          supplier_id: string | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          current_qty?: number | null
+          expiry_alert_days?: number | null
+          id?: string
+          name: string
+          reorder_point?: number | null
+          reorder_qty?: number | null
+          sku?: string | null
+          storage_location?: string | null
+          supplier_id?: string | null
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          current_qty?: number | null
+          expiry_alert_days?: number | null
+          id?: string
+          name?: string
+          reorder_point?: number | null
+          reorder_qty?: number | null
+          sku?: string | null
+          storage_location?: string | null
+          supplier_id?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_categories: {
         Row: {
           created_at: string | null
@@ -446,6 +505,48 @@ export type Database = {
         }
         Relationships: []
       }
+      recipes: {
+        Row: {
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          menu_item_id: string
+          notes: string | null
+          quantity_per_serving: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          menu_item_id: string
+          notes?: string | null
+          quantity_per_serving: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          menu_item_id?: string
+          notes?: string | null
+          quantity_per_serving?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       refunds: {
         Row: {
           amount: number
@@ -537,6 +638,89 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_moves: {
+        Row: {
+          cost_impact: number | null
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          performed_by: string | null
+          quantity: number
+          reason: string | null
+          reference_id: string | null
+          reference_type: string | null
+          type: Database["public"]["Enums"]["stock_move_type"]
+        }
+        Insert: {
+          cost_impact?: number | null
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          performed_by?: string | null
+          quantity: number
+          reason?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          type: Database["public"]["Enums"]["stock_move_type"]
+        }
+        Update: {
+          cost_impact?: number | null
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          performed_by?: string | null
+          quantity?: number
+          reason?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          type?: Database["public"]["Enums"]["stock_move_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_moves_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -569,11 +753,68 @@ export type Database = {
           },
         ]
       }
+      wastage_logs: {
+        Row: {
+          cost_impact: number | null
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          logged_by: string | null
+          notes: string | null
+          quantity: number
+          reason: string
+        }
+        Insert: {
+          cost_impact?: number | null
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          logged_by?: string | null
+          notes?: string | null
+          quantity: number
+          reason: string
+        }
+        Update: {
+          cost_impact?: number | null
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          logged_by?: string | null
+          notes?: string | null
+          quantity?: number
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wastage_logs_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      decrement_inventory_on_order: {
+        Args: { order_id_param: string }
+        Returns: undefined
+      }
+      get_low_stock_items: {
+        Args: never
+        Returns: {
+          current_qty: number
+          days_until_stockout: number
+          id: string
+          name: string
+          reorder_point: number
+          sku: string
+          unit: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -593,6 +834,12 @@ export type Database = {
         | "PERCENT_OFF"
         | "TIME_RANGE_DISCOUNT"
         | "HAPPY_HOUR"
+      stock_move_type:
+        | "order_consumption"
+        | "purchase"
+        | "adjustment"
+        | "wastage"
+        | "transfer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -730,6 +977,13 @@ export const Constants = {
         "PERCENT_OFF",
         "TIME_RANGE_DISCOUNT",
         "HAPPY_HOUR",
+      ],
+      stock_move_type: [
+        "order_consumption",
+        "purchase",
+        "adjustment",
+        "wastage",
+        "transfer",
       ],
     },
   },

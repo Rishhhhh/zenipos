@@ -11,7 +11,8 @@ import {
   Users, 
   Settings,
   TrendingUp,
-  Tag
+  Tag,
+  Package
 } from "lucide-react";
 
 export default function Admin() {
@@ -141,6 +142,16 @@ export default function Admin() {
               <h3 className="text-xl font-semibold mb-2 text-foreground">Promotions</h3>
               <p className="text-muted-foreground">
                 Create and manage promotional offers
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/inventory">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Package className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Inventory</h3>
+              <p className="text-muted-foreground">
+                Track stock levels and manage ingredients
               </p>
             </Card>
           </Link>

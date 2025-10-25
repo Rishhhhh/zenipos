@@ -96,13 +96,28 @@ export default function KDS() {
 
       if (updateError) throw updateError;
 
+      // Auto-decrement inventory
+      const { error: inventoryError } = await supabase.rpc(
+        'decrement_inventory_on_order',
+        { order_id_param: orderId }
+      );
+
+      if (inventoryError) {
+        console.error('Inventory decrement failed:', inventoryError);
+        toast({
+          variant: 'destructive',
+          title: 'Inventory Warning',
+          description: 'Order completed but inventory may not be updated. Check manually.',
+        });
+      }
+
       // Log to audit
       await supabase.from('audit_log').insert({
         actor: user.id,
         action: 'bump_order',
         entity: 'orders',
         entity_id: orderId,
-        diff: { status: 'done' },
+        diff: { status: 'done', inventory_decremented: !inventoryError },
       });
 
       return orderId;
@@ -110,9 +125,10 @@ export default function KDS() {
     onSuccess: () => {
       toast({
         title: "Order completed",
-        description: "Order moved to done",
+        description: "Order moved to done, inventory updated",
       });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
     onError: (error) => {
       toast({
