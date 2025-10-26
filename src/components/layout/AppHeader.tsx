@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Brain, Settings, LogOut, User } from 'lucide-react';
+import { Brain, LogOut, User } from 'lucide-react';
 import { AISearchBar } from '@/components/ai/AISearchBar';
 import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -38,12 +38,6 @@ export function AppHeader() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/admin">
-                <Settings className="h-5 w-5" />
-              </Link>
-            </Button>
-
             {employee && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

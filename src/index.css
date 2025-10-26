@@ -244,4 +244,33 @@ macOS-inspired black/red/white theme with glass morphism
     10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
     20%, 40%, 60%, 80% { transform: translateX(8px); }
   }
+
+  /* Dock animations */
+  @keyframes dock-bounce {
+    0%, 100% { transform: scale(1) translateY(0); }
+    25% { transform: scale(1.1) translateY(-8px); }
+    50% { transform: scale(0.95) translateY(0); }
+    75% { transform: scale(1.05) translateY(-4px); }
+  }
+
+  .animate-dock-bounce {
+    animation: dock-bounce 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Disable magnification on touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    .dock-icon:hover {
+      transform: scale(1) translateY(0) !important;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .dock-icon {
+      transition: none !important;
+    }
+    .animate-dock-bounce {
+      animation: none !important;
+    }
+  }
 }

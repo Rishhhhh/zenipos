@@ -26,6 +26,23 @@ import PerformanceDashboard from "./pages/admin/PerformanceDashboard";
 import RateLimitMonitor from "./pages/admin/RateLimitMonitor";
 import NotFound from "./pages/NotFound";
 import { AppHeader } from "./components/layout/AppHeader";
+import { MacDock } from "./components/navigation/MacDock";
+import { useAuth } from "./contexts/AuthContext";
+import { useLocation } from "react-router-dom";
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  const { employee } = useAuth();
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+  const isCustomerScreen = location.pathname.startsWith('/customer/');
+
+  return (
+    <>
+      {children}
+      {employee && !isLoginPage && !isCustomerScreen && <MacDock />}
+    </>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +61,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
+            <AppLayout>
+              <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/customer/:sessionId" element={<CustomerScreen />} />
@@ -164,7 +182,8 @@ const App = () => (
               
               {/* Catch-all redirect to login */}
               <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+              </Routes>
+            </AppLayout>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
