@@ -4,101 +4,151 @@
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
+macOS-inspired black/red/white theme with glass morphism
 */
 
 @layer base {
   :root {
-    /* Base colors - soft pastels for minimal kiosk UI */
-    --background: 42 100% 98%; /* Sand #F9FAFB */
-    --foreground: 210 40% 20%; /* Ink #334155 */
+    /* Base colors - macOS inspired monochrome */
+    --background: 0 0% 98%; /* Off-white #FAFAFA */
+    --foreground: 0 0% 9%; /* Near-black #171717 */
 
-    --card: 0 0% 100%; /* Panel white */
-    --card-foreground: 210 40% 20%;
+    --card: 0 0% 100%; /* Pure white */
+    --card-foreground: 0 0% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 20%;
+    --popover-foreground: 0 0% 9%;
 
-    /* Primary - Lavender accent */
-    --primary: 270 50% 60%; /* Lavender #8B5CF6 */
+    /* Primary - Red accent (macOS style) */
+    --primary: 0 84% 60%; /* Red #EF4444 */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Mint */
-    --secondary: 142 60% 88%; /* Mint #C6F6D5 */
-    --secondary-foreground: 210 40% 20%;
+    /* Secondary - Light gray */
+    --secondary: 0 0% 96%; /* #F5F5F5 */
+    --secondary-foreground: 0 0% 9%;
 
-    /* Muted - Light sand */
-    --muted: 42 40% 94%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Mid gray */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent - Sky blue */
-    --accent: 200 100% 90%; /* Sky #CFE9FF */
-    --accent-foreground: 210 40% 20%;
+    /* Accent - Red variant */
+    --accent: 0 84% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Success - Mint green */
+    /* Success - Keep green */
     --success: 142 76% 36%; /* #10B981 */
     --success-foreground: 0 0% 100%;
 
-    /* Warning - Sand */
+    /* Warning - Amber */
     --warning: 38 92% 50%; /* #F59E0B */
     --warning-foreground: 0 0% 100%;
 
-    /* Destructive - Blush */
-    --destructive: 0 72% 51%; /* #EF4444 */
+    /* Destructive - Red */
+    --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 270 50% 60%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 84% 60%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* macOS-like rounded corners */
 
+    /* Sidebar using same theme */
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 210 40% 20%;
-    --sidebar-primary: 270 50% 60%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 0 84% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 142 60% 88%;
-    --sidebar-accent-foreground: 210 40% 20%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 270 50% 60%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 84% 60%;
+
+    /* Glass morphism variables */
+    --glass-bg: 255 255 255 / 0.7;
+    --glass-border: 255 255 255 / 0.18;
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 9%; /* Near-black #171717 */
+    --foreground: 0 0% 98%; /* Off-white #FAFAFA */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 11%; /* #1C1C1C */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 270 50% 70%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Lighter red for dark mode */
+    --primary: 0 91% 71%; /* #F87171 */
+    --primary-foreground: 0 0% 9%;
 
-    --secondary: 142 60% 30%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Dark gray */
+    --secondary: 0 0% 15%; /* #262626 */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted - Mid dark gray */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 200 100% 30%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent - Red variant */
+    --accent: 0 91% 71%;
+    --accent-foreground: 0 0% 9%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive - Lighter red */
+    --destructive: 0 91% 71%; /* #F87171 */
+    --destructive-foreground: 0 0% 9%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 270 50% 70%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 91% 71%;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 270 50% 70%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 142 60% 30%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 270 50% 70%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 91% 71%;
+    --sidebar-primary-foreground: 0 0% 9%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 91% 71%;
+
+    /* Glass morphism variables for dark mode */
+    --glass-bg: 28 28 28 / 0.7;
+    --glass-border: 255 255 255 / 0.1;
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+}
+
+/* Glass Morphism Utilities */
+@layer components {
+  .glass {
+    background: rgba(var(--glass-bg));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(var(--glass-border));
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-dock {
+    background: rgba(var(--glass-bg));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(var(--glass-border));
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .glass-backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .glass-card {
+    background: rgba(var(--glass-bg));
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(var(--glass-border));
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -108,7 +158,34 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(0, 84%, 60%, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(0, 84%, 60%, 0.03) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* macOS-style scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   /* Kiosk-specific styles */
@@ -121,8 +198,13 @@ All colors MUST be HSL.
     @apply min-h-[44px] min-w-[44px];
   }
 
-  /* Focus states for accessibility */
+  /* macOS-style focus states */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2;
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  /* Smooth transitions for theme changes */
+  * {
+    @apply transition-colors duration-200;
   }
 }
