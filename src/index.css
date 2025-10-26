@@ -47,6 +47,10 @@ macOS-inspired black/red/white theme with glass morphism
     --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
+    /* Danger - Same as destructive for consistency */
+    --danger: 0 84% 60%; /* #EF4444 */
+    --danger-foreground: 0 0% 100%;
+
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 0 84% 60%;
@@ -98,6 +102,10 @@ macOS-inspired black/red/white theme with glass morphism
     /* Destructive - Lighter red */
     --destructive: 0 91% 71%; /* #F87171 */
     --destructive-foreground: 0 0% 9%;
+
+    /* Danger - Same as destructive for consistency */
+    --danger: 0 91% 71%; /* #F87171 */
+    --danger-foreground: 0 0% 9%;
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
@@ -206,5 +214,34 @@ macOS-inspired black/red/white theme with glass morphism
   /* Smooth transitions for theme changes */
   * {
     @apply transition-colors duration-200;
+  }
+
+  /* Login screen animations */
+  @keyframes login-card-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.9) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes pin-dot-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.1);
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
   }
 }

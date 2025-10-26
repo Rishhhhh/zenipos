@@ -2,9 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 import POS from "./pages/POS";
 import CustomerScreen from "./pages/CustomerScreen";
 import KDS from "./pages/KDS";
@@ -36,34 +39,135 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-        <AppHeader />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/pos" element={<POS />} />
-          <Route path="/customer/:sessionId" element={<CustomerScreen />} />
-          <Route path="/kds" element={<KDS />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/menu" element={<MenuManagement />} />
-          <Route path="/admin/promotions" element={<PromotionManagement />} />
-          <Route path="/admin/inventory" element={<InventoryManagement />} />
-          <Route path="/admin/crm" element={<CRMDashboard />} />
-          <Route path="/admin/employees" element={<EmployeeManagement />} />
-          <Route path="/admin/reports" element={<ReportsDashboard />} />
-          <Route path="/admin/ai-history" element={<AIHistoryDashboard />} />
-          <Route path="/admin/branches" element={<BranchManagement />} />
-          <Route path="/admin/manager" element={<ManagerDashboard />} />
-          <Route path="/admin/system-health" element={<SystemHealthDashboard />} />
-          <Route path="/admin/performance" element={<PerformanceDashboard />} />
-          <Route path="/admin/rate-limits" element={<RateLimitMonitor />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/customer/:sessionId" element={<CustomerScreen />} />
+              
+              {/* Protected Routes with AppHeader */}
+              <Route path="/" element={
+                <>
+                  <AppHeader />
+                  <Index />
+                </>
+              } />
+              
+              <Route path="/pos" element={
+                <ProtectedRoute requiredRole="cashier">
+                  <AppHeader />
+                  <POS />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/kds" element={
+                <ProtectedRoute requiredRole="cashier">
+                  <AppHeader />
+                  <KDS />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <Admin />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/menu" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <MenuManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/promotions" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <PromotionManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/inventory" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <InventoryManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/crm" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <CRMDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/employees" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <EmployeeManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/reports" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <ReportsDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/ai-history" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <AIHistoryDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/branches" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AppHeader />
+                  <BranchManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/manager" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <ManagerDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/system-health" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AppHeader />
+                  <SystemHealthDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/performance" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AppHeader />
+                  <PerformanceDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/rate-limits" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AppHeader />
+                  <RateLimitMonitor />
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all redirect to login */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

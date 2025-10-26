@@ -353,6 +353,7 @@ export type Database = {
           pay_rate: number | null
           phone: string | null
           pin: string
+          role: Database["public"]["Enums"]["app_role"] | null
         }
         Insert: {
           active?: boolean | null
@@ -365,6 +366,7 @@ export type Database = {
           pay_rate?: number | null
           phone?: string | null
           pin: string
+          role?: Database["public"]["Enums"]["app_role"] | null
         }
         Update: {
           active?: boolean | null
@@ -377,6 +379,7 @@ export type Database = {
           pay_rate?: number | null
           phone?: string | null
           pin?: string
+          role?: Database["public"]["Enums"]["app_role"] | null
         }
         Relationships: [
           {

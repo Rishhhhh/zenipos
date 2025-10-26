@@ -1,5 +1,8 @@
 project_id = "eiutjobcaojpnlzgqhis"
 
+[functions.employee-login]
+verify_jwt = false
+
 [functions.validate-manager-pin]
 verify_jwt = true
 

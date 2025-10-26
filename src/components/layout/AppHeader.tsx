@@ -1,13 +1,24 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Brain, Settings } from 'lucide-react';
+import { Brain, Settings, LogOut, User } from 'lucide-react';
 import { AISearchBar } from '@/components/ai/AISearchBar';
 import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
+import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function AppHeader() {
   const [showAI, setShowAI] = useState(false);
+  const { employee, role, logout } = useAuth();
 
   const handleCommand = (command: string) => {
     setShowAI(true);
@@ -32,6 +43,28 @@ export function AppHeader() {
                 <Settings className="h-5 w-5" />
               </Link>
             </Button>
+
+            {employee && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{employee.name}</span>
+                    <Badge variant="outline" className="ml-1 capitalize">
+                      {role}
+                    </Badge>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="glass-card">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-danger cursor-pointer">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </header>
