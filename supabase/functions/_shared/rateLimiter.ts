@@ -12,6 +12,7 @@ interface RateLimitResult {
 }
 
 const DEFAULT_LIMITS: Record<string, RateLimitConfig> = {
+  'employee-login': { limit: 5, windowMinutes: 1 },
   'ai-orchestrator': { limit: 20, windowMinutes: 1 },
   'voice-to-text': { limit: 10, windowMinutes: 1 },
   'send-push-notification': { limit: 100, windowMinutes: 1 },
