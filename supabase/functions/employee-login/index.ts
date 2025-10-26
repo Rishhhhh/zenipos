@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.2.4/mod.ts";
+import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
