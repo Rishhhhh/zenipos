@@ -1029,6 +1029,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_log: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          identifier: string
+          identifier_type: string
+          limit_exceeded: boolean
+          limit_window: string
+          method: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          limit_exceeded?: boolean
+          limit_window: string
+          method?: string
+          request_count?: number
+          window_start: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          limit_exceeded?: boolean
+          limit_window?: string
+          method?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       receipt_templates: {
         Row: {
           active: boolean | null
@@ -1520,6 +1559,17 @@ export type Database = {
       calculate_points_earned: { Args: { amount: number }; Returns: number }
       can_access_branch: {
         Args: { _branch_id: string; _user_id: string }
+        Returns: boolean
+      }
+      check_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_identifier: string
+          p_identifier_type: string
+          p_limit: number
+          p_method: string
+          p_window_minutes: number
+        }
         Returns: boolean
       }
       close_shift: { Args: { shift_id_param: string }; Returns: undefined }

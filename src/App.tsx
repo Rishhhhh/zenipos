@@ -19,6 +19,7 @@ import BranchManagement from "./pages/admin/BranchManagement";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import SystemHealthDashboard from "./pages/admin/SystemHealthDashboard";
 import PerformanceDashboard from "./pages/admin/PerformanceDashboard";
+import RateLimitMonitor from "./pages/admin/RateLimitMonitor";
 import NotFound from "./pages/NotFound";
 import { AppHeader } from "./components/layout/AppHeader";
 
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/admin/manager" element={<ManagerDashboard />} />
           <Route path="/admin/system-health" element={<SystemHealthDashboard />} />
           <Route path="/admin/performance" element={<PerformanceDashboard />} />
+          <Route path="/admin/rate-limits" element={<RateLimitMonitor />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

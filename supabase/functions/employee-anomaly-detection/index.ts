@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,12 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Check rate limit
+  const rateLimit = await checkRateLimit(req, 'employee-anomaly-detection');
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit.resetAt);
   }
 
   try {

@@ -16,7 +16,8 @@ import {
   Brain,
   Store,
   Activity,
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
 
 export default function Admin() {
@@ -239,6 +240,16 @@ export default function Admin() {
               <h3 className="text-xl font-semibold mb-2 text-foreground">Performance Metrics</h3>
               <p className="text-muted-foreground">
                 Track page load times and budgets
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/rate-limits">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Shield className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Rate Limiting</h3>
+              <p className="text-muted-foreground">
+                Monitor API usage and abuse prevention
               </p>
             </Card>
           </Link>
