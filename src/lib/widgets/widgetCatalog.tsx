@@ -32,6 +32,8 @@ export interface WidgetDefinition {
   roles: ("cashier" | "manager" | "admin")[];
   category: string;
   defaultSize: { cols: number; rows: number };
+  minSize: { width: number; height: number };
+  maxSize: { width: number; height: number };
   capabilities: {
     supportedDisplayTypes: ('chart' | 'table' | 'cards' | 'gauge')[];
     dataType: 'financial' | 'text-list' | 'time-series' | 'status-list';
@@ -51,6 +53,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["cashier", "manager", "admin"],
       category: "pos",
       defaultSize: { cols: 2, rows: 2 },
+      minSize: { width: 500, height: 600 },
+      maxSize: { width: 800, height: 900 },
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'text-list',
@@ -66,6 +70,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["cashier", "manager", "admin"],
       category: "pos",
       defaultSize: { cols: 1, rows: 1 },
+      minSize: { width: 400, height: 300 },
+      maxSize: { width: 600, height: 700 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -83,6 +89,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "analytics",
       defaultSize: { cols: 2, rows: 1 },
+      minSize: { width: 450, height: 350 },
+      maxSize: { width: 650, height: 500 },
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -98,6 +106,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "analytics",
       defaultSize: { cols: 2, rows: 1 },
+      minSize: { width: 450, height: 300 },
+      maxSize: { width: 900, height: 500 },
       capabilities: {
         supportedDisplayTypes: ['chart'],
         dataType: 'time-series',
@@ -113,6 +123,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "analytics",
       defaultSize: { cols: 1, rows: 1 },
+      minSize: { width: 350, height: 300 },
+      maxSize: { width: 500, height: 600 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'text-list',
@@ -130,6 +142,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "inventory",
       defaultSize: { cols: 1, rows: 1 },
+      minSize: { width: 350, height: 300 },
+      maxSize: { width: 500, height: 500 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -147,6 +161,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "customers",
       defaultSize: { cols: 1, rows: 1 },
+      minSize: { width: 350, height: 300 },
+      maxSize: { width: 500, height: 450 },
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -164,6 +180,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "employees",
       defaultSize: { cols: 1, rows: 1 },
+      minSize: { width: 350, height: 300 },
+      maxSize: { width: 500, height: 500 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',

@@ -2,13 +2,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, TrendingUp } from "lucide-react";
+import { Users, Award, Gift, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
 export function LoyaltyStatsWidget() {
-  const { config } = useWidgetConfig('loyalty-stats');
+  const { config } = useWidgetConfig<LoyaltyStatsConfig>('loyalty-stats');
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["loyalty-stats"],

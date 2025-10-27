@@ -2,14 +2,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { DollarSign, ShoppingBag, Package, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { MagicBento } from "@/components/ui/magic-bento";
 import { startOfDay, subDays } from "date-fns";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { SalesWidgetConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
 export function SalesWidget() {
-  const { config } = useWidgetConfig('sales');
+  const { config } = useWidgetConfig<SalesWidgetConfig>('sales');
   
   const { data: todayStats, isLoading, refetch } = useQuery({
     queryKey: ["today-sales"],

@@ -2,14 +2,15 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock } from "lucide-react";
+import { Clock, DollarSign, UserCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { ActiveShiftsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
 export function ActiveShiftsWidget() {
-  const { config } = useWidgetConfig('active-shifts');
+  const { config } = useWidgetConfig<ActiveShiftsConfig>('active-shifts');
   
   const { data: activeShifts, isLoading } = useQuery({
     queryKey: ["active-shifts"],

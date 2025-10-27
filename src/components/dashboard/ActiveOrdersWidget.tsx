@@ -2,17 +2,18 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, ChefHat, ArrowRight } from "lucide-react";
+import { Clock, ChefHat, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
 export function ActiveOrdersWidget() {
   const navigate = useNavigate();
-  const { config } = useWidgetConfig('active-orders');
+  const { config } = useWidgetConfig<ActiveOrdersConfig>('active-orders');
 
   const { data: orders, refetch } = useQuery({
     queryKey: ["active-orders"],

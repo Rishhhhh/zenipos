@@ -2,6 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { getWidgetById } from "@/lib/widgets/widgetCatalog";
+import { Grip } from "lucide-react";
 
 interface DraggableWidgetProps {
   id: string;
@@ -27,8 +29,10 @@ export function DraggableWidget({
   } = useSortable({ id });
 
   const [isResizing, setIsResizing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  const widgetDef = getWidgetById(id);
 
   // Bring to front when clicked
   const handleMouseDown = () => {
@@ -61,8 +65,13 @@ export function DraggableWidget({
       const deltaX = e.clientX - startPosRef.current.x;
       const deltaY = e.clientY - startPosRef.current.y;
 
-      const newWidth = Math.max(250, startPosRef.current.width + deltaX);
-      const newHeight = Math.max(200, startPosRef.current.height + deltaY);
+      const minWidth = widgetDef?.minSize.width || 250;
+      const maxWidth = widgetDef?.maxSize.width || 1000;
+      const minHeight = widgetDef?.minSize.height || 200;
+      const maxHeight = widgetDef?.maxSize.height || 800;
+
+      const newWidth = Math.max(minWidth, Math.min(maxWidth, startPosRef.current.width + deltaX));
+      const newHeight = Math.max(minHeight, Math.min(maxHeight, startPosRef.current.height + deltaY));
 
       onPositionChange({ width: newWidth, height: newHeight });
     };
@@ -80,17 +89,21 @@ export function DraggableWidget({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, onPositionChange]);
+  }, [isResizing, onPositionChange, widgetDef]);
 
   const style = {
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
-    width: position.width || 'auto',
-    height: position.height || 'auto',
+    width: position.width || widgetDef?.minSize.width || 'auto',
+    height: position.height || widgetDef?.minSize.height || 'auto',
+    minWidth: widgetDef?.minSize.width,
+    maxWidth: widgetDef?.maxSize.width,
+    minHeight: widgetDef?.minSize.height,
+    maxHeight: widgetDef?.maxSize.height,
     zIndex: isDragging ? 9999 : position.zIndex,
     transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : 'transform 0.2s ease',
+    transition: isDragging || isResizing ? 'none' : 'transform 0.2s ease',
   };
 
   return (
@@ -101,28 +114,39 @@ export function DraggableWidget({
       }}
       style={style}
       className={cn(
-        "cursor-grab active:cursor-grabbing",
+        "cursor-grab active:cursor-grabbing group",
         "transition-shadow duration-200",
         isDragging && "shadow-2xl scale-[1.02] opacity-90",
         isResizing && "shadow-xl"
       )}
       onMouseDown={handleMouseDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       {...attributes}
       {...listeners}
     >
-      {children}
-      
-      {/* Resize Handle - 24px × 24px bottom-right */}
-      <div
-        className={cn(
-          "absolute bottom-0 right-0 w-6 h-6",
-          "cursor-nwse-resize",
-          "hover:bg-primary/20 transition-colors rounded-tl-lg",
-          isResizing && "bg-primary/30"
+      <div className="h-full w-full relative">
+        {children}
+        
+        {/* Resize Handle - inside widget, shown on hover */}
+        {isHovered && !isDragging && (
+          <div
+            className={cn(
+              "absolute bottom-2 right-2 w-7 h-7 z-50",
+              "cursor-nwse-resize",
+              "bg-primary/10 hover:bg-primary/30 rounded-md",
+              "flex items-center justify-center",
+              "transition-all duration-200",
+              "shadow-sm",
+              isResizing && "bg-primary/40 scale-110"
+            )}
+            onMouseDown={handleResizeStart}
+            aria-label="Resize widget"
+          >
+            <Grip className="w-4 h-4 text-primary rotate-45" />
+          </div>
         )}
-        onMouseDown={handleResizeStart}
-        aria-label="Resize widget"
-      />
+      </div>
     </div>
   );
 }

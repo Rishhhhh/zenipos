@@ -1,17 +1,9 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
+import { BaseWidgetConfig } from "@/types/widgetConfigs";
 
-export interface WidgetConfig {
-  displayType: 'chart' | 'table' | 'cards' | 'gauge';
-  colorScheme: string; // ThemeId or 'auto'
-  refreshInterval: 5 | 30 | 60 | 300;
-  compactMode: boolean;
-  dataFilters: {
-    dateRange?: 'today' | 'week' | 'month';
-    branchIds?: string[];
-  };
-}
+export interface WidgetConfig extends BaseWidgetConfig {}
 
 /**
  * Get default display type from widget capabilities
@@ -39,31 +31,31 @@ export function getDefaultConfig(widgetType: string): WidgetConfig {
 }
 
 /**
- * Hook to manage per-user widget configuration
+ * Hook to manage per-user widget configuration with generic types
  */
-export function useWidgetConfig(widgetId: string) {
+export function useWidgetConfig<T extends BaseWidgetConfig = WidgetConfig>(widgetId: string) {
   const { employee } = useAuth();
   const storageKey = `widget_config_${employee?.id || 'default'}_${widgetId}`;
   
-  const [config, setConfig] = useState<WidgetConfig>(() => {
+  const [config, setConfig] = useState<T>(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return JSON.parse(saved) as T;
       } catch {
-        return getDefaultConfig(widgetId);
+        return getDefaultConfig(widgetId) as T;
       }
     }
-    return getDefaultConfig(widgetId);
+    return getDefaultConfig(widgetId) as T;
   });
   
-  const saveConfig = useCallback((newConfig: WidgetConfig) => {
+  const saveConfig = useCallback((newConfig: T) => {
     setConfig(newConfig);
     localStorage.setItem(storageKey, JSON.stringify(newConfig));
   }, [storageKey]);
 
   const resetToDefault = useCallback(() => {
-    const defaultConfig = getDefaultConfig(widgetId);
+    const defaultConfig = getDefaultConfig(widgetId) as T;
     setConfig(defaultConfig);
     localStorage.setItem(storageKey, JSON.stringify(defaultConfig));
   }, [widgetId, storageKey]);
