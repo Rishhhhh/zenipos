@@ -116,7 +116,7 @@ export function DraggableWidget({
       className={cn(
         "cursor-grab active:cursor-grabbing group",
         "transition-shadow duration-200",
-        isDragging && "shadow-2xl scale-[1.02] opacity-90",
+        isDragging && "shadow-2xl opacity-95",
         isResizing && "shadow-xl"
       )}
       onMouseDown={handleMouseDown}
