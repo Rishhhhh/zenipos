@@ -51,9 +51,10 @@ export function CartSummary({
   };
 
   return (
-    <div className="h-full bg-card p-4 flex flex-col">
+    <div className="h-full flex flex-col p-4">
       <h2 className="text-lg font-semibold mb-4 text-foreground">Cart</h2>
       
+      {/* Scrollable Cart Items */}
       <ScrollArea className="flex-1 mb-4">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -110,7 +111,8 @@ export function CartSummary({
         )}
       </ScrollArea>
 
-      <div className="border-t pt-4 space-y-2">
+      {/* STICKY CHECKOUT - Always Visible */}
+      <div className="border-t pt-4 space-y-2 flex-shrink-0 bg-card/95 backdrop-blur-sm">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-medium">RM {subtotal.toFixed(2)}</span>

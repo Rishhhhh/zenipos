@@ -178,10 +178,10 @@ export default function POS() {
   });
 
   return (
-    <div className="kiosk-layout">
-      {/* Table/Order Type Badge */}
-      {(table_id || order_type === 'takeaway') && (
-        <div className="absolute top-4 left-4 z-10">
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Header: Table Badge (56px fixed) */}
+      <div className="h-14 border-b flex items-center px-4 flex-shrink-0">
+        {(table_id || order_type === 'takeaway') && (
           <Badge
             variant="secondary"
             className="text-sm cursor-pointer hover:bg-secondary/80"
@@ -190,8 +190,8 @@ export default function POS() {
             <MapPin className="h-3 w-3 mr-1" />
             {order_type === 'takeaway' ? 'Takeaway' : `Table ${table_id}`}
           </Badge>
-        </div>
-      )}
+        )}
+      </div>
 
       <TableSelectionModal
         open={showTableSelect}
@@ -230,19 +230,20 @@ export default function POS() {
         }}
       />
 
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={20} minSize={15}>
+      {/* Main Content: Fixed Heights */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT: Categories (240px fixed, internal scroll) */}
+        <div className="w-60 border-r flex-shrink-0 overflow-hidden">
           <CategoryList
             categories={categories}
             isLoading={categoriesLoading}
             selectedCategoryId={selectedCategoryId}
             onSelectCategory={setSelectedCategoryId}
           />
-        </ResizablePanel>
+        </div>
 
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={50} minSize={30}>
+        {/* MIDDLE: Items (flex-grow, main scrollable) */}
+        <div className="flex-1 overflow-y-auto bg-background">
           <ItemGrid
             items={menuItems}
             isLoading={itemsLoading}
@@ -259,11 +260,10 @@ export default function POS() {
             }}
             categoryId={selectedCategoryId}
           />
-        </ResizablePanel>
+        </div>
 
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={30} minSize={25}>
+        {/* RIGHT: Cart (384px fixed, sticky checkout) */}
+        <div className="w-96 border-l flex-shrink-0 overflow-hidden">
           <CartSummary
             items={items}
             subtotal={getSubtotal()}
@@ -277,8 +277,8 @@ export default function POS() {
             onSplitBill={() => setShowSplitBill(true)}
             isSending={sendToKDS.isPending}
           />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      </div>
     </div>
   );
 }
