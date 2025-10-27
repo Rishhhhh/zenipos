@@ -63,7 +63,7 @@ export function ActiveOrdersWidget() {
   };
 
   return (
-    <Card className="glass-card p-5 h-full flex flex-col">
+    <Card className={cn("glass-card p-5 h-full w-full flex flex-col", config.compactMode && "p-3")}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -78,14 +78,15 @@ export function ActiveOrdersWidget() {
       </div>
 
       {/* Orders List */}
-      <div className={cn("flex-1 overflow-y-auto mb-4", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
+      <div className="flex-1 min-h-0 overflow-y-auto mb-4">
         {!orders || orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-sm">
             <ChefHat className="h-8 w-8 mb-2 opacity-50" />
             <p>No active orders</p>
           </div>
         ) : config.displayType === 'cards' ? (
-          orders.map((order) => (
+          <div className={cn("space-y-2", config.compactMode && "space-y-1")}>
+            {orders.map((order) => (
             <div
               key={order.id}
               className={cn(
@@ -123,7 +124,8 @@ export function ActiveOrdersWidget() {
                 </span>
               </div>
             </div>
-          ))
+          ))}
+          </div>
         ) : (
           <div className="space-y-1">
             {orders.map((order) => (

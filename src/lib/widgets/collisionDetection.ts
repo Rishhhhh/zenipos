@@ -78,24 +78,25 @@ export function shrinkToMaxFit(
 
 /**
  * Calculate grid position for each widget based on order
+ * Grid columns are 1-indexed for CSS grid
  */
 export function calculateGridPositions(
   widgetOrder: string[],
   widgetSizes: Record<string, { cols: number; rows: number }>
 ): WidgetBounds[] {
   const bounds: WidgetBounds[] = [];
-  let currentRow = 0;
-  let currentCol = 0;
+  let currentRow = 1; // CSS grid is 1-indexed
+  let currentCol = 1; // CSS grid is 1-indexed
   const maxCols = 4; // Grid has 4 columns
 
   for (const id of widgetOrder) {
     const size = widgetSizes[id] || { cols: 1, rows: 1 };
 
     // Check if widget fits in current row
-    if (currentCol + size.cols > maxCols) {
+    if (currentCol + size.cols - 1 > maxCols) {
       // Move to next row
       currentRow++;
-      currentCol = 0;
+      currentCol = 1;
     }
 
     bounds.push({

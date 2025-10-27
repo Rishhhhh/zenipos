@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { DndContext, closestCenter, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { Plus, RefreshCw } from "lucide-react";
 import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { calculateGridPositions } from "@/lib/widgets/collisionDetection";
 
 export default function Dashboard() {
   const { employee } = useAuth();
@@ -20,6 +21,11 @@ export default function Dashboard() {
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
   
   const { layout, updateOrder, updateSize, addWidget, removeWidget, resetLayout } = useWidgetLayout();
+
+  // Calculate grid positions for all widgets
+  const gridPositions = useMemo(() => {
+    return calculateGridPositions(layout.widgetOrder, layout.widgetSizes);
+  }, [layout.widgetOrder, layout.widgetSizes]);
 
   // Configure sensors for press-and-hold dragging (800ms)
   const mouseSensor = useSensor(MouseSensor, {
@@ -79,10 +85,13 @@ export default function Dashboard() {
           sensors={sensors}
         >
           <SortableContext items={layout.widgetOrder} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[300px]">
+            <div className="grid grid-cols-4 gap-4" style={{ gridAutoRows: '300px' }}>
               {layout.widgetOrder.map((widgetId, index) => {
                 const widgetDef = getWidgetById(widgetId);
                 if (!widgetDef) return null;
+
+                const position = gridPositions.find(p => p.id === widgetId);
+                if (!position) return null;
 
                 const size = layout.widgetSizes[widgetId] || widgetDef.defaultSize;
                 const WidgetComponent = widgetDef.component;
@@ -97,10 +106,13 @@ export default function Dashboard() {
                       id={widgetId}
                       cols={size.cols}
                       rows={size.rows}
+                      gridCol={position.col}
+                      gridRow={position.row}
+                      allWidgets={gridPositions}
                       onResize={(cols, rows) => updateSize(widgetId, { cols, rows })}
                     >
                       <Suspense fallback={<Skeleton className="h-full w-full" />}>
-                        <div className="h-full relative group">
+                        <div className="h-full w-full relative group">
                           <WidgetMenu 
                             widgetId={widgetId}
                             widgetName={widgetDef.name}

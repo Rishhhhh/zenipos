@@ -40,7 +40,7 @@ export function LowStockWidget() {
   };
 
   return (
-    <Card className="glass-card p-4 h-full flex flex-col">
+    <Card className="glass-card p-4 h-full w-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-warning" />
@@ -53,7 +53,7 @@ export function LowStockWidget() {
         )}
       </div>
 
-      <div className={cn("flex-1 overflow-y-auto mb-3", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
+      <div className="flex-1 min-h-0 overflow-y-auto mb-3">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-16 w-full" />

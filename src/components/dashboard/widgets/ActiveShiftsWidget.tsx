@@ -43,7 +43,7 @@ export function ActiveShiftsWidget() {
   const totalLaborCost = activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0;
 
   return (
-    <Card className="glass-card p-4 h-full flex flex-col">
+    <Card className="glass-card p-4 h-full w-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
@@ -63,7 +63,7 @@ export function ActiveShiftsWidget() {
       </div>
 
       {/* Active Shifts List */}
-      <div className={cn("flex-1 overflow-y-auto", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-14 w-full" />

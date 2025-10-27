@@ -57,13 +57,13 @@ export function TopItemsWidget() {
   });
 
   return (
-    <Card className="glass-card p-4 h-full flex flex-col">
+    <Card className="glass-card p-4 h-full w-full flex flex-col">
       <div className="flex items-center gap-2 mb-3">
         <Star className="h-4 w-4 text-primary" />
         <h3 className="font-semibold text-base">Top Selling Items</h3>
       </div>
 
-      <div className={cn("flex-1 overflow-y-auto", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />

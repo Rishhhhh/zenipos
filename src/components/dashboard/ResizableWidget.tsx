@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { checkCollision, shrinkToMaxFit, WidgetBounds } from "@/lib/widgets/collisionDetection";
 
 interface ResizableWidgetProps {
   id: string;
   children: React.ReactNode;
   cols: number;
   rows: number;
+  gridCol: number;
+  gridRow: number;
+  allWidgets: WidgetBounds[];
   onResize: (cols: number, rows: number) => void;
 }
 
@@ -13,7 +17,10 @@ export function ResizableWidget({
   id, 
   children, 
   cols, 
-  rows, 
+  rows,
+  gridCol,
+  gridRow,
+  allWidgets,
   onResize 
 }: ResizableWidgetProps) {
   const [isResizing, setIsResizing] = useState(false);
@@ -39,11 +46,20 @@ export function ResizableWidget({
 
       // Only update if changed
       if (newCols !== cols || newRows !== rows) {
-        onResize(newCols, newRows);
+        // Check for collisions with the proposed size
+        const hasCollision = checkCollision(newCols, newRows, id, allWidgets);
         
-        // Show collision animation briefly
-        setIsColliding(true);
-        setTimeout(() => setIsColliding(false), 600);
+        if (hasCollision) {
+          // Auto-shrink to fit
+          const shrunk = shrinkToMaxFit(newCols, newRows, id, allWidgets);
+          onResize(shrunk.cols, shrunk.rows);
+          
+          // Show collision animation
+          setIsColliding(true);
+          setTimeout(() => setIsColliding(false), 600);
+        } else {
+          onResize(newCols, newRows);
+        }
       }
     };
 
@@ -75,16 +91,17 @@ export function ResizableWidget({
       ref={widgetRef}
       className={cn(
         "relative group",
-        `col-span-${cols} row-span-${rows}`,
         isResizing && "z-50",
         isColliding && "animate-pulse ring-2 ring-amber-500"
       )}
       style={{
-        gridColumn: `span ${cols}`,
-        gridRow: `span ${rows}`,
+        gridColumn: `${gridCol} / span ${cols}`,
+        gridRow: `${gridRow} / span ${rows}`,
       }}
     >
-      {children}
+      <div className="h-full w-full">
+        {children}
+      </div>
       
       {/* Invisible Resize Hitbox - 24px x 24px at bottom-right */}
       <div

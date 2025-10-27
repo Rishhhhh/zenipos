@@ -69,7 +69,7 @@ export function SalesWidget() {
   });
 
   return (
-    <Card className="glass-card p-5 h-full flex flex-col lg:col-span-2">
+    <Card className="glass-card p-5 h-full w-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -87,17 +87,18 @@ export function SalesWidget() {
       </div>
 
       {/* Metrics Display */}
-      {isLoading ? (
-        <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3")}>
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-32 bg-accent/50 rounded-lg animate-pulse"
-            />
-          ))}
-        </div>
-      ) : config.displayType === 'table' ? (
-        <div className="space-y-2">
+      <div className="flex-1 min-h-0">
+        {isLoading ? (
+          <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3")}>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-32 bg-accent/50 rounded-lg animate-pulse"
+              />
+            ))}
+          </div>
+        ) : config.displayType === 'table' ? (
+          <div className="space-y-2 h-full overflow-y-auto">
           <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
             <div>
               <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Revenue</p>
@@ -143,8 +144,8 @@ export function SalesWidget() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
           <MagicBento
             title="Revenue"
             value={`RM ${todayStats?.revenue.toFixed(2) || "0.00"}`}
@@ -171,8 +172,9 @@ export function SalesWidget() {
             subtitle="Total items today"
             threshold={{ warning: 50, danger: 20 }}
           />
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Trend Indicators */}
       {todayStats && (
