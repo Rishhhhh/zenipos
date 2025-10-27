@@ -6,15 +6,19 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/lib/store/cart";
-import { ShoppingCart, Plus, Minus, ArrowRight } from "lucide-react";
+import { ShoppingCart, Plus, ArrowRight, Coffee, Utensils } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { haptics } from "@/lib/haptics";
+import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { QuickPOSConfig } from "@/types/widgetConfigs";
+import { cn } from "@/lib/utils";
 
 export function QuickPOSWidget() {
   const navigate = useNavigate();
-  const { items, addItem, updateQuantity } = useCartStore();
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const { items, addItem } = useCartStore();
+  const { config } = useWidgetConfig<QuickPOSConfig>('quick-pos');
+  const [selectedCategory, setSelectedCategory] = useState<string>(config.defaultCategoryId || "all");
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -69,15 +73,15 @@ export function QuickPOSWidget() {
   };
 
   return (
-    <Card className="glass-card p-4 min-h-[400px] min-w-[400px] flex flex-col overflow-hidden">
+    <Card className="glass-card p-4 min-h-[600px] min-w-[500px] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-base">Quick POS</h3>
+          <Coffee className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-lg">Quick POS</h3>
         </div>
         {totalItems > 0 && (
-          <Badge variant="default" className="bg-primary/20 text-primary">
+          <Badge variant="default" className="bg-primary text-primary-foreground">
             {totalItems}
           </Badge>
         )}
@@ -98,35 +102,50 @@ export function QuickPOSWidget() {
       {/* Menu Items Grid */}
       <div className="flex-1 overflow-y-auto mb-3 min-h-0">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-accent/50 rounded-lg animate-pulse" />
+          <div className={cn("grid gap-2", `grid-cols-${config.itemsPerRow}`)}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-24 bg-accent/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : menuItems && menuItems.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className={cn("grid gap-2", `grid-cols-${config.itemsPerRow}`)}>
             {menuItems.map((item) => {
               const quantity = getCartQuantity(item.id);
+              const inStock = item.in_stock;
               return (
                 <div
                   key={item.id}
-                  className="p-2 bg-accent/30 hover:bg-accent/50 rounded-lg transition-all group relative"
+                  className={cn(
+                    "p-3 rounded-lg transition-all group relative border",
+                    inStock 
+                      ? "bg-card hover:bg-accent/50 border-border/50 cursor-pointer" 
+                      : "bg-muted/30 border-border/30 opacity-60"
+                  )}
                 >
                   <button
-                    onClick={() => handleAddToCart(item)}
+                    onClick={() => inStock && handleAddToCart(item)}
                     className="w-full text-left"
+                    disabled={!inStock}
                   >
-                    <p className="text-xs font-medium line-clamp-1 mb-1">
-                      {item.name}
-                    </p>
+                    {config.showImages && item.image_url && (
+                      <img src={item.image_url} alt={item.name} className="w-full h-16 object-cover rounded mb-2" />
+                    )}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-sm font-medium line-clamp-2 flex-1">
+                        {item.name}
+                      </p>
+                      {inStock && (
+                        <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                      )}
+                    </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-primary font-semibold">
+                      <span className="text-sm text-primary font-bold">
                         RM {item.price.toFixed(2)}
                       </span>
                       {quantity === 0 ? (
-                        <Plus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <Plus className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                       ) : (
-                        <Badge variant="default" className="h-4 text-[10px] px-1">
+                        <Badge variant="default" className="h-5 text-xs px-2 bg-primary text-primary-foreground">
                           {quantity}
                         </Badge>
                       )}
@@ -137,18 +156,22 @@ export function QuickPOSWidget() {
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-            No items available
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <Utensils className="h-12 w-12 mb-2 opacity-50" />
+            <p className="text-sm">No items available</p>
           </div>
         )}
       </div>
 
       {/* Mini Cart Summary */}
       {totalItems > 0 && (
-        <div className="p-2 bg-primary/10 rounded-lg mb-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Cart: {totalItems} items</span>
-            <span className="font-semibold text-primary">RM {totalPrice.toFixed(2)}</span>
+        <div className="p-3 bg-primary/10 rounded-lg mb-2 border border-primary/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Cart: {totalItems} items</span>
+            </div>
+            <span className="text-lg font-bold text-primary">RM {totalPrice.toFixed(2)}</span>
           </div>
         </div>
       )}
@@ -159,11 +182,13 @@ export function QuickPOSWidget() {
           navigate("/pos");
           haptics.light();
         }}
-        className="w-full h-9 text-sm"
+        className="w-full h-10"
         variant={totalItems > 0 ? "default" : "outline"}
+        size="lg"
       >
-        {totalItems > 0 ? "Checkout" : "Open Full POS"}
-        <ArrowRight className="ml-2 h-3 w-3" />
+        <ShoppingCart className="mr-2 h-4 w-4" />
+        {totalItems > 0 ? `Checkout (${totalItems})` : "Open Full POS"}
+        <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </Card>
   );

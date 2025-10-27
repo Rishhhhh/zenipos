@@ -74,7 +74,7 @@ export function SalesWidget() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
+          <DollarSign className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-lg">Today's Sales</h3>
         </div>
         <Button
