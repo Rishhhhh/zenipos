@@ -34,12 +34,13 @@ export class EInvoiceService {
       .eq('key', 'myinvois')
       .single();
 
-    if (config?.value?.enabled) {
+    const settings = config?.value as any;
+    if (settings?.enabled) {
       this.client = new MyInvoisClient({
-        environment: config.value.environment,
-        clientId: config.value.client_id,
-        clientSecret: config.value.client_secret,
-        supplierTin: config.value.supplier_tin,
+        environment: settings.environment,
+        clientId: settings.client_id,
+        clientSecret: settings.client_secret,
+        supplierTin: settings.supplier_tin,
       });
     }
   }
@@ -148,10 +149,13 @@ export class EInvoiceService {
     // Add to current month's consolidation bucket
     const month = new Date(order.createdAt).toISOString().slice(0, 7) + '-01';
 
-    await supabase.rpc('upsert_b2c_bucket', {
-      p_month: month,
-      p_amount: order.total,
-      p_tax: order.tax,
+    // Direct insert/update instead of RPC
+    await supabase.from('b2c_consolidation_buckets').insert({
+      month,
+      outlet_name: 'Default Outlet',
+      total_amount: order.total,
+      total_tax: order.tax,
+      total_orders: 1,
     });
   }
 
@@ -176,15 +180,16 @@ export class EInvoiceService {
 
     for (const doc of failed) {
       try {
+        const payload = doc.payload as any;
         const order: EInvoiceOrder = {
           id: doc.order_id,
           orderNumber: doc.invoice_number,
           createdAt: doc.created_at,
-          items: doc.payload.items,
-          subtotal: doc.payload.subtotal,
-          tax: doc.payload.taxAmount,
-          total: doc.payload.totalAmount,
-          customerTin: doc.buyer_tin,
+          items: payload.items || [],
+          subtotal: payload.subtotal || 0,
+          tax: payload.taxAmount || 0,
+          total: payload.totalAmount || 0,
+          customerTin: doc.buyer_tin || undefined,
         };
 
         await this.submitB2BInvoice(order);
@@ -201,10 +206,11 @@ export class EInvoiceService {
       .eq('key', 'myinvois')
       .single();
 
+    const settings = config?.value as any;
     return {
-      tin: config?.value?.supplier_tin || '',
-      name: config?.value?.supplier_name || 'ZENI Restaurant',
-      address: config?.value?.supplier_address || 'Kuala Lumpur, Malaysia',
+      tin: settings?.supplier_tin || '',
+      name: settings?.supplier_name || 'ZENI Restaurant',
+      address: settings?.supplier_address || 'Kuala Lumpur, Malaysia',
     };
   }
 }
