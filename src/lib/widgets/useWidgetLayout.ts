@@ -31,7 +31,35 @@ export function useWidgetLayout() {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        
+        // Migrate old format (widgetSizes) to new format (widgetPositions)
+        if (parsed.widgetSizes && !parsed.widgetPositions) {
+          const migratedPositions: Record<string, WidgetPosition> = {};
+          let currentX = 20;
+          let currentY = 20;
+          
+          parsed.widgetOrder?.forEach((widgetId: string, index: number) => {
+            const size = parsed.widgetSizes[widgetId] || { cols: 1, rows: 1 };
+            migratedPositions[widgetId] = {
+              x: currentX,
+              y: currentY,
+              width: size.cols * 250,
+              height: size.rows * 300,
+              zIndex: index + 1,
+            };
+            
+            // Stack widgets vertically with some spacing
+            currentY += (size.rows * 300) + 20;
+          });
+          
+          return {
+            widgetOrder: parsed.widgetOrder || [],
+            widgetPositions: migratedPositions,
+          };
+        }
+        
+        return parsed;
       } catch {
         return DEFAULT_LAYOUT;
       }

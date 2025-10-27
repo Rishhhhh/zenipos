@@ -20,7 +20,7 @@ export function SalesWidget() {
       // Fetch today's orders
       const { data: todayOrders, error: todayError } = await supabase
         .from("orders")
-        .select("total, order_items(qty)")
+        .select("total, order_items(quantity)")
         .gte("created_at", today.toISOString())
         .in("status", ["done", "preparing", "pending"]);
 
@@ -41,7 +41,7 @@ export function SalesWidget() {
       const todayOrderCount = todayOrders?.length || 0;
       const todayItemCount = todayOrders?.reduce(
         (sum, order) =>
-          sum + (order.order_items?.reduce((itemSum: number, item: any) => itemSum + item.qty, 0) || 0),
+          sum + (order.order_items?.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0) || 0),
         0
       ) || 0;
 
