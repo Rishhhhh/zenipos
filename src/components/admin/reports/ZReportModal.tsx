@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -33,21 +33,20 @@ export function ZReportModal() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <FileText className="mr-2 h-4 w-4" />
-          Z-Report
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>End of Day Report (Z-Report)</DialogTitle>
-          <DialogDescription>
-            Generate and print daily sales summary
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Button variant="outline" onClick={() => setIsOpen(true)}>
+        <FileText className="mr-2 h-4 w-4" />
+        Z-Report
+      </Button>
 
+      <GlassModal
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        title="End of Day Report (Z-Report)"
+        description="Generate and print daily sales summary"
+        size="xl"
+        variant="default"
+      >
         <div className="space-y-4">
           <div className="flex items-center gap-4">
             <Popover>
@@ -156,7 +155,7 @@ export function ZReportModal() {
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </GlassModal>
+    </>
   );
 }

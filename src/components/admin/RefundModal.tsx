@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -149,65 +149,62 @@ export function RefundModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-warning" />
-            Process Refund
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="bg-warning/10 p-4 rounded-lg">
-            <p className="text-sm font-medium">Refund Amount</p>
-            <p className="text-2xl font-bold">RM {payment.amount.toFixed(2)}</p>
-          </div>
-
-          <div>
-            <Label htmlFor="pin">Manager PIN (Required)</Label>
-            <Input
-              id="pin"
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              value={managerPin}
-              onChange={(e) => setManagerPin(e.target.value.replace(/\D/g, ''))}
-              placeholder="6-digit PIN"
-              autoFocus
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Enter your manager PIN to authorize this refund
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="reason">Reason (Optional)</Label>
-            <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g., Customer request, wrong order..."
-              rows={3}
-            />
-          </div>
-
-          <Button
-            onClick={handleRefund}
-            disabled={isProcessing || !managerPin}
-            className="w-full"
-            variant="destructive"
-            size="lg"
-          >
-            {isProcessing ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <ShieldAlert className="h-4 w-4 mr-2" />
-            )}
-            Process Refund
-          </Button>
+    <GlassModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title="Process Refund"
+      size="md"
+      variant="default"
+    >
+      <div className="space-y-4">
+        <div className="bg-warning/10 p-4 rounded-lg">
+          <p className="text-sm font-medium">Refund Amount</p>
+          <p className="text-2xl font-bold">RM {payment.amount.toFixed(2)}</p>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <div>
+          <Label htmlFor="pin">Manager PIN (Required)</Label>
+          <Input
+            id="pin"
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={managerPin}
+            onChange={(e) => setManagerPin(e.target.value.replace(/\D/g, ''))}
+            placeholder="6-digit PIN"
+            autoFocus
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Enter your manager PIN to authorize this refund
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="reason">Reason (Optional)</Label>
+          <Textarea
+            id="reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g., Customer request, wrong order..."
+            rows={3}
+          />
+        </div>
+
+        <Button
+          onClick={handleRefund}
+          disabled={isProcessing || !managerPin}
+          className="w-full"
+          variant="destructive"
+          size="lg"
+        >
+          {isProcessing ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <ShieldAlert className="h-4 w-4 mr-2" />
+          )}
+          Process Refund
+        </Button>
+      </div>
+    </GlassModal>
   );
 }

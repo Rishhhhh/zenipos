@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -92,119 +92,119 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{item ? 'Edit' : 'Add'} Inventory Item</DialogTitle>
-        </DialogHeader>
+    <GlassModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title={`${item ? 'Edit' : 'Add'} Inventory Item`}
+      size="md"
+      variant="default"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="name">Item Name</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="name">Item Name</Label>
+            <Label htmlFor="sku">SKU</Label>
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
+              id="sku"
+              value={formData.sku}
+              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="sku">SKU</Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="unit">Unit</Label>
-              <Select value={formData.unit} onValueChange={(val) => setFormData({ ...formData, unit: val })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                  <SelectItem value="g">Gram (g)</SelectItem>
-                  <SelectItem value="l">Liter (l)</SelectItem>
-                  <SelectItem value="ml">Milliliter (ml)</SelectItem>
-                  <SelectItem value="pcs">Pieces (pcs)</SelectItem>
-                  <SelectItem value="box">Box</SelectItem>
-                  <SelectItem value="pack">Pack</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="unit">Unit</Label>
+            <Select value={formData.unit} onValueChange={(val) => setFormData({ ...formData, unit: val })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                <SelectItem value="g">Gram (g)</SelectItem>
+                <SelectItem value="l">Liter (l)</SelectItem>
+                <SelectItem value="ml">Milliliter (ml)</SelectItem>
+                <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                <SelectItem value="box">Box</SelectItem>
+                <SelectItem value="pack">Pack</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+        </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="current_qty">Current Stock</Label>
-              <Input
-                id="current_qty"
-                type="number"
-                step="0.001"
-                value={formData.current_qty}
-                onChange={(e) => setFormData({ ...formData, current_qty: parseFloat(e.target.value) })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="reorder_point">Reorder Point</Label>
-              <Input
-                id="reorder_point"
-                type="number"
-                step="0.001"
-                value={formData.reorder_point}
-                onChange={(e) => setFormData({ ...formData, reorder_point: parseFloat(e.target.value) })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="reorder_qty">Reorder Qty</Label>
-              <Input
-                id="reorder_qty"
-                type="number"
-                step="0.001"
-                value={formData.reorder_qty}
-                onChange={(e) => setFormData({ ...formData, reorder_qty: parseFloat(e.target.value) })}
-              />
-            </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="current_qty">Current Stock</Label>
+            <Input
+              id="current_qty"
+              type="number"
+              step="0.001"
+              value={formData.current_qty}
+              onChange={(e) => setFormData({ ...formData, current_qty: parseFloat(e.target.value) })}
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cost">Cost per Unit (RM)</Label>
-              <Input
-                id="cost"
-                type="number"
-                step="0.01"
-                value={formData.cost_per_unit}
-                onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vegetables">Vegetables</SelectItem>
-                  <SelectItem value="meat">Meat</SelectItem>
-                  <SelectItem value="dairy">Dairy</SelectItem>
-                  <SelectItem value="dry_goods">Dry Goods</SelectItem>
-                  <SelectItem value="beverages">Beverages</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="reorder_point">Reorder Point</Label>
+            <Input
+              id="reorder_point"
+              type="number"
+              step="0.001"
+              value={formData.reorder_point}
+              onChange={(e) => setFormData({ ...formData, reorder_point: parseFloat(e.target.value) })}
+            />
           </div>
+          <div>
+            <Label htmlFor="reorder_qty">Reorder Qty</Label>
+            <Input
+              id="reorder_qty"
+              type="number"
+              step="0.001"
+              value={formData.reorder_qty}
+              onChange={(e) => setFormData({ ...formData, reorder_qty: parseFloat(e.target.value) })}
+            />
+          </div>
+        </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {item ? 'Update Item' : 'Create Item'}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="cost">Cost per Unit (RM)</Label>
+            <Input
+              id="cost"
+              type="number"
+              step="0.01"
+              value={formData.cost_per_unit}
+              onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="vegetables">Vegetables</SelectItem>
+                <SelectItem value="meat">Meat</SelectItem>
+                <SelectItem value="dairy">Dairy</SelectItem>
+                <SelectItem value="dry_goods">Dry Goods</SelectItem>
+                <SelectItem value="beverages">Beverages</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {item ? 'Update Item' : 'Create Item'}
+        </Button>
+      </form>
+    </GlassModal>
   );
 }

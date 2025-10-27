@@ -5,12 +5,7 @@ import * as z from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import {
   Form,
   FormControl,
@@ -197,293 +192,292 @@ export function PromotionModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {promotion ? 'Edit Promotion' : 'Create Promotion'}
-          </DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
+    <GlassModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title={`${promotion ? 'Edit Promotion' : 'Create Promotion'}`}
+      size="xl"
+      variant="default"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Happy Hour Special" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="20% off all orders from 9-11 PM" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <Input {...field} placeholder="Happy Hour Special" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select promotion type" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    <SelectItem value="PERCENT_OFF">Percent Off</SelectItem>
+                    <SelectItem value="BUY_X_GET_Y">Buy X Get Y</SelectItem>
+                    <SelectItem value="TIME_RANGE_DISCOUNT">Time Range Discount</SelectItem>
+                    <SelectItem value="HAPPY_HOUR">Happy Hour</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
+          {/* Dynamic fields based on type */}
+          {(watchType === 'PERCENT_OFF' || watchType === 'TIME_RANGE_DISCOUNT' || watchType === 'HAPPY_HOUR') && (
             <FormField
               control={form.control}
-              name="description"
+              name="discount_percent"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} placeholder="20% off all orders from 9-11 PM" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select promotion type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="PERCENT_OFF">Percent Off</SelectItem>
-                      <SelectItem value="BUY_X_GET_Y">Buy X Get Y</SelectItem>
-                      <SelectItem value="TIME_RANGE_DISCOUNT">Time Range Discount</SelectItem>
-                      <SelectItem value="HAPPY_HOUR">Happy Hour</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dynamic fields based on type */}
-            {(watchType === 'PERCENT_OFF' || watchType === 'TIME_RANGE_DISCOUNT' || watchType === 'HAPPY_HOUR') && (
-              <FormField
-                control={form.control}
-                name="discount_percent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discount Percentage</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        placeholder="20"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {watchType === 'PERCENT_OFF' && (
-              <FormField
-                control={form.control}
-                name="min_amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Amount (Optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        placeholder="50"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {watchType === 'BUY_X_GET_Y' && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="buy_quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Buy Quantity</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                          placeholder="2"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="get_quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Get Quantity Free</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                          placeholder="1"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            {(watchType === 'TIME_RANGE_DISCOUNT' || watchType === 'HAPPY_HOUR') && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="start_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="time" placeholder="21:00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="end_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="time" placeholder="23:00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            {watchType === 'TIME_RANGE_DISCOUNT' && (
-              <FormField
-                control={form.control}
-                name="days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Days (0=Sun, 6=Sat, comma-separated)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="0,6" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority (0-100, higher = first)</FormLabel>
+                  <FormLabel>Discount Percentage</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
-                      placeholder="0"
+                      placeholder="20"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
+          {watchType === 'PERCENT_OFF' && (
             <FormField
               control={form.control}
-              name="active"
+              name="min_amount"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between">
-                  <FormLabel>Active</FormLabel>
+                <FormItem>
+                  <FormLabel>Minimum Amount (Optional)</FormLabel>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      placeholder="50"
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
+          {watchType === 'BUY_X_GET_Y' && (
+            <>
+              <FormField
+                control={form.control}
+                name="buy_quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Buy Quantity</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        placeholder="2"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="get_quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Get Quantity Free</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        placeholder="1"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {(watchType === 'TIME_RANGE_DISCOUNT' || watchType === 'HAPPY_HOUR') && (
+            <>
+              <FormField
+                control={form.control}
+                name="start_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="time" placeholder="21:00" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="end_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="time" placeholder="23:00" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {watchType === 'TIME_RANGE_DISCOUNT' && (
             <FormField
               control={form.control}
-              name="stackable"
+              name="days"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between">
-                  <FormLabel>Stackable with other promotions</FormLabel>
+                <FormItem>
+                  <FormLabel>Days (0=Sun, 6=Sat, comma-separated)</FormLabel>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Input {...field} placeholder="0,6" />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving...' : promotion ? 'Update' : 'Create'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="start_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="end_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Priority (0-100, higher = first)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    placeholder="0"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="active"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between">
+                <FormLabel>Active</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="stackable"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between">
+                <FormLabel>Stackable with other promotions</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? 'Saving...' : promotion ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </GlassModal>
   );
 }

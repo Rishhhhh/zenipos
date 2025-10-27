@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -206,111 +206,111 @@ export function PaymentModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Payment - RM {total.toFixed(2)}</DialogTitle>
-        </DialogHeader>
+    <GlassModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title={`Payment - RM ${total.toFixed(2)}`}
+      size="lg"
+      variant="default"
+    >
+      <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="qr">
+            <QrCode className="h-4 w-4 mr-2" />
+            QR Payment
+          </TabsTrigger>
+          <TabsTrigger value="cash">
+            <Banknote className="h-4 w-4 mr-2" />
+            Cash
+          </TabsTrigger>
+        </TabsList>
 
-        <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="qr">
-              <QrCode className="h-4 w-4 mr-2" />
-              QR Payment
-            </TabsTrigger>
-            <TabsTrigger value="cash">
-              <Banknote className="h-4 w-4 mr-2" />
-              Cash
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="qr" className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                variant={qrProvider === 'duitnow' ? 'default' : 'outline'}
-                onClick={() => setQrProvider('duitnow')}
-                className="flex-1"
-              >
-                DuitNow QR
-              </Button>
-              <Button
-                variant={qrProvider === 'tng' ? 'default' : 'outline'}
-                onClick={() => setQrProvider('tng')}
-                className="flex-1"
-              >
-                Touch 'n Go
-              </Button>
-            </div>
-
-            {!qrCodeUrl ? (
-              <Button
-                onClick={handleGenerateQR}
-                disabled={isProcessing}
-                className="w-full"
-                size="lg"
-              >
-                {isProcessing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <QrCode className="h-4 w-4 mr-2" />
-                )}
-                Generate QR Code
-              </Button>
-            ) : (
-              <div className="flex flex-col items-center py-8">
-                <QrCode className="h-48 w-48 text-primary mb-4" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Scan with banking app
-                </p>
-                <Badge>{qrProvider.toUpperCase()}</Badge>
-                <p className="text-xs text-muted-foreground mt-4">
-                  Waiting for payment confirmation...
-                </p>
-                <Loader2 className="h-6 w-6 animate-spin mt-2" />
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="cash" className="space-y-4">
-            <div>
-              <Label htmlFor="cash">Cash Received (RM)</Label>
-              <Input
-                id="cash"
-                type="number"
-                step="0.01"
-                min={total}
-                value={cashReceived}
-                onChange={(e) => setCashReceived(e.target.value)}
-                placeholder={total.toFixed(2)}
-                autoFocus
-              />
-            </div>
-
-            {cashReceived && parseFloat(cashReceived) >= total && (
-              <div className="bg-success/10 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Change</p>
-                <p className="text-2xl font-bold text-success">
-                  RM {change.toFixed(2)}
-                </p>
-              </div>
-            )}
-
+        <TabsContent value="qr" className="space-y-4">
+          <div className="flex gap-2">
             <Button
-              onClick={handleCashPayment}
-              disabled={isProcessing || !cashReceived || parseFloat(cashReceived) < total}
+              variant={qrProvider === 'duitnow' ? 'default' : 'outline'}
+              onClick={() => setQrProvider('duitnow')}
+              className="flex-1"
+            >
+              DuitNow QR
+            </Button>
+            <Button
+              variant={qrProvider === 'tng' ? 'default' : 'outline'}
+              onClick={() => setQrProvider('tng')}
+              className="flex-1"
+            >
+              Touch 'n Go
+            </Button>
+          </div>
+
+          {!qrCodeUrl ? (
+            <Button
+              onClick={handleGenerateQR}
+              disabled={isProcessing}
               className="w-full"
               size="lg"
             >
               {isProcessing ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <Banknote className="h-4 w-4 mr-2" />
+                <QrCode className="h-4 w-4 mr-2" />
               )}
-              Complete Payment
+              Generate QR Code
             </Button>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <div className="flex flex-col items-center py-8">
+              <QrCode className="h-48 w-48 text-primary mb-4" />
+              <p className="text-sm text-muted-foreground mb-2">
+                Scan with banking app
+              </p>
+              <Badge>{qrProvider.toUpperCase()}</Badge>
+              <p className="text-xs text-muted-foreground mt-4">
+                Waiting for payment confirmation...
+              </p>
+              <Loader2 className="h-6 w-6 animate-spin mt-2" />
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="cash" className="space-y-4">
+          <div>
+            <Label htmlFor="cash">Cash Received (RM)</Label>
+            <Input
+              id="cash"
+              type="number"
+              step="0.01"
+              min={total}
+              value={cashReceived}
+              onChange={(e) => setCashReceived(e.target.value)}
+              placeholder={total.toFixed(2)}
+              autoFocus
+            />
+          </div>
+
+          {cashReceived && parseFloat(cashReceived) >= total && (
+            <div className="bg-success/10 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">Change</p>
+              <p className="text-2xl font-bold text-success">
+                RM {change.toFixed(2)}
+              </p>
+            </div>
+          )}
+
+          <Button
+            onClick={handleCashPayment}
+            disabled={isProcessing || !cashReceived || parseFloat(cashReceived) < total}
+            className="w-full"
+            size="lg"
+          >
+            {isProcessing ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Banknote className="h-4 w-4 mr-2" />
+            )}
+            Complete Payment
+          </Button>
+        </TabsContent>
+      </Tabs>
+    </GlassModal>
   );
 }

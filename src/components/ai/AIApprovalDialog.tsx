@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,21 +71,20 @@ export function AIApprovalDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
-            {language === 'ms' ? 'Kelulusan Diperlukan' : 'Approval Required'}
-          </DialogTitle>
-          <DialogDescription>
-            {language === 'ms' 
-              ? 'Tindakan berikut memerlukan kelulusan pengurus:' 
-              : 'The following actions require manager approval:'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 my-4">
+    <GlassModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={language === 'ms' ? 'Kelulusan Diperlukan' : 'Approval Required'}
+      description={
+        language === 'ms' 
+          ? 'Tindakan berikut memerlukan kelulusan pengurus:' 
+          : 'The following actions require manager approval:'
+      }
+      size="md"
+      variant="default"
+    >
+      <div className="space-y-4">
+        <div className="space-y-4">
           {actions.map((action, idx) => (
             <Alert key={idx}>
               <AlertDescription>
@@ -121,9 +113,10 @@ export function AIApprovalDialog({
           />
         </div>
 
-        <DialogFooter>
+        <div className="flex gap-2">
           <Button
             variant="outline"
+            className="flex-1"
             onClick={() => {
               setPin('');
               onOpenChange(false);
@@ -133,6 +126,7 @@ export function AIApprovalDialog({
             {language === 'ms' ? 'Batal' : 'Cancel'}
           </Button>
           <Button
+            className="flex-1"
             onClick={handleApprove}
             disabled={!pin || isApproving}
           >
@@ -148,8 +142,8 @@ export function AIApprovalDialog({
               </>
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </GlassModal>
   );
 }

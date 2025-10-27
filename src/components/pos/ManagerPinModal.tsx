@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
+import { Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ManagerPinModalProps {
   open: boolean;
@@ -66,65 +67,77 @@ export function ManagerPinModal({ open, onOpenChange, onSuccess, action }: Manag
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Manager Authorization Required</DialogTitle>
-        </DialogHeader>
-
-        <div className="text-center mb-4">
-          <ShieldCheck className="h-12 w-12 mx-auto text-warning mb-2" />
-          <p className="text-sm text-muted-foreground">{action}</p>
+    <GlassModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Manager Authorization"
+      description={`Enter manager PIN to authorize: ${action}`}
+      size="sm"
+      variant="default"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="pin">PIN</Label>
+          <Input
+            id="pin"
+            type="password"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            maxLength={6}
+            placeholder="Enter 6-digit PIN"
+            disabled={isValidating}
+            autoFocus
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Manager PIN</label>
-            <Input
-              type="password"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              placeholder="Enter manager PIN"
-              maxLength={6}
-              className="text-center text-2xl tracking-widest"
-              autoFocus
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, '⌫'].map((key) => (
-              <Button
-                key={key}
-                type="button"
-                variant="outline"
-                className="h-16 text-xl"
-                onClick={() => {
-                  if (key === 'C') {
-                    setPin('');
-                  } else if (key === '⌫') {
-                    setPin(pin.slice(0, -1));
-                  } else {
-                    if (pin.length < 6) {
-                      setPin(pin + key);
-                    }
-                  }
-                }}
-              >
-                {key}
-              </Button>
-            ))}
-          </div>
-
-          <Button type="submit" className="w-full" size="lg" disabled={pin.length < 4 || isValidating}>
-            {isValidating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <ShieldCheck className="h-4 w-4 mr-2" />
-            )}
-            Authorize
+        {/* Numeric Keypad */}
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+            <Button
+              key={num}
+              type="button"
+              variant="outline"
+              onClick={() => setPin(pin.length < 6 ? pin + num : pin)}
+              disabled={isValidating}
+            >
+              {num}
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setPin(pin.slice(0, -1))}
+            disabled={isValidating}
+          >
+            ← 
           </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setPin(pin.length < 6 ? pin + '0' : pin)}
+            disabled={isValidating}
+          >
+            0
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setPin('')}
+            disabled={isValidating}
+          >
+            Clear
+          </Button>
+        </div>
+
+        <Button type="submit" className="w-full" disabled={isValidating || pin.length !== 6}>
+          {isValidating ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <CheckCircle className="h-4 w-4 mr-2" />
+          )}
+          Authorize
+        </Button>
+      </form>
+    </GlassModal>
   );
 }

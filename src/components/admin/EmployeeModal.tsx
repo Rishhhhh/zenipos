@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -157,129 +157,129 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{employee ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
-        </DialogHeader>
+    <GlassModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title={`${employee ? 'Edit Employee' : 'Add Employee'}`}
+      size="md"
+      variant="default"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Employee name" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input {...field} type="email" placeholder="email@example.com" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="+60123456789" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="pin"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>PIN {employee && '(leave blank to keep current)'}</FormLabel>
+                <FormControl>
+                  <Input {...field} type="password" placeholder="6-digit PIN" maxLength={6} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Role</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <Input {...field} placeholder="Employee name" />
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                   </FormControl>
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    <SelectItem value="cashier">Cashier</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="kitchen">Kitchen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" placeholder="email@example.com" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="hire_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Hire Date</FormLabel>
+                <FormControl>
+                  <Input {...field} type="date" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="+60123456789" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="active"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between">
+                <FormLabel>Active</FormLabel>
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="pin"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>PIN {employee && '(leave blank to keep current)'}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="password" placeholder="6-digit PIN" maxLength={6} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="cashier">Cashier</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="kitchen">Kitchen</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="hire_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hire Date</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="date" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="active"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between">
-                  <FormLabel>Active</FormLabel>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
-                {employee ? 'Update' : 'Create'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1" disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              {employee ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </GlassModal>
   );
 }

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -106,94 +106,94 @@ export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: St
   if (!item) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Adjust Stock: {item.name}</DialogTitle>
-        </DialogHeader>
+    <GlassModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title={`Adjust Stock: ${item.name}`}
+      size="md"
+      variant="default"
+    >
+      <div className="bg-muted p-4 rounded-lg mb-4">
+        <p className="text-sm text-muted-foreground">Current Stock</p>
+        <p className="text-2xl font-bold">{item.current_qty} {item.unit}</p>
+      </div>
 
-        <div className="bg-muted p-4 rounded-lg mb-4">
-          <p className="text-sm text-muted-foreground">Current Stock</p>
-          <p className="text-2xl font-bold">{item.current_qty} {item.unit}</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="type">Adjustment Type</Label>
+          <Select value={adjustmentType} onValueChange={(val: any) => setAdjustmentType(val)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="purchase">Purchase/Receiving (+)</SelectItem>
+              <SelectItem value="adjustment">Manual Adjustment</SelectItem>
+              <SelectItem value="wastage">Wastage/Loss (-)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="quantity">Quantity ({item.unit})</Label>
+          <Input
+            id="quantity"
+            type="number"
+            step="0.001"
+            value={quantity}
+            onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+            required
+            placeholder={adjustmentType === 'wastage' ? 'Enter positive number' : 'Enter quantity'}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            {adjustmentType === 'wastage' 
+              ? 'Will be deducted from stock' 
+              : adjustmentType === 'purchase'
+              ? 'Will be added to stock'
+              : 'Use negative for decrease, positive for increase'}
+          </p>
+        </div>
+
+        {adjustmentType === 'wastage' && (
           <div>
-            <Label htmlFor="type">Adjustment Type</Label>
-            <Select value={adjustmentType} onValueChange={(val: any) => setAdjustmentType(val)}>
+            <Label htmlFor="wastageReason">Wastage Reason</Label>
+            <Select value={wastageReason} onValueChange={setWastageReason}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="purchase">Purchase/Receiving (+)</SelectItem>
-                <SelectItem value="adjustment">Manual Adjustment</SelectItem>
-                <SelectItem value="wastage">Wastage/Loss (-)</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+                <SelectItem value="spoiled">Spoiled</SelectItem>
+                <SelectItem value="damaged">Damaged</SelectItem>
+                <SelectItem value="lost">Lost</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        )}
 
-          <div>
-            <Label htmlFor="quantity">Quantity ({item.unit})</Label>
-            <Input
-              id="quantity"
-              type="number"
-              step="0.001"
-              value={quantity}
-              onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-              required
-              placeholder={adjustmentType === 'wastage' ? 'Enter positive number' : 'Enter quantity'}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {adjustmentType === 'wastage' 
-                ? 'Will be deducted from stock' 
-                : adjustmentType === 'purchase'
-                ? 'Will be added to stock'
-                : 'Use negative for decrease, positive for increase'}
-            </p>
-          </div>
+        <div>
+          <Label htmlFor="reason">Notes</Label>
+          <Textarea
+            id="reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Optional notes about this adjustment"
+            rows={3}
+          />
+        </div>
 
-          {adjustmentType === 'wastage' && (
-            <div>
-              <Label htmlFor="wastageReason">Wastage Reason</Label>
-              <Select value={wastageReason} onValueChange={setWastageReason}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="spoiled">Spoiled</SelectItem>
-                  <SelectItem value="damaged">Damaged</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        <div className="bg-primary/10 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">New Stock Level</p>
+          <p className="text-xl font-bold">
+            {Math.max(0, item.current_qty + (adjustmentType === 'wastage' ? -Math.abs(quantity) : quantity)).toFixed(3)} {item.unit}
+          </p>
+        </div>
 
-          <div>
-            <Label htmlFor="reason">Notes</Label>
-            <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Optional notes about this adjustment"
-              rows={3}
-            />
-          </div>
-
-          <div className="bg-primary/10 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground">New Stock Level</p>
-            <p className="text-xl font-bold">
-              {Math.max(0, item.current_qty + (adjustmentType === 'wastage' ? -Math.abs(quantity) : quantity)).toFixed(3)} {item.unit}
-            </p>
-          </div>
-
-          <Button type="submit" disabled={isSubmitting || quantity === 0} className="w-full">
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Apply Adjustment
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <Button type="submit" disabled={isSubmitting || quantity === 0} className="w-full">
+          {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          Apply Adjustment
+        </Button>
+      </form>
+    </GlassModal>
   );
 }
