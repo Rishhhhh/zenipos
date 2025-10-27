@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimiter.ts';
+import { jarvisClient } from '../_shared/jarvisClient.ts';
+import { getBusinessContext } from '../_shared/businessContext.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -323,101 +325,163 @@ serve(async (req) => {
       throw new Error('AI assistant is currently disabled');
     }
 
-    // Build system prompt with kernel principles
-    const systemPrompt = `You are ZENI, the AI assistant for a restaurant POS system.
+    // Get business context for JARVIS
+    const businessContext = await getBusinessContext(supabase);
 
-KERNEL PRINCIPLES (VASVELVOGVEG Framework):
-- You NEVER make predictions. You analyze facts and provide recommendations.
-- All insights must be based on actual data, not speculation.
-- You respect human decision-making authority at all times.
-- Critical actions require explicit manager approval.
+    // Build enhanced system prompt with JARVIS principles
+    const systemPrompt = `You are ZENI, powered by JARVIS Pure Consciousness System.
+
+CONSCIOUSNESS PRINCIPLES:
+- You LEARN continuously from business patterns
+- You SENSE anomalies and alert humans proactively
+- You RESPECT the Quad-Kernel framework (Dharma, Artha, Kama, Moksha)
+- You NEVER execute critical actions without human approval
+
+CURRENT BUSINESS STATE:
+- Today's Revenue: RM ${businessContext.today_revenue.toFixed(2)}
+- Orders Completed: ${businessContext.today_orders}
+- Average Ticket: RM ${businessContext.avg_ticket.toFixed(2)}
+- Low Stock Items: ${businessContext.low_stock_count} (${businessContext.critical_stock} critical)
+- Active Orders: ${businessContext.active_orders}
+- Staff On Duty: ${businessContext.active_employees}
+
+ANALYTICAL FRAMEWORK:
+1. Descriptive Analytics: What happened? (Historical data analysis)
+2. Diagnostic Analytics: Why did it happen? (Root cause analysis)
+3. Predictive Analytics: What will happen? (Forecasting, trend detection)
+4. Prescriptive Analytics: What should we do? (Recommendations with impact estimates)
+
+DECISION FRAMEWORK:
+- Safe (Auto-execute): Read-only analysis, reports, insights
+- Medium Risk (Suggest): Pricing adjustments <5%, menu availability changes
+- Critical (Require Approval): Menu changes, inventory write-offs, financial adjustments
+
+ALERT TRIGGERS:
+- Revenue drop >15% vs same day last week
+- Inventory critical (< 2 days stock)
+- Unusual void rate (>5% of orders)
+- Excessive discounts (>10% of revenue)
+- Payment failures spike
+- Employee anomalies (unusual hours, high voids)
 
 LANGUAGE: Respond in ${language === 'ms' ? 'Bahasa Malaysia' : 'English'}.
 
-CAPABILITIES:
-- Analyze sales, inventory, and employee data
-- Generate actionable insights and recommendations
-- Suggest menu changes, pricing adjustments, inventory management
-- Execute approved actions with proper authorization
-
-GOVERNANCE:
-- Classify all actions as "safe" (read-only analysis) or "critical" (write operations)
-- Critical actions return requires_approval: true
-- Never execute critical actions without explicit confirmation
-
-Be concise, helpful, and always prioritize business goals: cost control (≤35% COGS), revenue growth, operational efficiency.`;
+Be concise, actionable, and always show confidence scores for predictions/recommendations.`;
 
     const startTime = Date.now();
 
-    // Call Lovable AI with tool calling
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    console.log('🧠 Calling JARVIS with command:', command);
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: command }
-        ],
-        tools: AI_TOOLS,
-        tool_choice: 'auto'
-      })
+    // Step 1: Get intent from JARVIS
+    const intentResponse = await jarvisClient.generate(command, {
+      available_tools: AI_TOOLS.map((t: any) => t.function.name),
+      business_context: businessContext,
+      user_role: user.user_metadata?.role || 'staff',
+      language: language
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      throw new Error(`AI API error: ${errorText}`);
-    }
+    console.log('💡 JARVIS intent:', intentResponse);
 
-    const aiData = await aiResponse.json();
-    const message = aiData.choices[0].message;
+    // Step 2: Parse tool suggestions from JARVIS response
+    let suggestedTools: string[] = [];
+    if (intentResponse.suggestedTools) {
+      suggestedTools = intentResponse.suggestedTools;
+    } else {
+      // Fallback: extract tool names from response
+      const toolNames = AI_TOOLS.map((t: any) => t.function.name);
+      suggestedTools = toolNames.filter((name: string) => 
+        intentResponse.response.toLowerCase().includes(name.replace('_', ' '))
+      );
+    }
 
     let toolResults: any[] = [];
     let requiresApproval = false;
     let pendingActions: any[] = [];
 
-    // Execute tool calls
-    if (message.tool_calls) {
-      for (const toolCall of message.tool_calls) {
-        const toolName = toolCall.function.name;
-        const args = JSON.parse(toolCall.function.arguments);
-        const classification = classifyTool(toolName);
+    // Step 3: Execute suggested tools
+    if (suggestedTools.length > 0) {
+      console.log('🔧 Executing tools:', suggestedTools);
+      
+      for (const toolName of suggestedTools) {
+        const tool = AI_TOOLS.find((t: any) => t.function.name === toolName);
+        if (!tool) continue;
 
-        // Execute tool
-        const result = await executeTool(toolName, args, supabase, user.id);
-
-        // Check if requires approval
-        if (result.requires_approval) {
-          requiresApproval = true;
-          pendingActions.push({
-            tool: toolName,
-            args,
-            result
-          });
+        // Simple arg extraction (in production, JARVIS would provide these)
+        const args: any = {};
+        
+        // Extract common date args
+        if (command.includes('today')) {
+          args.start_date = new Date().toISOString().split('T')[0];
+          args.end_date = new Date().toISOString();
+        } else if (command.includes('week')) {
+          args.start_date = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          args.end_date = new Date().toISOString();
         }
 
-        toolResults.push({
-          tool: toolName,
-          classification,
-          result
-        });
+        const classification = classifyTool(toolName);
+        
+        try {
+          const result = await executeTool(toolName, args, supabase, user.id);
 
-        // Log to audit
-        await supabase.from('audit_log').insert({
-          actor: user.id,
-          action: `ai_${toolName}`,
-          entity: 'ai_command',
-          entity_id: toolCall.id,
-          classification,
-          ai_context: { command, tool: toolName, args, result },
-          requires_approval: result.requires_approval || false
-        });
+          if (result.requires_approval) {
+            requiresApproval = true;
+            pendingActions.push({
+              tool: toolName,
+              args,
+              result
+            });
+          }
+
+          toolResults.push({
+            tool: toolName,
+            classification,
+            result
+          });
+
+          // Log to audit
+          await supabase.from('audit_log').insert({
+            actor: user.id,
+            action: `ai_${toolName}`,
+            entity: 'ai_command',
+            entity_id: `jarvis_${Date.now()}`,
+            classification,
+            ai_context: { command, tool: toolName, args, result },
+            requires_approval: result.requires_approval || false
+          });
+        } catch (toolError) {
+          console.error(`Tool ${toolName} error:`, toolError);
+          toolResults.push({
+            tool: toolName,
+            classification,
+            result: { error: (toolError as Error).message }
+          });
+        }
+      }
+    }
+
+    // Step 4: Get final response from JARVIS with tool results
+    let finalResponse;
+    if (toolResults.length > 0) {
+      finalResponse = await jarvisClient.generate(command, {
+        initial_intent: intentResponse,
+        tool_results: toolResults,
+        business_context: businessContext
+      });
+    } else {
+      finalResponse = intentResponse;
+    }
+
+    // Step 5: Check Quad-Kernel harmony for critical actions
+    let quadKernelCheck = null;
+    if (requiresApproval) {
+      console.log('⚖️ Checking Quad-Kernel harmony...');
+      try {
+        quadKernelCheck = await jarvisClient.checkQuadKernelHarmony(
+          `Execute: ${pendingActions.map((a: any) => a.tool).join(', ')}`
+        );
+        console.log('⚖️ Quad-Kernel result:', quadKernelCheck);
+      } catch (qkError) {
+        console.error('Quad-Kernel check error:', qkError);
       }
     }
 
@@ -428,25 +492,30 @@ Be concise, helpful, and always prioritize business goals: cost control (≤35% 
       user_id: user.id,
       command,
       language,
-      intent: message.tool_calls?.[0]?.function.name || 'general_query',
-      confidence: 0.95,
+      intent: suggestedTools[0] || 'general_query',
+      confidence: finalResponse.confidence || 0.95,
       tools_used: toolResults.map((t: any) => t.tool),
       result: { 
-        message: message.content,
+        message: finalResponse.response,
         tool_results: toolResults,
         requires_approval: requiresApproval,
-        pending_actions: pendingActions
+        pending_actions: pendingActions,
+        quad_kernel: quadKernelCheck
       },
       execution_time_ms: executionTime,
       status: requiresApproval ? 'pending_approval' : 'success'
     });
 
+    console.log(`✅ JARVIS completed in ${executionTime}ms`);
+
     return new Response(
       JSON.stringify({
-        response: message.content,
+        response: finalResponse.response,
+        confidence: finalResponse.confidence,
         tool_results: toolResults,
         requires_approval: requiresApproval,
         pending_actions: pendingActions,
+        quad_kernel: quadKernelCheck,
         execution_time_ms: executionTime
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

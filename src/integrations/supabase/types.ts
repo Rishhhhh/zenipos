@@ -679,6 +679,36 @@ export type Database = {
           },
         ]
       }
+      generated_reports: {
+        Row: {
+          created_at: string
+          data: Json
+          date_range: Json
+          download_url: string | null
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          date_range: Json
+          download_url?: string | null
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          date_range?: Json
+          download_url?: string | null
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hardware_devices: {
         Row: {
           branch_id: string | null
@@ -838,6 +868,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      jarvis_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          id: string
+          jarvis_analysis: string | null
+          message: string
+          severity: string
+          status: string
+          type: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          jarvis_analysis?: string | null
+          message: string
+          severity: string
+          status?: string
+          type: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          id?: string
+          jarvis_analysis?: string | null
+          message?: string
+          severity?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
       }
       loyalty_ledger: {
         Row: {

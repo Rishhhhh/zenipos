@@ -41,3 +41,9 @@ verify_jwt = true
 
 [functions.clear-demo-data]
 verify_jwt = true
+
+[functions.jarvis-alerts]
+verify_jwt = false
+
+[edge_runtime.functions.jarvis-alerts]
+periodic_schedule = "*/15 * * * *"
