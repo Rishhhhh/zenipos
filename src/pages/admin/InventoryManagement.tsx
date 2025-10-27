@@ -16,9 +16,6 @@ import {
   Brain,
   ArrowLeft,
 } from 'lucide-react';
-import { InventoryItemModal } from '@/components/admin/InventoryItemModal';
-import { StockAdjustmentModal } from '@/components/admin/StockAdjustmentModal';
-import { AIForecastPanel } from '@/components/admin/AIForecastPanel';
 import { Link } from 'react-router-dom';
 
 export default function InventoryManagement() {

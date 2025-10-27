@@ -10,8 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { KPICards } from "@/components/admin/reports/KPICards";
 import { SalesHeatmap } from "@/components/admin/reports/SalesHeatmap";
-import { ZReportModal } from "@/components/admin/reports/ZReportModal";
 import { toast } from "sonner";
+import { useModalManager } from "@/hooks/useModalManager";
 import { Link } from "react-router-dom";
 
 export default function ReportsDashboard() {
@@ -21,6 +21,7 @@ export default function ReportsDashboard() {
   });
 
   const queryClient = useQueryClient();
+  const { openModal } = useModalManager();
 
   // Fetch KPI data
   const { data: kpiData, isLoading: kpiLoading } = useQuery({
@@ -216,7 +217,9 @@ export default function ReportsDashboard() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
             </Button>
-            <ZReportModal />
+            <Button onClick={() => openModal('zReport', {})}>
+              Generate Z-Report
+            </Button>
           </div>
         </div>
 
