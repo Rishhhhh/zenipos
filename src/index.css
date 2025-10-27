@@ -333,4 +333,69 @@ macOS-inspired black/red/white theme with glass morphism
       transition: none !important;
     }
   }
+
+  /* ===================================
+     Modal System Styles
+     =================================== */
+
+  /* Glass morphism backdrop */
+  .glass-modal-backdrop {
+    will-change: opacity;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Modal content with GPU acceleration */
+  .glass-modal-content {
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Slide in from bottom animation (mobile drawer) */
+  @keyframes slide-in-bottom {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-bottom {
+    animation: slide-in-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Virtual scrollbar styling */
+  .virtual-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .virtual-scroll::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .virtual-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+
+  .virtual-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Reduced motion for modals */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-modal-content,
+    .glass-modal-backdrop {
+      animation: none !important;
+      transition: none !important;
+    }
+    
+    .animate-slide-in-bottom {
+      animation: none !important;
+    }
+  }
 }

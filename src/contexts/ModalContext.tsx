@@ -1,0 +1,90 @@
+import React, { createContext, useContext, useState, useCallback } from 'react';
+
+export interface ModalOptions {
+  variant?: 'default' | 'drawer' | 'fullscreen';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  disableBackdropClick?: boolean;
+  onClose?: () => void;
+}
+
+export interface Modal {
+  id: string;
+  component: React.ComponentType<any>;
+  props: any;
+  options: ModalOptions;
+}
+
+interface ModalContextType {
+  modals: Modal[];
+  openModal: (component: React.ComponentType<any>, props?: any, options?: ModalOptions) => string;
+  closeModal: (id: string) => void;
+  closeAll: () => void;
+}
+
+const ModalContext = createContext<ModalContextType | undefined>(undefined);
+
+export function ModalProvider({ children }: { children: React.ReactNode }) {
+  const [modals, setModals] = useState<Modal[]>([]);
+
+  const openModal = useCallback((
+    component: React.ComponentType<any>,
+    props: any = {},
+    options: ModalOptions = {}
+  ) => {
+    const id = `modal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const modal: Modal = {
+      id,
+      component,
+      props: {
+        ...props,
+        open: true,
+        onOpenChange: (open: boolean) => {
+          if (!open) {
+            closeModal(id);
+          }
+        }
+      },
+      options
+    };
+
+    setModals(prev => [...prev, modal]);
+    return id;
+  }, []);
+
+  const closeModal = useCallback((id: string) => {
+    setModals(prev => {
+      const modal = prev.find(m => m.id === id);
+      if (modal?.options.onClose) {
+        modal.options.onClose();
+      }
+      return prev.filter(m => m.id !== id);
+    });
+  }, []);
+
+  const closeAll = useCallback(() => {
+    modals.forEach(modal => {
+      if (modal.options.onClose) {
+        modal.options.onClose();
+      }
+    });
+    setModals([]);
+  }, [modals]);
+
+  return (
+    <ModalContext.Provider value={{ modals, openModal, closeModal, closeAll }}>
+      {children}
+      {modals.map(modal => {
+        const ModalComponent = modal.component;
+        return <ModalComponent key={modal.id} {...modal.props} />;
+      })}
+    </ModalContext.Provider>
+  );
+}
+
+export function useModalContext() {
+  const context = useContext(ModalContext);
+  if (!context) {
+    throw new Error('useModalContext must be used within ModalProvider');
+  }
+  return context;
+}

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ModalProvider } from "./contexts/ModalContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -57,12 +59,14 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppLayout>
-              <Routes>
+        <ModalProvider>
+          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppLayout>
+                  <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/customer/:sessionId" element={<CustomerScreen />} />
@@ -182,10 +186,12 @@ const App = () => (
               
               {/* Catch-all redirect to login */}
               <Route path="*" element={<Navigate to="/login" replace />} />
-              </Routes>
-            </AppLayout>
-          </BrowserRouter>
-        </TooltipProvider>
+                  </Routes>
+                </AppLayout>
+              </BrowserRouter>
+            </TooltipProvider>
+          </Suspense>
+        </ModalProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
