@@ -10,50 +10,39 @@ import { usePromotions } from "@/lib/hooks/usePromotions";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogIn, LogOut, Clock } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
 import { ItemGrid } from "@/components/pos/ItemGrid";
 import { CartSummary } from "@/components/pos/CartSummary";
+import { TableSelectionModal } from "@/components/pos/TableSelectionModal";
+import { ModifierSelectionModal } from "@/components/pos/ModifierSelectionModal";
 
 export default function POS() {
   // Track performance for this page
   usePerformanceMonitor('POS');
   
-  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, setTableId, setOrderType } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
-  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
-  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
-  const [shiftElapsed, setShiftElapsed] = useState<string>('00:00');
+  const [showTableSelect, setShowTableSelect] = useState(false);
+  const [showModifierSelect, setShowModifierSelect] = useState(false);
+  const [pendingItem, setPendingItem] = useState<any>(null);
   
   // Auto-evaluate promotions
   usePromotions();
 
-  // Update shift timer
+  // Show table selection on first load
   useEffect(() => {
-    if (!currentShiftId) return;
-
-    const interval = setInterval(async () => {
-      const { data: shift } = await supabase
-        .from('shifts')
-        .select('clock_in_at')
-        .eq('id', currentShiftId)
-        .single();
-
-      if (shift) {
-        const elapsed = Date.now() - new Date(shift.clock_in_at).getTime();
-        const hours = Math.floor(elapsed / (1000 * 60 * 60));
-        const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-        setShiftElapsed(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-      }
-    }, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, [currentShiftId]);
+    if (!table_id && order_type === 'takeaway') {
+      // Auto-set takeaway
+    } else if (!table_id && order_type === 'dine_in') {
+      setShowTableSelect(true);
+    }
+  }, []);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -97,6 +86,8 @@ export default function POS() {
         .from('orders')
         .insert({
           session_id: sessionId,
+          table_id: useCartStore.getState().table_id,
+          order_type: useCartStore.getState().order_type,
           subtotal,
           tax,
           discount,
@@ -123,7 +114,7 @@ export default function POS() {
             quantity: item.quantity,
             unit_price: item.price,
             notes: item.notes,
-            modifiers: item.modifiers || [],
+            modifiers: (item.modifiers || []) as any,
           }))
         );
 
@@ -186,6 +177,42 @@ export default function POS() {
 
   return (
     <div className="kiosk-layout">
+      {/* Table/Order Type Badge */}
+      {(table_id || order_type === 'takeaway') && (
+        <div className="absolute top-4 left-4 z-10">
+          <Badge
+            variant="secondary"
+            className="text-sm cursor-pointer hover:bg-secondary/80"
+            onClick={() => setShowTableSelect(true)}
+          >
+            <MapPin className="h-3 w-3 mr-1" />
+            {order_type === 'takeaway' ? 'Takeaway' : `Table ${table_id}`}
+          </Badge>
+        </div>
+      )}
+
+      <TableSelectionModal
+        open={showTableSelect}
+        onOpenChange={setShowTableSelect}
+        onSelect={(tableId, orderType) => {
+          setTableId(tableId);
+          setOrderType(orderType);
+        }}
+      />
+
+      <ModifierSelectionModal
+        open={showModifierSelect}
+        onOpenChange={setShowModifierSelect}
+        menuItemId={pendingItem?.menu_item_id || ''}
+        menuItemName={pendingItem?.name || ''}
+        onConfirm={(modifiers) => {
+          if (pendingItem) {
+            addItem({ ...pendingItem, modifiers });
+            setPendingItem(null);
+          }
+        }}
+      />
+
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} minSize={15}>
           <CategoryList
@@ -202,7 +229,17 @@ export default function POS() {
           <ItemGrid
             items={menuItems}
             isLoading={itemsLoading}
-            onAddItem={addItem}
+            onAddItem={(item) => {
+              // First check if table is selected for dine-in
+              if (!table_id && !order_type) {
+                setShowTableSelect(true);
+                return;
+              }
+              
+              // Check for modifiers, if yes show modifier modal
+              setPendingItem(item);
+              setShowModifierSelect(true);
+            }}
             categoryId={selectedCategoryId}
           />
         </ResizablePanel>

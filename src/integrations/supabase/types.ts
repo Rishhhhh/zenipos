@@ -576,6 +576,42 @@ export type Database = {
           },
         ]
       }
+      menu_item_modifiers: {
+        Row: {
+          created_at: string | null
+          id: string
+          menu_item_id: string
+          modifier_group_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          menu_item_id: string
+          modifier_group_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string
+          modifier_group_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_modifiers_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_modifiers_modifier_group_id_fkey"
+            columns: ["modifier_group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           archived: boolean | null
@@ -641,6 +677,62 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modifier_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_selections: number
+          min_selections: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_selections?: number
+          min_selections?: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_selections?: number
+          min_selections?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      modifiers: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          name: string
+          price?: number
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modifiers_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -1437,6 +1529,41 @@ export type Database = {
           success_rate?: number | null
         }
         Relationships: []
+      }
+      tables: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          label: string
+          seats: number
+          status: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          label: string
+          seats?: number
+          status?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string
+          seats?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tables_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_branches: {
         Row: {

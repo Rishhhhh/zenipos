@@ -198,7 +198,7 @@ macOS-inspired black/red/white theme with glass morphism
 
   /* Kiosk-specific styles */
   .kiosk-layout {
-    @apply h-screen w-screen overflow-hidden;
+    @apply relative min-h-screen w-screen bg-gradient-to-br from-background via-background to-accent/5 pb-32;
   }
 
   /* Touch-friendly targets */

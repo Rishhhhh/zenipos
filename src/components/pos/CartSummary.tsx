@@ -63,12 +63,17 @@ export function CartSummary({
             {items.map(item => (
               <Card key={item.id} className="p-3">
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-foreground">{item.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      ${item.price.toFixed(2)}
-                    </p>
+              <div className="flex-1">
+                <h4 className="font-medium text-foreground">{item.name}</h4>
+                <p className="text-sm text-muted-foreground">
+                  RM {item.price.toFixed(2)}
+                </p>
+                {item.modifiers && item.modifiers.length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {item.modifiers.map(m => `+ ${m.name}`).join(', ')}
                   </div>
+                )}
+              </div>
                   <div className="flex items-center gap-2">
                     <Button
                       size="icon"
@@ -106,7 +111,7 @@ export function CartSummary({
       <div className="border-t pt-4 space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
-          <span className="font-medium">${subtotal.toFixed(2)}</span>
+          <span className="font-medium">RM {subtotal.toFixed(2)}</span>
         </div>
         
         {/* Promotions */}
@@ -119,7 +124,7 @@ export function CartSummary({
                   <span className="text-success font-medium">{promo.message}</span>
                 </div>
                 <span className="text-success font-medium">
-                  -${promo.discount.toFixed(2)}
+                  -RM {promo.discount.toFixed(2)}
                 </span>
               </div>
             ))}
@@ -128,7 +133,7 @@ export function CartSummary({
         
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Tax (8%)</span>
-          <span className="font-medium">${tax.toFixed(2)}</span>
+          <span className="font-medium">RM {tax.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-lg font-bold">
           <div className="flex items-center gap-2">
@@ -139,7 +144,7 @@ export function CartSummary({
               </Badge>
             )}
           </div>
-          <span>${total.toFixed(2)}</span>
+          <span>RM {total.toFixed(2)}</span>
         </div>
         
         <Button

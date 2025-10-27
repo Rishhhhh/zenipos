@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import type { EvaluationResult } from '@/lib/promotions/evaluator';
 
+export interface CartModifier {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface CartItem {
   id: string;
   menu_item_id: string;
@@ -8,7 +14,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   notes?: string;
-  modifiers?: any[];
+  modifiers?: CartModifier[];
 }
 
 interface CartState {
@@ -17,13 +23,18 @@ interface CartState {
   tax_rate: number;
   discount: number;
   appliedPromotions: EvaluationResult[];
+  table_id: string | null;
+  order_type: 'dine_in' | 'takeaway';
   
   // Actions
   setSessionId: (id: string) => void;
+  setTableId: (id: string | null) => void;
+  setOrderType: (type: 'dine_in' | 'takeaway') => void;
   addItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
   removeItem: (id: string) => void;
   voidItem: (id: string, managerId?: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => void;
+  updateItemModifiers: (id: string, modifiers: CartModifier[]) => void;
   clearCart: () => void;
   applyPromotions: (results: EvaluationResult[]) => void;
   clearPromotions: () => void;
@@ -41,25 +52,17 @@ export const useCartStore = create<CartState>((set, get) => ({
   tax_rate: 0.08, // 8% default tax
   discount: 0,
   appliedPromotions: [],
+  table_id: null,
+  order_type: 'takeaway',
   
   setSessionId: (id) => set({ sessionId: id }),
+  setTableId: (id) => set({ table_id: id }),
+  setOrderType: (type) => set({ order_type: type }),
   
   addItem: (item) => set((state) => {
-    // Check if item already exists
-    const existing = state.items.find(i => i.menu_item_id === item.menu_item_id);
-    if (existing) {
-      return {
-        items: state.items.map(i =>
-          i.menu_item_id === item.menu_item_id
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        )
-      };
-    }
-    
-    // Add new item
+    // Always add as new item (don't auto-merge, modifiers may differ)
     return {
-      items: [...state.items, { ...item, id: crypto.randomUUID(), quantity: 1 }]
+      items: [...state.items, { ...item, id: crypto.randomUUID(), quantity: 1, modifiers: item.modifiers || [] }]
     };
   }),
   
@@ -99,7 +102,13 @@ export const useCartStore = create<CartState>((set, get) => ({
     };
   }),
   
-  clearCart: () => set({ items: [], sessionId: crypto.randomUUID(), appliedPromotions: [] }),
+  updateItemModifiers: (id, modifiers) => set((state) => ({
+    items: state.items.map(i =>
+      i.id === id ? { ...i, modifiers } : i
+    )
+  })),
+  
+  clearCart: () => set({ items: [], sessionId: crypto.randomUUID(), appliedPromotions: [], table_id: null, order_type: 'takeaway' }),
   
   applyPromotions: (results) => set({ appliedPromotions: results }),
   
@@ -107,7 +116,10 @@ export const useCartStore = create<CartState>((set, get) => ({
   
   getSubtotal: () => {
     const { items } = get();
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return items.reduce((sum, item) => {
+      const itemPrice = item.price + (item.modifiers?.reduce((modSum, mod) => modSum + mod.price, 0) || 0);
+      return sum + (itemPrice * item.quantity);
+    }, 0);
   },
   
   getTax: () => {
