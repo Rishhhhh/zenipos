@@ -22,6 +22,8 @@ export function WidgetConfigModal({ widgetId, open, onOpenChange }: WidgetConfig
 
   const handleSave = () => {
     saveConfig(localConfig);
+    // Force a re-render by dispatching a custom event
+    window.dispatchEvent(new CustomEvent('widget-config-updated', { detail: { widgetId } }));
     onOpenChange(false);
   };
 

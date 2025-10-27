@@ -103,7 +103,7 @@ export function DraggableWidget({
     maxHeight: widgetDef?.maxSize.height,
     zIndex: isDragging ? 9999 : position.zIndex,
     transform: CSS.Transform.toString(transform),
-    transition: isDragging || isResizing ? 'none' : 'transform 0.2s ease',
+    transition: 'none',
   };
 
   return (
@@ -132,13 +132,14 @@ export function DraggableWidget({
         {isHovered && !isDragging && (
           <div
             className={cn(
-              "absolute bottom-2 right-2 w-7 h-7 z-50",
+              "absolute bottom-3 right-3 w-8 h-8 z-[100]",
               "cursor-nwse-resize",
-              "bg-primary/10 hover:bg-primary/30 rounded-md",
+              "bg-primary/20 hover:bg-primary/40 rounded-md",
               "flex items-center justify-center",
               "transition-all duration-200",
-              "shadow-sm",
-              isResizing && "bg-primary/40 scale-110"
+              "shadow-md border border-primary/30",
+              "hover:scale-110 hover:shadow-lg",
+              isResizing && "bg-primary/50 scale-110 shadow-lg"
             )}
             onMouseDown={handleResizeStart}
             aria-label="Resize widget"

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { 
@@ -153,6 +153,42 @@ export function useWidgetConfig<T extends BaseWidgetConfig = WidgetConfig>(widge
     setConfig(defaultConfig);
     localStorage.setItem(storageKey, JSON.stringify(defaultConfig));
   }, [widgetId, storageKey]);
+
+  // Listen for config updates (both cross-tab and same-tab)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === storageKey && e.newValue) {
+        try {
+          const newConfig = JSON.parse(e.newValue) as T;
+          setConfig(newConfig);
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    };
+
+    const handleConfigUpdate = (e: CustomEvent) => {
+      if (e.detail?.widgetId === widgetId) {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          try {
+            const newConfig = JSON.parse(saved) as T;
+            setConfig(newConfig);
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('widget-config-updated', handleConfigUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('widget-config-updated', handleConfigUpdate as EventListener);
+    };
+  }, [storageKey, widgetId]);
   
   return { config, saveConfig, resetToDefault };
 }

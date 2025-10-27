@@ -53,7 +53,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["cashier", "manager", "admin"],
       category: "pos",
       defaultSize: { cols: 2, rows: 2 },
-      minSize: { width: 500, height: 600 },
+      minSize: { width: 500, height: 400 },
       maxSize: { width: 800, height: 900 },
       capabilities: {
         supportedDisplayTypes: ['cards'],
