@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.health-check]
 verify_jwt = false
+
+[functions.generate-demo-data]
+verify_jwt = true
+
+[functions.clear-demo-data]
+verify_jwt = true

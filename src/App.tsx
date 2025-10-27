@@ -29,6 +29,9 @@ const EmployeeManagement = lazy(() => import("./pages/admin/EmployeeManagement")
 const ReportsDashboard = lazy(() => import("./pages/admin/ReportsDashboard"));
 const AIHistoryDashboard = lazy(() => import("./pages/admin/AIHistoryDashboard"));
 const BranchManagement = lazy(() => import("./pages/admin/BranchManagement"));
+const Changelog = lazy(() => import("./pages/Changelog"));
+const Documentation = lazy(() => import("./pages/Documentation"));
+const Documentation = lazy(() => import("./pages/Documentation"));
 const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const SystemHealthDashboard = lazy(() => import("./pages/admin/SystemHealthDashboard"));
 const PerformanceDashboard = lazy(() => import("./pages/admin/PerformanceDashboard"));
@@ -264,6 +267,11 @@ const App = () => (
                   <ModifierManagement />
                 </ProtectedRoute>
               } />
+              
+              {/* Changelog & Documentation */}
+              <Route path="/changelog" element={<Changelog />} />
+              <Route path="/documentation" element={<Documentation />} />
+              <Route path="/documentation/:slug" element={<Documentation />} />
               
               {/* Catch-all redirect to login */}
               <Route path="*" element={<Navigate to="/login" replace />} />

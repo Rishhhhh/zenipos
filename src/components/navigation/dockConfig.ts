@@ -1,4 +1,4 @@
-import { Monitor, ChefHat, Package, BarChart3, Settings, Moon, Sun, LogOut } from 'lucide-react';
+import { Monitor, ChefHat, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type AppRole = 'cashier' | 'manager' | 'admin';
@@ -61,6 +61,22 @@ export const DOCK_APPS: DockApp[] = [
     route: '/admin',
     shortcut: '⌘5',
     roles: ['admin'],
+  },
+  {
+    id: 'changelog',
+    label: 'Changelog',
+    icon: FileText,
+    route: '/changelog',
+    shortcut: '⌘6',
+    roles: ['manager', 'admin'],
+  },
+  {
+    id: 'docs',
+    label: 'Docs',
+    icon: BookOpen,
+    route: '/documentation',
+    shortcut: '⌘7',
+    roles: ['manager', 'admin'],
   },
 ];
 

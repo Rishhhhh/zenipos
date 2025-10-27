@@ -8,15 +8,15 @@ import { ShoppingCart, TrendingUp, UtensilsCrossed, LayoutDashboard, Search } fr
 import { CompactModuleCard } from "@/components/admin/CompactModuleCard";
 import { ModuleDetailModal } from "@/components/admin/ModuleDetailModal";
 import { AdminSearchCommand } from "@/components/admin/AdminSearchCommand";
-import { ADMIN_MODULES } from "@/lib/admin/moduleRegistry";
+import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
+import { DemoModePanel } from '@/components/admin/DemoModePanel';
 import { useState, useEffect } from "react";
 
 export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<any>(null);
 
-  // Enhanced stats query
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats-enhanced'],
     queryFn: async () => {
@@ -27,8 +27,6 @@ export default function Admin() {
       ]);
 
       const totalRevenue = ordersRes.data?.reduce((sum, o) => sum + Number(o.total), 0) || 0;
-      
-      // Generate sparkline data (mock last 7 days)
       const sparklineData = [20, 25, 30, 28, 35, 40, 45];
 
       return {
@@ -41,12 +39,10 @@ export default function Admin() {
     },
   });
 
-  // Animated counters
   const ordersCount = useCountUp(stats?.orders || 0);
   const itemsCount = useCountUp(stats?.items || 0);
   const categoriesCount = useCountUp(stats?.categories || 0);
 
-  // Keyboard shortcut listener
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -61,31 +57,23 @@ export default function Admin() {
   return (
     <div className="kiosk-layout p-6 pb-32 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Compact header with search */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2 text-foreground">Admin Center</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage operations • Press ⌘K to search
-            </p>
+            <p className="text-sm text-muted-foreground">Manage operations • Press ⌘K to search</p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setCommandOpen(true)}
-            className="glass"
-          >
+          <Button variant="outline" onClick={() => setCommandOpen(true)} className="glass">
             <Search className="mr-2 h-4 w-4" />
             Quick Search
             <kbd className="ml-2 px-2 py-1 text-xs bg-muted rounded">⌘K</kbd>
           </Button>
         </div>
 
-        {/* Enhanced Stats Grid */}
+        <DemoModePanel />
+
         {isLoading ? (
           <div className="grid grid-cols-4 gap-4 mb-8">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28" />
-            ))}
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-4 mb-8">
@@ -96,7 +84,7 @@ export default function Admin() {
                   <p className="text-3xl font-bold text-foreground">{ordersCount}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-success" />
-                    <span className="text-xs text-success">+12% vs yesterday</span>
+                    <span className="text-xs text-success">+12%</span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -110,12 +98,10 @@ export default function Admin() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Revenue</p>
-                  <p className="text-3xl font-bold text-foreground">
-                    ${stats?.revenue.toFixed(2)}
-                  </p>
+                  <p className="text-3xl font-bold text-foreground">${stats?.revenue.toFixed(2)}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-success" />
-                    <span className="text-xs text-success">+8% vs yesterday</span>
+                    <span className="text-xs text-success">+8%</span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -130,9 +116,6 @@ export default function Admin() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Menu Items</p>
                   <p className="text-3xl font-bold text-foreground">{itemsCount}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs text-muted-foreground">Active items</span>
-                  </div>
                 </div>
                 <div className="text-right">
                   <UtensilsCrossed className="h-6 w-6 text-primary mb-2" />
@@ -146,9 +129,6 @@ export default function Admin() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Categories</p>
                   <p className="text-3xl font-bold text-foreground">{categoriesCount}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs text-muted-foreground">Total categories</span>
-                  </div>
                 </div>
                 <div className="text-right">
                   <LayoutDashboard className="h-6 w-6 text-primary mb-2" />
@@ -159,7 +139,6 @@ export default function Admin() {
           </div>
         )}
 
-        {/* Categorized Module Grid */}
         {Object.entries(ADMIN_MODULES).map(([category, modules]) => (
           <div key={category} className="mb-8">
             <div className="flex items-center gap-2 mb-3">
@@ -167,29 +146,17 @@ export default function Admin() {
               <h2 className="text-lg font-semibold text-foreground">{category}</h2>
               <span className="text-xs text-muted-foreground">({modules.length})</span>
             </div>
-
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {modules.map((module) => (
-                <CompactModuleCard
-                  key={module.id}
-                  module={module}
-                  onClick={() => setSelectedModule(module)}
-                />
+                <CompactModuleCard key={module.id} module={module} onClick={() => setSelectedModule(module)} />
               ))}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Command Palette */}
       <AdminSearchCommand open={commandOpen} onOpenChange={setCommandOpen} />
-
-      {/* Detail Modal */}
-      <ModuleDetailModal
-        module={selectedModule}
-        open={!!selectedModule}
-        onClose={() => setSelectedModule(null)}
-      />
+      <ModuleDetailModal module={selectedModule} open={!!selectedModule} onClose={() => setSelectedModule(null)} />
     </div>
   );
 }

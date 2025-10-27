@@ -296,6 +296,30 @@ export type Database = {
           },
         ]
       }
+      demo_data_metadata: {
+        Row: {
+          generated_at: string | null
+          id: string
+          record_id: string
+          seed: number | null
+          table_name: string
+        }
+        Insert: {
+          generated_at?: string | null
+          id?: string
+          record_id: string
+          seed?: number | null
+          table_name: string
+        }
+        Update: {
+          generated_at?: string | null
+          id?: string
+          record_id?: string
+          seed?: number | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           branch_id: string | null
@@ -340,6 +364,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      documentation_attachments: {
+        Row: {
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          filename: string
+          id: string
+          page_id: string | null
+          uploaded_at: string | null
+        }
+        Insert: {
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          filename: string
+          id?: string
+          page_id?: string | null
+          uploaded_at?: string | null
+        }
+        Update: {
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          filename?: string
+          id?: string
+          page_id?: string | null
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentation_attachments_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "documentation_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentation_pages: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_published: boolean | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          version: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          version?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          version?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
       }
       employees: {
         Row: {
@@ -1494,6 +1601,72 @@ export type Database = {
           name?: string
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      system_changelog: {
+        Row: {
+          author_id: string | null
+          changes: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          module: string | null
+          released_at: string | null
+          title: string
+          type: string
+          version: string
+        }
+        Insert: {
+          author_id?: string | null
+          changes?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module?: string | null
+          released_at?: string | null
+          title: string
+          type: string
+          version: string
+        }
+        Update: {
+          author_id?: string | null
+          changes?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          module?: string | null
+          released_at?: string | null
+          title?: string
+          type?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      system_config: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
