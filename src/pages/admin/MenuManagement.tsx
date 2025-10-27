@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useModalManager } from '@/hooks/useModalManager';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ArrowLeft } from 'lucide-react';
@@ -29,10 +30,9 @@ interface MenuItem {
 }
 
 export default function MenuManagement() {
+  const { openModal } = useModalManager();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showItemModal, setShowItemModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -71,18 +71,18 @@ export default function MenuManagement() {
   });
 
   const handleEditItem = (item: MenuItem) => {
-    setEditingItem(item);
-    setShowItemModal(true);
+    openModal('menuItem', {
+      item,
+      categoryId: selectedCategoryId,
+      categories,
+    });
   };
 
   const handleAddItem = () => {
-    setEditingItem(null);
-    setShowItemModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowItemModal(false);
-    setEditingItem(null);
+    openModal('menuItem', {
+      categoryId: selectedCategoryId,
+      categories,
+    });
   };
 
   const handleAddCategory = async () => {
@@ -182,15 +182,6 @@ export default function MenuManagement() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
-
-      {/* Item Modal */}
-      <MenuItemModal
-        open={showItemModal}
-        onOpenChange={handleCloseModal}
-        item={editingItem || undefined}
-        categoryId={selectedCategoryId}
-        categories={categories}
-      />
     </div>
   );
 }

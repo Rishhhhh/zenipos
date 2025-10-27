@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { useModalManager } from '@/hooks/useModalManager';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -21,9 +22,8 @@ import {
 export default function EmployeeManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openModal } = useModalManager();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
   const { data: employees } = useQuery({
@@ -72,7 +72,7 @@ export default function EmployeeManagement() {
           <h1 className="text-3xl font-bold text-foreground">Employee Management</h1>
           <p className="text-muted-foreground">Manage staff, roles, and time tracking</p>
         </div>
-        <Button onClick={() => { setEditingEmployee(null); setShowEmployeeModal(true); }}>
+        <Button onClick={() => openModal('employee', {})}>
           <Plus className="h-4 w-4 mr-2" />
           Add Employee
         </Button>
@@ -135,8 +135,7 @@ export default function EmployeeManagement() {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingEmployee(employee);
-                          setShowEmployeeModal(true);
+                          openModal('employee', { employee });
                         }}
                       >
                         <Edit className="h-4 w-4" />
@@ -177,12 +176,6 @@ export default function EmployeeManagement() {
           )}
         </div>
       </div>
-
-      <EmployeeModal
-        open={showEmployeeModal}
-        onOpenChange={setShowEmployeeModal}
-        employee={editingEmployee}
-      />
     </div>
   );
 }

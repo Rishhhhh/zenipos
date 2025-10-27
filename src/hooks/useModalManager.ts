@@ -1,13 +1,20 @@
 import { useModalContext, ModalOptions } from '@/contexts/ModalContext';
-import React from 'react';
+import React, { lazy } from 'react';
+import { MODAL_REGISTRY, ModalType } from '@/components/modals';
 
 export function useModalManager() {
-  const { openModal, closeModal, closeAll, modals } = useModalContext();
+  const { openModal: openModalContext, closeModal, closeAll, modals } = useModalContext();
+
+  const openModal = (modalType: ModalType, props?: any, options?: ModalOptions) => {
+    const ModalComponent = MODAL_REGISTRY[modalType];
+    if (!ModalComponent) {
+      throw new Error(`Modal type "${modalType}" not found in registry`);
+    }
+    return openModalContext(ModalComponent as any, props, options);
+  };
 
   return {
-    openModal: (component: React.ComponentType<any>, props?: any, options?: ModalOptions) => {
-      return openModal(component, props, options);
-    },
+    openModal,
     closeModal,
     closeAll,
     activeModals: modals,

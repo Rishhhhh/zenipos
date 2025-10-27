@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
@@ -145,49 +145,49 @@ export function CustomerLoyaltyPanel({ sessionId, total, onCustomerLinked }: Cus
       )}
 
       {/* Login Modal */}
-      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Link Loyalty Account</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="phone">Phone Number (Malaysia)</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="0123456789 or +60123456789"
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Your phone number is used to track loyalty points
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="name">Name (Optional)</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-              />
-            </div>
-
-            <Button onClick={handleLinkCustomer} disabled={isLoading} className="w-full" size="lg">
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
-              Link Account
-            </Button>
+      <GlassModal
+        open={showLoginModal}
+        onOpenChange={setShowLoginModal}
+        title="Link Loyalty Account"
+        size="md"
+        variant="default"
+      >
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="phone">Phone Number (Malaysia)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="0123456789 or +60123456789"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Your phone number is used to track loyalty points
+            </p>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          <div>
+            <Label htmlFor="name">Name (Optional)</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+            />
+          </div>
+
+          <Button onClick={handleLinkCustomer} disabled={isLoading} className="w-full" size="lg">
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <CheckCircle className="h-4 w-4 mr-2" />
+            )}
+            Link Account
+          </Button>
+        </div>
+      </GlassModal>
     </>
   );
 }

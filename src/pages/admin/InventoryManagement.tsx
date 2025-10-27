@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useModalManager } from '@/hooks/useModalManager';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,10 +24,7 @@ import { Link } from 'react-router-dom';
 export default function InventoryManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showItemModal, setShowItemModal] = useState(false);
-  const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
-  const [showForecast, setShowForecast] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const { openModal } = useModalManager();
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['inventory-items'],
@@ -80,11 +78,15 @@ export default function InventoryManagement() {
             <p className="text-muted-foreground">Track stock levels and manage ingredients</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setShowForecast(true)} variant="outline">
+            <Button onClick={() => openModal('aiForecast', { lowStockItems: lowStockItems || [] })} variant="outline">
               <Brain className="h-4 w-4 mr-2" />
               AI Forecast
             </Button>
-            <Button onClick={() => { setSelectedItem(null); setShowItemModal(true); }}>
+            <Button onClick={() => openModal('inventoryItem', {
+              onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+              },
+            })}>
               <Plus className="h-4 w-4 mr-2" />
               Add Item
             </Button>
@@ -184,10 +186,13 @@ export default function InventoryManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                setSelectedItem(item);
-                                setShowAdjustmentModal(true);
-                              }}
+                              onClick={() => openModal('stockAdjustment', {
+                                item,
+                                onSuccess: () => {
+                                  queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+                                  queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
+                                },
+                              })}
                             >
                               Adjust
                             </Button>
@@ -238,35 +243,6 @@ export default function InventoryManagement() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        <InventoryItemModal
-          open={showItemModal}
-          onOpenChange={setShowItemModal}
-          item={selectedItem}
-          onSuccess={() => {
-            setShowItemModal(false);
-            setSelectedItem(null);
-            queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-          }}
-        />
-
-        <StockAdjustmentModal
-          open={showAdjustmentModal}
-          onOpenChange={setShowAdjustmentModal}
-          item={selectedItem}
-          onSuccess={() => {
-            setShowAdjustmentModal(false);
-            setSelectedItem(null);
-            queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-            queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
-          }}
-        />
-
-        <AIForecastPanel
-          open={showForecast}
-          onOpenChange={setShowForecast}
-          lowStockItems={lowStockItems || []}
-        />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useModalManager } from '@/hooks/useModalManager';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -13,10 +14,9 @@ import { Tables } from '@/integrations/supabase/types';
 type Promotion = Tables<'promotions'>;
 
 export default function PromotionManagement() {
-  const [showModal, setShowModal] = useState(false);
-  const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openModal } = useModalManager();
 
   // Fetch all promotions
   const { data: promotions, isLoading } = useQuery({
@@ -68,18 +68,11 @@ export default function PromotionManagement() {
   });
 
   const handleEdit = (promo: Promotion) => {
-    setEditingPromo(promo);
-    setShowModal(true);
+    openModal('promotion', { promotion: promo });
   };
 
   const handleCreate = () => {
-    setEditingPromo(null);
-    setShowModal(true);
-  };
-
-  const handleModalClose = (open: boolean) => {
-    setShowModal(open);
-    if (!open) setEditingPromo(null);
+    openModal('promotion', {});
   };
 
   return (
@@ -164,12 +157,6 @@ export default function PromotionManagement() {
             ))}
           </div>
         )}
-
-        <PromotionModal
-          open={showModal}
-          onOpenChange={handleModalClose}
-          promotion={editingPromo}
-        />
       </div>
     </div>
   );

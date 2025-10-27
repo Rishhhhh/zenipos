@@ -14,6 +14,7 @@ export const MODAL_REGISTRY = {
   zReport: lazy(() => import('@/components/admin/reports/ZReportModal').then(m => ({ default: m.ZReportModal }))),
   qrPay: lazy(() => import('@/components/customer/QrPayModal').then(m => ({ default: m.QrPayModal }))),
   aiApproval: lazy(() => import('@/components/ai/AIApprovalDialog').then(m => ({ default: m.AIApprovalDialog }))),
+  aiForecast: lazy(() => import('@/components/admin/AIForecastPanel').then(m => ({ default: m.AIForecastPanel }))),
 };
 
 export type ModalType = keyof typeof MODAL_REGISTRY;

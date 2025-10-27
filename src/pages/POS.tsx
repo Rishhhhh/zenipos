@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { useState, useEffect } from "react";
+import { useModalManager } from "@/hooks/useModalManager";
 import { usePromotions } from "@/lib/hooks/usePromotions";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
@@ -26,12 +27,8 @@ export default function POS() {
   const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openModal } = useModalManager();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-  const [currentOrderNumber, setCurrentOrderNumber] = useState<string | null>(null);
-  const [showClockInModal, setShowClockInModal] = useState(false);
-  const [showClockOutModal, setShowClockOutModal] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState<any>(null);
   const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
   const [shiftElapsed, setShiftElapsed] = useState<string>('00:00');
@@ -170,10 +167,16 @@ export default function POS() {
       });
       console.log('🍳 Auto-printing kitchen ticket:', kitchenTicket);
       
-      // Open payment modal instead of clearing cart immediately
-      setCurrentOrderId(order.id);
-      setCurrentOrderNumber(order.id.substring(0, 8));
-      setShowPaymentModal(true);
+      // Open payment modal using modal manager
+      openModal('payment', {
+        orderId: order.id,
+        orderNumber: order.id.substring(0, 8),
+        total: getTotal(),
+        onPaymentSuccess: () => {
+          clearCart();
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+        },
+      });
     },
     onError: (error) => {
       toast({
@@ -195,12 +198,24 @@ export default function POS() {
           </Badge>
         )}
         {!currentShiftId ? (
-          <Button onClick={() => setShowClockInModal(true)} size="sm">
+          <Button onClick={() => openModal('employeeClockIn', {
+            onSuccess: (employee: any, shiftId: string) => {
+              setCurrentEmployee(employee);
+              setCurrentShiftId(shiftId);
+            },
+          })} size="sm">
             <LogIn className="h-4 w-4 mr-2" />
             Clock In
           </Button>
         ) : (
-          <Button onClick={() => setShowClockOutModal(true)} variant="outline" size="sm">
+          <Button onClick={() => openModal('employeeClockOut', {
+            shiftId: currentShiftId,
+            onSuccess: () => {
+              setCurrentEmployee(null);
+              setCurrentShiftId(null);
+              setShiftElapsed('00:00');
+            },
+          })} variant="outline" size="sm">
             <LogOut className="h-4 w-4 mr-2" />
             Clock Out
           </Button>
@@ -245,38 +260,6 @@ export default function POS() {
           />
         </ResizablePanel>
       </ResizablePanelGroup>
-      
-      <PaymentModal
-        open={showPaymentModal}
-        onOpenChange={setShowPaymentModal}
-        orderId={currentOrderId || ''}
-        orderNumber={currentOrderNumber || ''}
-        total={getTotal()}
-        onPaymentSuccess={() => {
-          clearCart();
-          queryClient.invalidateQueries({ queryKey: ['orders'] });
-        }}
-      />
-
-      <EmployeeClockInModal
-        open={showClockInModal}
-        onOpenChange={setShowClockInModal}
-        onSuccess={(employee, shiftId) => {
-          setCurrentEmployee(employee);
-          setCurrentShiftId(shiftId);
-        }}
-      />
-
-      <EmployeeClockOutModal
-        open={showClockOutModal}
-        onOpenChange={setShowClockOutModal}
-        shiftId={currentShiftId || ''}
-        onSuccess={() => {
-          setCurrentEmployee(null);
-          setCurrentShiftId(null);
-          setShiftElapsed('00:00');
-        }}
-      />
     </div>
   );
 }

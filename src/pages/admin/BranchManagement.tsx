@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { GlassModal } from '@/components/modals/GlassModal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash, Store } from 'lucide-react';
@@ -101,34 +101,31 @@ export default function BranchManagement() {
           <h1 className="text-3xl font-bold mb-2">Branch Management</h1>
           <p className="text-muted-foreground">Manage your restaurant locations</p>
         </div>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingBranch(null)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Branch
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingBranch ? 'Edit Branch' : 'New Branch'}
-              </DialogTitle>
-            </DialogHeader>
-            <BranchForm
-              branch={editingBranch}
-              onSubmit={(values) => {
-                if (editingBranch) {
-                  updateMutation.mutate({ id: editingBranch.id, ...values });
-                } else {
-                  createMutation.mutate(values);
-                }
-              }}
-              isSubmitting={createMutation.isPending || updateMutation.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => { setEditingBranch(null); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Branch
+        </Button>
       </div>
+
+      <GlassModal
+        open={open}
+        onOpenChange={setOpen}
+        title={editingBranch ? 'Edit Branch' : 'New Branch'}
+        size="md"
+        variant="default"
+      >
+        <BranchForm
+          branch={editingBranch}
+          onSubmit={(values) => {
+            if (editingBranch) {
+              updateMutation.mutate({ id: editingBranch.id, ...values });
+            } else {
+              createMutation.mutate(values);
+            }
+          }}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
+        />
+      </GlassModal>
 
       {isLoading ? (
         <Card className="p-6">
