@@ -73,10 +73,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   return (
     <ModalContext.Provider value={{ modals, openModal, closeModal, closeAll }}>
       {children}
-      {modals.map(modal => {
-        const ModalComponent = modal.component;
-        return <ModalComponent key={modal.id} {...modal.props} />;
-      })}
+      {/* Only render the topmost modal (queue system) */}
+      {modals.length > 0 && (() => {
+        const activeModal = modals[modals.length - 1];
+        const ModalComponent = activeModal.component;
+        return (
+          <React.Suspense fallback={null}>
+            <ModalComponent key={activeModal.id} {...activeModal.props} />
+          </React.Suspense>
+        );
+      })()}
     </ModalContext.Provider>
   );
 }

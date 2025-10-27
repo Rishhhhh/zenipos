@@ -120,13 +120,13 @@ export function GlassModal({
 
   return (
     <div
-      className="glass-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in"
+      className="glass-modal-backdrop glass-backdrop fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
       onClick={handleBackdropClick}
     >
       <div
         ref={contentRef}
         className={cn(
-          'glass-modal-content relative w-full bg-card/95 backdrop-blur-xl shadow-2xl border border-border/50',
+          'glass-modal-content glass-card relative w-full shadow-2xl',
           'animate-scale-in',
           {
             // Default variant - centered modal

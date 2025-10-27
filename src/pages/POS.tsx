@@ -16,9 +16,6 @@ import { LogIn, LogOut, Clock } from "lucide-react";
 import { CategoryList } from "@/components/pos/CategoryList";
 import { ItemGrid } from "@/components/pos/ItemGrid";
 import { CartSummary } from "@/components/pos/CartSummary";
-import { PaymentModal } from "@/components/pos/PaymentModal";
-import { EmployeeClockInModal } from "@/components/pos/EmployeeClockInModal";
-import { EmployeeClockOutModal } from "@/components/pos/EmployeeClockOutModal";
 
 export default function POS() {
   // Track performance for this page
