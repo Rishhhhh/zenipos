@@ -82,6 +82,13 @@ export default {
         'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         'dock': '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
       },
+      backgroundImage: {
+        'grid-pattern': `linear-gradient(to right, hsl(var(--primary) / 0.05) 1px, transparent 1px),
+                        linear-gradient(to bottom, hsl(var(--primary) / 0.05) 1px, transparent 1px)`,
+      },
+      backgroundSize: {
+        'grid-80': '80px 80px',
+      },
       keyframes: {
         "accordion-down": {
           from: {

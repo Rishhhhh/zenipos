@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Grip } from "lucide-react";
+import { snapSizeToGrid } from "@/lib/widgets/gridSystem";
 
 interface DraggableWidgetProps {
   id: string;
@@ -73,6 +74,7 @@ export function DraggableWidget({
       const newWidth = Math.max(minWidth, Math.min(maxWidth, startPosRef.current.width + deltaX));
       const newHeight = Math.max(minHeight, Math.min(maxHeight, startPosRef.current.height + deltaY));
 
+      // Live preview (no snapping during drag)
       onPositionChange({ width: newWidth, height: newHeight });
     };
 
@@ -80,6 +82,17 @@ export function DraggableWidget({
       setIsResizing(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      
+      // Snap final size to grid
+      const currentWidth = position.width || widgetDef?.minSize.width || 400;
+      const currentHeight = position.height || widgetDef?.minSize.height || 400;
+      const snapped = snapSizeToGrid(currentWidth, currentHeight);
+      
+      // Apply snapped size
+      onPositionChange({
+        width: snapped.width,
+        height: snapped.height,
+      });
     };
 
     document.addEventListener('mousemove', handleMouseMove);

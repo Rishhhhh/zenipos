@@ -17,9 +17,14 @@ export interface WidgetLayout {
 const DEFAULT_LAYOUT: WidgetLayout = {
   widgetOrder: ["quick-pos", "active-orders", "sales"],
   widgetPositions: {
-    "quick-pos": { x: 20, y: 20, width: 500, height: 600, zIndex: 1 },
-    "active-orders": { x: 540, y: 20, width: 400, height: 300, zIndex: 2 },
-    "sales": { x: 960, y: 20, width: 500, height: 300, zIndex: 3 },
+    // Quick POS: Top-left, 5 cols x 7 rows (400x560px)
+    "quick-pos": { x: 0, y: 0, width: 400, height: 560, zIndex: 1 },
+    
+    // Active Orders: Top-middle, 5 cols x 4 rows (400x320px)
+    "active-orders": { x: 480, y: 0, width: 400, height: 320, zIndex: 2 },
+    
+    // Sales: Top-right, 5 cols x 4 rows (400x320px)
+    "sales": { x: 880, y: 0, width: 400, height: 320, zIndex: 3 },
   },
 };
 

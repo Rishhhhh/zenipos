@@ -12,6 +12,8 @@ import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { haptics } from "@/lib/haptics";
+import { softSnapPosition, constrainToCanvas, GRID_CONFIG } from "@/lib/widgets/gridSystem";
+import { GridOverlay } from "@/components/dashboard/GridOverlay";
 
 export default function Dashboard() {
   const { employee } = useAuth();
@@ -42,9 +44,23 @@ export default function Dashboard() {
     const currentPos = layout.widgetPositions[widgetId];
     
     if (currentPos) {
+      const rawX = currentPos.x + delta.x;
+      const rawY = currentPos.y + delta.y;
+      
+      // Apply soft magnetic snapping
+      const snapped = softSnapPosition(rawX, rawY);
+      
+      // Constrain to canvas bounds
+      const constrained = constrainToCanvas(
+        snapped.x, 
+        snapped.y, 
+        currentPos.width || 400, 
+        currentPos.height || 400
+      );
+      
       updatePosition(widgetId, {
-        x: currentPos.x + delta.x,
-        y: currentPos.y + delta.y,
+        x: constrained.x,
+        y: constrained.y,
       });
     }
   };
@@ -88,7 +104,14 @@ export default function Dashboard() {
           sensors={sensors}
         >
           <SortableContext items={layout.widgetOrder} strategy={rectSortingStrategy}>
-            <div className="relative min-h-[1000px] w-full">
+            <div 
+              className="relative w-full mx-auto" 
+              style={{ 
+                height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
+                maxWidth: `${GRID_CONFIG.CANVAS_WIDTH}px`,
+              }}
+            >
+              <GridOverlay />
               {layout.widgetOrder.map((widgetId) => {
                 const widgetDef = getWidgetById(widgetId);
                 if (!widgetDef) return null;
@@ -126,8 +149,8 @@ export default function Dashboard() {
 
         {/* Help Text */}
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Press and hold (0.5s) any widget to drag • Widgets can overlap freely</p>
-          <p>Drag bottom-right corner to resize • Layout saves automatically</p>
+          <p>Press and hold (0.5s) any widget to drag • Magnetically snaps to grid</p>
+          <p>Drag bottom-right corner to resize • All widgets fit in viewport</p>
         </div>
       </div>
 
