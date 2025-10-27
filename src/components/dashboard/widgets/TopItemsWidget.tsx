@@ -1,10 +1,15 @@
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { cn } from "@/lib/utils";
 
 export function TopItemsWidget() {
+  const { config } = useWidgetConfig('top-items');
+  
   const { data: topItems, isLoading } = useQuery({
     queryKey: ["top-selling-items"],
     queryFn: async () => {
@@ -58,37 +63,57 @@ export function TopItemsWidget() {
         <h3 className="font-semibold text-base">Top Selling Items</h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className={cn("flex-1 overflow-y-auto", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))
         ) : topItems && topItems.length > 0 ? (
-          topItems.map((item, index) => (
-            <div key={index} className="p-2 bg-accent/30 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium line-clamp-1 flex-1">
-                  {index + 1}. {item.name}
-                </span>
-                <span className="text-xs font-semibold text-primary ml-2">
-                  RM {item.revenue.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-accent rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full"
-                    style={{
-                      width: `${(item.quantity / (topItems[0]?.quantity || 1)) * 100}%`,
-                    }}
-                  />
+          config.displayType === 'cards' ? (
+            <div className={cn("grid gap-2", config.compactMode ? "grid-cols-1" : "grid-cols-1")}>
+              {topItems.map((item, index) => (
+                <div key={index} className={cn("bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-2")}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={cn("font-medium line-clamp-1 flex-1", config.compactMode ? "text-xs" : "text-sm")}>
+                      {index + 1}. {item.name}
+                    </span>
+                    <span className="text-xs font-semibold text-primary ml-2">
+                      RM {item.revenue.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-accent rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full"
+                        style={{
+                          width: `${(item.quantity / (topItems[0]?.quantity || 1)) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {item.quantity} sold
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {item.quantity} sold
-                </span>
-              </div>
+              ))}
             </div>
-          ))
+          ) : (
+            <div className="space-y-1">
+              {topItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-1.5 bg-accent/30 rounded text-xs">
+                  <span className="font-medium line-clamp-1 flex-1">
+                    {index + 1}. {item.name}
+                  </span>
+                  <div className="flex items-center gap-2 ml-2">
+                    <Badge variant="outline" className="text-[10px] h-4">{item.quantity}</Badge>
+                    <span className="font-semibold text-primary whitespace-nowrap">
+                      RM {item.revenue.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
             No sales data yet

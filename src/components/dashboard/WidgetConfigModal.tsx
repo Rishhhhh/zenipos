@@ -38,6 +38,7 @@ export function WidgetConfigModal({ widgetId, open, onOpenChange }: WidgetConfig
 
   if (!widgetDef) return null;
 
+  const { capabilities } = widgetDef;
   const themeColors = getThemeColors(theme || 'cosmic-modern');
 
   return (
@@ -46,7 +47,7 @@ export function WidgetConfigModal({ widgetId, open, onOpenChange }: WidgetConfig
         <DialogHeader>
           <DialogTitle>Configure {widgetDef.name}</DialogTitle>
           <DialogDescription>
-            Customize how this widget displays data
+            Customize how this widget displays {capabilities.dataType} data
           </DialogDescription>
         </DialogHeader>
         
@@ -58,7 +59,7 @@ export function WidgetConfigModal({ widgetId, open, onOpenChange }: WidgetConfig
           </TabsList>
           
           <TabsContent value="display" className="space-y-4 mt-4">
-            {/* Visualization Type */}
+            {/* Visualization Type - FILTERED BY CAPABILITIES */}
             <div className="space-y-2">
               <Label>Visualization Style</Label>
               <Select 
@@ -69,45 +70,58 @@ export function WidgetConfigModal({ widgetId, open, onOpenChange }: WidgetConfig
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card z-50">
-                  <SelectItem value="chart">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Chart (recommended for finance data)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="table">
-                    <div className="flex items-center gap-2">
-                      <Table className="h-4 w-4" />
-                      <span>Table (recommended for items/names)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cards">
-                    <div className="flex items-center gap-2">
-                      <LayoutGrid className="h-4 w-4" />
-                      <span>Cards (visual tiles)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="gauge">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4" />
-                      <span>Gauge (KPI meter)</span>
-                    </div>
-                  </SelectItem>
+                  {capabilities.supportedDisplayTypes.includes('chart') && (
+                    <SelectItem value="chart">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Chart (visual trends)</span>
+                      </div>
+                    </SelectItem>
+                  )}
+                  {capabilities.supportedDisplayTypes.includes('table') && (
+                    <SelectItem value="table">
+                      <div className="flex items-center gap-2">
+                        <Table className="h-4 w-4" />
+                        <span>Table (detailed list)</span>
+                      </div>
+                    </SelectItem>
+                  )}
+                  {capabilities.supportedDisplayTypes.includes('cards') && (
+                    <SelectItem value="cards">
+                      <div className="flex items-center gap-2">
+                        <LayoutGrid className="h-4 w-4" />
+                        <span>Cards (visual tiles)</span>
+                      </div>
+                    </SelectItem>
+                  )}
+                  {capabilities.supportedDisplayTypes.includes('gauge') && (
+                    <SelectItem value="gauge">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4" />
+                        <span>Gauge (progress meter)</span>
+                      </div>
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {capabilities.supportedDisplayTypes.length} visualization{capabilities.supportedDisplayTypes.length > 1 ? 's' : ''} available for {capabilities.dataType} data
+              </p>
             </div>
             
-            {/* Compact Mode */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Compact Mode</Label>
-                <p className="text-xs text-muted-foreground">Dense data-rich view with less spacing</p>
+            {/* Compact Mode - ONLY if supported */}
+            {capabilities.hasCompactMode && (
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Compact Mode</Label>
+                  <p className="text-xs text-muted-foreground">Dense data-rich view with less spacing</p>
+                </div>
+                <Switch 
+                  checked={config.compactMode}
+                  onCheckedChange={(v) => saveConfig({ ...config, compactMode: v })}
+                />
               </div>
-              <Switch 
-                checked={config.compactMode}
-                onCheckedChange={(v) => saveConfig({ ...config, compactMode: v })}
-              />
-            </div>
+            )}
             
             {/* Color Preview */}
             <div className="space-y-2">

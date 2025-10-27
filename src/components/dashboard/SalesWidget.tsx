@@ -5,8 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { MagicBento } from "@/components/ui/magic-bento";
 import { startOfDay, subDays } from "date-fns";
+import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { cn } from "@/lib/utils";
 
 export function SalesWidget() {
+  const { config } = useWidgetConfig('sales');
+  
   const { data: todayStats, isLoading, refetch } = useQuery({
     queryKey: ["today-sales"],
     queryFn: async () => {
@@ -82,9 +86,9 @@ export function SalesWidget() {
         </Button>
       </div>
 
-      {/* Metrics Grid */}
+      {/* Metrics Display */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3")}>
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -92,9 +96,55 @@ export function SalesWidget() {
             />
           ))}
         </div>
+      ) : config.displayType === 'table' ? (
+        <div className="space-y-2">
+          <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
+            <div>
+              <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Revenue</p>
+              <p className={cn("font-bold text-primary", config.compactMode ? "text-lg" : "text-2xl")}>
+                RM {todayStats?.revenue.toFixed(2) || "0.00"}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              {(todayStats?.revenueTrend || 0) >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-success" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-danger" />
+              )}
+              <span className={cn((todayStats?.revenueTrend || 0) >= 0 ? "text-success" : "text-danger")}>
+                {Math.abs(todayStats?.revenueTrend || 0).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
+            <div>
+              <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Orders</p>
+              <p className={cn("font-bold", config.compactMode ? "text-lg" : "text-2xl")}>
+                {todayStats?.orders || 0}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              {(todayStats?.orderTrend || 0) >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-success" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-danger" />
+              )}
+              <span className={cn((todayStats?.orderTrend || 0) >= 0 ? "text-success" : "text-danger")}>
+                {Math.abs(todayStats?.orderTrend || 0).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
+            <div>
+              <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Items Sold</p>
+              <p className={cn("font-bold", config.compactMode ? "text-lg" : "text-2xl")}>
+                {todayStats?.items || 0}
+              </p>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Revenue */}
           <MagicBento
             title="Revenue"
             value={`RM ${todayStats?.revenue.toFixed(2) || "0.00"}`}
@@ -105,8 +155,6 @@ export function SalesWidget() {
             subtitle="Total earnings today"
             threshold={{ warning: 1000, danger: 500 }}
           />
-
-          {/* Orders */}
           <MagicBento
             title="Orders"
             value={todayStats?.orders.toString() || "0"}
@@ -117,8 +165,6 @@ export function SalesWidget() {
             subtitle="Completed orders"
             threshold={{ warning: 20, danger: 10 }}
           />
-
-          {/* Items Sold */}
           <MagicBento
             title="Items Sold"
             value={todayStats?.items.toString() || "0"}

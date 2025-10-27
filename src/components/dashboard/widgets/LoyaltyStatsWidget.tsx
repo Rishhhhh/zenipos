@@ -1,10 +1,15 @@
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { cn } from "@/lib/utils";
 
 export function LoyaltyStatsWidget() {
+  const { config } = useWidgetConfig('loyalty-stats');
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ["loyalty-stats"],
     queryFn: async () => {
@@ -56,18 +61,31 @@ export function LoyaltyStatsWidget() {
         ) : (
           <>
             {/* Stats Summary */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Points Today</p>
-                <p className="text-lg font-bold text-primary">
-                  {stats?.totalPoints || 0}
-                </p>
+            {config.displayType === 'cards' ? (
+              <div className={cn("grid gap-2", config.compactMode ? "grid-cols-2" : "grid-cols-2")}>
+                <div className={cn("bg-primary/10 rounded-lg", config.compactMode ? "p-1.5" : "p-2")}>
+                  <p className="text-xs text-muted-foreground mb-1">Points Today</p>
+                  <p className={cn("font-bold text-primary", config.compactMode ? "text-base" : "text-lg")}>
+                    {stats?.totalPoints || 0}
+                  </p>
+                </div>
+                <div className={cn("bg-accent/50 rounded-lg", config.compactMode ? "p-1.5" : "p-2")}>
+                  <p className="text-xs text-muted-foreground mb-1">Customers</p>
+                  <p className={cn("font-bold", config.compactMode ? "text-base" : "text-lg")}>{stats?.uniqueCustomers || 0}</p>
+                </div>
               </div>
-              <div className="p-2 bg-accent/50 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Customers</p>
-                <p className="text-lg font-bold">{stats?.uniqueCustomers || 0}</p>
+            ) : (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between p-1.5 bg-accent/30 rounded text-xs">
+                  <span className="text-muted-foreground">Points Today</span>
+                  <span className="font-semibold text-primary">{stats?.totalPoints || 0}</span>
+                </div>
+                <div className="flex items-center justify-between p-1.5 bg-accent/30 rounded text-xs">
+                  <span className="text-muted-foreground">Active Customers</span>
+                  <Badge variant="outline" className="text-[10px] h-4">{stats?.uniqueCustomers || 0}</Badge>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Top Customers */}
             {stats?.topCustomers && stats.topCustomers.length > 0 && (

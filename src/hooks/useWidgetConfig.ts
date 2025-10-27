@@ -13,15 +13,16 @@ export interface WidgetConfig {
 }
 
 /**
- * Smart defaults: Charts for finance data, Tables for text data
+ * Get default display type from widget capabilities
  */
-export function getDefaultDisplayType(widgetType: string): 'chart' | 'table' {
-  const financeWidgets = ['sales', 'revenue-chart', 'loyalty-stats'];
-  const textWidgets = ['top-items', 'low-stock', 'active-shifts'];
+export function getDefaultDisplayType(widgetId: string): 'chart' | 'table' | 'cards' | 'gauge' {
+  const { getWidgetById } = require('@/lib/widgets/widgetCatalog');
+  const widgetDef = getWidgetById(widgetId);
   
-  if (financeWidgets.includes(widgetType)) return 'chart';
-  if (textWidgets.includes(widgetType)) return 'table';
-  return 'chart'; // Default fallback
+  if (!widgetDef) return 'cards';
+  
+  // Use first supported display type as default
+  return widgetDef.capabilities.supportedDisplayTypes[0];
 }
 
 /**

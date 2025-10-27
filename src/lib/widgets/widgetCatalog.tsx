@@ -32,6 +32,12 @@ export interface WidgetDefinition {
   roles: ("cashier" | "manager" | "admin")[];
   category: string;
   defaultSize: { cols: number; rows: number };
+  capabilities: {
+    supportedDisplayTypes: ('chart' | 'table' | 'cards' | 'gauge')[];
+    dataType: 'financial' | 'text-list' | 'time-series' | 'status-list';
+    hasCompactMode: boolean;
+    customSettings?: string[];
+  };
 }
 
 export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
@@ -45,6 +51,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["cashier", "manager", "admin"],
       category: "pos",
       defaultSize: { cols: 2, rows: 2 },
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
+        dataType: 'text-list',
+        hasCompactMode: false,
+      },
     },
     {
       id: "active-orders",
@@ -55,6 +66,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["cashier", "manager", "admin"],
       category: "pos",
       defaultSize: { cols: 1, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['table', 'cards'],
+        dataType: 'status-list',
+        hasCompactMode: true,
+      },
     },
   ],
   analytics: [
@@ -67,6 +83,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "analytics",
       defaultSize: { cols: 2, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['cards', 'table'],
+        dataType: 'financial',
+        hasCompactMode: true,
+      },
     },
     {
       id: "revenue-chart",
@@ -77,6 +98,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "analytics",
       defaultSize: { cols: 2, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['chart'],
+        dataType: 'time-series',
+        hasCompactMode: false,
+      },
     },
     {
       id: "top-items",
@@ -87,6 +113,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "analytics",
       defaultSize: { cols: 1, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['table', 'cards'],
+        dataType: 'text-list',
+        hasCompactMode: true,
+      },
     },
   ],
   inventory: [
@@ -99,6 +130,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "inventory",
       defaultSize: { cols: 1, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['table', 'cards'],
+        dataType: 'status-list',
+        hasCompactMode: false,
+      },
     },
   ],
   customers: [
@@ -111,6 +147,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "customers",
       defaultSize: { cols: 1, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['cards', 'table'],
+        dataType: 'financial',
+        hasCompactMode: true,
+      },
     },
   ],
   employees: [
@@ -123,6 +164,11 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "employees",
       defaultSize: { cols: 1, rows: 1 },
+      capabilities: {
+        supportedDisplayTypes: ['table', 'cards'],
+        dataType: 'status-list',
+        hasCompactMode: true,
+      },
     },
   ],
 };

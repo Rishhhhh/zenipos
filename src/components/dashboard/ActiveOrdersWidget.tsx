@@ -7,9 +7,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { cn } from "@/lib/utils";
 
 export function ActiveOrdersWidget() {
   const navigate = useNavigate();
+  const { config } = useWidgetConfig('active-orders');
 
   const { data: orders, refetch } = useQuery({
     queryKey: ["active-orders"],
@@ -75,27 +78,30 @@ export function ActiveOrdersWidget() {
       </div>
 
       {/* Orders List */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+      <div className={cn("flex-1 overflow-y-auto mb-4", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
         {!orders || orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-sm">
             <ChefHat className="h-8 w-8 mb-2 opacity-50" />
             <p>No active orders</p>
           </div>
-        ) : (
+        ) : config.displayType === 'cards' ? (
           orders.map((order) => (
             <div
               key={order.id}
-              className="p-3 bg-accent/30 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+              className={cn(
+                "bg-accent/30 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer",
+                config.compactMode ? "p-2" : "p-3"
+              )}
               onClick={() => navigate("/kds")}
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-semibold">
+                  <span className={cn("font-mono font-semibold", config.compactMode ? "text-xs" : "text-sm")}>
                     #{order.id.slice(0, 8)}
                   </span>
                   <Badge
                     variant="outline"
-                    className={getStatusColor(order.status)}
+                    className={cn(getStatusColor(order.status), config.compactMode && "text-xs h-4")}
                   >
                     {order.status}
                   </Badge>
@@ -112,12 +118,32 @@ export function ActiveOrdersWidget() {
                     addSuffix: true,
                   })}
                 </div>
-                <span className="text-sm font-semibold text-primary">
+                <span className={cn("font-semibold text-primary", config.compactMode ? "text-xs" : "text-sm")}>
                   RM {order.total.toFixed(2)}
                 </span>
               </div>
             </div>
           ))
+        ) : (
+          <div className="space-y-1">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="p-2 bg-accent/30 rounded hover:bg-accent/50 transition-colors cursor-pointer text-xs"
+                onClick={() => navigate("/kds")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-semibold">#{order.id.slice(0, 8)}</span>
+                    <Badge variant="outline" className={cn(getStatusColor(order.status), "text-[10px] h-4")}>
+                      {order.status}
+                    </Badge>
+                  </div>
+                  <span className="font-semibold text-primary">RM {order.total.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

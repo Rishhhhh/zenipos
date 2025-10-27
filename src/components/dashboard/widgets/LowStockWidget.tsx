@@ -1,14 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 
 export function LowStockWidget() {
   const navigate = useNavigate();
+  const { config } = useWidgetConfig('low-stock');
 
   const { data: lowStockItems, isLoading } = useQuery({
     queryKey: ["low-stock-items"],
@@ -50,38 +53,57 @@ export function LowStockWidget() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+      <div className={cn("flex-1 overflow-y-auto mb-3", config.displayType === 'table' ? "space-y-1" : "space-y-2")}>
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-16 w-full" />
           ))
         ) : lowStockItems && lowStockItems.length > 0 ? (
-          lowStockItems.map((item) => {
-            const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
-            const percentage = Math.min(100, (Number(item.current_qty) / Number(item.reorder_point)) * 100);
+          config.displayType === 'cards' ? (
+            lowStockItems.map((item) => {
+              const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
+              const percentage = Math.min(100, (Number(item.current_qty) / Number(item.reorder_point)) * 100);
 
-            return (
-              <div key={item.id} className="p-2 bg-accent/30 rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium line-clamp-1">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.current_qty} {item.unit} left
-                    </p>
+              return (
+                <div key={item.id} className="p-2 bg-accent/30 rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium line-clamp-1">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.current_qty} {item.unit} left
+                      </p>
+                    </div>
+                    <span className={cn("text-xs font-semibold ml-2", stockInfo.color)}>
+                      {stockInfo.level}
+                    </span>
                   </div>
-                  <span className={cn("text-xs font-semibold ml-2", stockInfo.color)}>
-                    {stockInfo.level}
-                  </span>
+                  <div className="relative h-2 bg-accent rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", stockInfo.bg)}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="relative h-2 bg-accent rounded-full overflow-hidden">
-                  <div
-                    className={cn("h-full rounded-full transition-all", stockInfo.bg)}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })
+              );
+            })
+          ) : (
+            <div className="space-y-1">
+              {lowStockItems.map((item) => {
+                const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-1.5 bg-accent/30 rounded text-xs">
+                    <span className="font-medium line-clamp-1 flex-1">{item.name}</span>
+                    <div className="flex items-center gap-2 ml-2">
+                      <span className="text-muted-foreground">{item.current_qty} {item.unit}</span>
+                      <Badge variant="outline" className={cn("text-[10px] h-4", stockInfo.color)}>
+                        {stockInfo.level}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
             All items in stock
