@@ -36,6 +36,8 @@ const RateLimitMonitor = lazy(() => import("./pages/admin/RateLimitMonitor"));
 const SupplierManagement = lazy(() => import("./pages/admin/SupplierManagement"));
 const PurchaseOrders = lazy(() => import("./pages/admin/PurchaseOrders"));
 const ReceiptTemplates = lazy(() => import("./pages/admin/ReceiptTemplates"));
+const TableLayout = lazy(() => import("./pages/admin/TableLayout"));
+const ModifierManagement = lazy(() => import("./pages/admin/ModifierManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -246,6 +248,20 @@ const App = () => (
                 <ProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <ReceiptTemplates />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/tables" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <TableLayout />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/modifiers" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <ModifierManagement />
                 </ProtectedRoute>
               } />
               

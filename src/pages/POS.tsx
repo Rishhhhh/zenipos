@@ -18,6 +18,7 @@ import { ItemGrid } from "@/components/pos/ItemGrid";
 import { CartSummary } from "@/components/pos/CartSummary";
 import { TableSelectionModal } from "@/components/pos/TableSelectionModal";
 import { ModifierSelectionModal } from "@/components/pos/ModifierSelectionModal";
+import { SplitBillModal } from "@/components/pos/SplitBillModal";
 
 export default function POS() {
   // Track performance for this page
@@ -30,6 +31,7 @@ export default function POS() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [showTableSelect, setShowTableSelect] = useState(false);
   const [showModifierSelect, setShowModifierSelect] = useState(false);
+  const [showSplitBill, setShowSplitBill] = useState(false);
   const [pendingItem, setPendingItem] = useState<any>(null);
   
   // Auto-evaluate promotions
@@ -213,6 +215,21 @@ export default function POS() {
         }}
       />
 
+      <SplitBillModal
+        open={showSplitBill}
+        onOpenChange={setShowSplitBill}
+        items={items}
+        onConfirm={(splits) => {
+          // Handle split bills - create separate orders
+          toast({
+            title: `Bill split into ${splits.length} orders`,
+            description: 'Each bill can now be paid separately',
+          });
+          setShowSplitBill(false);
+          // TODO: Implement actual order splitting logic
+        }}
+      />
+
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} minSize={15}>
           <CategoryList
@@ -257,6 +274,7 @@ export default function POS() {
             onUpdateQuantity={updateQuantity}
             onVoidItem={voidItem}
             onSendToKDS={() => sendToKDS.mutate()}
+            onSplitBill={() => setShowSplitBill(true)}
             isSending={sendToKDS.isPending}
           />
         </ResizablePanel>

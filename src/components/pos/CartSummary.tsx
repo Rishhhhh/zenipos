@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, CreditCard, ShoppingCart, Tag, Trash2 } from "lucide-react";
+import { Minus, Plus, CreditCard, ShoppingCart, Tag, Trash2, Split } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import type { EvaluationResult } from "@/lib/promotions/evaluator";
 import { ManagerPinModal } from "@/components/pos/ManagerPinModal";
@@ -18,6 +18,7 @@ interface CartSummaryProps {
   onUpdateQuantity: (id: string, quantity: number) => void;
   onVoidItem: (id: string, managerId?: string) => Promise<void>;
   onSendToKDS: () => void;
+  onSplitBill?: () => void;
   isSending: boolean;
 }
 
@@ -31,6 +32,7 @@ export function CartSummary({
   onUpdateQuantity,
   onVoidItem,
   onSendToKDS,
+  onSplitBill,
   isSending,
 }: CartSummaryProps) {
   const [showManagerPin, setShowManagerPin] = useState(false);
@@ -147,15 +149,29 @@ export function CartSummary({
           <span>RM {total.toFixed(2)}</span>
         </div>
         
-        <Button
-          className="w-full mt-4 touch-target"
-          size="lg"
-          onClick={onSendToKDS}
-          disabled={items.length === 0 || isSending}
-        >
-          <CreditCard className="h-4 w-4 mr-2" />
-          {isSending ? 'Processing...' : 'Process Payment'}
-        </Button>
+        {/* Action Buttons */}
+        <div className="space-y-2 mt-4">
+          {items.length > 1 && onSplitBill && (
+            <Button
+              variant="outline"
+              className="w-full touch-target"
+              onClick={onSplitBill}
+            >
+              <Split className="h-4 w-4 mr-2" />
+              Split Bill
+            </Button>
+          )}
+          
+          <Button
+            className="w-full touch-target"
+            size="lg"
+            onClick={onSendToKDS}
+            disabled={items.length === 0 || isSending}
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            {isSending ? 'Processing...' : 'Process Payment'}
+          </Button>
+        </div>
       </div>
 
       <ManagerPinModal
