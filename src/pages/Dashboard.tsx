@@ -5,8 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
 import { ResizableWidget } from "@/components/dashboard/ResizableWidget";
 import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
+import { WidgetMenu } from "@/components/dashboard/WidgetMenu";
+import { WidgetConfigModal } from "@/components/dashboard/WidgetConfigModal";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +17,7 @@ export default function Dashboard() {
   const { employee } = useAuth();
   const userRole = employee?.role || "cashier";
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
   
   const { layout, updateOrder, updateSize, addWidget, removeWidget, resetLayout } = useWidgetLayout();
 
@@ -98,15 +101,13 @@ export default function Dashboard() {
                     >
                       <Suspense fallback={<Skeleton className="h-full w-full" />}>
                         <div className="h-full relative group">
+                          <WidgetMenu 
+                            widgetId={widgetId}
+                            widgetName={widgetDef.name}
+                            onConfigure={() => setConfigModalWidget(widgetId)}
+                            onDelete={() => removeWidget(widgetId)}
+                          />
                           <WidgetComponent />
-                          {/* Remove Widget Button */}
-                          <button
-                            onClick={() => removeWidget(widgetId)}
-                            className="absolute top-2 right-2 p-1 rounded-md bg-destructive/10 hover:bg-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                            aria-label="Remove widget"
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </button>
                         </div>
                       </Suspense>
                     </ResizableWidget>
@@ -131,6 +132,13 @@ export default function Dashboard() {
         userRole={userRole}
         activeWidgets={layout.widgetOrder}
         onAddWidget={addWidget}
+      />
+
+      {/* Widget Configuration Modal */}
+      <WidgetConfigModal
+        widgetId={configModalWidget}
+        open={!!configModalWidget}
+        onOpenChange={(open) => !open && setConfigModalWidget(null)}
       />
     </div>
   );

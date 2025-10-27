@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ResizableWidgetProps {
@@ -18,6 +17,7 @@ export function ResizableWidget({
   onResize 
 }: ResizableWidgetProps) {
   const [isResizing, setIsResizing] = useState(false);
+  const [isColliding, setIsColliding] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0, cols, rows });
 
@@ -40,6 +40,10 @@ export function ResizableWidget({
       // Only update if changed
       if (newCols !== cols || newRows !== rows) {
         onResize(newCols, newRows);
+        
+        // Show collision animation briefly
+        setIsColliding(true);
+        setTimeout(() => setIsColliding(false), 600);
       }
     };
 
@@ -72,7 +76,8 @@ export function ResizableWidget({
       className={cn(
         "relative group",
         `col-span-${cols} row-span-${rows}`,
-        isResizing && "z-50"
+        isResizing && "z-50",
+        isColliding && "animate-pulse ring-2 ring-amber-500"
       )}
       style={{
         gridColumn: `span ${cols}`,
@@ -81,21 +86,17 @@ export function ResizableWidget({
     >
       {children}
       
-      {/* Resize Handle */}
-      <button
+      {/* Invisible Resize Hitbox - 24px x 24px at bottom-right */}
+      <div
         className={cn(
-          "absolute bottom-2 right-2 p-1.5 rounded-md",
-          "bg-background/80 backdrop-blur-sm border border-border",
-          "opacity-0 group-hover:opacity-100 transition-opacity",
-          "hover:bg-accent hover:border-primary",
-          "cursor-nwse-resize z-10",
-          isResizing && "opacity-100 bg-accent border-primary"
+          "absolute bottom-0 right-0 w-6 h-6",
+          "cursor-nwse-resize",
+          "hover:bg-primary/10 transition-colors rounded-tl-lg",
+          isResizing && "bg-primary/20"
         )}
         onMouseDown={handleResizeStart}
         aria-label="Resize widget"
-      >
-        <Maximize2 className="h-3 w-3 text-muted-foreground" />
-      </button>
+      />
     </div>
   );
 }

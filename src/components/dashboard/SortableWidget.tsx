@@ -43,9 +43,8 @@ export function SortableWidget({ id, children, index }: SortableWidgetProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative animate-fade-in will-change-transform",
-        "cursor-grab active:cursor-grabbing",
-        isDragging && "scale-[1.02] shadow-2xl shadow-primary/30 z-50",
+        "relative animate-fade-in will-change-transform group",
+        isDragging ? "cursor-grabbing scale-[1.02] shadow-2xl z-50" : "cursor-grab",
         isHolding && "ring-2 ring-primary/50"
       )}
       {...attributes}
