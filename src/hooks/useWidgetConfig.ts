@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 
 export interface WidgetConfig {
   displayType: 'chart' | 'table' | 'cards' | 'gauge';
@@ -16,7 +17,6 @@ export interface WidgetConfig {
  * Get default display type from widget capabilities
  */
 export function getDefaultDisplayType(widgetId: string): 'chart' | 'table' | 'cards' | 'gauge' {
-  const { getWidgetById } = require('@/lib/widgets/widgetCatalog');
   const widgetDef = getWidgetById(widgetId);
   
   if (!widgetDef) return 'cards';
