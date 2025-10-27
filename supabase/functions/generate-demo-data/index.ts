@@ -78,14 +78,14 @@ serve(async (req) => {
 
     const menuItems = [];
     const itemNames = [
-      'Spring Rolls', 'Garlic Bread', 'Bruschetta', 'Calamari', 'Nachos', 'Wings', 'Satay', 'Dim Sum',
-      'Tom Yum', 'Miso Soup', 'Caesar Salad', 'Garden Salad', 'Greek Salad',
-      'Nasi Goreng', 'Pad Thai', 'Burger', 'Pizza', 'Pasta', 'Steak', 'Salmon', 'Curry', 'Tacos', 'Ramen', 'Pho', 'Sushi', 'Kebab',
-      'Fries', 'Rice', 'Mashed Potato', 'Coleslaw', 'Garlic Bread',
-      'Tiramisu', 'Cheesecake', 'Ice Cream', 'Brownie', 'Panna Cotta',
-      'Coke', 'Sprite', 'Juice', 'Smoothie', 'Beer', 'Wine', 'Mojito', 'Lemonade',
-      'Coffee', 'Tea', 'Cappuccino', 'Latte', 'Hot Chocolate',
-      'Chef Special', 'Daily Special', 'Seasonal Dish', 'House Special',
+      'Popiah', 'Curry Puff', 'Keropok Lekor', 'Cucur Udang', 'Samosa', 'Spring Roll', 'Satay Ayam', 'Otak-Otak',
+      'Sup Tulang', 'Tom Yum', 'Soto Ayam', 'Salad Ulam', 'Kerabu',
+      'Nasi Goreng Kampung', 'Nasi Lemak', 'Mee Goreng Mamak', 'Char Kuey Teow', 'Laksa Johor', 'Rendang Daging', 'Ayam Percik', 'Sambal Udang', 'Ikan Bakar', 'Nasi Kandar', 'Roti Canai', 'Murtabak', 'Nasi Kerabu',
+      'Keledek Goreng', 'Nasi Putih', 'Acar Jelatah', 'Ulam Raja', 'Sayur Goreng',
+      'Kuih Lapis', 'Cendol', 'Ais Kacang', 'Pulut Kuning', 'Dodol',
+      'Air Sirap', 'Limau Ais', 'Bandung', 'Milo Ais', 'Teh Tarik', 'Kopi O', 'Sky Juice', 'Teh O Limau',
+      'Kopi Tarik', 'Teh Halia', 'Nescafe', 'Milo Panas', 'Horlicks',
+      'Nasi Dagang', 'Nasi Beriani', 'Gulai Kambing', 'Asam Pedas',
     ];
 
     const phi = 1.618; // Golden ratio
@@ -98,6 +98,7 @@ serve(async (req) => {
         name: itemNames[i],
         sku: `ITEM-${String(i).padStart(4, '0')}`,
         category_id: category.id,
+        sst_rate: 0.06,
         price,
         cost: Math.round(price * 0.35),
         tax_rate: 0.08,

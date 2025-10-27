@@ -31,7 +31,6 @@ const AIHistoryDashboard = lazy(() => import("./pages/admin/AIHistoryDashboard")
 const BranchManagement = lazy(() => import("./pages/admin/BranchManagement"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const Documentation = lazy(() => import("./pages/Documentation"));
-const Documentation = lazy(() => import("./pages/Documentation"));
 const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const SystemHealthDashboard = lazy(() => import("./pages/admin/SystemHealthDashboard"));
 const PerformanceDashboard = lazy(() => import("./pages/admin/PerformanceDashboard"));

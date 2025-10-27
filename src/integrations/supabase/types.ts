@@ -125,6 +125,62 @@ export type Database = {
         }
         Relationships: []
       }
+      b2c_consolidation_buckets: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          month: string
+          outlet_name: string
+          qr_url: string | null
+          status: string | null
+          submitted_at: string | null
+          total_amount: number | null
+          total_orders: number | null
+          total_tax: number | null
+          updated_at: string | null
+          uuid: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          month: string
+          outlet_name: string
+          qr_url?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          total_amount?: number | null
+          total_orders?: number | null
+          total_tax?: number | null
+          updated_at?: string | null
+          uuid?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          month?: string
+          outlet_name?: string
+          qr_url?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          total_amount?: number | null
+          total_orders?: number | null
+          total_tax?: number | null
+          updated_at?: string | null
+          uuid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2c_consolidation_buckets_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_stats: {
         Row: {
           avg_ticket: number | null
@@ -239,6 +295,57 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_float_events: {
+        Row: {
+          created_at: string | null
+          denomination: number | null
+          event_type: string
+          hopper_id: string | null
+          id: string
+          metadata: Json | null
+          quantity: number | null
+          running_balance: number | null
+          till_session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          denomination?: number | null
+          event_type: string
+          hopper_id?: string | null
+          id?: string
+          metadata?: Json | null
+          quantity?: number | null
+          running_balance?: number | null
+          till_session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          denomination?: number | null
+          event_type?: string
+          hopper_id?: string | null
+          id?: string
+          metadata?: Json | null
+          quantity?: number | null
+          running_balance?: number | null
+          till_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_float_events_hopper_id_fkey"
+            columns: ["hopper_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_hoppers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_float_events_till_session_id_fkey"
+            columns: ["till_session_id"]
+            isOneToOne: false
+            referencedRelation: "till_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -448,6 +555,74 @@ export type Database = {
         }
         Relationships: []
       }
+      einvoice_docs: {
+        Row: {
+          buyer_tin: string | null
+          created_at: string | null
+          error_json: Json | null
+          id: string
+          invoice_number: string
+          long_id: string | null
+          mode: string
+          order_id: string | null
+          payload: Json
+          qr_url: string | null
+          status: string
+          submitted_at: string | null
+          type: string
+          uin: string | null
+          updated_at: string | null
+          uuid: string | null
+          validated_at: string | null
+        }
+        Insert: {
+          buyer_tin?: string | null
+          created_at?: string | null
+          error_json?: Json | null
+          id?: string
+          invoice_number: string
+          long_id?: string | null
+          mode?: string
+          order_id?: string | null
+          payload: Json
+          qr_url?: string | null
+          status?: string
+          submitted_at?: string | null
+          type: string
+          uin?: string | null
+          updated_at?: string | null
+          uuid?: string | null
+          validated_at?: string | null
+        }
+        Update: {
+          buyer_tin?: string | null
+          created_at?: string | null
+          error_json?: Json | null
+          id?: string
+          invoice_number?: string
+          long_id?: string | null
+          mode?: string
+          order_id?: string | null
+          payload?: Json
+          qr_url?: string | null
+          status?: string
+          submitted_at?: string | null
+          type?: string
+          uin?: string | null
+          updated_at?: string | null
+          uuid?: string | null
+          validated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einvoice_docs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           active: boolean | null
@@ -500,6 +675,97 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware_devices: {
+        Row: {
+          branch_id: string | null
+          config: Json | null
+          created_at: string | null
+          device_address: number | null
+          device_type: string
+          id: string
+          last_seen: string | null
+          protocol: string
+          serial_port: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          config?: Json | null
+          created_at?: string | null
+          device_address?: number | null
+          device_type: string
+          id?: string
+          last_seen?: string | null
+          protocol: string
+          serial_port?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          config?: Json | null
+          created_at?: string | null
+          device_address?: number | null
+          device_type?: string
+          id?: string
+          last_seen?: string | null
+          protocol?: string
+          serial_port?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_devices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware_hoppers: {
+        Row: {
+          capacity: number
+          created_at: string | null
+          current_level: number | null
+          denomination: number
+          device_id: string | null
+          id: string
+          low_threshold: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          capacity: number
+          created_at?: string | null
+          current_level?: number | null
+          denomination: number
+          device_id?: string | null
+          id?: string
+          low_threshold?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          capacity?: number
+          created_at?: string | null
+          current_level?: number | null
+          denomination?: number
+          device_id?: string | null
+          id?: string
+          low_threshold?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_hoppers_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_devices"
             referencedColumns: ["id"]
           },
         ]
@@ -736,6 +1002,8 @@ export type Database = {
           name: string
           price: number
           sku: string | null
+          sst_exempted: boolean | null
+          sst_rate: number | null
           tax_rate: number | null
           track_inventory: boolean | null
           updated_at: string | null
@@ -753,6 +1021,8 @@ export type Database = {
           name: string
           price: number
           sku?: string | null
+          sst_exempted?: boolean | null
+          sst_rate?: number | null
           tax_rate?: number | null
           track_inventory?: boolean | null
           updated_at?: string | null
@@ -770,6 +1040,8 @@ export type Database = {
           name?: string
           price?: number
           sku?: string | null
+          sst_exempted?: boolean | null
+          sst_rate?: number | null
           tax_rate?: number | null
           track_inventory?: boolean | null
           updated_at?: string | null
@@ -1737,6 +2009,146 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      till_ledger: {
+        Row: {
+          amount: number
+          created_at: string | null
+          denomination_breakdown: Json | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          payment_id: string | null
+          till_session_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          denomination_breakdown?: Json | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          till_session_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          denomination_breakdown?: Json | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          till_session_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "till_ledger_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_ledger_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_ledger_till_session_id_fkey"
+            columns: ["till_session_id"]
+            isOneToOne: false
+            referencedRelation: "till_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      till_sessions: {
+        Row: {
+          actual_cash: number | null
+          blind_close_photo: string | null
+          branch_id: string | null
+          closed_at: string | null
+          closing_float: number | null
+          created_at: string | null
+          employee_id: string | null
+          expected_cash: number | null
+          id: string
+          opened_at: string | null
+          opening_float: number
+          reconciled_at: string | null
+          shift_id: string | null
+          status: string | null
+          updated_at: string | null
+          variance: number | null
+          variance_reason: string | null
+        }
+        Insert: {
+          actual_cash?: number | null
+          blind_close_photo?: string | null
+          branch_id?: string | null
+          closed_at?: string | null
+          closing_float?: number | null
+          created_at?: string | null
+          employee_id?: string | null
+          expected_cash?: number | null
+          id?: string
+          opened_at?: string | null
+          opening_float?: number
+          reconciled_at?: string | null
+          shift_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          variance?: number | null
+          variance_reason?: string | null
+        }
+        Update: {
+          actual_cash?: number | null
+          blind_close_photo?: string | null
+          branch_id?: string | null
+          closed_at?: string | null
+          closing_float?: number | null
+          created_at?: string | null
+          employee_id?: string | null
+          expected_cash?: number | null
+          id?: string
+          opened_at?: string | null
+          opening_float?: number
+          reconciled_at?: string | null
+          shift_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          variance?: number | null
+          variance_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "till_sessions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_sessions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_sessions_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
         ]
