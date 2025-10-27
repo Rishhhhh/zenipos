@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import {
   Package,
   TrendingDown,
@@ -19,6 +20,7 @@ import {
 import { Link } from 'react-router-dom';
 
 export default function InventoryManagement() {
+  usePerformanceMonitor('InventoryManagement');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();

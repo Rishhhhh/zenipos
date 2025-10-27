@@ -102,6 +102,7 @@ export function ImageUpload({
           <img
             src={value}
             alt="Preview"
+            loading="lazy"
             className="w-full h-48 object-cover rounded-lg border"
           />
           <Button

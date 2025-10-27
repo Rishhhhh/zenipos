@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ShiftHistoryPanel } from '@/components/admin/ShiftHistoryPanel';
+import { useDebounce } from '@/hooks/useDebounce';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import {
   Users,
   Plus,
@@ -19,10 +21,12 @@ import {
 } from 'lucide-react';
 
 export default function EmployeeManagement() {
+  usePerformanceMonitor('EmployeeManagement');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
   const { data: employees } = useQuery({
@@ -60,8 +64,8 @@ export default function EmployeeManagement() {
   });
 
   const filteredEmployees = employees?.filter(emp =>
-    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    emp.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    emp.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   return (

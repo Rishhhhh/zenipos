@@ -31,6 +31,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     props: any = {},
     options: ModalOptions = {}
   ) => {
+    const startTime = performance.now();
     const id = `modal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const modal: Modal = {
       id,
@@ -48,6 +49,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
     };
 
     setModals(prev => [...prev, modal]);
+    
+    // Track modal open time (target: <100ms)
+    requestAnimationFrame(() => {
+      const openTime = performance.now() - startTime;
+      // Track performance if needed
+      if (openTime > 100) {
+        console.warn(`Modal ${id} took ${openTime.toFixed(2)}ms to open (target: <100ms)`);
+      }
+    });
+
     return id;
   }, []);
 

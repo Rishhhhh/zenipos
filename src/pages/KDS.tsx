@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { Check, Clock } from "lucide-react";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 
 interface Order {
   id: string;
@@ -28,6 +29,7 @@ interface Order {
 }
 
 export default function KDS() {
+  usePerformanceMonitor('KDS');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [now, setNow] = useState(new Date());

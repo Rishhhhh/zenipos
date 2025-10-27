@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,29 +8,31 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ModalProvider } from "./contexts/ModalContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import POS from "./pages/POS";
 import CustomerScreen from "./pages/CustomerScreen";
-import KDS from "./pages/KDS";
-import Admin from "./pages/Admin";
-import MenuManagement from "./pages/admin/MenuManagement";
-import PromotionManagement from "./pages/admin/PromotionManagement";
-import InventoryManagement from "./pages/admin/InventoryManagement";
-import CRMDashboard from "./pages/admin/CRMDashboard";
-import EmployeeManagement from "./pages/admin/EmployeeManagement";
-import ReportsDashboard from "./pages/admin/ReportsDashboard";
-import AIHistoryDashboard from "./pages/admin/AIHistoryDashboard";
-import BranchManagement from "./pages/admin/BranchManagement";
-import ManagerDashboard from "./pages/ManagerDashboard";
-import SystemHealthDashboard from "./pages/admin/SystemHealthDashboard";
-import PerformanceDashboard from "./pages/admin/PerformanceDashboard";
-import RateLimitMonitor from "./pages/admin/RateLimitMonitor";
-import NotFound from "./pages/NotFound";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MacDock } from "./components/navigation/MacDock";
 import { useAuth } from "./contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+
+// Lazy load routes for code splitting and faster initial load
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const POS = lazy(() => import("./pages/POS"));
+const KDS = lazy(() => import("./pages/KDS"));
+const Admin = lazy(() => import("./pages/Admin"));
+const MenuManagement = lazy(() => import("./pages/admin/MenuManagement"));
+const PromotionManagement = lazy(() => import("./pages/admin/PromotionManagement"));
+const InventoryManagement = lazy(() => import("./pages/admin/InventoryManagement"));
+const CRMDashboard = lazy(() => import("./pages/admin/CRMDashboard"));
+const EmployeeManagement = lazy(() => import("./pages/admin/EmployeeManagement"));
+const ReportsDashboard = lazy(() => import("./pages/admin/ReportsDashboard"));
+const AIHistoryDashboard = lazy(() => import("./pages/admin/AIHistoryDashboard"));
+const BranchManagement = lazy(() => import("./pages/admin/BranchManagement"));
+const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
+const SystemHealthDashboard = lazy(() => import("./pages/admin/SystemHealthDashboard"));
+const PerformanceDashboard = lazy(() => import("./pages/admin/PerformanceDashboard"));
+const RateLimitMonitor = lazy(() => import("./pages/admin/RateLimitMonitor"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { employee } = useAuth();
@@ -60,8 +62,15 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
         <ModalProvider>
-          <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-            <TooltipProvider>
+          <TooltipProvider>
+            <Suspense fallback={
+              <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading...</p>
+                </div>
+              </div>
+            }>
               <Toaster />
               <Sonner />
               <BrowserRouter>
@@ -189,8 +198,8 @@ const App = () => (
                   </Routes>
                 </AppLayout>
               </BrowserRouter>
+            </Suspense>
             </TooltipProvider>
-          </Suspense>
         </ModalProvider>
       </AuthProvider>
     </ThemeProvider>

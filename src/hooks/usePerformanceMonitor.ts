@@ -1,11 +1,47 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { trackPerformance } from '@/lib/monitoring/sentry';
 
+/**
+ * Track FPS for a component
+ */
+export function trackFPS(componentName: string): () => void {
+  let frameCount = 0;
+  let lastTime = performance.now();
+  let animationFrameId: number;
+
+  const measureFPS = () => {
+    frameCount++;
+    const currentTime = performance.now();
+    const elapsed = currentTime - lastTime;
+
+    if (elapsed >= 1000) {
+      const fps = Math.round((frameCount * 1000) / elapsed);
+      trackPerformance('fps', fps, { component: componentName });
+      frameCount = 0;
+      lastTime = currentTime;
+    }
+
+    animationFrameId = requestAnimationFrame(measureFPS);
+  };
+
+  animationFrameId = requestAnimationFrame(measureFPS);
+
+  return () => {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+  };
+}
+
 export function usePerformanceMonitor(pageName: string) {
   const location = useLocation();
+  const fpsCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Start FPS tracking for this page
+    fpsCleanupRef.current = trackFPS(pageName);
+
     // Track page load performance
     if (typeof window !== 'undefined' && 'performance' in window) {
       const navigationTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
@@ -68,6 +104,13 @@ export function usePerformanceMonitor(pageName: string) {
         }
       }
     }
+
+    return () => {
+      // Cleanup FPS tracking when component unmounts
+      if (fpsCleanupRef.current) {
+        fpsCleanupRef.current();
+      }
+    };
   }, [pageName, location.pathname]);
 }
 

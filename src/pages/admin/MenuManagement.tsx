@@ -8,6 +8,8 @@ import { Plus, Search, ArrowLeft } from 'lucide-react';
 import { CategoryDragList } from '@/components/admin/CategoryDragList';
 import { MenuItemsTable } from '@/components/admin/MenuItemsTable';
 import { Link } from 'react-router-dom';
+import { useDebounce } from '@/hooks/useDebounce';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -29,9 +31,11 @@ interface MenuItem {
 }
 
 export default function MenuManagement() {
+  usePerformanceMonitor('MenuManagement');
   const { openModal } = useModalManager();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -48,7 +52,7 @@ export default function MenuManagement() {
 
   // Fetch menu items
   const { data: menuItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ['menuItems', selectedCategoryId, searchQuery],
+    queryKey: ['menuItems', selectedCategoryId, debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from('menu_items')
@@ -59,8 +63,8 @@ export default function MenuManagement() {
         query = query.eq('category_id', selectedCategoryId);
       }
 
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%`);
+      if (debouncedSearch) {
+        query = query.or(`name.ilike.%${debouncedSearch}%,sku.ilike.%${debouncedSearch}%`);
       }
 
       const { data, error } = await query.order('name');
