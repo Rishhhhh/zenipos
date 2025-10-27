@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import POS from "./pages/POS";
 import CustomerScreen from "./pages/CustomerScreen";
@@ -69,10 +69,10 @@ const App = () => (
               
               {/* Protected Routes with AppHeader */}
               <Route path="/" element={
-                <>
+                <ProtectedRoute requiredRole="cashier">
                   <AppHeader />
-                  <Index />
-                </>
+                  <Dashboard />
+                </ProtectedRoute>
               } />
               
               <Route path="/pos" element={
