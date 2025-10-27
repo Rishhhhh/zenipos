@@ -37,7 +37,7 @@ serve(async (req) => {
     // Get all active employees
     const { data: employees, error: fetchError } = await supabase
       .from('employees')
-      .select('id, name, email, pin, role, branch_id')
+      .select('id, name, email, pin, role, branch_id, auth_user_id')
       .eq('active', true);
 
     if (fetchError) {
@@ -54,13 +54,71 @@ serve(async (req) => {
         const isValid = await bcrypt.compare(pin, employee.pin);
         
         if (isValid) {
+          // Create or get auth user for this employee
+          let authUserId = employee.auth_user_id;
+          
+          if (!authUserId) {
+            // Create auth user for employee (first-time setup)
+            const email = employee.email || `employee-${employee.id}@pos.internal`;
+            const { data: authData, error: createError } = await supabase.auth.admin.createUser({
+              email,
+              password: pin,
+              email_confirm: true,
+              user_metadata: {
+                employee_id: employee.id,
+                name: employee.name,
+                role: employee.role
+              }
+            });
+
+            if (createError) {
+              console.error('Failed to create auth user:', createError);
+              return new Response(
+                JSON.stringify({ success: false, error: 'Authentication setup failed' }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+              );
+            }
+
+            authUserId = authData.user.id;
+
+            // Link employee to auth user
+            await supabase
+              .from('employees')
+              .update({ auth_user_id: authUserId })
+              .eq('id', employee.id);
+
+            // Create user_role entry
+            await supabase
+              .from('user_roles')
+              .upsert({ 
+                user_id: authUserId, 
+                role: employee.role 
+              });
+          }
+
+          // Sign in with Supabase Auth to get proper session
+          const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: employee.email || `employee-${employee.id}@pos.internal`,
+            password: pin
+          });
+
+          if (signInError) {
+            console.error('Sign in error:', signInError);
+            return new Response(
+              JSON.stringify({ success: false, error: 'Authentication failed' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+            );
+          }
+
           // Remove PIN from response
           const { pin: _, ...employeeData } = employee;
           
           return new Response(
             JSON.stringify({ 
               success: true, 
-              employee: employeeData 
+              employee: employeeData,
+              session: sessionData.session,
+              user: sessionData.user
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );

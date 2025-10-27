@@ -344,6 +344,7 @@ export type Database = {
       employees: {
         Row: {
           active: boolean | null
+          auth_user_id: string | null
           branch_id: string | null
           created_at: string | null
           email: string | null
@@ -358,6 +359,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          auth_user_id?: string | null
           branch_id?: string | null
           created_at?: string | null
           email?: string | null
@@ -372,6 +374,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          auth_user_id?: string | null
           branch_id?: string | null
           created_at?: string | null
           email?: string | null

@@ -40,41 +40,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [shiftId, setShiftId] = useState<string | null>(null);
 
-  // Restore session on mount
+  // Restore session on mount and listen to auth changes
   useEffect(() => {
-    const restoreSession = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const session: POSSession = JSON.parse(stored);
-        
-        // Check if session expired
-        if (Date.now() > session.expiresAt) {
+    // Set up Supabase auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // Restore employee data from localStorage
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            try {
+              const localSession: POSSession = JSON.parse(stored);
+              if (Date.now() <= localSession.expiresAt) {
+                setEmployee({
+                  id: localSession.employeeId,
+                  name: localSession.employeeName,
+                  role: localSession.role,
+                });
+                setShiftId(localSession.shiftId || null);
+              } else {
+                localStorage.removeItem(STORAGE_KEY);
+              }
+            } catch (error) {
+              console.error('Failed to restore session:', error);
+              localStorage.removeItem(STORAGE_KEY);
+            }
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setEmployee(null);
+          setShiftId(null);
           localStorage.removeItem(STORAGE_KEY);
-          setIsLoading(false);
-          return;
         }
-
-        // Restore employee data
-        setEmployee({
-          id: session.employeeId,
-          name: session.employeeName,
-          role: session.role,
-        });
-        setShiftId(session.shiftId || null);
-      } catch (error) {
-        console.error('Failed to restore session:', error);
-        localStorage.removeItem(STORAGE_KEY);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    );
 
-    restoreSession();
+    // Check for existing Supabase session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // Restore employee data from localStorage
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            const localSession: POSSession = JSON.parse(stored);
+            if (Date.now() <= localSession.expiresAt) {
+              setEmployee({
+                id: localSession.employeeId,
+                name: localSession.employeeName,
+                role: localSession.role,
+              });
+              setShiftId(localSession.shiftId || null);
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
+          } catch (error) {
+            console.error('Failed to restore session:', error);
+            localStorage.removeItem(STORAGE_KEY);
+          }
+        }
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (pin: string, rememberMe: boolean) => {
@@ -90,12 +117,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const employeeData: Employee = data.employee;
+      const authSession = data.session;
+
+      // Set Supabase session (enables RLS policies with auth.uid())
+      if (authSession) {
+        await supabase.auth.setSession({
+          access_token: authSession.access_token,
+          refresh_token: authSession.refresh_token,
+        });
+      }
 
       // Create shift record
       const { data: shift, error: shiftError } = await supabase
         .from('shifts')
         .insert({
           employee_id: employeeData.id,
+          user_id: data.user?.id || employeeData.id,
           clock_in_at: new Date().toISOString(),
           status: 'active',
         })
@@ -143,6 +180,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
           .eq('id', shiftId);
       }
+
+      // Sign out from Supabase Auth
+      await supabase.auth.signOut();
 
       // Clear session
       localStorage.removeItem(STORAGE_KEY);
