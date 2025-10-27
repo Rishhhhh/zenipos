@@ -1,100 +1,39 @@
-import { useState, useEffect } from "react";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import { useState, Suspense } from "react";
+import { DndContext, closestCenter, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
 import { SortableWidget } from "@/components/dashboard/SortableWidget";
-import { QuickPOSWidget } from "@/components/dashboard/QuickPOSWidget";
-import { ActiveOrdersWidget } from "@/components/dashboard/ActiveOrdersWidget";
-import { NumberPadWidget } from "@/components/dashboard/NumberPadWidget";
-import { SalesWidget } from "@/components/dashboard/SalesWidget";
-
-interface Widget {
-  id: string;
-  component: React.ComponentType;
-  roles: ("cashier" | "manager" | "admin")[];
-}
-
-const AVAILABLE_WIDGETS: Widget[] = [
-  {
-    id: "quick-pos",
-    component: QuickPOSWidget,
-    roles: ["cashier", "manager", "admin"],
-  },
-  {
-    id: "active-orders",
-    component: ActiveOrdersWidget,
-    roles: ["cashier", "manager", "admin"],
-  },
-  {
-    id: "number-pad",
-    component: NumberPadWidget,
-    roles: ["cashier", "manager", "admin"],
-  },
-  {
-    id: "sales",
-    component: SalesWidget,
-    roles: ["manager", "admin"],
-  },
-];
-
-const LAYOUT_STORAGE_KEY = "dashboard-widget-order";
+import { ResizableWidget } from "@/components/dashboard/ResizableWidget";
+import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
+import { Button } from "@/components/ui/button";
+import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
+import { getWidgetById } from "@/lib/widgets/widgetCatalog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { employee } = useAuth();
   const userRole = employee?.role || "cashier";
+  const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  
+  const { layout, updateOrder, updateSize, addWidget, removeWidget, resetLayout } = useWidgetLayout();
 
-  // Filter widgets based on role
-  const visibleWidgets = AVAILABLE_WIDGETS.filter((widget) =>
-    widget.roles.includes(userRole)
-  );
-
-  // Load saved order from localStorage or use default
-  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Filter out widgets user doesn't have access to
-        return parsed.filter((id: string) =>
-          visibleWidgets.some((w) => w.id === id)
-        );
-      } catch {
-        return visibleWidgets.map((w) => w.id);
-      }
-    }
-    return visibleWidgets.map((w) => w.id);
+  // Configure sensors for press-and-hold dragging (800ms)
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: { delay: 800, tolerance: 5 }
   });
-
-  // Update order when role changes
-  useEffect(() => {
-    const currentWidgetIds = visibleWidgets.map((w) => w.id);
-    const filteredOrder = widgetOrder.filter((id) =>
-      currentWidgetIds.includes(id)
-    );
-
-    // Add any new widgets that aren't in the saved order
-    const missingWidgets = currentWidgetIds.filter(
-      (id) => !filteredOrder.includes(id)
-    );
-    if (missingWidgets.length > 0) {
-      setWidgetOrder([...filteredOrder, ...missingWidgets]);
-    }
-  }, [userRole]);
-
-  // Save order to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(widgetOrder));
-  }, [widgetOrder]);
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 800, tolerance: 5 }
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setWidgetOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const oldIndex = layout.widgetOrder.indexOf(active.id as string);
+      const newIndex = layout.widgetOrder.indexOf(over.id as string);
+      updateOrder(arrayMove(layout.widgetOrder, oldIndex, newIndex));
     }
   };
 
@@ -102,32 +41,75 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-secondary/5 p-4 md:p-6 pb-24">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Welcome back, {employee?.name || "User"} • {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+              Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Welcome back, {employee?.name || "User"} • {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowWidgetLibrary(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Widget
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetLayout}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Widgets Grid with Drag and Drop */}
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {widgetOrder.map((widgetId, index) => {
-                const widget = visibleWidgets.find((w) => w.id === widgetId);
-                if (!widget) return null;
+        <DndContext 
+          collisionDetection={closestCenter} 
+          onDragEnd={handleDragEnd}
+          sensors={sensors}
+        >
+          <SortableContext items={layout.widgetOrder} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[300px]">
+              {layout.widgetOrder.map((widgetId, index) => {
+                const widgetDef = getWidgetById(widgetId);
+                if (!widgetDef) return null;
 
-                const WidgetComponent = widget.component;
+                const size = layout.widgetSizes[widgetId] || widgetDef.defaultSize;
+                const WidgetComponent = widgetDef.component;
 
                 return (
                   <SortableWidget
-                    key={widget.id}
-                    id={widget.id}
+                    key={widgetId}
+                    id={widgetId}
                     index={index}
                   >
-                    <WidgetComponent />
+                    <ResizableWidget
+                      id={widgetId}
+                      cols={size.cols}
+                      rows={size.rows}
+                      onResize={(cols, rows) => updateSize(widgetId, { cols, rows })}
+                    >
+                      <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                        <div className="h-full relative group">
+                          <WidgetComponent />
+                          {/* Remove Widget Button */}
+                          <button
+                            onClick={() => removeWidget(widgetId)}
+                            className="absolute top-2 right-2 p-1 rounded-md bg-destructive/10 hover:bg-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            aria-label="Remove widget"
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </button>
+                        </div>
+                      </Suspense>
+                    </ResizableWidget>
                   </SortableWidget>
                 );
               })}
@@ -136,10 +118,20 @@ export default function Dashboard() {
         </DndContext>
 
         {/* Help Text */}
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Drag widgets to rearrange • Layout saves automatically</p>
+        <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
+          <p>Press and hold (0.8s) any widget to drag • Drag bottom-right corner to resize</p>
+          <p>Layout saves automatically per user</p>
         </div>
       </div>
+
+      {/* Widget Library Modal */}
+      <WidgetLibrary
+        open={showWidgetLibrary}
+        onOpenChange={setShowWidgetLibrary}
+        userRole={userRole}
+        activeWidgets={layout.widgetOrder}
+        onAddWidget={addWidget}
+      />
     </div>
   );
 }
