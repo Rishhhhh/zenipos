@@ -354,6 +354,7 @@ export type Database = {
           phone: string | null
           pin: string
           role: Database["public"]["Enums"]["app_role"] | null
+          updated_at: string | null
         }
         Insert: {
           active?: boolean | null
@@ -367,6 +368,7 @@ export type Database = {
           phone?: string | null
           pin: string
           role?: Database["public"]["Enums"]["app_role"] | null
+          updated_at?: string | null
         }
         Update: {
           active?: boolean | null
@@ -380,6 +382,7 @@ export type Database = {
           phone?: string | null
           pin?: string
           role?: Database["public"]["Enums"]["app_role"] | null
+          updated_at?: string | null
         }
         Relationships: [
           {
