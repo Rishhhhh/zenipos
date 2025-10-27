@@ -3,15 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, PackageX, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
+import { LowStockConfig } from "@/types/widgetConfigs";
+import { Progress } from "@/components/ui/progress";
 
 export function LowStockWidget() {
   const navigate = useNavigate();
-  const { config } = useWidgetConfig('low-stock');
+  const { config } = useWidgetConfig<LowStockConfig>('low-stock');
 
   const { data: lowStockItems, isLoading } = useQuery({
     queryKey: ["low-stock-items"],
@@ -40,73 +42,103 @@ export function LowStockWidget() {
   };
 
   return (
-    <Card className="glass-card p-4 min-h-[300px] min-w-[350px] flex flex-col">
-      <div className="flex items-center justify-between mb-3">
+    <Card className="glass-card p-5 min-h-[300px] min-w-[350px] flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-warning" />
-          <h3 className="font-semibold text-base">Low Stock Alert</h3>
+          <AlertTriangle className="h-5 w-5 text-warning" />
+          <h3 className="font-semibold text-lg">Low Stock Alert</h3>
         </div>
         {lowStockItems && lowStockItems.length > 0 && (
-          <span className="text-xs font-semibold text-warning">
+          <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">
             {lowStockItems.length} items
-          </span>
+          </Badge>
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto mb-3">
+      <div className="flex-1 min-h-0 overflow-y-auto mb-3 space-y-2.5">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))
         ) : lowStockItems && lowStockItems.length > 0 ? (
-          config.displayType === 'cards' ? (
-            lowStockItems.map((item) => {
-              const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
-              const percentage = Math.min(100, (Number(item.current_qty) / Number(item.reorder_point)) * 100);
+          lowStockItems.map((item) => {
+            const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
+            const percentage = Math.min(100, (Number(item.current_qty) / Number(item.reorder_point)) * 100);
+            const isCritical = percentage <= 10;
 
-              return (
-                <div key={item.id} className="p-2 bg-accent/30 rounded-lg">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.current_qty} {item.unit} left
-                      </p>
-                    </div>
-                    <span className={cn("text-xs font-semibold ml-2", stockInfo.color)}>
-                      {stockInfo.level}
-                    </span>
+            return (
+              <div 
+                key={item.id} 
+                className={cn(
+                  "p-3 rounded-lg border transition-all hover:shadow-md",
+                  isCritical ? "bg-destructive/5 border-destructive/30" : "bg-accent/30 border-border/50"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0",
+                    isCritical ? "bg-destructive/20" : "bg-warning/20"
+                  )}>
+                    {isCritical ? (
+                      <PackageX className="h-5 w-5 text-destructive animate-pulse" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-warning" />
+                    )}
                   </div>
-                  <div className="relative h-2 bg-accent rounded-full overflow-hidden">
-                    <div
-                      className={cn("h-full rounded-full transition-all", stockInfo.bg)}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="space-y-1">
-              {lowStockItems.map((item) => {
-                const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
-                return (
-                  <div key={item.id} className="flex items-center justify-between p-1.5 bg-accent/30 rounded text-xs">
-                    <span className="font-medium line-clamp-1 flex-1">{item.name}</span>
-                    <div className="flex items-center gap-2 ml-2">
-                      <span className="text-muted-foreground">{item.current_qty} {item.unit}</span>
-                      <Badge variant="outline" className={cn("text-[10px] h-4", stockInfo.color)}>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm line-clamp-1">{item.name}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {item.current_qty} {item.unit} left (reorder at {item.reorder_point})
+                        </p>
+                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-xs h-5 px-2 whitespace-nowrap",
+                          stockInfo.color,
+                          isCritical && "animate-pulse"
+                        )}
+                      >
                         {stockInfo.level}
                       </Badge>
                     </div>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Stock Level</span>
+                        <span className={cn("font-semibold", stockInfo.color)}>
+                          {percentage.toFixed(0)}%
+                        </span>
+                      </div>
+                      <Progress 
+                        value={percentage} 
+                        className={cn("h-2", isCritical && "animate-pulse")}
+                      />
+                    </div>
+                    
+                    {config.autoReorder && isCritical && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full mt-2 h-7 text-xs"
+                        onClick={() => navigate("/admin/purchase-orders")}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Create PO
+                      </Button>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )
+                </div>
+              </div>
+            );
+          })
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            All items in stock
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <PackageX className="h-12 w-12 mb-2 opacity-50" />
+            <p className="text-sm">All items in stock</p>
           </div>
         )}
       </div>
