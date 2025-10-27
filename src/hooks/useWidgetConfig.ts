@@ -1,7 +1,17 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
-import { BaseWidgetConfig } from "@/types/widgetConfigs";
+import { 
+  BaseWidgetConfig,
+  QuickPOSConfig,
+  SalesWidgetConfig,
+  RevenueChartConfig,
+  TopItemsConfig,
+  LowStockConfig,
+  ActiveShiftsConfig,
+  LoyaltyStatsConfig,
+  ActiveOrdersConfig
+} from "@/types/widgetConfigs";
 
 export interface WidgetConfig extends BaseWidgetConfig {}
 
@@ -20,14 +30,98 @@ export function getDefaultDisplayType(widgetId: string): 'chart' | 'table' | 'ca
 /**
  * Get default config for a widget type
  */
-export function getDefaultConfig(widgetType: string): WidgetConfig {
-  return {
+export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
+  const baseConfig = {
     displayType: getDefaultDisplayType(widgetType),
-    colorScheme: 'auto', // Auto-match current theme
-    refreshInterval: 30,
+    colorScheme: 'auto',
+    refreshInterval: 30 as const,
     compactMode: false,
     dataFilters: {},
   };
+
+  // Widget-specific defaults
+  switch (widgetType) {
+    case 'quick-pos':
+      return {
+        ...baseConfig,
+        itemsPerRow: 3,
+        showImages: true,
+        quickAddMode: true,
+        defaultCategoryId: undefined,
+        cartPosition: 'bottom',
+      } as QuickPOSConfig;
+
+    case 'sales':
+      return {
+        ...baseConfig,
+        comparisonPeriod: 'yesterday',
+        goalTracking: { enabled: false, dailyTarget: 0 },
+        showSparklines: true,
+        showTrends: true,
+      } as SalesWidgetConfig;
+
+    case 'revenue-chart':
+      return {
+        ...baseConfig,
+        timeGranularity: 'hourly',
+        chartType: 'area',
+        showDataPoints: true,
+        yAxisRange: 'auto',
+        showMovingAverage: false,
+      } as RevenueChartConfig;
+
+    case 'top-items':
+      return {
+        ...baseConfig,
+        sortBy: 'quantity',
+        topN: 5,
+        showImages: false,
+        showPercentages: true,
+        showComparison: true,
+      } as TopItemsConfig;
+
+    case 'low-stock':
+      return {
+        ...baseConfig,
+        alertThreshold: { critical: 10, low: 30 },
+        sortBy: 'stockLevel',
+        showSupplier: true,
+        autoReorder: false,
+      } as LowStockConfig;
+
+    case 'active-shifts':
+      return {
+        ...baseConfig,
+        showPhotos: true,
+        showRoles: true,
+        showLaborCost: false,
+        timeFormat: '12hr',
+        groupBy: 'shiftTime',
+      } as ActiveShiftsConfig;
+
+    case 'loyalty-stats':
+      return {
+        ...baseConfig,
+        showTierProgress: true,
+        topNCustomers: 5,
+        showCustomerPhotos: true,
+        showPointsConversion: true,
+        showRedemptionRate: true,
+      } as LoyaltyStatsConfig;
+
+    case 'active-orders':
+      return {
+        ...baseConfig,
+        statusFilters: ['pending', 'preparing', 'ready'],
+        sortBy: 'orderTime',
+        showTimer: true,
+        alertThresholdMinutes: 15,
+        viewMode: 'list',
+      } as ActiveOrdersConfig;
+
+    default:
+      return baseConfig;
+  }
 }
 
 /**

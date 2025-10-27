@@ -14,6 +14,12 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { QuickPOSConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
+const GRID_COLS_MAP = {
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4'
+} as const;
+
 export function QuickPOSWidget() {
   const navigate = useNavigate();
   const { items, addItem } = useCartStore();
@@ -102,13 +108,13 @@ export function QuickPOSWidget() {
       {/* Menu Items Grid */}
       <div className="flex-1 overflow-y-auto mb-3 min-h-0">
         {isLoading ? (
-          <div className={cn("grid gap-2", `grid-cols-${config.itemsPerRow}`)}>
+          <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-24 bg-accent/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : menuItems && menuItems.length > 0 ? (
-          <div className={cn("grid gap-2", `grid-cols-${config.itemsPerRow}`)}>
+          <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {menuItems.map((item) => {
               const quantity = getCartQuantity(item.id);
               const inStock = item.in_stock;
