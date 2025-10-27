@@ -12,10 +12,19 @@ interface ActiveOrdersConfigPanelProps {
 }
 
 export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrdersConfigPanelProps) {
+  // Provide defaults for nested properties
+  const statusFilters = config.statusFilters || ['pending', 'preparing', 'ready'];
+  const sortBy = config.sortBy || 'orderTime';
+  const showTimer = config.showTimer ?? true;
+  const alertThresholdMinutes = config.alertThresholdMinutes || 15;
+  const viewMode = config.viewMode || 'list';
+  const refreshInterval = config.refreshInterval || 30;
+  const compactMode = config.compactMode ?? false;
+
   const handleStatusFilterChange = (status: 'pending' | 'preparing' | 'ready', checked: boolean) => {
     const newFilters = checked
-      ? [...config.statusFilters, status]
-      : config.statusFilters.filter(s => s !== status);
+      ? [...statusFilters, status]
+      : statusFilters.filter(s => s !== status);
     onConfigChange({ ...config, statusFilters: newFilters as any });
   };
 
@@ -28,7 +37,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="pending"
-                checked={config.statusFilters.includes('pending')}
+                checked={statusFilters.includes('pending')}
                 onCheckedChange={(checked) => handleStatusFilterChange('pending', checked as boolean)}
               />
               <Label htmlFor="pending" className="font-normal">Pending</Label>
@@ -36,7 +45,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="preparing"
-                checked={config.statusFilters.includes('preparing')}
+                checked={statusFilters.includes('preparing')}
                 onCheckedChange={(checked) => handleStatusFilterChange('preparing', checked as boolean)}
               />
               <Label htmlFor="preparing" className="font-normal">Preparing</Label>
@@ -44,7 +53,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="ready"
-                checked={config.statusFilters.includes('ready')}
+                checked={statusFilters.includes('ready')}
                 onCheckedChange={(checked) => handleStatusFilterChange('ready', checked as boolean)}
               />
               <Label htmlFor="ready" className="font-normal">Ready</Label>
@@ -55,7 +64,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
         <div className="space-y-2">
           <Label>Sort By</Label>
           <RadioGroup
-            value={config.sortBy}
+            value={sortBy}
             onValueChange={(value) => onConfigChange({ ...config, sortBy: value as any })}
           >
             <div className="flex items-center space-x-2">
@@ -77,7 +86,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
           <Label htmlFor="show-timer">Show Timer</Label>
           <Switch
             id="show-timer"
-            checked={config.showTimer}
+            checked={showTimer}
             onCheckedChange={(checked) => onConfigChange({ ...config, showTimer: checked })}
           />
         </div>
@@ -87,7 +96,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
           <Input
             id="alert-threshold"
             type="number"
-            value={config.alertThresholdMinutes}
+            value={alertThresholdMinutes}
             onChange={(e) => onConfigChange({ ...config, alertThresholdMinutes: parseInt(e.target.value) || 15 })}
             placeholder="15"
             min={1}
@@ -98,7 +107,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
         <div className="space-y-2">
           <Label>View Mode</Label>
           <RadioGroup
-            value={config.viewMode}
+            value={viewMode}
             onValueChange={(value) => onConfigChange({ ...config, viewMode: value as any })}
           >
             <div className="flex items-center space-x-2">
@@ -115,7 +124,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
         <div className="space-y-2">
           <Label>Refresh Interval</Label>
           <Select
-            value={config.refreshInterval.toString()}
+            value={refreshInterval.toString()}
             onValueChange={(value) => onConfigChange({ ...config, refreshInterval: parseInt(value) as 5 | 30 | 60 | 300 })}
           >
             <SelectTrigger>
@@ -134,7 +143,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
           <Label htmlFor="compact-mode">Compact Mode</Label>
           <Switch
             id="compact-mode"
-            checked={config.compactMode}
+            checked={compactMode}
             onCheckedChange={(checked) => onConfigChange({ ...config, compactMode: checked })}
           />
         </div>

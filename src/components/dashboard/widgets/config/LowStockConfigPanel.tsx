@@ -11,6 +11,14 @@ interface LowStockConfigPanelProps {
 }
 
 export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPanelProps) {
+  // Provide defaults for nested properties that might not exist in old configs
+  const alertThreshold = config.alertThreshold || { critical: 10, low: 30 };
+  const sortBy = config.sortBy || 'stockLevel';
+  const showSupplier = config.showSupplier ?? true;
+  const autoReorder = config.autoReorder ?? false;
+  const refreshInterval = config.refreshInterval || 30;
+  const compactMode = config.compactMode ?? false;
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -22,10 +30,10 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
               <Input
                 id="critical-threshold"
                 type="number"
-                value={config.alertThreshold.critical}
+                value={alertThreshold.critical}
                 onChange={(e) => onConfigChange({ 
                   ...config, 
-                  alertThreshold: { ...config.alertThreshold, critical: parseFloat(e.target.value) || 10 }
+                  alertThreshold: { ...alertThreshold, critical: parseFloat(e.target.value) || 10 }
                 })}
                 placeholder="10"
                 min={0}
@@ -37,10 +45,10 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
               <Input
                 id="low-threshold"
                 type="number"
-                value={config.alertThreshold.low}
+                value={alertThreshold.low}
                 onChange={(e) => onConfigChange({ 
                   ...config, 
-                  alertThreshold: { ...config.alertThreshold, low: parseFloat(e.target.value) || 30 }
+                  alertThreshold: { ...alertThreshold, low: parseFloat(e.target.value) || 30 }
                 })}
                 placeholder="30"
                 min={0}
@@ -53,7 +61,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
         <div className="space-y-2">
           <Label>Sort By</Label>
           <RadioGroup
-            value={config.sortBy}
+            value={sortBy}
             onValueChange={(value) => onConfigChange({ ...config, sortBy: value as any })}
           >
             <div className="flex items-center space-x-2">
@@ -75,7 +83,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
           <Label htmlFor="show-supplier">Show Supplier</Label>
           <Switch
             id="show-supplier"
-            checked={config.showSupplier}
+            checked={showSupplier}
             onCheckedChange={(checked) => onConfigChange({ ...config, showSupplier: checked })}
           />
         </div>
@@ -84,7 +92,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
           <Label htmlFor="auto-reorder">Auto-Reorder</Label>
           <Switch
             id="auto-reorder"
-            checked={config.autoReorder}
+            checked={autoReorder}
             onCheckedChange={(checked) => onConfigChange({ ...config, autoReorder: checked })}
           />
         </div>
@@ -93,7 +101,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
         <div className="space-y-2">
           <Label>Refresh Interval</Label>
           <Select
-            value={config.refreshInterval.toString()}
+            value={refreshInterval.toString()}
             onValueChange={(value) => onConfigChange({ ...config, refreshInterval: parseInt(value) as 5 | 30 | 60 | 300 })}
           >
             <SelectTrigger>
@@ -112,7 +120,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
           <Label htmlFor="compact-mode">Compact Mode</Label>
           <Switch
             id="compact-mode"
-            checked={config.compactMode}
+            checked={compactMode}
             onCheckedChange={(checked) => onConfigChange({ ...config, compactMode: checked })}
           />
         </div>

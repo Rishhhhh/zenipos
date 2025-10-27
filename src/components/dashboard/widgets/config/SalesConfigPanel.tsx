@@ -11,13 +11,21 @@ interface SalesConfigPanelProps {
 }
 
 export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelProps) {
+  // Provide defaults for nested properties
+  const goalTracking = config.goalTracking || { enabled: false, dailyTarget: 0 };
+  const comparisonPeriod = config.comparisonPeriod || 'yesterday';
+  const showSparklines = config.showSparklines ?? true;
+  const showTrends = config.showTrends ?? true;
+  const refreshInterval = config.refreshInterval || 30;
+  const compactMode = config.compactMode ?? false;
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Comparison Period</Label>
           <RadioGroup
-            value={config.comparisonPeriod}
+            value={comparisonPeriod}
             onValueChange={(value) => onConfigChange({ ...config, comparisonPeriod: value as any })}
           >
             <div className="flex items-center space-x-2">
@@ -40,23 +48,23 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
             <Label htmlFor="goal-tracking">Goal Tracking</Label>
             <Switch
               id="goal-tracking"
-              checked={config.goalTracking.enabled}
+              checked={goalTracking.enabled}
               onCheckedChange={(checked) => onConfigChange({ 
                 ...config, 
-                goalTracking: { ...config.goalTracking, enabled: checked }
+                goalTracking: { ...goalTracking, enabled: checked }
               })}
             />
           </div>
-          {config.goalTracking.enabled && (
+          {goalTracking.enabled && (
             <div className="space-y-2 pl-6">
               <Label htmlFor="daily-target">Daily Revenue Target</Label>
               <Input
                 id="daily-target"
                 type="number"
-                value={config.goalTracking.dailyTarget}
+                value={goalTracking.dailyTarget}
                 onChange={(e) => onConfigChange({ 
                   ...config, 
-                  goalTracking: { ...config.goalTracking, dailyTarget: parseFloat(e.target.value) || 0 }
+                  goalTracking: { ...goalTracking, dailyTarget: parseFloat(e.target.value) || 0 }
                 })}
                 placeholder="0.00"
               />
@@ -68,7 +76,7 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
           <Label htmlFor="show-sparklines">Show Sparklines</Label>
           <Switch
             id="show-sparklines"
-            checked={config.showSparklines}
+            checked={showSparklines}
             onCheckedChange={(checked) => onConfigChange({ ...config, showSparklines: checked })}
           />
         </div>
@@ -77,7 +85,7 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
           <Label htmlFor="show-trends">Show Trends</Label>
           <Switch
             id="show-trends"
-            checked={config.showTrends}
+            checked={showTrends}
             onCheckedChange={(checked) => onConfigChange({ ...config, showTrends: checked })}
           />
         </div>
@@ -85,7 +93,7 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
         <div className="space-y-2">
           <Label>Refresh Interval</Label>
           <Select
-            value={config.refreshInterval.toString()}
+            value={refreshInterval.toString()}
             onValueChange={(value) => onConfigChange({ ...config, refreshInterval: parseInt(value) as 5 | 30 | 60 | 300 })}
           >
             <SelectTrigger>
@@ -104,7 +112,7 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
           <Label htmlFor="compact-mode">Compact Mode</Label>
           <Switch
             id="compact-mode"
-            checked={config.compactMode}
+            checked={compactMode}
             onCheckedChange={(checked) => onConfigChange({ ...config, compactMode: checked })}
           />
         </div>
