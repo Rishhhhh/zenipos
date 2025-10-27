@@ -1,4 +1,5 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState } from "react";
+import { useModalManager } from "./hooks/useModalManager";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,7 +33,42 @@ const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const SystemHealthDashboard = lazy(() => import("./pages/admin/SystemHealthDashboard"));
 const PerformanceDashboard = lazy(() => import("./pages/admin/PerformanceDashboard"));
 const RateLimitMonitor = lazy(() => import("./pages/admin/RateLimitMonitor"));
+const SupplierManagement = lazy(() => import("./pages/admin/SupplierManagement"));
+const PurchaseOrders = lazy(() => import("./pages/admin/PurchaseOrders"));
+const ReceiptTemplates = lazy(() => import("./pages/admin/ReceiptTemplates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// POS with integrated clock in/out
+function POSWithHeader() {
+  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
+  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
+  const [shiftElapsed, setShiftElapsed] = useState<string>('00:00');
+  const { openModal } = useModalManager();
+
+  return (
+    <>
+      <AppHeader
+        currentShiftId={currentShiftId}
+        shiftElapsed={shiftElapsed}
+        onClockIn={() => openModal('employeeClockIn', {
+          onSuccess: (employee: any, shiftId: string) => {
+            setCurrentEmployee(employee);
+            setCurrentShiftId(shiftId);
+          },
+        })}
+        onClockOut={() => openModal('employeeClockOut', {
+          shiftId: currentShiftId,
+          onSuccess: () => {
+            setCurrentEmployee(null);
+            setCurrentShiftId(null);
+            setShiftElapsed('00:00');
+          },
+        })}
+      />
+      <POS />
+    </>
+  );
+}
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { employee } = useAuth();
@@ -90,8 +126,7 @@ const App = () => (
               
               <Route path="/pos" element={
                 <ProtectedRoute requiredRole="cashier">
-                  <AppHeader />
-                  <POS />
+                  <POSWithHeader />
                 </ProtectedRoute>
               } />
               
@@ -190,6 +225,27 @@ const App = () => (
                 <ProtectedRoute requiredRole="admin">
                   <AppHeader />
                   <RateLimitMonitor />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/suppliers" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <SupplierManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/purchase-orders" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <PurchaseOrders />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/receipt-templates" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <ReceiptTemplates />
                 </ProtectedRoute>
               } />
               

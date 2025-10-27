@@ -1,12 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, User } from 'lucide-react';
+import { Brain, LogOut, User, LogIn, Clock } from 'lucide-react';
 import { AISearchBar } from '@/components/ai/AISearchBar';
 import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +17,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export function AppHeader() {
+export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut }: {
+  currentShiftId?: string | null;
+  shiftElapsed?: string;
+  onClockIn?: () => void;
+  onClockOut?: () => void;
+}) {
   const [showAI, setShowAI] = useState(false);
   const { employee, role, logout } = useAuth();
+  const location = useLocation();
+  const { openModal } = useModalManager();
+  const isPOSPage = location.pathname === '/pos';
 
   const handleCommand = (command: string) => {
     setShowAI(true);
@@ -38,6 +47,29 @@ export function AppHeader() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Clock In/Out for POS page */}
+            {isPOSPage && employee && currentShiftId !== undefined && (
+              <>
+                {currentShiftId && shiftElapsed && (
+                  <Badge variant="secondary" className="text-sm">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {shiftElapsed}
+                  </Badge>
+                )}
+                {!currentShiftId ? (
+                  <Button onClick={onClockIn} size="sm" variant="outline">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Clock In
+                  </Button>
+                ) : (
+                  <Button onClick={onClockOut} size="sm" variant="outline">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Clock Out
+                  </Button>
+                )}
+              </>
+            )}
+
             {employee && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

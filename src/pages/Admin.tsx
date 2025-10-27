@@ -43,7 +43,7 @@ export default function Admin() {
   });
 
   return (
-    <div className="kiosk-layout p-8 overflow-y-auto bg-gradient-to-br from-background via-accent/10 to-secondary/10">
+    <div className="kiosk-layout p-8 pb-32 overflow-y-auto bg-gradient-to-br from-background via-accent/10 to-secondary/10">
       <div className="max-w-7xl mx-auto">
         {/* Hero Header with blur effect */}
         <div className="text-center mb-12">
@@ -250,6 +250,36 @@ export default function Admin() {
               <h3 className="text-xl font-semibold mb-2 text-foreground">Rate Limiting</h3>
               <p className="text-muted-foreground">
                 Monitor API usage and abuse prevention
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/suppliers">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Package className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Suppliers</h3>
+              <p className="text-muted-foreground">
+                Manage suppliers and contacts
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/purchase-orders">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <ShoppingCart className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Purchase Orders</h3>
+              <p className="text-muted-foreground">
+                Manage inventory procurement
+              </p>
+            </Card>
+          </Link>
+
+          <Link to="/admin/receipt-templates">
+            <Card className="p-8 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
+              <Settings className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2 text-foreground">Receipt Templates</h3>
+              <p className="text-muted-foreground">
+                Design receipt and ticket layouts
               </p>
             </Card>
           </Link>

@@ -186,39 +186,6 @@ export default function POS() {
 
   return (
     <div className="kiosk-layout">
-      {/* Clock In/Out Header */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
-        {currentEmployee && (
-          <Badge variant="secondary" className="text-sm">
-            <Clock className="h-3 w-3 mr-1" />
-            {currentEmployee.name} - {shiftElapsed}
-          </Badge>
-        )}
-        {!currentShiftId ? (
-          <Button onClick={() => openModal('employeeClockIn', {
-            onSuccess: (employee: any, shiftId: string) => {
-              setCurrentEmployee(employee);
-              setCurrentShiftId(shiftId);
-            },
-          })} size="sm">
-            <LogIn className="h-4 w-4 mr-2" />
-            Clock In
-          </Button>
-        ) : (
-          <Button onClick={() => openModal('employeeClockOut', {
-            shiftId: currentShiftId,
-            onSuccess: () => {
-              setCurrentEmployee(null);
-              setCurrentShiftId(null);
-              setShiftElapsed('00:00');
-            },
-          })} variant="outline" size="sm">
-            <LogOut className="h-4 w-4 mr-2" />
-            Clock Out
-          </Button>
-        )}
-      </div>
-
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={20} minSize={15}>
           <CategoryList
