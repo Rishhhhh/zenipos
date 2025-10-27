@@ -1,22 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export interface WidgetSize {
-  cols: number; // 1-4
-  rows: number; // 1-2
+export interface WidgetPosition {
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  zIndex: number;
 }
 
 export interface WidgetLayout {
   widgetOrder: string[];
-  widgetSizes: Record<string, WidgetSize>;
+  widgetPositions: Record<string, WidgetPosition>;
 }
 
 const DEFAULT_LAYOUT: WidgetLayout = {
   widgetOrder: ["quick-pos", "active-orders", "sales"],
-  widgetSizes: {
-    "quick-pos": { cols: 2, rows: 2 },
-    "active-orders": { cols: 1, rows: 1 },
-    "sales": { cols: 2, rows: 1 },
+  widgetPositions: {
+    "quick-pos": { x: 20, y: 20, width: 500, height: 600, zIndex: 1 },
+    "active-orders": { x: 540, y: 20, width: 400, height: 300, zIndex: 2 },
+    "sales": { x: 960, y: 20, width: 500, height: 300, zIndex: 3 },
   },
 };
 
@@ -49,34 +52,62 @@ export function useWidgetLayout() {
     setLayout(prev => ({ ...prev, widgetOrder: newOrder }));
   }, []);
 
-  const updateSize = useCallback((widgetId: string, size: WidgetSize) => {
+  const updatePosition = useCallback((widgetId: string, position: Partial<WidgetPosition>) => {
     setLayout(prev => ({
       ...prev,
-      widgetSizes: {
-        ...prev.widgetSizes,
-        [widgetId]: size,
+      widgetPositions: {
+        ...prev.widgetPositions,
+        [widgetId]: {
+          ...prev.widgetPositions[widgetId],
+          ...position,
+        },
       },
     }));
   }, []);
 
-  const addWidget = useCallback((widgetId: string, defaultSize: WidgetSize) => {
-    setLayout(prev => ({
-      widgetOrder: [...prev.widgetOrder, widgetId],
-      widgetSizes: {
-        ...prev.widgetSizes,
-        [widgetId]: defaultSize,
-      },
-    }));
+  const bringToFront = useCallback((widgetId: string) => {
+    setLayout(prev => {
+      const maxZ = Math.max(...Object.values(prev.widgetPositions).map(p => p.zIndex));
+      return {
+        ...prev,
+        widgetPositions: {
+          ...prev.widgetPositions,
+          [widgetId]: {
+            ...prev.widgetPositions[widgetId],
+            zIndex: maxZ + 1,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const addWidget = useCallback((widgetId: string, defaultSize: { cols: number; rows: number }) => {
+    setLayout(prev => {
+      const maxZ = Math.max(...Object.values(prev.widgetPositions).map(p => p.zIndex), 0);
+      return {
+        widgetOrder: [...prev.widgetOrder, widgetId],
+        widgetPositions: {
+          ...prev.widgetPositions,
+          [widgetId]: {
+            x: 20,
+            y: 20,
+            width: defaultSize.cols * 250,
+            height: defaultSize.rows * 300,
+            zIndex: maxZ + 1,
+          },
+        },
+      };
+    });
   }, []);
 
   const removeWidget = useCallback((widgetId: string) => {
     setLayout(prev => {
-      const newSizes = { ...prev.widgetSizes };
-      delete newSizes[widgetId];
+      const newPositions = { ...prev.widgetPositions };
+      delete newPositions[widgetId];
       
       return {
         widgetOrder: prev.widgetOrder.filter(id => id !== widgetId),
-        widgetSizes: newSizes,
+        widgetPositions: newPositions,
       };
     });
   }, []);
@@ -88,7 +119,8 @@ export function useWidgetLayout() {
   return {
     layout,
     updateOrder,
-    updateSize,
+    updatePosition,
+    bringToFront,
     addWidget,
     removeWidget,
     resetLayout,

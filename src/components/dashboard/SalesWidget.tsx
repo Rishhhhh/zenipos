@@ -69,7 +69,7 @@ export function SalesWidget() {
   });
 
   return (
-    <Card className="glass-card p-5 h-full w-full flex flex-col">
+    <Card className="glass-card p-5 min-h-[300px] min-w-[400px] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

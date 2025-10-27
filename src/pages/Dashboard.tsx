@@ -1,9 +1,8 @@
-import { useState, Suspense, useMemo } from "react";
-import { DndContext, closestCenter, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
+import { useState, Suspense } from "react";
+import { DndContext, DragEndEvent, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
-import { SortableWidget } from "@/components/dashboard/SortableWidget";
-import { ResizableWidget } from "@/components/dashboard/ResizableWidget";
+import { DraggableWidget } from "@/components/dashboard/DraggableWidget";
 import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
 import { WidgetMenu } from "@/components/dashboard/WidgetMenu";
 import { WidgetConfigModal } from "@/components/dashboard/WidgetConfigModal";
@@ -12,7 +11,7 @@ import { Plus, RefreshCw } from "lucide-react";
 import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { calculateGridPositions } from "@/lib/widgets/collisionDetection";
+import { haptics } from "@/lib/haptics";
 
 export default function Dashboard() {
   const { employee } = useAuth();
@@ -20,29 +19,33 @@ export default function Dashboard() {
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
   
-  const { layout, updateOrder, updateSize, addWidget, removeWidget, resetLayout } = useWidgetLayout();
+  const { layout, updateOrder, updatePosition, bringToFront, addWidget, removeWidget, resetLayout } = useWidgetLayout();
 
-  // Calculate grid positions for all widgets
-  const gridPositions = useMemo(() => {
-    return calculateGridPositions(layout.widgetOrder, layout.widgetSizes);
-  }, [layout.widgetOrder, layout.widgetSizes]);
-
-  // Configure sensors for press-and-hold dragging (800ms)
+  // Configure sensors for press-and-hold dragging (500ms)
   const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: { delay: 800, tolerance: 5 }
+    activationConstraint: { delay: 500, tolerance: 5 }
   });
   const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 800, tolerance: 5 }
+    activationConstraint: { delay: 500, tolerance: 5 }
   });
   const sensors = useSensors(mouseSensor, touchSensor);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragStart = (event: DragStartEvent) => {
+    const widgetId = event.active.id as string;
+    bringToFront(widgetId);
+    haptics.medium();
+  };
 
-    if (over && active.id !== over.id) {
-      const oldIndex = layout.widgetOrder.indexOf(active.id as string);
-      const newIndex = layout.widgetOrder.indexOf(over.id as string);
-      updateOrder(arrayMove(layout.widgetOrder, oldIndex, newIndex));
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, delta } = event;
+    const widgetId = active.id as string;
+    const currentPos = layout.widgetPositions[widgetId];
+    
+    if (currentPos) {
+      updatePosition(widgetId, {
+        x: currentPos.x + delta.x,
+        y: currentPos.y + delta.y,
+      });
     }
   };
 
@@ -78,52 +81,43 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Widgets Grid with Drag and Drop */}
+        {/* Free-Form Canvas with Drag and Drop */}
         <DndContext 
-          collisionDetection={closestCenter} 
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           sensors={sensors}
         >
           <SortableContext items={layout.widgetOrder} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-4 gap-4" style={{ gridAutoRows: '300px' }}>
-              {layout.widgetOrder.map((widgetId, index) => {
+            <div className="relative min-h-[1000px] w-full">
+              {layout.widgetOrder.map((widgetId) => {
                 const widgetDef = getWidgetById(widgetId);
                 if (!widgetDef) return null;
 
-                const position = gridPositions.find(p => p.id === widgetId);
+                const position = layout.widgetPositions[widgetId];
                 if (!position) return null;
 
-                const size = layout.widgetSizes[widgetId] || widgetDef.defaultSize;
                 const WidgetComponent = widgetDef.component;
 
                 return (
-                  <SortableWidget
+                  <DraggableWidget
                     key={widgetId}
                     id={widgetId}
-                    index={index}
+                    position={position}
+                    onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
+                    onBringToFront={() => bringToFront(widgetId)}
                   >
-                    <ResizableWidget
-                      id={widgetId}
-                      cols={size.cols}
-                      rows={size.rows}
-                      gridCol={position.col}
-                      gridRow={position.row}
-                      allWidgets={gridPositions}
-                      onResize={(cols, rows) => updateSize(widgetId, { cols, rows })}
-                    >
-                      <Suspense fallback={<Skeleton className="h-full w-full" />}>
-                        <div className="h-full w-full relative group">
-                          <WidgetMenu 
-                            widgetId={widgetId}
-                            widgetName={widgetDef.name}
-                            onConfigure={() => setConfigModalWidget(widgetId)}
-                            onDelete={() => removeWidget(widgetId)}
-                          />
-                          <WidgetComponent />
-                        </div>
-                      </Suspense>
-                    </ResizableWidget>
-                  </SortableWidget>
+                    <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                      <div className="h-full w-full relative group">
+                        <WidgetMenu 
+                          widgetId={widgetId}
+                          widgetName={widgetDef.name}
+                          onConfigure={() => setConfigModalWidget(widgetId)}
+                          onDelete={() => removeWidget(widgetId)}
+                        />
+                        <WidgetComponent />
+                      </div>
+                    </Suspense>
+                  </DraggableWidget>
                 );
               })}
             </div>
@@ -132,8 +126,8 @@ export default function Dashboard() {
 
         {/* Help Text */}
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Press and hold (0.8s) any widget to drag • Drag bottom-right corner to resize</p>
-          <p>Layout saves automatically per user</p>
+          <p>Press and hold (0.5s) any widget to drag • Widgets can overlap freely</p>
+          <p>Drag bottom-right corner to resize • Layout saves automatically</p>
         </div>
       </div>
 

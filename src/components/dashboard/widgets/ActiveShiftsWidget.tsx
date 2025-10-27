@@ -43,7 +43,7 @@ export function ActiveShiftsWidget() {
   const totalLaborCost = activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0;
 
   return (
-    <Card className="glass-card p-4 h-full w-full flex flex-col">
+    <Card className="glass-card p-4 min-h-[300px] min-w-[350px] flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />

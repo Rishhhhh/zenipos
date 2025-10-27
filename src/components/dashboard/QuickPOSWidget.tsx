@@ -69,7 +69,7 @@ export function QuickPOSWidget() {
   };
 
   return (
-    <Card className="glass-card p-4 h-full w-full flex flex-col">
+    <Card className="glass-card p-4 min-h-[400px] min-w-[400px] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
