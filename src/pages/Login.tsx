@@ -71,7 +71,7 @@ export default function Login() {
         {/* Logo & Branding */}
         <div className="text-center mb-8 animate-[fade-in_0.8s_ease-out]">
           <div className="inline-flex items-center justify-center mb-4">
-            <ZeniPOSLogo variant="full" className="h-20" />
+            <ZeniPOSLogo variant="full" theme="auto" className="h-20" />
           </div>
           <h1 className="text-3xl font-bold mb-2">
             <span className="text-foreground">ZENI</span>

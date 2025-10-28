@@ -1,25 +1,40 @@
 import { cn } from '@/lib/utils';
+import { useThemeContext } from '@/contexts/ThemeContext';
 
 interface ZeniPOSLogoProps {
   variant?: 'full' | 'icon';
-  theme?: 'light' | 'dark' | 'color';
+  theme?: 'auto' | 'light' | 'dark' | 'color';
   className?: string;
 }
 
 export function ZeniPOSLogo({ 
   variant = 'full', 
-  theme = 'color',
+  theme = 'auto',
   className 
 }: ZeniPOSLogoProps) {
-  // Determine logo source based on variant and theme
+  const { themeId } = useThemeContext();
+  
+  // Auto-detect theme if 'auto' is specified
+  let effectiveTheme = theme;
+  if (theme === 'auto') {
+    const isDark = themeId.includes('dark') || 
+                   ['professional-dark', 'retro-terminal', 'brutalism'].includes(themeId);
+    effectiveTheme = isDark ? 'dark' : 'light';
+  }
+  
+  // Determine logo source based on variant and effective theme
   const logoSrc = 
     variant === 'full' 
-      ? theme === 'color'
-        ? '/logos/zenipos-full-color.svg'    // Full logo with gold POS
-        : '/logos/zenipos-full-white.svg'    // Full logo all white
-      : theme === 'color'
-        ? '/logos/zenipos-icon-black.svg'    // Z icon in black
-        : '/logos/zenipos-icon-white.svg';   // Z icon in white
+      ? effectiveTheme === 'color'
+        ? '/logos/zenipos-full-color.svg'
+        : effectiveTheme === 'dark'
+          ? '/logos/zenipos-full-white.svg'
+          : '/logos/zenipos-full-color.svg'
+      : effectiveTheme === 'color'
+        ? '/logos/zenipos-icon-black.svg'
+        : effectiveTheme === 'dark'
+          ? '/logos/zenipos-icon-white.svg'
+          : '/logos/zenipos-icon-black.svg';
   
   return (
     <img 

@@ -6,7 +6,7 @@ export function ZeniPOSLoader() {
       <div className="relative">
         {/* Animated Z icon */}
         <div className="w-24 h-24 mb-6 animate-pulse">
-          <ZeniPOSLogo variant="icon" className="w-full h-full" />
+          <ZeniPOSLogo variant="icon" theme="auto" className="w-full h-full" />
         </div>
         
         {/* Loading text */}

@@ -39,7 +39,7 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-3">
-            <ZeniPOSLogo variant="icon" className="h-10 w-10" />
+            <ZeniPOSLogo variant="icon" theme="auto" className="h-10 w-10" />
             <div className="flex flex-col">
               <h1 className="text-lg font-bold leading-none">
                 <span className="text-foreground">ZENI</span>
