@@ -136,10 +136,10 @@ export function DraggableWidget({
     left: position.x,
     top: position.y,
     width: isMinimized ? currentWidth : currentWidth,
-    height: isMinimized ? 50 : currentHeight,
+    height: isMinimized ? 56 : currentHeight,
     minWidth: widgetDef?.minSize.width,
     maxWidth: widgetDef?.maxSize.width,
-    minHeight: isMinimized ? 50 : widgetDef?.minSize.height,
+    minHeight: isMinimized ? 56 : widgetDef?.minSize.height,
     maxHeight: widgetDef?.maxSize.height,
     zIndex: isDraggingThis ? 9999 : position.zIndex,
     transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -155,12 +155,12 @@ export function DraggableWidget({
       }}
       style={style}
       className={cn(
-        "group rounded-lg overflow-hidden bg-card border-2 border-border shadow-lg",
-        "cursor-grab active:cursor-grabbing",
-        "transition-shadow duration-200",
+        "group rounded-lg overflow-hidden bg-card border-2 shadow-lg",
+        isMinimized ? "border-primary/40 bg-card/80 cursor-grab" : "border-border cursor-grab",
+        "active:cursor-grabbing transition-all duration-200",
         isDraggingThis && "shadow-2xl opacity-95 border-primary",
         isResizing && "shadow-xl",
-        isMinimized && "opacity-80"
+        isMinimized && "hover:border-primary hover:bg-card"
       )}
       onMouseDown={handleMouseDown}
       onMouseEnter={() => setIsHovered(true)}
@@ -180,6 +180,11 @@ export function DraggableWidget({
           onClose={onClose}
           onConfigure={onConfigure}
         />
+
+        {/* Minimized State Indicator */}
+        {isMinimized && (
+          <div className="absolute left-0 right-0 bottom-0 h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0" />
+        )}
 
         {/* Widget Content */}
         {!isMinimized && (
