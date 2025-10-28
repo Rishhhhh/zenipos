@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useEffect, useState } from 'react';
 
 interface ZeniPOSLogoProps {
   variant?: 'full' | 'icon';
@@ -12,7 +13,14 @@ export function ZeniPOSLogo({
   theme = 'auto',
   className 
 }: ZeniPOSLogoProps) {
-  const { themeId } = useThemeContext();
+  // Safely get theme context with fallback
+  let themeId = 'zenipos-light';
+  try {
+    const context = useThemeContext();
+    themeId = context.themeId;
+  } catch {
+    // ThemeProvider not available, use default
+  }
   
   // Auto-detect theme if 'auto' is specified
   let effectiveTheme = theme;
