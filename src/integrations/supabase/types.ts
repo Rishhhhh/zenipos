@@ -1242,6 +1242,7 @@ export type Database = {
           customer_id: string | null
           discount: number | null
           id: string
+          metadata: Json | null
           order_type: Database["public"]["Enums"]["order_type"] | null
           session_id: string
           status: Database["public"]["Enums"]["order_status"] | null
@@ -1259,6 +1260,7 @@ export type Database = {
           customer_id?: string | null
           discount?: number | null
           id?: string
+          metadata?: Json | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           session_id: string
           status?: Database["public"]["Enums"]["order_status"] | null
@@ -1276,6 +1278,7 @@ export type Database = {
           customer_id?: string | null
           discount?: number | null
           id?: string
+          metadata?: Json | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           session_id?: string
           status?: Database["public"]["Enums"]["order_status"] | null

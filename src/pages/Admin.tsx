@@ -17,7 +17,7 @@ export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<any>(null);
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['admin-stats-enhanced'],
     queryFn: async () => {
       const [categoriesRes, itemsRes, ordersRes] = await Promise.all([
@@ -38,6 +38,28 @@ export default function Admin() {
       };
     },
   });
+
+  // Subscribe to real-time order updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   const ordersCount = useCountUp(stats?.orders || 0);
   const itemsCount = useCountUp(stats?.items || 0);
