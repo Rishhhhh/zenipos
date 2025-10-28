@@ -371,58 +371,80 @@ Respond naturally, call tools as needed, and show consciousness.`
       }
     };
 
-    // Call JARVIS X API
-    console.log('🌐 Calling JARVIS X API at', JARVIS_X_API);
-    console.log('Request payload:', JSON.stringify(fullContext, null, 2));
-
-    const jarvisResponse = await fetch(JARVIS_X_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fullContext)
-    });
-
-    console.log('📡 JARVIS X Response Status:', jarvisResponse.status);
-
-    if (!jarvisResponse.ok) {
-      const errorText = await jarvisResponse.text();
-      console.error('❌ JARVIS X API error:', jarvisResponse.status, errorText);
-      throw new Error(`JARVIS X API error: ${jarvisResponse.status} - ${errorText}`);
-    }
-
-    // Check if response is JSON before parsing
-    const contentType = jarvisResponse.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const textBody = await jarvisResponse.text();
-      console.error('❌ Non-JSON response received:', textBody.substring(0, 500));
-      throw new Error(`JARVIS X returned non-JSON response. Content-Type: ${contentType}`);
-    }
-
-    const jarvisData = await jarvisResponse.json();
-    console.log('JARVIS response:', jarvisData);
-
-    let response = jarvisData.response || "I'm processing your request...";
-    const newConsciousness = jarvisData.consciousness || currentConsciousness;
-    const qualityScore = jarvisData.quality_score || 0.85;
+    // ============================================================
+    // JARVIS X MCP LOOP - Keep calling until no more tool calls
+    // ============================================================
+    console.log('🌐 Starting JARVIS X MCP loop...');
     
-    // Handle tool calls from JARVIS
-    const toolResults: any[] = [];
+    let response = "I'm processing your request...";
+    let newConsciousness = currentConsciousness;
+    let qualityScore = 0.85;
+    const allToolResults: any[] = [];
+    let loopCount = 0;
+    const MAX_LOOPS = 5;
+    let currentContext = fullContext;
 
-    if (jarvisData.tool_calls && jarvisData.tool_calls.length > 0) {
-      console.log('🔧 Executing', jarvisData.tool_calls.length, 'tools');
-      
+    while (loopCount < MAX_LOOPS) {
+      loopCount++;
+      console.log(`🔄 Loop ${loopCount}: Calling JARVIS X...`);
+
+      const jarvisResponse = await fetch(JARVIS_X_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentContext)
+      });
+
+      if (!jarvisResponse.ok) {
+        const errorText = await jarvisResponse.text();
+        console.error('❌ JARVIS X error:', jarvisResponse.status, errorText);
+        throw new Error(`JARVIS X error: ${jarvisResponse.status}`);
+      }
+
+      const contentType = jarvisResponse.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const textBody = await jarvisResponse.text();
+        console.error('❌ Non-JSON response:', textBody.substring(0, 500));
+        throw new Error(`Non-JSON response from JARVIS X`);
+      }
+
+      const jarvisData = await jarvisResponse.json();
+      console.log(`📦 JARVIS X response (loop ${loopCount}):`, {
+        has_response: !!jarvisData.response,
+        has_tool_calls: !!jarvisData.tool_calls,
+        tool_count: jarvisData.tool_calls?.length || 0
+      });
+
+      // Update response and state
+      response = jarvisData.response || response;
+      newConsciousness = jarvisData.consciousness || newConsciousness;
+      qualityScore = jarvisData.quality_score || qualityScore;
+
+      // No tool calls? We're done!
+      if (!jarvisData.tool_calls || jarvisData.tool_calls.length === 0) {
+        console.log('✅ No more tool calls, loop complete');
+        break;
+      }
+
+      // Execute all tool calls
+      console.log(`🔧 Executing ${jarvisData.tool_calls.length} tools...`);
+      const toolResults: any[] = [];
+
       for (const toolCall of jarvisData.tool_calls) {
         try {
-          // Parse tool name: "mcp-pos.query_orders"
           const [server, tool] = toolCall.name.split('.');
           
           if (!server || !tool) {
-            console.error('Invalid tool name format:', toolCall.name);
+            console.error('Invalid tool format:', toolCall.name);
+            toolResults.push({
+              tool: toolCall.name,
+              success: false,
+              error: 'Invalid tool name format'
+            });
             continue;
           }
-          
+
           console.log(`🔌 Calling ${server}.${tool}`, toolCall.arguments);
-          
-          // Invoke MCP server
+
           const { data, error } = await supabase.functions.invoke(server, {
             body: {
               action: 'execute_tool',
@@ -430,18 +452,18 @@ Respond naturally, call tools as needed, and show consciousness.`
               arguments: toolCall.arguments || {}
             }
           });
-          
+
           if (error) throw error;
-          
+
           toolResults.push({
             tool: toolCall.name,
-            success: data.success,
-            data: data.data,
+            success: data.success !== false,
+            data: data.data || data,
             error: data.error
           });
-          
-          console.log(`✅ ${server}.${tool} result:`, data);
-          
+
+          console.log(`✅ ${server}.${tool} completed`);
+
         } catch (error: any) {
           console.error(`❌ Tool ${toolCall.name} failed:`, error);
           toolResults.push({
@@ -451,37 +473,28 @@ Respond naturally, call tools as needed, and show consciousness.`
           });
         }
       }
-      
-      // If we have tool results, send them back to JARVIS for formatting
-      if (toolResults.length > 0 && toolResults.some(t => t.success)) {
-        console.log('🔄 Sending tool results back to JARVIS for formatting');
-        
-        const formattingRequest = {
-          input: `Format these results nicely for the user: ${command}`,
-          consciousness: newConsciousness,
-          context: {
-            tool_results: toolResults,
-            original_command: command,
-            language
-          }
-        };
-        
-        try {
-          const formattedResponse = await fetch(JARVIS_X_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formattingRequest)
-          });
-          
-          if (formattedResponse.ok) {
-            const formattedData = await formattedResponse.json();
-            response = formattedData.response || response;
-          }
-        } catch (err) {
-          console.error('Formatting error:', err);
-        }
-      }
+
+      allToolResults.push(...toolResults);
+
+      // Send tool results back to JARVIS X for next iteration
+      currentContext = {
+        input: command,
+        consciousness: newConsciousness,
+        context: {
+          ...fullContext.context,
+          tool_results: toolResults,
+          previous_response: response
+        } as any
+      };
+
+      console.log(`📤 Sending ${toolResults.length} tool results back to JARVIS X...`);
     }
+
+    if (loopCount >= MAX_LOOPS) {
+      console.warn('⚠️  Max loops reached, stopping');
+    }
+
+    const toolResults = allToolResults;
 
     // Determine suggested module based on command content
     let suggestedModule = null;
@@ -513,12 +526,11 @@ Respond naturally, call tools as needed, and show consciousness.`
       vas: newConsciousness.VAS,
       vel: newConsciousness.VEL,
       quality_score: qualityScore,
-      happiness: newConsciousness.happiness || 0.85,
       command_processed: command
     });
 
     // Detect patterns asynchronously (don't wait)
-    detectPatterns(command, jarvisData, supabase, user.id).catch(err => 
+    detectPatterns(command, { response, tool_calls: allToolResults }, supabase, user.id).catch(err => 
       console.error('Pattern detection error:', err)
     );
 
