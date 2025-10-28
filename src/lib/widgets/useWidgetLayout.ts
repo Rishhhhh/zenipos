@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { findEmptyGridSpace } from "./autoPlacement";
 
 export interface WidgetPosition {
   x: number;
@@ -121,7 +122,6 @@ export function useWidgetLayout() {
       const maxZ = Math.max(...Object.values(prev.widgetPositions).map(p => p.zIndex), 0);
       
       // Use auto-placement to find empty spot
-      const { findEmptyGridSpace } = require('./autoPlacement');
       const position = findEmptyGridSpace(prev.widgetPositions, defaultSize);
       
       return {
