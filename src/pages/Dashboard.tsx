@@ -126,13 +126,14 @@ export default function Dashboard() {
           onDragEnd={handleDragEnd}
           sensors={sensors}
         >
-          <div 
-            className="relative w-full mx-auto bg-card/20 rounded-lg overflow-hidden" 
-            style={{ 
-              height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
-              minHeight: '600px',
-            }}
-          >
+        <div 
+          className="relative w-full mx-auto bg-card/20 rounded-lg" 
+          style={{ 
+            height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
+            minHeight: '600px',
+            overflow: 'visible', // Allow widgets to overflow at bottom but stay behind dock
+          }}
+        >
             {/* Backdrop for Maximized Widget */}
             {maximizedWidget && (
               <div
