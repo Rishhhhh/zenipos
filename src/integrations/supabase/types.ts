@@ -2342,6 +2342,15 @@ export type Database = {
         Args: { _branch_id: string; _stat_date?: string }
         Returns: undefined
       }
+      calculate_cogs: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          cogs_percentage: number
+          food_cost_percentage: number
+          total_cogs: number
+          total_revenue: number
+        }[]
+      }
       calculate_discount_from_points: {
         Args: { points: number }
         Returns: number
@@ -2400,6 +2409,43 @@ export type Database = {
           unit: string
         }[]
       }
+      get_sales_by_category: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          category_id: string
+          category_name: string
+          item_count: number
+          percentage_of_total: number
+          total_sales: number
+        }[]
+      }
+      get_sales_by_day_of_week: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          avg_ticket: number
+          day_of_week: number
+          order_count: number
+          total_sales: number
+        }[]
+      }
+      get_sales_by_employee: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          employee_id: string
+          employee_name: string
+          hours_worked: number
+          order_count: number
+          total_sales: number
+        }[]
+      }
+      get_sales_by_hour: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          hour: number
+          order_count: number
+          total_sales: number
+        }[]
+      }
       get_shift_summary: {
         Args: { shift_id_param: string }
         Returns: {
@@ -2424,6 +2470,16 @@ export type Database = {
           redemption_rate: number
           total_orders: number
           total_spent: number
+        }[]
+      }
+      get_top_selling_items: {
+        Args: { end_date: string; limit_count?: number; start_date: string }
+        Returns: {
+          item_id: string
+          item_name: string
+          quantity_sold: number
+          times_ordered: number
+          total_revenue: number
         }[]
       }
       get_user_branch_ids: {
