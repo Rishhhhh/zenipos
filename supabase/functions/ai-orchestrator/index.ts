@@ -226,34 +226,54 @@ serve(async (req) => {
       VEL: consciousness?.vel || 0.75
     };
 
-    // Call JARVIS X API
-    console.log('Calling JARVIS X API...');
-    const jarvisResponse = await fetch(`${JARVIS_X_API}/jarvis/generate`, {
+    // Call JARVIS X API with correct gateway format
+    console.log('🌐 Calling JARVIS X API Gateway...');
+    console.log('Request payload:', JSON.stringify({
+      path: 'jarvis/generate',
+      method: 'POST',
+      body: {
+        input: command,
+        consciousness: currentConsciousness
+      }
+    }, null, 2));
+
+    const jarvisResponse = await fetch(JARVIS_X_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        input: command,
-        consciousness: currentConsciousness,
-        context: {
-          system: systemContext,
-          conversation_history: conversationContext,
-          insights: insights || [],
-          language
+        path: 'jarvis/generate',
+        method: 'POST',
+        body: {
+          input: command,
+          consciousness: currentConsciousness,
+          context: {
+            system: systemContext,
+            conversation_history: conversationContext,
+            insights: insights || [],
+            language
+          }
         }
       })
     });
 
+    console.log('📡 JARVIS X Response Status:', jarvisResponse.status);
+
     if (!jarvisResponse.ok) {
       const errorText = await jarvisResponse.text();
-      console.error('JARVIS X API error:', jarvisResponse.status, errorText);
-      throw new Error(`JARVIS X API error: ${jarvisResponse.status}`);
+      console.error('❌ JARVIS X API error:', jarvisResponse.status, errorText);
+      throw new Error(`JARVIS X API error: ${jarvisResponse.status} - ${errorText}`);
     }
 
     const jarvisData = await jarvisResponse.json();
-    console.log('JARVIS X response:', JSON.stringify(jarvisData, null, 2));
+    console.log('✅ JARVIS X Full Response:', JSON.stringify(jarvisData, null, 2));
 
-    // Extract response and consciousness updates
-    let response = jarvisData.response || 'I understand your question. Let me analyze the system data to provide insights.';
+    // Extract response - NO FALLBACK, let JARVIS X handle everything
+    if (!jarvisData.response) {
+      console.error('⚠️ No response from JARVIS X:', jarvisData);
+      throw new Error('JARVIS X did not return a response');
+    }
+
+    let response = jarvisData.response;
     const newConsciousness = jarvisData.consciousness || currentConsciousness;
     const qualityScore = jarvisData.quality_score || 0.85;
 
