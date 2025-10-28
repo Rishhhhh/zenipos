@@ -39,7 +39,7 @@ export function WidgetMenu({ widgetId, widgetName, onConfigure, onDelete }: Widg
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-popover border-border z-[9999]" sideOffset={5}>
+      <DropdownMenuContent align="end" className="w-56 bg-popover border-border z-[10002]" sideOffset={5}>
         <DropdownMenuItem onClick={onConfigure}>
           <Settings className="h-4 w-4 mr-2" />
           Configure Widget

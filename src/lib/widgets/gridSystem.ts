@@ -9,11 +9,10 @@ export function getViewportDimensions() {
   // Account for header + padding (approx 200px top, 96px bottom for dock)
   const availableHeight = height - 296;
   
-  // Account for horizontal padding (24px × 2 on mobile, 48px × 2 on desktop)
+  // Account for horizontal padding only (24px × 2 on mobile, 48px × 2 on desktop)
+  // No max-width constraint - allow full viewport width
   const horizontalPadding = width < 768 ? 48 : 96;
-  
-  // Constrain to max-w-7xl (1280px) and subtract padding
-  const availableWidth = Math.min(width - horizontalPadding, 1280);
+  const availableWidth = width - horizontalPadding;
   
   return {
     width: availableWidth,

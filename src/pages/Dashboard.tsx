@@ -39,12 +39,12 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Configure sensors for press-and-hold dragging (500ms)
+  // Configure sensors for press-and-hold dragging (350ms)
   const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: { delay: 500, tolerance: 5 }
+    activationConstraint: { delay: 350, tolerance: 5 }
   });
   const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 500, tolerance: 5 }
+    activationConstraint: { delay: 350, tolerance: 5 }
   });
   const sensors = useSensors(mouseSensor, touchSensor);
 
@@ -85,10 +85,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-secondary/5 p-4 md:p-6 pb-24">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-secondary/5 pb-24">
+      {/* Header with max-width constraint */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6 mb-6">
+        <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Dashboard
@@ -115,9 +115,12 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+      </div>
 
+      {/* Canvas spans full viewport width */}
+      <div className="px-4 md:px-6">
         {/* Free-Form Canvas with Drag and Drop */}
-        <DndContext 
+        <DndContext
           key={viewportKey}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
@@ -177,7 +180,7 @@ export default function Dashboard() {
 
         {/* Help Text */}
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Press and hold (0.5s) any widget to drag • Magnetically snaps to grid</p>
+          <p>Press and hold (0.35s) any widget to drag • Magnetically snaps to grid</p>
           <p>Drag bottom-right corner to resize • All widgets fit in viewport</p>
           <p>Click maximize for full-screen • Press Escape or click backdrop to restore</p>
         </div>

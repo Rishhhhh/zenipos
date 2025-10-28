@@ -14,6 +14,7 @@ export interface WidgetPosition {
   _originalHeight?: number;
   _originalX?: number;
   _originalY?: number;
+  _wasMinimized?: boolean;
 }
 
 export interface WidgetLayout {
@@ -188,6 +189,7 @@ export function useWidgetLayout() {
     setLayout(prev => {
       const current = prev.widgetPositions[widgetId];
       const isCurrentlyMaximized = current.isMaximized;
+      const isCurrentlyMinimized = current.isMinimized;
       
       return {
         ...prev,
@@ -201,8 +203,13 @@ export function useWidgetLayout() {
               // Store originals when maximizing
               _originalX: current.x,
               _originalY: current.y,
-              _originalWidth: current.width,
+              // If currently minimized, use the stored original width, not 300px
+              _originalWidth: isCurrentlyMinimized && current._originalWidth 
+                ? current._originalWidth 
+                : current.width,
               _originalHeight: current.height,
+              // Remember if it was minimized before maximizing
+              _wasMinimized: isCurrentlyMinimized,
               // Don't set x/y/width/height - DraggableWidget handles via CSS
             } : {
               // Restore originals when un-maximizing
@@ -210,6 +217,8 @@ export function useWidgetLayout() {
               y: current._originalY || current.y,
               width: current._originalWidth || current.width,
               height: current._originalHeight || current.height,
+              // If it was minimized before maximizing, restore to minimized state
+              isMinimized: current._wasMinimized || false,
             }),
           },
         },
