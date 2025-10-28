@@ -188,8 +188,10 @@ export function DraggableWidget({
 
         {/* Widget Content */}
         {!isMinimized && (
-          <div className="h-full w-full pt-2">
-            {children}
+          <div className="h-full w-full pt-2 overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 overflow-auto">
+              {children}
+            </div>
           </div>
         )}
         

@@ -73,7 +73,7 @@ export function ActiveOrdersWidget() {
   };
 
   return (
-    <Card className={cn("glass-card p-5 min-h-[300px] min-w-[350px] flex flex-col", config.compactMode && "p-3")}>
+    <Card className={cn("glass-card p-5 h-full flex flex-col", config.compactMode && "p-3")}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

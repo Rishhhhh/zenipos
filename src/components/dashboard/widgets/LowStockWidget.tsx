@@ -42,7 +42,7 @@ export function LowStockWidget() {
   };
 
   return (
-    <Card className="glass-card p-5 min-h-[300px] min-w-[350px] flex flex-col">
+    <Card className="glass-card p-5 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-warning" />

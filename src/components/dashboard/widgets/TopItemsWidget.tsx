@@ -65,7 +65,7 @@ export function TopItemsWidget() {
   };
 
   return (
-    <Card className="glass-card p-5 min-h-[300px] min-w-[350px] flex flex-col">
+    <Card className="glass-card p-5 h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="h-5 w-5 text-primary" />
         <h3 className="font-semibold text-lg">Top Selling Items</h3>
