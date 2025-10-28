@@ -8,11 +8,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AISearchBar } from './AISearchBar';
 import { AIApprovalDialog } from './AIApprovalDialog';
+import { AIResponseRenderer } from './AIResponseRenderer';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   toolResults?: any[];
+  structuredData?: {
+    type: 'receipt' | 'sales_chart' | 'table' | 'kpi_cards';
+    data: any;
+  };
   requiresApproval?: boolean;
   pendingActions?: any[];
   timestamp: Date;
@@ -69,6 +74,7 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
         role: 'assistant',
         content: data.response,
         toolResults: data.tool_results,
+        structuredData: data.structured_data,
         requiresApproval: data.requires_approval,
         pendingActions: data.pending_actions,
         timestamp: new Date()
@@ -198,31 +204,24 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
           <div className="space-y-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <Card className={`max-w-[80%] p-3 ${
+                <Card className={`max-w-[85%] p-4 ${
                   msg.role === 'user' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted'
+                    : 'bg-card'
                 }`}>
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  
-                  {/* Tool Results */}
-                  {msg.toolResults && msg.toolResults.length > 0 && (
-                    <div className="mt-3 pt-3 border-t space-y-2">
-                      <p className="text-xs font-semibold opacity-70">Tools Executed:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {msg.toolResults.map((tool, tidx) => (
-                          <Badge key={tidx} variant="outline" className="text-xs">
-                            <Zap className="h-3 w-3 mr-1" />
-                            {tool.tool}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                  {msg.role === 'assistant' ? (
+                    <AIResponseRenderer
+                      content={msg.content}
+                      toolResults={msg.toolResults}
+                      structuredData={msg.structuredData}
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
 
                   {/* Approval Required */}
                   {msg.requiresApproval && (
-                    <div className="mt-3 pt-3 border-t">
+                    <div className="mt-3 pt-3 border-t border-border">
                       <div className="flex items-center gap-2 text-xs text-orange-600">
                         <AlertTriangle className="h-4 w-4" />
                         <span>{language === 'ms' ? 'Memerlukan kelulusan pengurus' : 'Requires manager approval'}</span>

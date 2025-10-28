@@ -49,8 +49,21 @@ serve(async (req) => {
             inputSchema: {
               type: "object",
               properties: {
-                branch_id: { type: "string" }
+                branch_id: { type: "string", format: "uuid" }
               }
+            }
+          },
+          {
+            name: "adjust_stock",
+            description: "Adjust inventory stock levels (SuperAdmin only)",
+            inputSchema: {
+              type: "object",
+              properties: {
+                item_id: { type: "string", format: "uuid" },
+                quantity: { type: "number" },
+                reason: { type: "string" }
+              },
+              required: ["item_id", "quantity", "reason"]
             }
           }
         ],
@@ -96,31 +109,61 @@ serve(async (req) => {
         }
 
         case 'get_inventory_value': {
-          let query = supabase.from('inventory_items').select('current_qty, cost_per_unit');
+          const { branch_id } = args;
           
-          if (args?.branch_id) query = query.eq('branch_id', args.branch_id);
+          let query = supabase
+            .from('inventory_items')
+            .select('current_qty, cost_per_unit');
           
-          const { data, error } = await query;
-          
-          if (!error && data) {
-            const totalValue = data.reduce((sum, item) => 
-              sum + (item.current_qty * item.cost_per_unit), 0
-            );
-            return new Response(JSON.stringify({ 
-              success: true, 
-              data: { 
-                total_value: totalValue,
-                item_count: data.length,
-                items: data
-              }
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
+          if (branch_id) {
+            query = query.eq('branch_id', branch_id);
           }
           
-          return new Response(JSON.stringify({ success: false, error: error?.message }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          const { data, error } = await query;
+          if (error) throw error;
+          
+          const totalValue = data?.reduce((sum, item) => 
+            sum + (item.current_qty * item.cost_per_unit), 0
+          ) || 0;
+          
+          return new Response(
+            JSON.stringify({ success: true, data: { total_value: totalValue, items_count: data?.length || 0 } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        case 'adjust_stock': {
+          const { item_id, quantity, reason } = args;
+          
+          const { data: item, error: fetchError } = await supabase
+            .from('inventory_items')
+            .select('current_qty')
+            .eq('id', item_id)
+            .single();
+          
+          if (fetchError) throw fetchError;
+          
+          const newQty = item.current_qty + quantity;
+          
+          const { error: updateError } = await supabase
+            .from('inventory_items')
+            .update({ current_qty: newQty })
+            .eq('id', item_id);
+          
+          if (updateError) throw updateError;
+          
+          // Log stock movement
+          await supabase.from('stock_moves').insert({
+            inventory_item_id: item_id,
+            type: quantity > 0 ? 'adjustment_in' : 'adjustment_out',
+            quantity: Math.abs(quantity),
+            reason
           });
+          
+          return new Response(
+            JSON.stringify({ success: true, data: { item_id, old_qty: item.current_qty, new_qty: newQty } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
       }
     }

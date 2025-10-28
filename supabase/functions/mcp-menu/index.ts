@@ -34,12 +34,37 @@ serve(async (req) => {
           },
           {
             name: "get_item_profitability",
-            description: "Calculate profit margins for menu items",
+            description: "Calculate item profitability (revenue vs cost)",
             inputSchema: {
               type: "object",
               properties: {
-                item_id: { type: "string" }
-              }
+                item_id: { type: "string", format: "uuid" }
+              },
+              required: ["item_id"]
+            }
+          },
+          {
+            name: "update_menu_item_price",
+            description: "Update menu item price (SuperAdmin only)",
+            inputSchema: {
+              type: "object",
+              properties: {
+                item_id: { type: "string", format: "uuid" },
+                new_price: { type: "number" }
+              },
+              required: ["item_id", "new_price"]
+            }
+          },
+          {
+            name: "toggle_item_availability",
+            description: "Enable/disable menu item (SuperAdmin only)",
+            inputSchema: {
+              type: "object",
+              properties: {
+                item_id: { type: "string", format: "uuid" },
+                in_stock: { type: "boolean" }
+              },
+              required: ["item_id", "in_stock"]
             }
           }
         ],
@@ -80,32 +105,73 @@ serve(async (req) => {
         }
 
         case 'get_item_profitability': {
-          const { data: item, error } = await supabase.from('menu_items')
+          const { item_id } = args;
+          
+          const { data: item, error: itemError } = await supabase
+            .from('menu_items')
             .select('name, price, cost')
-            .eq('id', args.item_id)
+            .eq('id', item_id)
             .single();
           
-          if (!error && item) {
-            const profit = item.price - item.cost;
-            const marginPercent = item.price > 0 ? (profit / item.price) * 100 : 0;
-            
-            return new Response(JSON.stringify({ 
-              success: true, 
-              data: {
-                item_name: item.name,
-                price: item.price,
-                cost: item.cost,
-                profit_per_unit: profit,
-                profit_margin_percent: marginPercent
-              }
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
+          if (itemError) throw itemError;
           
-          return new Response(JSON.stringify({ success: false, error: error?.message }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+          const { data: sales, error: salesError } = await supabase
+            .from('order_items')
+            .select('quantity, unit_price')
+            .eq('menu_item_id', item_id);
+          
+          if (salesError) throw salesError;
+          
+          const totalRevenue = sales?.reduce((sum, s) => sum + (s.quantity * s.unit_price), 0) || 0;
+          const totalCost = sales?.reduce((sum, s) => sum + (s.quantity * (item.cost || 0)), 0) || 0;
+          const profit = totalRevenue - totalCost;
+          const margin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              data: { 
+                item_name: item.name,
+                total_revenue: totalRevenue,
+                total_cost: totalCost,
+                profit,
+                margin_percentage: margin
+              } 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        case 'update_menu_item_price': {
+          const { item_id, new_price } = args;
+          
+          const { error } = await supabase
+            .from('menu_items')
+            .update({ price: new_price })
+            .eq('id', item_id);
+          
+          if (error) throw error;
+          
+          return new Response(
+            JSON.stringify({ success: true, data: { item_id, new_price } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        case 'toggle_item_availability': {
+          const { item_id, in_stock } = args;
+          
+          const { error } = await supabase
+            .from('menu_items')
+            .update({ in_stock })
+            .eq('id', item_id);
+          
+          if (error) throw error;
+          
+          return new Response(
+            JSON.stringify({ success: true, data: { item_id, in_stock } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
       }
     }

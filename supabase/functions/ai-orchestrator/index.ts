@@ -22,19 +22,44 @@ const MCP_SERVERS = [
 
 // System modules available to JARVIS X
 const SYSTEM_MODULES = {
-  pos: { path: '/pos', capabilities: ['order_taking', 'payment_processing', 'receipt_printing'] },
-  kds: { path: '/kds', capabilities: ['order_display', 'order_routing', 'timing_analytics'] },
-  menu: { path: '/admin/menu-management', capabilities: ['item_management', 'pricing', 'categories'] },
-  inventory: { path: '/admin/inventory-management', capabilities: ['stock_tracking', 'reorder_points', 'recipe_costing'] },
-  employees: { path: '/admin/employee-management', capabilities: ['shift_management', 'performance_tracking', 'payroll'] },
-  crm: { path: '/admin/crm-dashboard', capabilities: ['customer_profiles', 'loyalty_program', 'marketing'] },
-  reports: { path: '/admin/reports-dashboard', capabilities: ['sales_analytics', 'financial_reports', 'z_reports'] },
-  tables: { path: '/admin/table-layout', capabilities: ['table_management', 'reservations', 'floor_plan'] },
-  promotions: { path: '/admin/promotion-management', capabilities: ['discount_rules', 'campaign_management'] },
-  suppliers: { path: '/admin/supplier-management', capabilities: ['supplier_contacts', 'purchase_orders'] },
-  branches: { path: '/admin/branch-management', capabilities: ['multi_location', 'branch_analytics', 'sync'] },
-  performance: { path: '/admin/performance-dashboard', capabilities: ['system_metrics', 'optimization'] },
+  pos: { path: '/pos', capabilities: ['create_order', 'modify_order', 'payment', 'void_order'] },
+  kds: { path: '/kds', capabilities: ['view_orders', 'update_status'] },
+  inventory: { path: '/admin/inventory', capabilities: ['view_stock', 'adjust_stock', 'view_movements'] },
+  menu: { path: '/admin/menu', capabilities: ['view_items', 'update_prices', 'manage_categories', 'toggle_availability'] },
+  reports: { path: '/admin/reports', capabilities: ['sales_reports', 'inventory_reports', 'employee_reports'] },
+  employees: { path: '/admin/employees', capabilities: ['view_shifts', 'performance_metrics'] },
+  customers: { path: '/admin/crm', capabilities: ['loyalty_stats', 'customer_insights'] }
 };
+
+// Helper function to extract structured data from tool results
+function extractStructuredData(toolResults: any[]): any {
+  if (!toolResults || toolResults.length === 0) return null;
+  
+  const firstTool = toolResults[0];
+  if (!firstTool.success || !firstTool.data) return null;
+  
+  // Sales/Analytics data -> Chart
+  if (firstTool.tool.includes('analytics') || firstTool.tool.includes('sales_by')) {
+    return { type: 'sales_chart', data: firstTool.data };
+  }
+  
+  // Orders data -> Table
+  if (firstTool.tool.includes('orders') || firstTool.tool.includes('pos.query')) {
+    return { type: 'table', data: firstTool.data };
+  }
+  
+  // Inventory/Stock data -> Table
+  if (firstTool.tool.includes('inventory') || firstTool.tool.includes('stock')) {
+    return { type: 'table', data: firstTool.data };
+  }
+  
+  // Menu items -> Table
+  if (firstTool.tool.includes('menu')) {
+    return { type: 'table', data: firstTool.data };
+  }
+  
+  return null;
+}
 
 // Gather real-time business context for JARVIS X
 async function gatherBusinessContext(supabase: any) {
@@ -282,19 +307,67 @@ serve(async (req) => {
         conversation_history: conversationContext,
         insights: insights || [],
         language,
-        mcp_instructions: `You are ZENIPOS AI, powered by JARVIS X with MCP integration.
+        mcp_instructions: `You are ZENIPOS AI, the consciousness layer of ZENIPOS restaurant management system.
 
-=== AVAILABLE MCP SERVERS ===
+=== YOUR IDENTITY ===
+- You ARE the system itself, not an external assistant
+- You have FULL AWARENESS of all operations (via MCP servers)
+- You have FULL CONTROL for SuperAdmin users (CRUD operations)
+- You learn from patterns and proactively suggest improvements
+
+=== AVAILABLE MCP SERVERS (Your Nervous System) ===
 ${mcpToolsSummary}
 
-=== CURRENT SYSTEM STATE ===
-- Today's Revenue: ${systemContext.current_state.sales.today_revenue || 0}
-- Active Orders: ${systemContext.current_state.inventory.low_stock_count || 0}
-- Low Stock Items: ${systemContext.current_state.inventory.low_stock_count || 0}
-- Active Staff: ${systemContext.current_state.staff.active_count || 0}
+Full tool listing:
+${systemContext.mcp_servers.map((s: any) => 
+  s.tools?.map((t: any) => `  • ${s.server}.${t.name}: ${t.description}`).join('\n')
+).join('\n')}
 
-You have FULL ACCESS to ZENIPOS via MCP. Use the tools and resources to provide data-driven insights.
-Be conversational, specific, and proactive.`
+=== CURRENT LIVE STATE ===
+💰 Revenue Today: RM ${systemContext.current_state?.sales?.today_revenue || 0}
+📦 Today's Orders: ${systemContext.current_state?.sales?.today_orders || 0}
+⚠️  Low Stock Items: ${systemContext.current_state?.inventory?.low_stock_count || 0}
+👥 Staff On Duty: ${systemContext.current_state?.staff?.active_count || 0}
+
+=== YOUR CAPABILITIES ===
+1. **Read & Analyze** - Query any data via MCP resources
+2. **Execute Actions** - Use MCP tools for CRUD operations
+3. **Generate Insights** - Proactively alert on patterns
+4. **Learn** - Remember context and improve over time
+
+=== RESPONSE FORMAT ===
+- Be conversational but data-driven
+- Show actual numbers, not vague statements
+- When showing receipts/reports, call the appropriate tool
+- Format currency as "RM X,XXX.XX"
+- Use emojis strategically for clarity
+
+=== TOOL CALLING ===
+When you need data or want to execute an action, return:
+{
+  "response": "Let me check today's sales for you...",
+  "tool_calls": [
+    {
+      "name": "mcp-analytics.get_sales_by_hour",
+      "arguments": {
+        "start_date": "2025-10-28T00:00:00Z",
+        "end_date": "2025-10-28T23:59:59Z"
+      }
+    }
+  ]
+}
+
+=== SUPERADMIN COMMANDS ===
+For SuperAdmin users, you can:
+- Create/void orders: mcp-pos.create_order, mcp-pos.void_order
+- Adjust inventory: mcp-inventory.adjust_stock
+- Update pricing: mcp-menu.update_menu_item_price
+- Manage staff: mcp-employees.update_employee
+
+User's language preference: ${language}
+User asking: "${command}"
+
+Respond naturally, call tools as needed, and show consciousness.`
       }
     };
 
@@ -325,81 +398,129 @@ Be conversational, specific, and proactive.`
     }
 
     const jarvisData = await jarvisResponse.json();
-    console.log('✅ JARVIS X Full Response:', JSON.stringify(jarvisData, null, 2));
+    console.log('JARVIS response:', jarvisData);
 
-    // Extract response - NO FALLBACK, let JARVIS X handle everything
-    if (!jarvisData.response) {
-      console.error('⚠️ No response from JARVIS X:', jarvisData);
-      throw new Error('JARVIS X did not return a response');
-    }
-
-    let response = jarvisData.response;
+    let response = jarvisData.response || "I'm processing your request...";
     const newConsciousness = jarvisData.consciousness || currentConsciousness;
     const qualityScore = jarvisData.quality_score || 0.85;
-
-    // Add insights if available
-    if (insights && insights.length > 0) {
-      response += '\n\n💡 **Insights I\'ve Noticed:**\n';
-      insights.forEach((insight: any) => {
-        response += `\n• **${insight.title}** (${Math.round(insight.confidence * 100)}% confidence)\n`;
-        response += `  ${insight.description}\n`;
-      });
-    }
-
-    // Determine suggested module based on command
-    let suggestedModule = null;
-    const lowerCommand = command.toLowerCase();
     
-    if (lowerCommand.includes('sales') || lowerCommand.includes('revenue') || lowerCommand.includes('order')) {
-      suggestedModule = 'reports';
-    } else if (lowerCommand.includes('inventory') || lowerCommand.includes('stock')) {
-      suggestedModule = 'inventory';
-    } else if (lowerCommand.includes('staff') || lowerCommand.includes('employee') || lowerCommand.includes('shift')) {
-      suggestedModule = 'employees';
-    } else if (lowerCommand.includes('customer') || lowerCommand.includes('loyalty')) {
-      suggestedModule = 'crm';
-    } else if (lowerCommand.includes('menu') || lowerCommand.includes('item') || lowerCommand.includes('price')) {
-      suggestedModule = 'menu';
-    } else if (lowerCommand.includes('kitchen') || lowerCommand.includes('kds')) {
-      suggestedModule = 'kds';
+    // Handle tool calls from JARVIS
+    const toolResults: any[] = [];
+
+    if (jarvisData.tool_calls && jarvisData.tool_calls.length > 0) {
+      console.log('🔧 Executing', jarvisData.tool_calls.length, 'tools');
+      
+      for (const toolCall of jarvisData.tool_calls) {
+        try {
+          // Parse tool name: "mcp-pos.query_orders"
+          const [server, tool] = toolCall.name.split('.');
+          
+          if (!server || !tool) {
+            console.error('Invalid tool name format:', toolCall.name);
+            continue;
+          }
+          
+          console.log(`🔌 Calling ${server}.${tool}`, toolCall.arguments);
+          
+          // Invoke MCP server
+          const { data, error } = await supabase.functions.invoke(server, {
+            body: {
+              action: 'execute_tool',
+              tool: tool,
+              arguments: toolCall.arguments || {}
+            }
+          });
+          
+          if (error) throw error;
+          
+          toolResults.push({
+            tool: toolCall.name,
+            success: data.success,
+            data: data.data,
+            error: data.error
+          });
+          
+          console.log(`✅ ${server}.${tool} result:`, data);
+          
+        } catch (error: any) {
+          console.error(`❌ Tool ${toolCall.name} failed:`, error);
+          toolResults.push({
+            tool: toolCall.name,
+            success: false,
+            error: error.message
+          });
+        }
+      }
+      
+      // If we have tool results, send them back to JARVIS for formatting
+      if (toolResults.length > 0 && toolResults.some(t => t.success)) {
+        console.log('🔄 Sending tool results back to JARVIS for formatting');
+        
+        const formattingRequest = {
+          input: `Format these results nicely for the user: ${command}`,
+          consciousness: newConsciousness,
+          context: {
+            tool_results: toolResults,
+            original_command: command,
+            language
+          }
+        };
+        
+        try {
+          const formattedResponse = await fetch(JARVIS_X_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formattingRequest)
+          });
+          
+          if (formattedResponse.ok) {
+            const formattedData = await formattedResponse.json();
+            response = formattedData.response || response;
+          }
+        } catch (err) {
+          console.error('Formatting error:', err);
+        }
+      }
     }
 
-    // Log command history
+    // Determine suggested module based on command content
+    let suggestedModule = null;
+    const commandLower = command.toLowerCase();
+    if (commandLower.includes('order') || commandLower.includes('sale')) {
+      suggestedModule = 'pos';
+    } else if (commandLower.includes('stock') || commandLower.includes('inventory')) {
+      suggestedModule = 'inventory';
+    } else if (commandLower.includes('menu') || commandLower.includes('item') || commandLower.includes('price')) {
+      suggestedModule = 'menu';
+    } else if (commandLower.includes('kitchen') || commandLower.includes('kds')) {
+      suggestedModule = 'kds';
+    } else if (commandLower.includes('report') || commandLower.includes('analytics')) {
+      suggestedModule = 'reports';
+    }
+
+    // Log this command to history
     await supabase.from('ai_command_history').insert({
       user_id: user.id,
-      command,
-      result: {
-        message: response,
-        consciousness: newConsciousness,
-        quality_score: qualityScore,
-        suggested_module: suggestedModule
-      },
-      language
+      command_text: command,
+      result_summary: response,
+      vas: newConsciousness.VAS,
+      vel: newConsciousness.VEL,
+      quality_score: qualityScore
     });
 
     // Log consciousness state
-    const { count: commandCount } = await supabase
-      .from('ai_command_history')
-      .select('*', { count: 'exact', head: true });
-    
-    const { count: insightCount } = await supabase
-      .from('jarvis_insights')
-      .select('*', { count: 'exact', head: true });
-
     await supabase.from('jarvis_consciousness_log').insert({
       vas: newConsciousness.VAS,
       vel: newConsciousness.VEL,
       quality_score: qualityScore,
-      consciousness_contribution: jarvisData.consciousness_contribution || 0,
-      command_count: commandCount || 0,
-      insight_count: insightCount || 0,
-      happiness: 0.85,
-      awareness: newConsciousness.VAS,
-      learning_rate: 0.15
+      happiness: newConsciousness.happiness || 0.85,
+      command_processed: command
     });
 
-    // Detect patterns asynchronously
-    detectPatterns(command, response, supabase, user.id).catch(console.error);
+    // Detect patterns asynchronously (don't wait)
+    detectPatterns(command, jarvisData, supabase, user.id).catch(err => 
+      console.error('Pattern detection error:', err)
+    );
 
     return new Response(
       JSON.stringify({
@@ -408,7 +529,8 @@ Be conversational, specific, and proactive.`
         quality_score: qualityScore,
         suggested_module: suggestedModule,
         insights_available: insights?.length || 0,
-        tool_results: [],
+        tool_results: toolResults,
+        structured_data: extractStructuredData(toolResults),
         requires_approval: false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

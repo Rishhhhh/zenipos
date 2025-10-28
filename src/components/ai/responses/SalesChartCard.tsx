@@ -1,0 +1,71 @@
+import { Card } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+interface SalesChartCardProps {
+  data: any;
+}
+
+export function SalesChartCard({ data }: SalesChartCardProps) {
+  if (!data || !Array.isArray(data)) return null;
+
+  // Transform data for recharts
+  const chartData = data.map((item: any) => ({
+    name: item.hour !== undefined ? `${item.hour}:00` : item.category_name || item.item_name || 'Unknown',
+    value: parseFloat(item.total_sales || item.total_revenue || 0),
+    count: parseInt(item.order_count || item.quantity_sold || 0)
+  }));
+
+  return (
+    <Card className="p-6 bg-card border-border">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Sales Data</h3>
+        
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis 
+              dataKey="name" 
+              className="text-muted-foreground text-xs"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <YAxis 
+              className="text-muted-foreground text-xs"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px'
+              }}
+              formatter={(value: any) => [`RM ${parseFloat(value).toFixed(2)}`, 'Sales']}
+            />
+            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+        
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-primary">
+              RM {chartData.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
+            </p>
+            <p className="text-xs text-muted-foreground">Total Revenue</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-primary">
+              {chartData.reduce((sum, item) => sum + item.count, 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Total Orders</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-primary">
+              RM {(chartData.reduce((sum, item) => sum + item.value, 0) / 
+                   Math.max(chartData.reduce((sum, item) => sum + item.count, 0), 1)).toFixed(2)}
+            </p>
+            <p className="text-xs text-muted-foreground">Avg Ticket</p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}

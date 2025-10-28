@@ -37,12 +37,26 @@ serve(async (req) => {
           },
           {
             name: "get_order_stats",
-            description: "Get order statistics (count, total revenue, average ticket)",
+            description: "Get order statistics for a date range",
             inputSchema: {
               type: "object",
               properties: {
-                date_range: { type: "object", properties: { start: { type: "string" }, end: { type: "string" } } }
-              }
+                start_date: { type: "string", format: "date-time" },
+                end_date: { type: "string", format: "date-time" }
+              },
+              required: ["start_date", "end_date"]
+            }
+          },
+          {
+            name: "void_order",
+            description: "Void an existing order (SuperAdmin only)",
+            inputSchema: {
+              type: "object",
+              properties: {
+                order_id: { type: "string", format: "uuid" },
+                reason: { type: "string" }
+              },
+              required: ["order_id", "reason"]
             }
           }
         ],
@@ -90,31 +104,54 @@ serve(async (req) => {
         }
 
         case 'get_order_stats': {
-          let query = supabase.from('orders').select('total, status, created_at');
+          const { start_date, end_date } = args;
           
-          if (args?.date_range?.start) query = query.gte('created_at', args.date_range.start);
-          if (args?.date_range?.end) query = query.lte('created_at', args.date_range.end);
+          const { data: orders, error } = await supabase
+            .from('orders')
+            .select('status, total')
+            .gte('created_at', start_date)
+            .lte('created_at', end_date);
           
-          const { data: orders, error } = await query;
+          if (error) throw error;
           
-          if (!error && orders) {
-            const stats = {
-              total_orders: orders.length,
-              total_revenue: orders.reduce((sum, o) => sum + (o.total || 0), 0),
-              average_ticket: orders.length > 0 ? orders.reduce((sum, o) => sum + (o.total || 0), 0) / orders.length : 0,
-              by_status: orders.reduce((acc, o) => {
-                acc[o.status] = (acc[o.status] || 0) + 1;
-                return acc;
-              }, {} as Record<string, number>)
-            };
-            return new Response(JSON.stringify({ success: true, data: stats }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
+          const stats = {
+            total_orders: orders?.length || 0,
+            total_revenue: orders?.reduce((sum, o) => sum + (o.total || 0), 0) || 0,
+            avg_ticket: orders?.length ? (orders.reduce((sum, o) => sum + (o.total || 0), 0) / orders.length) : 0,
+            by_status: orders?.reduce((acc, o) => {
+              acc[o.status] = (acc[o.status] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>)
+          };
           
-          return new Response(JSON.stringify({ success: false, error: error?.message }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          return new Response(
+            JSON.stringify({ success: true, data: stats }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        case 'void_order': {
+          const { order_id, reason } = args;
+          
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ status: 'cancelled' })
+            .eq('id', order_id);
+          
+          if (updateError) throw updateError;
+          
+          // Log the void action
+          await supabase.from('audit_log').insert({
+            action: 'void_order',
+            entity: 'orders',
+            entity_id: order_id,
+            diff: { reason }
           });
+          
+          return new Response(
+            JSON.stringify({ success: true, data: { order_id, status: 'cancelled' } }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
       }
     }
