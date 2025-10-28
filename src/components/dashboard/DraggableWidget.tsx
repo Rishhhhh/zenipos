@@ -156,7 +156,7 @@ export function DraggableWidget({
       style={style}
       className={cn(
         "group rounded-lg overflow-hidden bg-card border-2 border-border shadow-lg",
-        !isMinimized && "cursor-grab active:cursor-grabbing",
+        "cursor-grab active:cursor-grabbing",
         "transition-shadow duration-200",
         isDraggingThis && "shadow-2xl opacity-95 border-primary",
         isResizing && "shadow-xl",
@@ -166,7 +166,7 @@ export function DraggableWidget({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...attributes}
-      {...(isMinimized ? {} : listeners)}
+      {...listeners}
     >
       <div className="h-full w-full relative">
         {/* Widget Header */}
