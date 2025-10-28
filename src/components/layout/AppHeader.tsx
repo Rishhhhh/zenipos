@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, LogIn, Clock, Brain } from 'lucide-react';
+import { LogOut, User, LogIn, Clock } from 'lucide-react';
 import { AISearchBar } from '@/components/ai/AISearchBar';
 import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -50,20 +50,13 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
           </Link>
 
           <div className="flex-1 max-w-2xl mx-8">
-            <AISearchBar onCommand={handleCommand} />
+            <AISearchBar 
+              onCommand={handleCommand}
+              onFocus={() => setShowAI(true)}
+            />
           </div>
 
           <div className="flex items-center gap-2">
-            {/* JARVIS X Button */}
-            <Button 
-              onClick={() => setShowAI(true)}
-              variant="ghost"
-              size="icon"
-              className="relative group"
-            >
-              <Brain className="h-5 w-5 text-primary transition-all group-hover:scale-110" />
-              <span className="absolute -bottom-1 -right-1 h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-            </Button>
             {/* Clock In/Out for POS page */}
             {isPOSPage && employee && currentShiftId !== undefined && (
               <>
@@ -113,7 +106,7 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
       </header>
 
       <Sheet open={showAI} onOpenChange={setShowAI}>
-        <SheetContent side="right" className="w-full sm:max-w-xl p-0">
+        <SheetContent side="right" className="w-full sm:max-w-xl p-0 z-[10003]">
           <AIAssistantPanel />
         </SheetContent>
       </Sheet>

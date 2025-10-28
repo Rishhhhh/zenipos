@@ -44,9 +44,9 @@ export function DockIcon({ icon: Icon, label, shortcut, isActive, onClick }: Doc
             )}
             style={{
               transform: isHovered 
-                ? 'scale(1.5) translateY(-8px)' 
+                ? 'scale(1.15) translateY(-4px)' 
                 : 'scale(1) translateY(0)',
-              transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transition: 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             }}
             aria-label={`${label} (${shortcut})`}
           >
@@ -55,10 +55,10 @@ export function DockIcon({ icon: Icon, label, shortcut, isActive, onClick }: Doc
               isActive ? "text-primary" : "text-foreground"
             )} />
             
-            {/* Active indicator - enhanced gold glow */}
+            {/* Active indicator - subtle line */}
             {isActive && (
               <div 
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-md shadow-primary/50"
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-primary"
                 aria-label="Active"
               />
             )}

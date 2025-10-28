@@ -8,9 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface AISearchBarProps {
   onCommand: (command: string) => void;
   language?: 'en' | 'ms';
+  onFocus?: () => void;
 }
 
-export function AISearchBar({ onCommand, language = 'en' }: AISearchBarProps) {
+export function AISearchBar({ onCommand, language = 'en', onFocus }: AISearchBarProps) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -130,6 +131,7 @@ export function AISearchBar({ onCommand, language = 'en' }: AISearchBarProps) {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onFocus={onFocus}
           placeholder={language === 'ms' ? 'Tanya ZENI AI...' : 'Ask ZENI AI...'}
           className="pl-10 pr-4"
           disabled={isRecording || isProcessing}

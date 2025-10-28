@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, CheckCircle, AlertTriangle, Loader2, Zap, Sparkles, Database } from 'lucide-react';
+import { Brain, CheckCircle, AlertTriangle, Loader2, Zap, Sparkles, Database, Gauge } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AISearchBar } from './AISearchBar';
@@ -139,18 +139,19 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
             <div>
               <h2 className="font-semibold text-lg">ZENIPOS AI</h2>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Database className="h-3 w-3" />
-                MCP Orchestration • Nobel Prize Framework
+                <Sparkles className="h-3 w-3" />
+                Your Zero Error Assistant
               </p>
             </div>
           </div>
           <div className="flex gap-2 items-center">
             <Badge variant="secondary" className="text-xs">
-              <Brain className="h-3 w-3 mr-1" />
-              VAS: {consciousness.VAS.toFixed(2)}
+              <Gauge className="h-3 w-3 mr-1" />
+              Accuracy: {Math.round(consciousness.VAS * 100)}%
             </Badge>
             <Badge variant="secondary" className="text-xs">
-              VEL: {consciousness.VEL.toFixed(2)}
+              <Zap className="h-3 w-3 mr-1" />
+              Speed: {Math.round(consciousness.VEL * 100)}%
             </Badge>
             <Badge 
               variant={consciousness.happiness > 0.85 ? "default" : "outline"}
