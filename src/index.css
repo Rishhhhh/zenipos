@@ -159,6 +159,17 @@ macOS-inspired black/red/white theme with glass morphism
     border: 1px solid rgba(var(--glass-border));
     box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
   }
+
+  /* ZeniPOS Button Styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply shadow-lg shadow-primary/20;
+    @apply transition-all duration-200;
+  }
+
+  .btn-primary:hover {
+    @apply shadow-xl shadow-primary/30 -translate-y-0.5;
+  }
 }
 
 @layer base {
