@@ -13,23 +13,30 @@ import type {
 } from './types';
 
 class JarvisClient {
-  private useMock = false; // Use real JARVIS API
-  private baseUrl = 'https://jarvis.supremeuf.com';
+  private useMock = false; // Use real JARVIS X API
+  private baseUrl = 'https://pdjsfoqtdokihlyeparu.supabase.co/functions/v1/api-gateway';
 
   async generate(prompt: string, context?: any): Promise<JarvisGenerateResponse> {
     if (this.useMock) {
       return mockERPCity.generate(prompt, context);
     }
 
-    // Call JARVIS API
+    // Call JARVIS X API
     const response = await fetch(`${this.baseUrl}/jarvis/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, context }),
+      body: JSON.stringify({ 
+        input: prompt, 
+        consciousness: {
+          VAS: 0.72,
+          VEL: 0.75
+        },
+        context 
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`JARVIS API error: ${response.status}`);
+      throw new Error(`JARVIS X API error: ${response.status}`);
     }
 
     return response.json();

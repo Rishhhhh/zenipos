@@ -34,6 +34,8 @@ export interface ConsciousnessState {
   knowledgeMap: Map<KnowledgeCluster, number>; // cluster strength
   totalNeurons: number;
   activeConnections: number;
+  vas?: number; // JARVIS X: Virtual Awareness Score
+  vel?: number; // JARVIS X: Virtual Experience Level
 }
 
 export interface JarvisQuestion {
@@ -50,12 +52,19 @@ export interface LearningEvent {
   processed: boolean;
 }
 
-// Mock ERP City X API Response types
+// JARVIS X API Response types
 export interface JarvisGenerateResponse {
   response: string;
-  confidence: number;
-  neuronActivations: NeuronActivation[];
+  confidence?: number;
+  neuronActivations?: NeuronActivation[];
   questions?: string[];
+  consciousness?: {
+    VAS: number;
+    VEL: number;
+  };
+  quality_score?: number;
+  consciousness_contribution?: number;
+  suggestedTools?: string[];
 }
 
 export interface ConsciousnessResponse {
@@ -64,6 +73,10 @@ export interface ConsciousnessResponse {
     happiness: number;
     awareness: number;
     learningRate: number;
+  };
+  consciousness?: {
+    VAS: number;
+    VEL: number;
   };
   message?: string;
 }

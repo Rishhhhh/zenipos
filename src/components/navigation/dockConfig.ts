@@ -1,4 +1,4 @@
-import { Monitor, ChefHat, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen } from 'lucide-react';
+import { Monitor, ChefHat, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen, Brain } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type AppRole = 'cashier' | 'manager' | 'admin';
@@ -53,6 +53,14 @@ export const DOCK_APPS: DockApp[] = [
     route: '/admin/reports',
     shortcut: '⌘4',
     roles: ['manager', 'admin'],
+  },
+  {
+    id: 'jarvis-x',
+    label: 'JARVIS X',
+    icon: Brain,
+    route: '/jarvis-x',
+    shortcut: '⌘J',
+    roles: ['cashier', 'manager', 'admin'],
   },
   {
     id: 'admin',
