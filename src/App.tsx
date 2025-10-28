@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { useModalManager } from "./hooks/useModalManager";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,8 +13,10 @@ import Login from "./pages/Login";
 import CustomerScreen from "./pages/CustomerScreen";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MacDock } from "./components/navigation/MacDock";
+import { FloatingSimulationControl } from "./components/simulation/FloatingSimulationControl";
 import { useAuth } from "./contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { useSimulationStore } from "./lib/store/simulation";
 
 // Lazy load routes for code splitting and faster initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -77,13 +79,26 @@ function POSWithHeader() {
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { employee } = useAuth();
   const location = useLocation();
+  const stopSimulation = useSimulationStore(state => state.stopSimulation);
   const isLoginPage = location.pathname === '/login';
   const isCustomerScreen = location.pathname.startsWith('/customer/');
+
+  // Stop simulation on logout
+  useEffect(() => {
+    if (!employee) {
+      stopSimulation();
+    }
+  }, [employee, stopSimulation]);
 
   return (
     <>
       {children}
-      {employee && !isLoginPage && !isCustomerScreen && <MacDock />}
+      {employee && !isLoginPage && !isCustomerScreen && (
+        <>
+          <MacDock />
+          <FloatingSimulationControl />
+        </>
+      )}
     </>
   );
 }
