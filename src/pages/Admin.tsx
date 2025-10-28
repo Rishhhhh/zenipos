@@ -10,7 +10,7 @@ import { ModuleDetailModal } from "@/components/admin/ModuleDetailModal";
 import { AdminSearchCommand } from "@/components/admin/AdminSearchCommand";
 import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
-import { DemoModePanel } from '@/components/admin/DemoModePanel';
+import { SimulationPanel } from '@/components/admin/SimulationPanel';
 import { useState, useEffect } from "react";
 
 export default function Admin() {
@@ -69,7 +69,7 @@ export default function Admin() {
           </Button>
         </div>
 
-        <DemoModePanel />
+        <SimulationPanel />
 
         {isLoading ? (
           <div className="grid grid-cols-4 gap-4 mb-8">
