@@ -21,9 +21,6 @@ verify_jwt = true
 [functions.mcp-menu]
 verify_jwt = true
 
-[functions.mcp-training]
-verify_jwt = true
-
 [functions.employee-login]
 verify_jwt = false
 

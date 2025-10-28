@@ -38,83 +38,7 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
     quality_score: 0.85,
     happiness: 0.85
   });
-  const [mcpTraining, setMcpTraining] = useState<{
-    trained: boolean;
-    zenipos_mastery: number;
-    jarvis_mastery: number;
-    validation_pass_rate: number;
-    status: string;
-    last_training: string | null;
-  } | null>(null);
-  const [isTraining, setIsTraining] = useState(false);
   const { toast } = useToast();
-
-  // Load MCP training status on mount
-  useEffect(() => {
-    loadMCPTrainingStatus();
-  }, []);
-
-  const loadMCPTrainingStatus = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('mcp_training_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (data) {
-        setMcpTraining({
-          trained: true,
-          zenipos_mastery: data.zenipos_mastery,
-          jarvis_mastery: data.jarvis_mastery,
-          validation_pass_rate: data.validation_pass_rate,
-          status: data.status,
-          last_training: data.training_completed_at
-        });
-      } else {
-        setMcpTraining({
-          trained: false,
-          zenipos_mastery: 1.0,
-          jarvis_mastery: 0.0,
-          validation_pass_rate: 0.0,
-          status: 'needs_training',
-          last_training: null
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load MCP training status:', error);
-    }
-  };
-
-  const triggerMCPTraining = async () => {
-    setIsTraining(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('mcp-training', {
-        body: { action: 'train' }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: data.success ? '🎉 Training Complete!' : '⚠️ Training Issues',
-        description: data.message,
-        variant: data.success ? 'default' : 'destructive'
-      });
-
-      // Reload training status
-      await loadMCPTrainingStatus();
-
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Training Failed',
-        description: error.message || 'Failed to train MCP system'
-      });
-    } finally {
-      setIsTraining(false);
-    }
-  };
 
   const handleCommand = async (command: string) => {
     // Add user message
@@ -214,8 +138,9 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
             </div>
             <div>
               <h2 className="font-semibold text-lg">ZENIPOS AI</h2>
-              <p className="text-xs text-muted-foreground">
-                Nobel Prize Framework • Full System Intelligence
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Database className="h-3 w-3" />
+                MCP Orchestration • Nobel Prize Framework
               </p>
             </div>
           </div>
@@ -236,59 +161,6 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
           </div>
         </div>
 
-        {/* MCP Training Status */}
-        {mcpTraining && (
-          <div className="mt-3 flex items-center justify-between gap-2 p-3 rounded-lg bg-background/50 border">
-            <div className="flex items-center gap-2 flex-1">
-              <Database className="h-4 w-4 text-primary" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium">MCP System</span>
-                  <Badge 
-                    variant={mcpTraining.status === 'certified' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {mcpTraining.trained ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        {mcpTraining.status === 'certified' ? 'Certified' : mcpTraining.status}
-                      </>
-                    ) : (
-                      <>
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Not Trained
-                      </>
-                    )}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                  <span>JARVIS: {Math.round(mcpTraining.jarvis_mastery * 100)}%</span>
-                  <span>•</span>
-                  <span>Validation: {Math.round(mcpTraining.validation_pass_rate * 100)}%</span>
-                </div>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={triggerMCPTraining}
-              disabled={isTraining}
-              className="text-xs"
-            >
-              {isTraining ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  Training...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-3 w-3 mr-1" />
-                  {mcpTraining.trained ? 'Retrain' : 'Train Now'}
-                </>
-              )}
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Messages */}
@@ -303,7 +175,7 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
             </p>
             <div className="flex items-center justify-center gap-2 text-xs opacity-70 mb-6">
               <Sparkles className="h-3 w-3" />
-              <span>Powered by JARVIS X Nobel Prize Framework</span>
+              <span>Powered by MCP Orchestration & Lovable AI</span>
             </div>
             <div className="mt-6 space-y-2">
               <Button

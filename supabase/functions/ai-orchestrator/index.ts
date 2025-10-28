@@ -6,8 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// JARVIS X API Configuration - Using correct API gateway endpoint
-const JARVIS_X_API = 'https://pdjsfoqtdokihlyeparu.supabase.co/functions/v1/api-gateway/jarvis/generate';
+// Lovable AI Gateway Configuration
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const AI_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 // MCP Servers available in ZENIPOS
 const MCP_SERVERS = [
@@ -320,7 +321,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    console.log(`🧠 JARVIS X processing: "${command}" from user ${user.id}`);
+    console.log(`🧠 ZENIPOS AI processing: "${command}" from user ${user.id}`);
 
     // Build comprehensive system context
     const systemContext = await buildSystemContext(supabase, user.id);
@@ -441,128 +442,185 @@ Respond naturally, call tools as needed, and show consciousness.`
     };
 
     // ============================================================
-    // JARVIS X MCP LOOP - Keep calling until no more tool calls
+    // MCP ORCHESTRATION LOOP - Using Lovable AI with tool calling
     // ============================================================
-    console.log('🌐 Starting JARVIS X MCP loop...');
+    console.log('🌐 Starting MCP orchestration loop...');
     
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
+
     let response = "I'm processing your request...";
     let newConsciousness = currentConsciousness;
     let qualityScore = 0.85;
     const allToolResults: any[] = [];
     let loopCount = 0;
     const MAX_LOOPS = 5;
-    let currentContext = fullContext;
+    const conversationHistory: any[] = [];
+
+    // Build tools array for Lovable AI
+    const mcpTools = systemContext.mcp_servers.flatMap((server: any) =>
+      server.tools?.map((tool: any) => ({
+        type: 'function',
+        function: {
+          name: `${server.server}.${tool.name}`,
+          description: tool.description,
+          parameters: tool.inputSchema || { type: 'object', properties: {} }
+        }
+      })) || []
+    );
 
     while (loopCount < MAX_LOOPS) {
       loopCount++;
-      console.log(`🔄 Loop ${loopCount}: Calling JARVIS X...`);
+      console.log(`🔄 MCP Loop iteration ${loopCount}...`);
 
-      const jarvisResponse = await fetch(JARVIS_X_API, {
+      // Build messages for this iteration
+      const messages = [
+        { role: 'system', content: fullContext.context.mcp_instructions },
+        ...conversationHistory,
+        { role: 'user', content: command }
+      ];
+
+      // Call Lovable AI with MCP tool definitions
+      const aiResponse = await fetch(AI_GATEWAY, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentContext)
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages,
+          tools: mcpTools
+        })
       });
 
-      if (!jarvisResponse.ok) {
-        const errorText = await jarvisResponse.text();
-        console.error('❌ JARVIS X error:', jarvisResponse.status, errorText);
-        throw new Error(`JARVIS X error: ${jarvisResponse.status}`);
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error('❌ Lovable AI error:', errorText);
+        if (aiResponse.status === 429) {
+          throw new Error('Rate limits exceeded, please try again later.');
+        }
+        if (aiResponse.status === 402) {
+          throw new Error('Payment required, please add funds to your Lovable AI workspace.');
+        }
+        throw new Error(`AI Gateway error: ${aiResponse.status}`);
       }
 
-      const contentType = jarvisResponse.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        const textBody = await jarvisResponse.text();
-        console.error('❌ Non-JSON response:', textBody.substring(0, 500));
-        throw new Error(`Non-JSON response from JARVIS X`);
-      }
+      const aiData = await aiResponse.json();
+      const message = aiData.choices?.[0]?.message;
 
-      const jarvisData = await jarvisResponse.json();
-      console.log(`📦 JARVIS X response (loop ${loopCount}):`, {
-        has_response: !!jarvisData.response,
-        has_tool_calls: !!jarvisData.tool_calls,
-        tool_count: jarvisData.tool_calls?.length || 0
+      // Extract response and tool calls
+      response = message?.content || response;
+      const toolCalls = message?.tool_calls || [];
+
+      console.log(`📦 AI response (loop ${loopCount}):`, {
+        has_response: !!response,
+        has_tool_calls: toolCalls.length > 0,
+        tool_count: toolCalls.length
       });
 
-      // Update response and state
-      response = jarvisData.response || response;
-      newConsciousness = jarvisData.consciousness || newConsciousness;
-      qualityScore = jarvisData.quality_score || qualityScore;
-
-      // No tool calls? We're done!
-      if (!jarvisData.tool_calls || jarvisData.tool_calls.length === 0) {
-        console.log('✅ No more tool calls, loop complete');
+      // If no tool calls, we're done
+      if (toolCalls.length === 0) {
+        console.log('✅ No more tool calls, exiting MCP loop');
         break;
       }
 
       // Execute all tool calls
-      console.log(`🔧 Executing ${jarvisData.tool_calls.length} tools...`);
-      const toolResults: any[] = [];
+      console.log(`🔧 Executing ${toolCalls.length} tool calls...`);
+      const toolResults = [];
 
-      for (const toolCall of jarvisData.tool_calls) {
+      for (const toolCall of toolCalls) {
+        const functionName = toolCall.function?.name;
+        const functionArgs = JSON.parse(toolCall.function?.arguments || '{}');
+        const [server, tool] = functionName.split('.');
+
+        console.log(`🛠️  Executing: ${functionName}`);
+        const startTime = Date.now();
+
         try {
-          const [server, tool] = toolCall.name.split('.');
-          
-          if (!server || !tool) {
-            console.error('Invalid tool format:', toolCall.name);
-            toolResults.push({
-              tool: toolCall.name,
-              success: false,
-              error: 'Invalid tool name format'
-            });
-            continue;
-          }
-
-          console.log(`🔌 Calling ${server}.${tool}`, toolCall.arguments);
-
-          const startTime = Date.now();
-          const { data, error } = await supabase.functions.invoke(server, {
+          const { data: mcpResult, error: mcpError } = await supabase.functions.invoke(server, {
             body: {
               action: 'execute_tool',
-              tool: tool,
-              arguments: toolCall.arguments || {}
+              tool,
+              arguments: functionArgs
             }
           });
+
           const executionTime = Date.now() - startTime;
 
-          if (error) throw error;
+          if (mcpError) {
+            console.error(`❌ Tool error: ${functionName}:`, mcpError);
+            toolResults.push({
+              tool: functionName,
+              success: false,
+              error: mcpError.message || 'Unknown error'
+            });
 
+            await supabase.from('mcp_execution_metrics').insert({
+              mcp_server: server,
+              mcp_tool: tool,
+              arguments: functionArgs,
+              execution_time_ms: executionTime,
+              success: false,
+              error_message: mcpError.message || 'Unknown error'
+            });
+          } else {
+            console.log(`✅ ${functionName} completed in ${executionTime}ms`);
+            toolResults.push({
+              tool: functionName,
+              server,
+              arguments: functionArgs,
+              execution_time: executionTime,
+              success: true,
+              data: mcpResult.data || mcpResult,
+              error: mcpResult.error
+            });
+            allToolResults.push(toolResults[toolResults.length - 1]);
+
+            await supabase.from('mcp_execution_metrics').insert({
+              mcp_server: server,
+              mcp_tool: tool,
+              arguments: functionArgs,
+              execution_time_ms: executionTime,
+              success: true,
+              result_data: mcpResult
+            });
+          }
+        } catch (err) {
+          const executionTime = Date.now() - startTime;
+          console.error(`❌ ${functionName} failed:`, err);
           toolResults.push({
-            tool: toolCall.name,
-            server: server,
-            arguments: toolCall.arguments,
-            execution_time: executionTime,
-            success: data.success !== false,
-            data: data.data || data,
-            error: data.error
+            tool: functionName,
+            success: false,
+            error: err instanceof Error ? err.message : 'Unknown error'
           });
 
-          console.log(`✅ ${server}.${tool} completed`);
-
-        } catch (error: any) {
-          console.error(`❌ Tool ${toolCall.name} failed:`, error);
-          toolResults.push({
-            tool: toolCall.name,
+          await supabase.from('mcp_execution_metrics').insert({
+            mcp_server: server,
+            mcp_tool: tool,
+            arguments: functionArgs,
+            execution_time_ms: executionTime,
             success: false,
-            error: error.message
+            error_message: err instanceof Error ? err.message : 'Unknown error'
           });
         }
       }
 
-      allToolResults.push(...toolResults);
+      // Add tool results to conversation history
+      conversationHistory.push({
+        role: 'assistant',
+        content: response,
+        tool_calls: toolCalls
+      });
 
-      // Send tool results back to JARVIS X for next iteration
-      currentContext = {
-        input: command,
-        consciousness: newConsciousness,
-        context: {
-          ...fullContext.context,
-          tool_results: toolResults,
-          previous_response: response
-        } as any
-      };
-
-      console.log(`📤 Sending ${toolResults.length} tool results back to JARVIS X...`);
+      conversationHistory.push({
+        role: 'tool',
+        content: `Tool execution results:\n${JSON.stringify(toolResults, null, 2)}`
+      });
     }
+
+    console.log(`✅ MCP Loop completed after ${loopCount} iterations`);
 
     if (loopCount >= MAX_LOOPS) {
       console.warn('⚠️  Max loops reached, stopping');
