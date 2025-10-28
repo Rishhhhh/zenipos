@@ -36,6 +36,11 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
     setShowAI(true);
   };
 
+  const handleOpenChat = () => {
+    setPendingCommand(undefined);
+    setShowAI(true);
+  };
+
   return (
     <>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
@@ -54,6 +59,7 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
           <div className="flex-1 max-w-2xl mx-8">
             <AISearchBar 
               onCommand={handleCommand}
+              onOpenChat={handleOpenChat}
             />
           </div>
 

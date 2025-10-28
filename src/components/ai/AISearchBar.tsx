@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Mic, Loader2 } from 'lucide-react';
+import { Search, Mic, Loader2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,9 +9,10 @@ interface AISearchBarProps {
   onCommand: (command: string) => void;
   language?: 'en' | 'ms';
   onFocus?: () => void;
+  onOpenChat?: () => void;
 }
 
-export function AISearchBar({ onCommand, language = 'en', onFocus }: AISearchBarProps) {
+export function AISearchBar({ onCommand, language = 'en', onFocus, onOpenChat }: AISearchBarProps) {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -137,6 +138,20 @@ export function AISearchBar({ onCommand, language = 'en', onFocus }: AISearchBar
           disabled={isRecording || isProcessing}
         />
       </div>
+      
+      {onOpenChat && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onOpenChat}
+          disabled={isRecording || isProcessing}
+          title={language === 'ms' ? 'Buka sembang' : 'Open chat'}
+          className="h-9 w-9"
+        >
+          <MessageSquare className="h-4 w-4" />
+        </Button>
+      )}
       
       <Button
         type="button"
