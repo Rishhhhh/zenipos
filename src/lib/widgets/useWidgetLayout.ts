@@ -20,14 +20,14 @@ export interface WidgetLayout {
 const DEFAULT_LAYOUT: WidgetLayout = {
   widgetOrder: ["quick-pos", "active-orders", "sales"],
   widgetPositions: {
-    // Quick POS: Top-left, 8x8 cols (640x640px) - grid aligned
-    "quick-pos": { x: 0, y: 0, width: 640, height: 640, zIndex: 1, isMinimized: false, isMaximized: false },
+    // Quick POS: Top-left, 10x10 cells (600x600px) - grid aligned
+    "quick-pos": { x: 0, y: 0, width: 600, height: 600, zIndex: 1, isMinimized: false, isMaximized: false },
     
-    // Active Orders: Top-middle, 5x4 cols (400x320px) - grid aligned
-    "active-orders": { x: 640, y: 0, width: 400, height: 320, zIndex: 2, isMinimized: false, isMaximized: false },
+    // Active Orders: Top-middle-right, 6x5 cells (360x300px) - grid aligned
+    "active-orders": { x: 660, y: 0, width: 360, height: 300, zIndex: 2, isMinimized: false, isMaximized: false },
     
-    // Sales: Top-right, 5x4 cols (400x320px) - grid aligned  
-    "sales": { x: 640, y: 320, width: 400, height: 320, zIndex: 3, isMinimized: false, isMaximized: false },
+    // Sales: Below active orders, 6x5 cells (360x300px) - grid aligned  
+    "sales": { x: 660, y: 360, width: 360, height: 300, zIndex: 3, isMinimized: false, isMaximized: false },
   },
 };
 
@@ -131,8 +131,8 @@ export function useWidgetLayout() {
           [widgetId]: {
             x: position.x,
             y: position.y,
-            width: defaultSize.cols * 80,
-            height: defaultSize.rows * 80,
+            width: defaultSize.cols * 60,
+            height: defaultSize.rows * 60,
             zIndex: maxZ + 1,
             isMinimized: false,
             isMaximized: false,
