@@ -1108,6 +1108,89 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_execution_metrics: {
+        Row: {
+          arguments: Json | null
+          command_id: string | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          mcp_server: string
+          mcp_tool: string
+          result_data: Json | null
+          success: boolean
+        }
+        Insert: {
+          arguments?: Json | null
+          command_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          mcp_server: string
+          mcp_tool: string
+          result_data?: Json | null
+          success?: boolean
+        }
+        Update: {
+          arguments?: Json | null
+          command_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          mcp_server?: string
+          mcp_tool?: string
+          result_data?: Json | null
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_execution_metrics_command_id_fkey"
+            columns: ["command_id"]
+            isOneToOne: false
+            referencedRelation: "ai_command_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_training_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          jarvis_mastery: number
+          status: string
+          training_completed_at: string
+          training_data: Json | null
+          training_session_id: string
+          validation_pass_rate: number
+          zenipos_mastery: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          jarvis_mastery: number
+          status: string
+          training_completed_at: string
+          training_data?: Json | null
+          training_session_id: string
+          validation_pass_rate: number
+          zenipos_mastery: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          jarvis_mastery?: number
+          status?: string
+          training_completed_at?: string
+          training_data?: Json | null
+          training_session_id?: string
+          validation_pass_rate?: number
+          zenipos_mastery?: number
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           branch_id: string | null

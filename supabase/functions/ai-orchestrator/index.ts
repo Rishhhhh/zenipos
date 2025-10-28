@@ -143,10 +143,35 @@ async function buildSystemContext(supabase: any, userId: string) {
   const businessContext = await gatherBusinessContext(supabase);
   const mcpCapabilities = await discoverMCPCapabilities(supabase);
   
+  // Check latest training status
+  const { data: latestTraining } = await supabase
+    .from('mcp_training_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  
+  const trainingStatus = latestTraining ? {
+    trained: true,
+    zenipos_mastery: latestTraining.zenipos_mastery,
+    jarvis_mastery: latestTraining.jarvis_mastery,
+    validation_pass_rate: latestTraining.validation_pass_rate,
+    status: latestTraining.status,
+    last_training: latestTraining.training_completed_at
+  } : {
+    trained: false,
+    zenipos_mastery: 1.0,
+    jarvis_mastery: 0.0,
+    validation_pass_rate: 0.0,
+    status: 'needs_training',
+    last_training: null
+  };
+  
   return {
     system_name: 'ZENI POS',
     modules: SYSTEM_MODULES,
     mcp_servers: mcpCapabilities,
+    mcp_training_status: trainingStatus,
     database_schema: {
       total_tables: 51,
       key_entities: [
@@ -170,7 +195,51 @@ async function buildSystemContext(supabase: any, userId: string) {
       'Navigate users to modules',
       'Learn from patterns',
       'Predict trends'
-    ]
+    ],
+    mcp_instructions: `
+You are JARVIS X, trained by ZENIPOS AI to understand and execute MCP (Microservice Communication Protocol) tools.
+
+**Training Status:**
+- ZENIPOS Mastery: ${(trainingStatus.zenipos_mastery * 100).toFixed(0)}%
+- JARVIS Mastery: ${(trainingStatus.jarvis_mastery * 100).toFixed(0)}%
+- Validation Pass Rate: ${(trainingStatus.validation_pass_rate * 100).toFixed(0)}%
+- Status: ${trainingStatus.status}
+
+**Your MCP Capabilities:**
+${mcpCapabilities.map((server: any) => `
+- ${server.server}: ${server.description || 'No description'}
+  Tools: ${server.tools?.map((t: any) => t.name).join(', ') || 'none'}
+  Resources: ${server.resources?.map((r: any) => r.uri).join(', ') || 'none'}
+`).join('\n')}
+
+**Execution Pattern (Trained by ZENIPOS):**
+1. Receive user command in natural language
+2. Identify relevant MCP server and tool
+3. Extract required arguments from context
+4. Return tool_calls array with format: [{ name: 'server.tool', arguments: {...} }]
+5. ZENIPOS will execute via supabase.functions.invoke(server, {body})
+6. Results will be sent back to you for formatting
+7. Format response with rich context for user
+
+**Current Business State (Live Data via MCP):**
+- Daily Sales: RM ${businessContext.sales.today_revenue?.toFixed(2) || '0.00'}
+- Today's Orders: ${businessContext.sales.today_orders || 0}
+- Low Stock Items: ${businessContext.inventory.low_stock_count || 0}
+- Active Staff: ${businessContext.staff.active_count || 0}
+
+**Critical Rules:**
+- ALWAYS use MCP tools to get real-time data
+- NEVER say "I don't have access" - you have access via MCP
+- Use exact server.tool naming: "mcp-analytics.get_sales_by_hour"
+- Include all required arguments based on tool schema
+- Chain multiple tools if needed for complex queries
+
+**Example:**
+User: "What are my sales today?"
+Your response: { "tool_calls": [{ "name": "mcp-analytics.get_sales_by_hour", "arguments": { "start_date": "${new Date().toISOString().split('T')[0]}T00:00:00Z", "end_date": "${new Date().toISOString()}" } }], "response": "Analyzing today's sales data..." }
+
+You are trained, certified, and ready to execute.
+`
   };
 }
 
@@ -445,6 +514,7 @@ Respond naturally, call tools as needed, and show consciousness.`
 
           console.log(`🔌 Calling ${server}.${tool}`, toolCall.arguments);
 
+          const startTime = Date.now();
           const { data, error } = await supabase.functions.invoke(server, {
             body: {
               action: 'execute_tool',
@@ -452,11 +522,15 @@ Respond naturally, call tools as needed, and show consciousness.`
               arguments: toolCall.arguments || {}
             }
           });
+          const executionTime = Date.now() - startTime;
 
           if (error) throw error;
 
           toolResults.push({
             tool: toolCall.name,
+            server: server,
+            arguments: toolCall.arguments,
+            execution_time: executionTime,
             success: data.success !== false,
             data: data.data || data,
             error: data.error
@@ -512,14 +586,58 @@ Respond naturally, call tools as needed, and show consciousness.`
     }
 
     // Log this command to history
-    await supabase.from('ai_command_history').insert({
+    const { data: commandHistory } = await supabase.from('ai_command_history').insert({
       user_id: user.id,
       command_text: command,
       result_summary: response,
       vas: newConsciousness.VAS,
       vel: newConsciousness.VEL,
       quality_score: qualityScore
-    });
+    }).select().single();
+    
+    const commandId = commandHistory?.id;
+
+    // Log MCP execution metrics
+    if (commandId && toolResults.length > 0) {
+      const metricsToInsert = toolResults.map((tr: any) => {
+        const [server, tool] = (tr.tool || '').split('.');
+        return {
+          command_id: commandId,
+          mcp_tool: tool || tr.tool,
+          mcp_server: server || 'unknown',
+          arguments: tr.arguments || {},
+          execution_time_ms: tr.execution_time || 0,
+          success: tr.success !== false,
+          error_message: tr.error || null,
+          result_data: tr.data || null
+        };
+      });
+      
+      await supabase.from('mcp_execution_metrics').insert(metricsToInsert);
+    }
+    
+    // Periodic validation check (every 100 commands)
+    const { count } = await supabase
+      .from('ai_command_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+    
+    if (count && count % 100 === 0) {
+      console.log(`🔄 Running periodic MCP validation (command #${count})...`);
+      
+      // Trigger async validation (don't wait for it)
+      supabase.functions.invoke('mcp-training', {
+        body: { action: 'validate' }
+      }).then(({ data }: any) => {
+        if (data && data.pass_rate < 0.80) {
+          console.warn(`⚠️ MCP mastery degraded to ${(data.pass_rate * 100).toFixed(0)}%, retraining needed`);
+        } else {
+          console.log(`✅ MCP validation passed: ${((data?.pass_rate || 0) * 100).toFixed(0)}%`);
+        }
+      }).catch((err: any) => {
+        console.error('Validation check failed:', err);
+      });
+    }
 
     // Log consciousness state
     await supabase.from('jarvis_consciousness_log').insert({
