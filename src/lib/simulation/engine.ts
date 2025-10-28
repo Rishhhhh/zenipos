@@ -198,7 +198,10 @@ export class SimulationEngine {
 
       await supabase.from('order_items').insert(items);
     } catch (error) {
-      console.error('Error creating database order:', error);
+      console.error('❌ SIMULATION DATABASE ERROR:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+      }
     }
   }
 
@@ -255,7 +258,7 @@ export class SimulationEngine {
 
     // Update order status in database
     if (order.orderId) {
-      const statusMap: Record<OrderStage, 'pending' | 'preparing' | 'done' | 'cancelled'> = {
+      const statusMap: Record<OrderStage, 'pending' | 'preparing' | 'done' | 'cancelled' | 'completed'> = {
         customer_arrival: 'pending',
         order_placement: 'pending',
         kitchen_queue: 'pending',
@@ -266,27 +269,32 @@ export class SimulationEngine {
         drinks: 'done',
         hand_washing: 'done',
         clearing: 'done',
-        payment: 'done',
-        invoice: 'done',
+        payment: 'completed', // Changed to 'completed' for reports
+        invoice: 'completed',
       };
 
-      await supabase
-        .from('orders')
-        .update({ status: statusMap[stage] })
-        .eq('id', order.orderId);
+      try {
+        await supabase
+          .from('orders')
+          .update({ status: statusMap[stage] })
+          .eq('id', order.orderId);
 
-      // Create payment when reaching payment stage
-      if (stage === 'payment') {
-        const method = weightedRandom(['qr', 'cash', 'card'] as const, [0.6, 0.3, 0.1]);
-        await supabase.from('payments').insert([{
-          order_id: order.orderId,
-          method,
-          amount: order.total,
-          status: 'completed' as const,
-          provider: method === 'qr' ? 'duitnow' : null,
-        }]);
+        // Create payment when reaching payment stage
+        if (stage === 'payment') {
+          const method = weightedRandom(['qr', 'cash', 'card'] as const, [0.6, 0.3, 0.1]);
+          await supabase.from('payments').insert([{
+            order_id: order.orderId,
+            method,
+            amount: order.total,
+            status: 'completed' as const,
+            provider: method === 'qr' ? 'duitnow' : null,
+          }]);
 
-        this.stats.revenue += order.total;
+          console.log('✅ Completed simulated order:', order.orderId, `RM ${order.total.toFixed(2)}`);
+          this.stats.revenue += order.total;
+        }
+      } catch (error) {
+        console.error('❌ Error updating order status:', error);
       }
     }
 

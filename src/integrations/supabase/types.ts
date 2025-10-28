@@ -2458,7 +2458,13 @@ export type Database = {
         | "bonus"
         | "expired"
         | "adjusted"
-      order_status: "pending" | "preparing" | "done" | "cancelled"
+      order_status:
+        | "pending"
+        | "preparing"
+        | "done"
+        | "cancelled"
+        | "completed"
+        | "paid"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
@@ -2608,7 +2614,14 @@ export const Constants = {
         "expired",
         "adjusted",
       ],
-      order_status: ["pending", "preparing", "done", "cancelled"],
+      order_status: [
+        "pending",
+        "preparing",
+        "done",
+        "cancelled",
+        "completed",
+        "paid",
+      ],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],
       payment_status: ["pending", "completed", "failed", "refunded"],
