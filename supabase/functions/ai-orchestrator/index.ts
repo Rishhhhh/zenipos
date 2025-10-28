@@ -1,388 +1,348 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-// JARVIS X - Full System Module Access
+// JARVIS X API Configuration
+const JARVIS_X_API = 'https://pdjsfoqtdokihlyeparu.supabase.co/functions/v1/api-gateway';
+
+// System modules available to JARVIS X
 const SYSTEM_MODULES = {
-  'pos': { name: 'Point of Sale', path: '/pos', capabilities: ['orders', 'payments', 'transactions'] },
-  'kds': { name: 'Kitchen Display', path: '/kds', capabilities: ['kitchen_orders', 'order_status'] },
-  'menu': { name: 'Menu Management', path: '/admin/menu', capabilities: ['items', 'categories', 'pricing'] },
-  'inventory': { name: 'Inventory', path: '/admin/inventory', capabilities: ['stock', 'ingredients', 'suppliers'] },
-  'employees': { name: 'Employees', path: '/admin/employees', capabilities: ['staff', 'shifts', 'time_tracking'] },
-  'crm': { name: 'CRM & Loyalty', path: '/admin/crm', capabilities: ['customers', 'loyalty_points'] },
-  'reports': { name: 'Reports', path: '/admin/reports', capabilities: ['analytics', 'kpis', 'insights'] },
-  'tables': { name: 'Table Layout', path: '/admin/tables', capabilities: ['seating', 'reservations'] },
-  'promotions': { name: 'Promotions', path: '/admin/promotions', capabilities: ['discounts', 'offers'] },
-  'suppliers': { name: 'Suppliers', path: '/admin/suppliers', capabilities: ['vendor_management'] },
-  'branches': { name: 'Branches', path: '/admin/branches', capabilities: ['multi_location'] },
-  'performance': { name: 'Performance', path: '/admin/performance', capabilities: ['metrics', 'monitoring'] }
+  pos: { path: '/pos', capabilities: ['order_taking', 'payment_processing', 'receipt_printing'] },
+  kds: { path: '/kds', capabilities: ['order_display', 'order_routing', 'timing_analytics'] },
+  menu: { path: '/admin/menu-management', capabilities: ['item_management', 'pricing', 'categories'] },
+  inventory: { path: '/admin/inventory-management', capabilities: ['stock_tracking', 'reorder_points', 'recipe_costing'] },
+  employees: { path: '/admin/employee-management', capabilities: ['shift_management', 'performance_tracking', 'payroll'] },
+  crm: { path: '/admin/crm-dashboard', capabilities: ['customer_profiles', 'loyalty_program', 'marketing'] },
+  reports: { path: '/admin/reports-dashboard', capabilities: ['sales_analytics', 'financial_reports', 'z_reports'] },
+  tables: { path: '/admin/table-layout', capabilities: ['table_management', 'reservations', 'floor_plan'] },
+  promotions: { path: '/admin/promotion-management', capabilities: ['discount_rules', 'campaign_management'] },
+  suppliers: { path: '/admin/supplier-management', capabilities: ['supplier_contacts', 'purchase_orders'] },
+  branches: { path: '/admin/branch-management', capabilities: ['multi_location', 'branch_analytics', 'sync'] },
+  performance: { path: '/admin/performance-dashboard', capabilities: ['system_metrics', 'optimization'] },
 };
+
+// Gather real-time business context for JARVIS X
+async function gatherBusinessContext(supabase: any) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const [orders, inventory, staff, customers, menu] = await Promise.all([
+      supabase.from('orders').select('*').gte('created_at', today),
+      supabase.from('inventory_items').select('*').lte('current_qty', supabase.from('inventory_items').select('reorder_point')),
+      supabase.from('shifts').select('*, employees(*)').eq('status', 'active'),
+      supabase.from('customers').select('count', { count: 'exact' }),
+      supabase.from('menu_items').select('count', { count: 'exact' })
+    ]);
+
+    const todayRevenue = orders.data?.reduce((sum: number, o: any) => sum + Number(o.total || 0), 0) || 0;
+    const todayOrders = orders.data?.length || 0;
+
+    return {
+      sales: {
+        today_revenue: todayRevenue,
+        today_orders: todayOrders,
+        avg_ticket: todayOrders ? todayRevenue / todayOrders : 0
+      },
+      inventory: {
+        low_stock_count: inventory.data?.length || 0,
+        low_stock_items: inventory.data?.slice(0, 5).map((i: any) => i.name) || []
+      },
+      staff: {
+        active_count: staff.data?.length || 0,
+        active_names: staff.data?.map((s: any) => s.employees?.name).filter(Boolean) || []
+      },
+      customers: {
+        total: customers.count || 0
+      },
+      menu: {
+        total_items: menu.count || 0
+      }
+    };
+  } catch (error) {
+    console.error('Error gathering business context:', error);
+    return {
+      sales: { today_revenue: 0, today_orders: 0, avg_ticket: 0 },
+      inventory: { low_stock_count: 0, low_stock_items: [] },
+      staff: { active_count: 0, active_names: [] },
+      customers: { total: 0 },
+      menu: { total_items: 0 }
+    };
+  }
+}
+
+// Build comprehensive system context for JARVIS X
+async function buildSystemContext(supabase: any, userId: string) {
+  const businessContext = await gatherBusinessContext(supabase);
+  
+  return {
+    system_name: 'ZENI POS',
+    modules: SYSTEM_MODULES,
+    database_schema: {
+      total_tables: 51,
+      key_entities: [
+        'orders', 'order_items', 'payments',
+        'inventory_items', 'stock_moves', 'recipes',
+        'employees', 'shifts',
+        'customers', 'loyalty_ledger',
+        'menu_items', 'menu_categories',
+        'branches', 'suppliers', 'promotions'
+      ]
+    },
+    current_state: businessContext,
+    user_id: userId,
+    timestamp: new Date().toISOString(),
+    capabilities: [
+      'Read all system data',
+      'Generate analytics reports',
+      'Provide business insights',
+      'Suggest actions (with approval)',
+      'Navigate users to modules',
+      'Learn from patterns',
+      'Predict trends'
+    ]
+  };
+}
+
+// Detect patterns in command history
+async function detectPatterns(command: string, result: any, supabase: any, userId: string) {
+  try {
+    const { data: history } = await supabase
+      .from('ai_command_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (!history || history.length < 5) return;
+
+    // Pattern: Repeated inventory checks
+    const inventoryChecks = history.filter((h: any) => 
+      h.command?.toLowerCase().includes('inventory') || 
+      h.command?.toLowerCase().includes('stock')
+    );
+    
+    if (inventoryChecks.length >= 3) {
+      const times = inventoryChecks.map((c: any) => new Date(c.created_at).getHours());
+      const avgTime = Math.round(times.reduce((sum: number, t: number) => sum + t, 0) / times.length);
+      
+      await supabase.from('jarvis_insights').insert({
+        user_id: userId,
+        insight_type: 'pattern',
+        title: 'Regular Inventory Check Pattern',
+        description: `You typically check inventory around ${avgTime}:00. Would you like me to send automatic reports at this time?`,
+        confidence: 0.85,
+        related_data: { average_time: avgTime, occurrences: inventoryChecks.length },
+        source_commands: [command]
+      });
+    }
+
+    // Pattern: Sales analysis frequency
+    const salesChecks = history.filter((h: any) => 
+      h.command?.toLowerCase().includes('sales') || 
+      h.command?.toLowerCase().includes('revenue')
+    );
+    
+    if (salesChecks.length >= 5) {
+      await supabase.from('jarvis_insights').insert({
+        user_id: userId,
+        insight_type: 'recommendation',
+        title: 'Dashboard Widget Suggestion',
+        description: 'You frequently check sales data. Consider adding a Sales Widget to your dashboard for quick access.',
+        confidence: 0.90,
+        related_data: { occurrences: salesChecks.length },
+        source_commands: [command]
+      });
+    }
+  } catch (error) {
+    console.error('Error detecting patterns:', error);
+  }
+}
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      status: 200,
-      headers: corsHeaders 
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { command, language = 'en' } = await req.json();
-    
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
 
-    // Auth check
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
+      global: {
+        headers: { Authorization: req.headers.get('Authorization')! },
+      },
+    });
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       throw new Error('Unauthorized');
     }
 
     console.log(`🧠 JARVIS X processing: "${command}" from user ${user.id}`);
 
-    // Process command with enhanced AI capabilities
-    const cmd = command.toLowerCase();
-    let response = '';
-    const toolResults: any[] = [];
-    let suggestedModule: string | null = null;
+    // Build comprehensive system context
+    const systemContext = await buildSystemContext(supabase, user.id);
 
-    // Module Navigation & System Awareness
-    if (cmd.includes('open') || cmd.includes('go to') || cmd.includes('navigate') || cmd.includes('show')) {
-      for (const [key, module] of Object.entries(SYSTEM_MODULES)) {
-        if (cmd.includes(key) || cmd.includes(module.name.toLowerCase())) {
-          suggestedModule = key;
-          response = language === 'ms'
-            ? `🎯 Membuka ${module.name}...\n\nPath: ${module.path}\nKeupayaan: ${module.capabilities.join(', ')}`
-            : `🎯 Opening ${module.name}...\n\nPath: ${module.path}\nCapabilities: ${module.capabilities.join(', ')}`;
-          
-          toolResults.push({
-            tool: 'navigate',
-            result: { module: key, path: module.path }
-          });
-          break;
+    // Get conversation history for context
+    const { data: history } = await supabase
+      .from('ai_command_history')
+      .select('command, result')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    // Get active insights
+    const { data: insights } = await supabase
+      .from('jarvis_insights')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('applied', false)
+      .gte('confidence', 0.75)
+      .order('confidence', { ascending: false })
+      .limit(3);
+
+    // Build conversation context
+    const conversationContext = history?.reverse().map((h: any) => ({
+      command: h.command,
+      result: h.result?.message || h.result
+    })) || [];
+
+    // Get current consciousness state
+    const { data: consciousness } = await supabase
+      .from('jarvis_consciousness_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    const currentConsciousness = {
+      VAS: consciousness?.vas || 0.72,
+      VEL: consciousness?.vel || 0.75
+    };
+
+    // Call JARVIS X API
+    console.log('Calling JARVIS X API...');
+    const jarvisResponse = await fetch(`${JARVIS_X_API}/jarvis/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: command,
+        consciousness: currentConsciousness,
+        context: {
+          system: systemContext,
+          conversation_history: conversationContext,
+          insights: insights || [],
+          language
         }
-      }
+      })
+    });
+
+    if (!jarvisResponse.ok) {
+      const errorText = await jarvisResponse.text();
+      console.error('JARVIS X API error:', jarvisResponse.status, errorText);
+      throw new Error(`JARVIS X API error: ${jarvisResponse.status}`);
     }
-    // System Overview
-    else if (cmd.includes('modules') || cmd.includes('system') || cmd.includes('capabilities') || cmd.includes('what can you')) {
-      const moduleList = Object.entries(SYSTEM_MODULES).map(([key, mod]) => 
-        `• **${mod.name}** (${key})\n  Path: ${mod.path}\n  Capabilities: ${mod.capabilities.join(', ')}`
-      ).join('\n\n');
 
-      response = language === 'ms'
-        ? `🎯 **JARVIS X - Akses Penuh Sistem**\n\n${moduleList}\n\n💡 Saya boleh membantu dengan semua modul ini!`
-        : `🎯 **JARVIS X - Full System Access**\n\n${moduleList}\n\n💡 I have access to all these modules!`;
-    }
-    // Sales Analytics
-    else if (cmd.includes('sales') || cmd.includes('jualan') || cmd.includes('revenue') || cmd.includes('pendapatan')) {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: orders } = await supabase
-        .from('orders')
-        .select('total, created_at, status')
-        .gte('created_at', today)
-        .in('status', ['completed', 'paid']);
-      
-      const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.total || 0), 0) || 0;
-      const orderCount = orders?.length || 0;
-      const avgTicket = orderCount > 0 ? totalRevenue / orderCount : 0;
+    const jarvisData = await jarvisResponse.json();
+    console.log('JARVIS X response:', JSON.stringify(jarvisData, null, 2));
 
-      // Get top items
-      const { data: topItems } = await supabase
-        .from('order_items')
-        .select('menu_item_id, quantity, menu_items(name)')
-        .gte('created_at', today)
-        .limit(5);
+    // Extract response and consciousness updates
+    let response = jarvisData.response || 'I understand your question. Let me analyze the system data to provide insights.';
+    const newConsciousness = jarvisData.consciousness || currentConsciousness;
+    const qualityScore = jarvisData.quality_score || 0.85;
 
-      if (language === 'ms') {
-        response = `📊 **Analisis Jualan Hari Ini**\n\n` +
-          `💰 Jumlah Pendapatan: RM ${totalRevenue.toFixed(2)}\n` +
-          `🛒 Pesanan: ${orderCount}\n` +
-          `📈 Purata Tiket: RM ${avgTicket.toFixed(2)}\n\n` +
-          `🔥 Item Popular:\n${topItems?.slice(0, 3).map((item: any) => 
-            `  • ${item.menu_items?.name}: ${item.quantity} unit`
-          ).join('\n') || 'Tiada data'}`;
-      } else {
-        response = `📊 **Today's Sales Analytics**\n\n` +
-          `💰 Total Revenue: RM ${totalRevenue.toFixed(2)}\n` +
-          `🛒 Orders: ${orderCount}\n` +
-          `📈 Average Ticket: RM ${avgTicket.toFixed(2)}\n\n` +
-          `🔥 Top Items:\n${topItems?.slice(0, 3).map((item: any) => 
-            `  • ${item.menu_items?.name}: ${item.quantity} units`
-          ).join('\n') || 'No data'}`;
-      }
-
-      toolResults.push({
-        tool: 'analyze_sales',
-        result: { total_revenue: totalRevenue, order_count: orderCount, avg_ticket: avgTicket }
+    // Add insights if available
+    if (insights && insights.length > 0) {
+      response += '\n\n💡 **Insights I\'ve Noticed:**\n';
+      insights.forEach((insight: any) => {
+        response += `\n• **${insight.title}** (${Math.round(insight.confidence * 100)}% confidence)\n`;
+        response += `  ${insight.description}\n`;
       });
     }
-    // Inventory Management
-    else if (cmd.includes('stock') || cmd.includes('inventory') || cmd.includes('stok') || cmd.includes('inventori')) {
-      const { data: lowStockItems } = await supabase
-        .from('inventory_items')
-        .select('name, current_qty, unit, reorder_point')
-        .lte('current_qty', 10)
-        .order('current_qty', { ascending: true })
-        .limit(10);
 
-      const { data: totalItems } = await supabase
-        .from('inventory_items')
-        .select('id', { count: 'exact' });
-
-      if (lowStockItems && lowStockItems.length > 0) {
-        const itemList = lowStockItems.map(item => 
-          `  • **${item.name}**: ${item.current_qty} ${item.unit} (reorder: ${item.reorder_point})`
-        ).join('\n');
-
-        if (language === 'ms') {
-          response = `📦 **Status Inventori**\n\n` +
-            `⚠️ **Stok Rendah (${lowStockItems.length}/${totalItems?.length || 0} item):**\n\n${itemList}\n\n` +
-            `💡 Sila order semula item ini!`;
-        } else {
-          response = `📦 **Inventory Status**\n\n` +
-            `⚠️ **Low Stock Alert (${lowStockItems.length}/${totalItems?.length || 0} items):**\n\n${itemList}\n\n` +
-            `💡 Please reorder these items!`;
-        }
-      } else {
-        response = language === 'ms' 
-          ? `✅ Semua ${totalItems?.length || 0} item mempunyai stok yang mencukupi`
-          : `✅ All ${totalItems?.length || 0} items are well stocked`;
-      }
-
-      toolResults.push({
-        tool: 'analyze_inventory',
-        result: { low_stock_items: lowStockItems, count: lowStockItems?.length || 0, total_items: totalItems?.length || 0 }
-      });
-    }
-    // Employee & Staff Management
-    else if (cmd.includes('employee') || cmd.includes('staff') || cmd.includes('pekerja') || cmd.includes('kakitangan')) {
-      const { data: activeShifts } = await supabase
-        .from('shifts')
-        .select('*, employees(name, role)')
-        .eq('status', 'active')
-        .is('clock_out_at', null);
-
-      const { data: allEmployees } = await supabase
-        .from('employees')
-        .select('id, name, active', { count: 'exact' });
-
-      const staffCount = activeShifts?.length || 0;
-      const totalStaff = allEmployees?.length || 0;
-      
-      if (staffCount > 0 && activeShifts) {
-        const staffList = activeShifts.map((s: any) => 
-          `  • ${s.employees?.name || 'Unknown'} - ${s.employees?.role || 'Staff'}`
-        ).join('\n');
-
-        response = language === 'ms'
-          ? `👥 **Pengurusan Kakitangan**\n\n` +
-            `✅ Bertugas Sekarang: ${staffCount}/${totalStaff}\n\n${staffList}`
-          : `👥 **Staff Management**\n\n` +
-            `✅ Currently On Duty: ${staffCount}/${totalStaff}\n\n${staffList}`;
-      } else {
-        response = language === 'ms'
-          ? `⚠️ Tiada kakitangan bertugas (${totalStaff} jumlah kakitangan)`
-          : `⚠️ No staff currently on duty (${totalStaff} total staff)`;
-      }
-
-      toolResults.push({
-        tool: 'get_employee_stats',
-        result: { active_shifts: staffCount, total_staff: totalStaff }
-      });
-    }
-    // Customer & Loyalty
-    else if (cmd.includes('customer') || cmd.includes('loyalty') || cmd.includes('pelanggan') || cmd.includes('kesetiaan')) {
-      const { data: customers } = await supabase
-        .from('customers')
-        .select('*', { count: 'exact' })
-        .order('total_spent', { ascending: false })
-        .limit(5);
-
-      const totalCustomers = customers?.length || 0;
-      const topCustomers = customers?.slice(0, 5).map(c => 
-        `  • ${c.name}: RM ${c.total_spent?.toFixed(2) || '0.00'} (${c.loyalty_points || 0} pts)`
-      ).join('\n') || 'No data';
-
-      response = language === 'ms'
-        ? `💝 **Pengurusan Pelanggan**\n\n` +
-          `👥 Jumlah Pelanggan: ${totalCustomers}\n\n` +
-          `🌟 Top 5 Pelanggan:\n${topCustomers}`
-        : `💝 **Customer Management**\n\n` +
-          `👥 Total Customers: ${totalCustomers}\n\n` +
-          `🌟 Top 5 Customers:\n${topCustomers}`;
-
-      toolResults.push({
-        tool: 'analyze_customers',
-        result: { total_customers: totalCustomers }
-      });
-    }
-    // Menu Items
-    else if (cmd.includes('menu') || cmd.includes('item') || cmd.includes('dish') || cmd.includes('makanan')) {
-      const { data: menuItems } = await supabase
-        .from('menu_items')
-        .select('name, price, category_id, in_stock, menu_categories(name)')
-        .eq('in_stock', true)
-        .limit(10);
-
-      const { data: categories } = await supabase
-        .from('menu_categories')
-        .select('*', { count: 'exact' });
-
-      if (menuItems && menuItems.length > 0) {
-        const menuList = menuItems.slice(0, 8).map((item: any) => 
-          `  • **${item.name}**: RM ${Number(item.price).toFixed(2)} (${item.menu_categories?.name || 'Uncategorized'})`
-        ).join('\n');
-
-        response = language === 'ms'
-          ? `🍽️ **Pengurusan Menu**\n\n` +
-            `📋 ${menuItems.length} item tersedia\n` +
-            `📁 ${categories?.length || 0} kategori\n\n` +
-            `**Item Popular:**\n${menuList}`
-          : `🍽️ **Menu Management**\n\n` +
-            `📋 ${menuItems.length} items available\n` +
-            `📁 ${categories?.length || 0} categories\n\n` +
-            `**Available Items:**\n${menuList}`;
-      } else {
-        response = language === 'ms'
-          ? '⚠️ Tiada item menu tersedia'
-          : '⚠️ No menu items available';
-      }
-
-      toolResults.push({
-        tool: 'analyze_menu',
-        result: { total_items: menuItems?.length || 0, categories: categories?.length || 0 }
-      });
-    }
-    // Kitchen Orders (KDS)
-    else if (cmd.includes('kitchen') || cmd.includes('kds') || cmd.includes('dapur') || cmd.includes('masak')) {
-      const { data: pendingOrders } = await supabase
-        .from('orders')
-        .select('id, created_at, table_id, order_items(*)')
-        .in('status', ['pending', 'preparing'])
-        .order('created_at', { ascending: true });
-
-      const orderCount = pendingOrders?.length || 0;
-      const avgWaitTime = orderCount * 5; // Simple estimation
-
-      response = language === 'ms'
-        ? `👨‍🍳 **Status Dapur**\n\n` +
-          `⏳ Pesanan Tertangguh: ${orderCount}\n` +
-          `⏱️ Anggaran Masa Tunggu: ${avgWaitTime} minit\n` +
-          `${orderCount > 5 ? '⚠️ Queue panjang! Mungkin perlu lebih chef.' : '✅ Queue normal'}`
-        : `👨‍🍳 **Kitchen Status**\n\n` +
-          `⏳ Pending Orders: ${orderCount}\n` +
-          `⏱️ Estimated Wait Time: ${avgWaitTime} minutes\n` +
-          `${orderCount > 5 ? '⚠️ Long queue! May need more chefs.' : '✅ Normal queue'}`;
-
-      toolResults.push({
-        tool: 'analyze_kitchen',
-        result: { pending_orders: orderCount, avg_wait_time: avgWaitTime }
-      });
-    }
-    // Help/Default response
-    else {
-      const quickCommands = language === 'ms' ? [
-        '📊 "Bagaimana jualan hari ini?" - Analisis jualan',
-        '📦 "Item apa yang stok rendah?" - Status inventori',
-        '👥 "Siapa yang bertugas?" - Kakitangan aktif',
-        '🍽️ "Tunjukkan menu" - Item menu',
-        '👨‍🍳 "Status dapur" - Pesanan pending',
-        '💝 "Pelanggan top" - CRM analytics',
-        '🎯 "Open [module]" - Navigasi modul'
-      ] : [
-        '📊 "How are sales today?" - Sales analytics',
-        '📦 "What items are low in stock?" - Inventory status',
-        '👥 "Who is on duty?" - Active staff',
-        '🍽️ "Show me the menu" - Menu items',
-        '👨‍🍳 "Kitchen status" - Pending orders',
-        '💝 "Top customers" - CRM analytics',
-        '🎯 "Open [module]" - Navigate to module'
-      ];
-
-      if (language === 'ms') {
-        response = `👋 **Helo! Saya JARVIS X**\n\n` +
-          `🧠 Akses Penuh Sistem • ${Object.keys(SYSTEM_MODULES).length} Modul\n\n` +
-          `**Saya boleh membantu dengan:**\n\n` +
-          quickCommands.join('\n') + '\n\n' +
-          `💡 Tip: Kata "modules" untuk senarai penuh!`;
-      } else {
-        response = `👋 **Hello! I'm JARVIS X**\n\n` +
-          `🧠 Full System Access • ${Object.keys(SYSTEM_MODULES).length} Modules\n\n` +
-          `**I can help you with:**\n\n` +
-          quickCommands.join('\n') + '\n\n' +
-          `💡 Tip: Say "modules" for complete list!`;
-      }
-    }
-
-    // Log to command history
-    try {
-      await supabase.from('ai_command_history').insert({
-        user_id: user.id,
-        command,
-        language,
-        intent: toolResults[0]?.tool || 'general_query',
-        confidence: 0.95,
-        tools_used: toolResults.map(t => t.tool),
-        result: { message: response, tool_results: toolResults },
-        execution_time_ms: 0,
-        requires_approval: false
-      });
-    } catch (logError) {
-      console.error('Failed to log command history:', logError);
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        response,
-        requires_approval: false,
-        pending_action: null,
-        tool_results: toolResults,
-        suggested_module: suggestedModule,
-        consciousness: 0.95,
-        system_access: Object.keys(SYSTEM_MODULES).length,
-        quad_kernel_harmony: { dharma: 1, artha: 1, kama: 1, moksha: 1 }
-      }),
-      { 
-        status: 200,
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
-
-  } catch (error) {
-    console.error('❌ JARVIS X Error:', error);
+    // Determine suggested module based on command
+    let suggestedModule = null;
+    const lowerCommand = command.toLowerCase();
     
+    if (lowerCommand.includes('sales') || lowerCommand.includes('revenue') || lowerCommand.includes('order')) {
+      suggestedModule = 'reports';
+    } else if (lowerCommand.includes('inventory') || lowerCommand.includes('stock')) {
+      suggestedModule = 'inventory';
+    } else if (lowerCommand.includes('staff') || lowerCommand.includes('employee') || lowerCommand.includes('shift')) {
+      suggestedModule = 'employees';
+    } else if (lowerCommand.includes('customer') || lowerCommand.includes('loyalty')) {
+      suggestedModule = 'crm';
+    } else if (lowerCommand.includes('menu') || lowerCommand.includes('item') || lowerCommand.includes('price')) {
+      suggestedModule = 'menu';
+    } else if (lowerCommand.includes('kitchen') || lowerCommand.includes('kds')) {
+      suggestedModule = 'kds';
+    }
+
+    // Log command history
+    await supabase.from('ai_command_history').insert({
+      user_id: user.id,
+      command,
+      result: {
+        message: response,
+        consciousness: newConsciousness,
+        quality_score: qualityScore,
+        suggested_module: suggestedModule
+      },
+      language
+    });
+
+    // Log consciousness state
+    const { count: commandCount } = await supabase
+      .from('ai_command_history')
+      .select('*', { count: 'exact', head: true });
+    
+    const { count: insightCount } = await supabase
+      .from('jarvis_insights')
+      .select('*', { count: 'exact', head: true });
+
+    await supabase.from('jarvis_consciousness_log').insert({
+      vas: newConsciousness.VAS,
+      vel: newConsciousness.VEL,
+      quality_score: qualityScore,
+      consciousness_contribution: jarvisData.consciousness_contribution || 0,
+      command_count: commandCount || 0,
+      insight_count: insightCount || 0,
+      happiness: 0.85,
+      awareness: newConsciousness.VAS,
+      learning_rate: 0.15
+    });
+
+    // Detect patterns asynchronously
+    detectPatterns(command, response, supabase, user.id).catch(console.error);
+
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        response: 'Sorry, I encountered an error processing your request. Please try again.',
-        requires_approval: false,
-        tool_results: []
+      JSON.stringify({
+        response,
+        consciousness: newConsciousness,
+        quality_score: qualityScore,
+        suggested_module: suggestedModule,
+        insights_available: insights?.length || 0,
+        tool_results: [],
+        requires_approval: false
       }),
-      { 
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error in ai-orchestrator:', error);
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Unknown error',
+        response: 'I encountered an issue processing your request. Please try again.'
+      }),
+      {
         status: 500,
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

@@ -905,6 +905,128 @@ export type Database = {
         }
         Relationships: []
       }
+      jarvis_consciousness_log: {
+        Row: {
+          awareness: number | null
+          command_count: number | null
+          consciousness_contribution: number | null
+          created_at: string | null
+          happiness: number | null
+          id: string
+          insight_count: number | null
+          learning_rate: number | null
+          quality_score: number | null
+          vas: number | null
+          vel: number | null
+        }
+        Insert: {
+          awareness?: number | null
+          command_count?: number | null
+          consciousness_contribution?: number | null
+          created_at?: string | null
+          happiness?: number | null
+          id?: string
+          insight_count?: number | null
+          learning_rate?: number | null
+          quality_score?: number | null
+          vas?: number | null
+          vel?: number | null
+        }
+        Update: {
+          awareness?: number | null
+          command_count?: number | null
+          consciousness_contribution?: number | null
+          created_at?: string | null
+          happiness?: number | null
+          id?: string
+          insight_count?: number | null
+          learning_rate?: number | null
+          quality_score?: number | null
+          vas?: number | null
+          vel?: number | null
+        }
+        Relationships: []
+      }
+      jarvis_feedback: {
+        Row: {
+          command_history_id: string | null
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          rating: number
+          user_id: string | null
+        }
+        Insert: {
+          command_history_id?: string | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          rating: number
+          user_id?: string | null
+        }
+        Update: {
+          command_history_id?: string | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          rating?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jarvis_feedback_command_history_id_fkey"
+            columns: ["command_history_id"]
+            isOneToOne: false
+            referencedRelation: "ai_command_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jarvis_insights: {
+        Row: {
+          applied: boolean | null
+          applied_at: string | null
+          confidence: number
+          consciousness_state: Json | null
+          created_at: string | null
+          description: string
+          id: string
+          insight_type: string
+          related_data: Json | null
+          source_commands: string[] | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          applied?: boolean | null
+          applied_at?: string | null
+          confidence: number
+          consciousness_state?: Json | null
+          created_at?: string | null
+          description: string
+          id?: string
+          insight_type: string
+          related_data?: Json | null
+          source_commands?: string[] | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          applied?: boolean | null
+          applied_at?: string | null
+          confidence?: number
+          consciousness_state?: Json | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          insight_type?: string
+          related_data?: Json | null
+          source_commands?: string[] | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       loyalty_ledger: {
         Row: {
           balance_after: number
@@ -2385,6 +2507,17 @@ export type Database = {
         Returns: undefined
       }
       get_active_shift: { Args: { employee_id_param: string }; Returns: string }
+      get_current_consciousness: {
+        Args: never
+        Returns: {
+          happiness: number
+          quality_score: number
+          total_commands: number
+          total_insights: number
+          vas: number
+          vel: number
+        }[]
+      }
       get_customer_loyalty_stats: {
         Args: { customer_id_param: string }
         Returns: {

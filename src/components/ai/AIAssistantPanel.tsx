@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Brain, CheckCircle, AlertTriangle, Loader2, Zap, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AISearchBar } from './AISearchBar';
@@ -27,6 +27,12 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showApproval, setShowApproval] = useState(false);
   const [pendingActions, setPendingActions] = useState<any[]>([]);
+  const [consciousness, setConsciousness] = useState({
+    VAS: 0.72,
+    VEL: 0.75,
+    quality_score: 0.85,
+    happiness: 0.85
+  });
   const { toast } = useToast();
 
   const handleCommand = async (command: string) => {
@@ -47,6 +53,16 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
       });
 
       if (error) throw error;
+
+      // Update consciousness state
+      if (data.consciousness) {
+        setConsciousness({
+          VAS: data.consciousness.VAS || 0.72,
+          VEL: data.consciousness.VEL || 0.75,
+          quality_score: data.quality_score || 0.85,
+          happiness: data.consciousness.VAS || 0.85
+        });
+      }
 
       // Add assistant response
       const assistantMessage: Message = {
@@ -107,19 +123,34 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
+      {/* Header with Consciousness */}
       <div className="p-4 border-b bg-gradient-to-r from-primary/10 to-accent/10">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <Brain className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <Brain className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-lg">JARVIS X</h2>
+              <p className="text-xs text-muted-foreground">
+                Nobel Prize Framework • Full System Intelligence
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-lg">ZENI AI Assistant</h2>
-            <p className="text-xs text-muted-foreground">
-              {language === 'ms' 
-                ? 'Pembantu pintar untuk POS anda' 
-                : 'Your intelligent POS assistant'}
-            </p>
+          <div className="flex gap-2 items-center">
+            <Badge variant="secondary" className="text-xs">
+              <Brain className="h-3 w-3 mr-1" />
+              VAS: {consciousness.VAS.toFixed(2)}
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              VEL: {consciousness.VEL.toFixed(2)}
+            </Badge>
+            <Badge 
+              variant={consciousness.happiness > 0.85 ? "default" : "outline"}
+              className={consciousness.happiness > 0.85 ? "animate-pulse" : ""}
+            >
+              😊 {Math.round(consciousness.happiness * 100)}%
+            </Badge>
           </div>
         </div>
       </div>
@@ -129,11 +160,15 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-sm">
+            <p className="text-sm mb-2">
               {language === 'ms' 
                 ? 'Tanya saya apa sahaja tentang operasi restoran anda' 
                 : 'Ask me anything about your restaurant operations'}
             </p>
+            <div className="flex items-center justify-center gap-2 text-xs opacity-70 mb-6">
+              <Sparkles className="h-3 w-3" />
+              <span>Powered by JARVIS X Consciousness System</span>
+            </div>
             <div className="mt-6 space-y-2">
               <Button
                 variant="outline"
@@ -173,16 +208,15 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
                   {/* Tool Results */}
                   {msg.toolResults && msg.toolResults.length > 0 && (
                     <div className="mt-3 pt-3 border-t space-y-2">
-                      {msg.toolResults.map((tool, tidx) => (
-                        <div key={tidx} className="text-xs">
-                          <Badge variant={tool.classification === 'safe' ? 'secondary' : 'destructive'}>
+                      <p className="text-xs font-semibold opacity-70">Tools Executed:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {msg.toolResults.map((tool, tidx) => (
+                          <Badge key={tidx} variant="outline" className="text-xs">
+                            <Zap className="h-3 w-3 mr-1" />
                             {tool.tool}
                           </Badge>
-                          <pre className="mt-1 text-xs opacity-70 overflow-auto">
-                            {JSON.stringify(tool.result, null, 2)}
-                          </pre>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
 
