@@ -10,6 +10,10 @@ export interface WidgetPosition {
   zIndex: number;
   isMinimized?: boolean;
   isMaximized?: boolean;
+  _originalWidth?: number;
+  _originalHeight?: number;
+  _originalX?: number;
+  _originalY?: number;
 }
 
 export interface WidgetLayout {
@@ -159,17 +163,25 @@ export function useWidgetLayout() {
   }, []);
 
   const toggleMinimize = useCallback((widgetId: string) => {
-    setLayout(prev => ({
-      ...prev,
-      widgetPositions: {
-        ...prev.widgetPositions,
-        [widgetId]: {
-          ...prev.widgetPositions[widgetId],
-          isMinimized: !prev.widgetPositions[widgetId].isMinimized,
-          isMaximized: false,
+    setLayout(prev => {
+      const currentPos = prev.widgetPositions[widgetId];
+      const isCurrentlyMinimized = currentPos.isMinimized;
+
+      return {
+        ...prev,
+        widgetPositions: {
+          ...prev.widgetPositions,
+          [widgetId]: {
+            ...currentPos,
+            isMinimized: !isCurrentlyMinimized,
+            isMaximized: false,
+            // Store original width when minimizing, restore when un-minimizing
+            _originalWidth: !isCurrentlyMinimized ? currentPos.width : undefined,
+            width: !isCurrentlyMinimized ? 300 : (currentPos._originalWidth || currentPos.width),
+          },
         },
-      },
-    }));
+      };
+    });
   }, []);
 
   const toggleMaximize = useCallback((widgetId: string) => {

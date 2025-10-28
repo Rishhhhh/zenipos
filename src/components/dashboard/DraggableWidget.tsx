@@ -135,7 +135,7 @@ export function DraggableWidget({
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
-    width: isMinimized ? currentWidth : currentWidth,
+    width: isMinimized ? 300 : currentWidth,
     height: isMinimized ? 56 : currentHeight,
     minWidth: widgetDef?.minSize.width,
     maxWidth: widgetDef?.maxSize.width,
@@ -143,7 +143,7 @@ export function DraggableWidget({
     maxHeight: widgetDef?.maxSize.height,
     zIndex: isDraggingThis ? 9999 : position.zIndex,
     transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    transition: isDraggingThis || isResizing ? 'none' : 'height 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+    transition: isDraggingThis || isResizing ? 'none' : 'width 0.3s ease, height 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease',
     pointerEvents: (isAnyDragging && !isDraggingThis) ? 'none' as const : 'auto' as const,
   };
 
