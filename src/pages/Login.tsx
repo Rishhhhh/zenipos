@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GlassLoginCard } from '@/components/auth/GlassLoginCard';
 import { AnimatedPinPad } from '@/components/auth/AnimatedPinPad';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
-import { Brain, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { ZeniPOSLogo } from '@/components/layout/ZeniPOSLogo';
 
 export default function Login() {
   const [pin, setPin] = useState('');
@@ -69,11 +70,15 @@ export default function Login() {
       <GlassLoginCard>
         {/* Logo & Branding */}
         <div className="text-center mb-8 animate-[fade-in_0.8s_ease-out]">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-danger/20 border border-danger/30 mb-4 animate-[shimmer_3s_ease-in-out_infinite]">
-            <Brain className="h-10 w-10 text-danger" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <ZeniPOSLogo variant="full" className="h-20" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Restaurant POS</h1>
-          <p className="text-muted-foreground">Enter your PIN to continue</p>
+          <h1 className="text-3xl font-bold mb-2">
+            <span className="text-foreground">ZENI</span>
+            <span className="text-primary">POS</span>
+          </h1>
+          <p className="text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
+          <p className="text-muted-foreground mt-2">Enter your PIN to continue</p>
         </div>
 
         {/* PIN Pad */}

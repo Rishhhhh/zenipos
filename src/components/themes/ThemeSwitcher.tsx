@@ -26,6 +26,25 @@ export function ThemeSwitcher() {
         <DropdownMenuSeparator />
         
         <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+          ZeniPOS Themes
+        </DropdownMenuLabel>
+        {['zenipos-light', 'zenipos-dark'].map(id => (
+          <DropdownMenuItem
+            key={id}
+            onClick={() => setTheme(id as any)}
+            className={themeId === id ? 'bg-accent' : ''}
+          >
+            <div className="flex flex-col">
+              <span className="font-medium">{themes[id as keyof typeof themes].name}</span>
+              <span className="text-xs text-muted-foreground">
+                {themes[id as keyof typeof themes].description}
+              </span>
+            </div>
+          </DropdownMenuItem>
+        ))}
+
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
           Modern Themes
         </DropdownMenuLabel>
         {['cosmic-modern', 'professional-dark', 'material-3', 'neumorphism', 'fluent-11'].map(id => (

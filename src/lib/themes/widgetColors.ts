@@ -11,6 +11,18 @@ export interface ThemeColorPalette {
 }
 
 export const themeColorPalettes: Record<string, ThemeColorPalette> = {
+  'zenipos-light': {
+    primary: ['#FFC100', '#E6AD00', '#CC9A00'],
+    accent: ['#090A0E', '#1A1A1A', '#2A2A2A'],
+    gradient: ['#FFC100', '#E6AD00'],
+    chartColors: ['#FFC100', '#090A0E', '#10B981', '#EF4444', '#3B82F6', '#F59E0B'],
+  },
+  'zenipos-dark': {
+    primary: ['#FFC100', '#FFD54F', '#FFE082'],
+    accent: ['#FAFAFA', '#E5E5E5', '#D4D4D4'],
+    gradient: ['#FFC100', '#FFD54F'],
+    chartColors: ['#FFC100', '#FAFAFA', '#10B981', '#EF4444', '#60A5FA', '#FBBF24'],
+  },
   'cosmic-modern': {
     primary: ['#8B5CF6', '#A78BFA', '#C4B5FD'], // Purple spectrum
     accent: ['#EC4899', '#F472B6', '#FBCFE8'],  // Pink spectrum

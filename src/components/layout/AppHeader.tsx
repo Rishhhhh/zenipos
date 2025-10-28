@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Brain, LogOut, User, LogIn, Clock } from 'lucide-react';
+import { LogOut, User, LogIn, Clock } from 'lucide-react';
 import { AISearchBar } from '@/components/ai/AISearchBar';
 import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ZeniPOSLogo } from './ZeniPOSLogo';
 
 export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut }: {
   currentShiftId?: string | null;
@@ -37,9 +38,15 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
     <>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
         <div className="container flex h-16 items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-            <Brain className="h-6 w-6 text-primary" />
-            <span>Restaurant POS</span>
+          <Link to="/" className="flex items-center gap-3">
+            <ZeniPOSLogo variant="icon" className="h-10 w-10" />
+            <div className="flex flex-col">
+              <h1 className="text-lg font-bold leading-none">
+                <span className="text-foreground">ZENI</span>
+                <span className="text-primary">POS</span>
+              </h1>
+              <p className="text-xs text-muted-foreground tracking-wider">ZERO ERROR</p>
+            </div>
           </Link>
 
           <div className="flex-1 max-w-2xl mx-8">

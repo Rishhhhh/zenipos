@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeId] = useState<ThemeId>(() => {
     const stored = localStorage.getItem('theme-id');
-    return (stored as ThemeId) || 'cosmic-modern';
+    return (stored as ThemeId) || 'zenipos-light';
   });
 
   const config = themes[themeId];

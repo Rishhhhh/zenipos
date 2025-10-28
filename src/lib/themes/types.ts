@@ -4,6 +4,8 @@
  */
 
 export type ThemeId =
+  | 'zenipos-light'
+  | 'zenipos-dark'
   | 'cosmic-modern'
   | 'professional-dark'
   | 'windows-xp'
@@ -27,6 +29,76 @@ export interface ThemeConfig {
 }
 
 export const themes: Record<ThemeId, ThemeConfig> = {
+  'zenipos-light': {
+    id: 'zenipos-light',
+    name: 'ZeniPOS Light',
+    description: 'Zero Error - Clean gold & black (Default)',
+    animations: true,
+    glassEffects: true,
+    gradients: false,
+    cssVars: {
+      '--background': '0 0% 98%',
+      '--foreground': '225 22% 5%',
+      '--card': '0 0% 100%',
+      '--card-foreground': '225 22% 5%',
+      '--popover': '0 0% 100%',
+      '--popover-foreground': '225 22% 5%',
+      '--primary': '45 100% 50%',
+      '--primary-foreground': '225 22% 5%',
+      '--secondary': '0 0% 96%',
+      '--secondary-foreground': '225 22% 5%',
+      '--muted': '0 0% 96%',
+      '--muted-foreground': '0 0% 45%',
+      '--accent': '45 100% 50%',
+      '--accent-foreground': '225 22% 5%',
+      '--success': '142 76% 36%',
+      '--success-foreground': '0 0% 100%',
+      '--warning': '38 92% 50%',
+      '--warning-foreground': '0 0% 100%',
+      '--destructive': '0 84% 60%',
+      '--destructive-foreground': '0 0% 100%',
+      '--danger': '45 100% 50%',
+      '--danger-foreground': '225 22% 5%',
+      '--border': '0 0% 90%',
+      '--input': '0 0% 90%',
+      '--ring': '45 100% 50%',
+    },
+  },
+  'zenipos-dark': {
+    id: 'zenipos-dark',
+    name: 'ZeniPOS Dark',
+    description: 'Zero Error - Dark mode with gold accents',
+    animations: true,
+    glassEffects: true,
+    gradients: false,
+    cssVars: {
+      '--background': '225 22% 5%',
+      '--foreground': '0 0% 98%',
+      '--card': '0 0% 12%',
+      '--card-foreground': '0 0% 98%',
+      '--popover': '0 0% 12%',
+      '--popover-foreground': '0 0% 98%',
+      '--primary': '45 100% 50%',
+      '--primary-foreground': '225 22% 5%',
+      '--secondary': '0 0% 15%',
+      '--secondary-foreground': '0 0% 98%',
+      '--muted': '0 0% 15%',
+      '--muted-foreground': '0 0% 64%',
+      '--accent': '45 100% 50%',
+      '--accent-foreground': '225 22% 5%',
+      '--success': '142 76% 36%',
+      '--success-foreground': '0 0% 100%',
+      '--warning': '38 92% 50%',
+      '--warning-foreground': '0 0% 100%',
+      '--destructive': '0 84% 60%',
+      '--destructive-foreground': '0 0% 100%',
+      '--danger': '45 100% 50%',
+      '--danger-foreground': '225 22% 5%',
+      '--border': '0 0% 20%',
+      '--input': '0 0% 20%',
+      '--ring': '45 100% 50%',
+    },
+  },
   'cosmic-modern': {
     id: 'cosmic-modern',
     name: 'Cosmic Modern',

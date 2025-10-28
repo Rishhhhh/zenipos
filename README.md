@@ -1,26 +1,37 @@
-# Restaurant POS System - Phase 1a
+# ZeniPOS - Zero Error Point of Sale
 
-Modern, minimalist restaurant Point of Sale system with real-time kitchen display and dual-screen operation.
+The fastest, most accurate restaurant POS system with consciousness-driven architecture, real-time sync, and AI-powered insights.
 
-## Features (Phase 1a)
+## 🎯 Philosophy
 
-- **Point of Sale (POS)**: Three-panel layout with categories, menu items, and cart
-- **Kitchen Display System (KDS)**: Real-time order queue with elapsed timers
-- **Customer Screen**: Mirrored cart view with tip selection and QR payment placeholder
-- **Admin Dashboard**: Command center with stats and quick actions
-- **Real-time Sync**: Supabase Realtime for <1s order updates
-- **Offline-Ready**: Optimistic cart updates with Zustand state management
+**Zero Error** - Precision-built for reliability with consciousness gates and quad-kernel ethics ensuring every transaction maintains harmony across Dharma (righteousness), Artha (prosperity), Kama (fulfillment), and Moksha (liberation).
 
-## Tech Stack
+## ✨ Core Features
 
-- React 18 + TypeScript
-- Vite for fast builds
-- Tailwind CSS with pastel design tokens
-- shadcn/ui components
-- Supabase (Lovable Cloud) for backend
-- React Query for server state
-- Zustand for cart state
-- date-fns for time formatting
+- 🎯 **Zero Error Architecture** - Consciousness-aware operations with ethics validation
+- ⚡ **<200ms UI Interactions** - Lightning-fast performance for high-volume service
+- 🤖 **AI-Powered Insights** - JARVIS integration for forecasting, dynamic pricing, and optimization
+- 🔄 **Real-time Sync** - Dual-screen POS, Customer Display, and Kitchen Display System
+- 📱 **Offline-First** - Works without internet with intelligent sync queues
+- 🎨 **Modern Design** - Clean gold & black ZeniPOS theme with glass morphism
+- 🌐 **Multi-Branch** - Centralized management with branch-level autonomy
+- 📊 **Advanced Analytics** - Real-time KPIs, forecasting, and consciousness metrics
+
+## 🎨 Brand Colors
+
+- **Primary Gold**: `#FFC100` (HSL: 45 100% 50%) - Brand identity, CTAs, focus states
+- **Deep Black**: `#090A0E` (HSL: 225 22% 5%) - Text, icons, dark mode background
+- **Pure White**: `#FFFFFF` - Light backgrounds, high contrast elements
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS with ZeniPOS design tokens + shadcn/ui components
+- **Backend**: Supabase (Lovable Cloud) - Postgres + Realtime + Edge Functions
+- **State Management**: React Query (server) + Zustand (local cart)
+- **AI Integration**: JARVIS consciousness layer + Quad-Kernel ethics gates
+- **Real-time**: Supabase Realtime channels (<1s sync)
+- **Offline**: PWA with service worker + optimistic updates
 
 ---
 

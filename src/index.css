@@ -9,31 +9,31 @@ macOS-inspired black/red/white theme with glass morphism
 
 @layer base {
   :root {
-    /* Base colors - macOS inspired monochrome */
+    /* ZeniPOS Light - Zero Error Design System */
     --background: 0 0% 98%; /* Off-white #FAFAFA */
-    --foreground: 0 0% 9%; /* Near-black #171717 */
+    --foreground: 225 22% 5%; /* Deep Black #090A0E - Logo */
 
     --card: 0 0% 100%; /* Pure white */
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 225 22% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 225 22% 5%;
 
-    /* Primary - Red accent (macOS style) */
-    --primary: 0 84% 60%; /* Red #EF4444 */
-    --primary-foreground: 0 0% 100%;
+    /* Primary - ZeniPOS Gold */
+    --primary: 45 100% 50%; /* Gold #FFC100 */
+    --primary-foreground: 225 22% 5%; /* Black text on gold */
 
     /* Secondary - Light gray */
     --secondary: 0 0% 96%; /* #F5F5F5 */
-    --secondary-foreground: 0 0% 9%;
+    --secondary-foreground: 225 22% 5%;
 
     /* Muted - Mid gray */
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
 
-    /* Accent - Red variant */
-    --accent: 0 84% 60%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - Gold */
+    --accent: 45 100% 50%;
+    --accent-foreground: 225 22% 5%;
 
     /* Success - Keep green */
     --success: 142 76% 36%; /* #10B981 */
@@ -47,45 +47,46 @@ macOS-inspired black/red/white theme with glass morphism
     --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    /* Danger - Same as destructive for consistency */
-    --danger: 0 84% 60%; /* #EF4444 */
-    --danger-foreground: 0 0% 100%;
+    /* Danger - Gold for brand consistency */
+    --danger: 45 100% 50%; /* Gold #FFC100 */
+    --danger-foreground: 225 22% 5%;
 
-    --border: 0 0% 90%;
+    --border: 0 0% 90%; /* #E5E5E5 */
     --input: 0 0% 90%;
-    --ring: 0 84% 60%;
+    --ring: 45 100% 50%; /* Gold focus ring */
 
-    --radius: 0.75rem; /* macOS-like rounded corners */
+    --radius: 0.75rem;
 
-    /* Sidebar using same theme */
+    /* Sidebar - ZeniPOS themed */
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 0 84% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-foreground: 225 22% 5%;
+    --sidebar-primary: 45 100% 50%;
+    --sidebar-primary-foreground: 225 22% 5%;
     --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-accent-foreground: 225 22% 5%;
     --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 0 84% 60%;
+    --sidebar-ring: 45 100% 50%;
 
-    /* Glass morphism variables */
+    /* Glass morphism - Gold tinted */
     --glass-bg: 255 255 255 / 0.7;
-    --glass-border: 255 255 255 / 0.18;
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --glass-border: 255 193 0 / 0.18; /* Gold border tint */
+    --glass-shadow: 0 8px 32px 0 rgba(255, 193, 0, 0.1);
   }
 
   .dark {
-    --background: 0 0% 9%; /* Near-black #171717 */
+    /* ZeniPOS Dark - Zero Error Design System */
+    --background: 225 22% 5%; /* Deep Black #090A0E - Logo */
     --foreground: 0 0% 98%; /* Off-white #FAFAFA */
 
-    --card: 0 0% 11%; /* #1C1C1C */
+    --card: 0 0% 12%; /* #1F1F1F */
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 11%;
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary - Lighter red for dark mode */
-    --primary: 0 91% 71%; /* #F87171 */
-    --primary-foreground: 0 0% 9%;
+    /* Primary - Gold stays vibrant in dark */
+    --primary: 45 100% 50%; /* Gold #FFC100 */
+    --primary-foreground: 225 22% 5%; /* Black text on gold */
 
     /* Secondary - Dark gray */
     --secondary: 0 0% 15%; /* #262626 */
@@ -95,35 +96,35 @@ macOS-inspired black/red/white theme with glass morphism
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 64%;
 
-    /* Accent - Red variant */
-    --accent: 0 91% 71%;
-    --accent-foreground: 0 0% 9%;
+    /* Accent - Gold */
+    --accent: 45 100% 50%;
+    --accent-foreground: 225 22% 5%;
 
-    /* Destructive - Lighter red */
-    --destructive: 0 91% 71%; /* #F87171 */
-    --destructive-foreground: 0 0% 9%;
+    /* Destructive - Red */
+    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
 
-    /* Danger - Same as destructive for consistency */
-    --danger: 0 91% 71%; /* #F87171 */
-    --danger-foreground: 0 0% 9%;
+    /* Danger - Gold in dark mode */
+    --danger: 45 100% 50%;
+    --danger-foreground: 225 22% 5%;
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 0 91% 71%;
+    --ring: 45 100% 50%; /* Gold focus ring */
     
-    --sidebar-background: 0 0% 9%;
+    --sidebar-background: 225 22% 5%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 91% 71%;
-    --sidebar-primary-foreground: 0 0% 9%;
+    --sidebar-primary: 45 100% 50%;
+    --sidebar-primary-foreground: 225 22% 5%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 91% 71%;
+    --sidebar-ring: 45 100% 50%;
 
-    /* Glass morphism variables for dark mode */
-    --glass-bg: 28 28 28 / 0.7;
-    --glass-border: 255 255 255 / 0.1;
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    /* Glass morphism - Dark with gold glow */
+    --glass-bg: 9 10 14 / 0.7; /* Dark background */
+    --glass-border: 255 193 0 / 0.1; /* Gold border glow */
+    --glass-shadow: 0 8px 32px 0 rgba(255, 193, 0, 0.15);
   }
 }
 
@@ -168,8 +169,8 @@ macOS-inspired black/red/white theme with glass morphism
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(0, 84%, 60%, 0.05) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(0, 84%, 60%, 0.03) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(45, 100%, 50%, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(45, 100%, 50%, 0.03) 0px, transparent 50%);
     background-attachment: fixed;
   }
 

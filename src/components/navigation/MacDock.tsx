@@ -72,7 +72,7 @@ export function MacDock() {
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10002] dock-container">
-      <div className="glass-dock rounded-2xl px-3 py-2 flex items-center gap-1 shadow-2xl">
+      <div className="glass-dock rounded-2xl px-3 py-2 flex items-center gap-1 shadow-2xl border border-primary/10">
         {/* App Icons */}
         {visibleApps.map((app) => (
           <DockIcon
