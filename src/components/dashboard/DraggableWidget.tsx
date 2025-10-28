@@ -143,7 +143,7 @@ export function DraggableWidget({
     maxHeight: widgetDef?.maxSize.height,
     zIndex: isDraggingThis ? 9999 : position.zIndex,
     transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    transition: 'none',
+    transition: isDraggingThis || isResizing ? 'none' : 'height 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease',
     pointerEvents: (isAnyDragging && !isDraggingThis) ? 'none' as const : 'auto' as const,
   };
 
@@ -157,7 +157,7 @@ export function DraggableWidget({
       className={cn(
         "group rounded-lg overflow-hidden bg-card border-2 shadow-lg",
         isMinimized ? "border-primary/40 bg-card/80 cursor-grab" : "border-border cursor-grab",
-        "active:cursor-grabbing transition-all duration-200",
+        "active:cursor-grabbing transition-all duration-300 ease-in-out",
         isDraggingThis && "shadow-2xl opacity-95 border-primary",
         isResizing && "shadow-xl",
         isMinimized && "hover:border-primary hover:bg-card"
