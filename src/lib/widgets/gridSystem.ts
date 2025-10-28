@@ -6,13 +6,18 @@ export function getViewportDimensions() {
   const width = typeof window !== 'undefined' ? window.innerWidth : 1280;
   const height = typeof window !== 'undefined' ? window.innerHeight : 800;
   
-  // Account for padding and header (approx 200px total)
-  const availableHeight = height - 200;
-  const availableWidth = Math.min(width - 48, 1920); // Max width 1920px, minus padding
+  // Account for header + padding (approx 200px top, 96px bottom for dock)
+  const availableHeight = height - 296;
+  
+  // Account for horizontal padding (24px × 2 on mobile, 48px × 2 on desktop)
+  const horizontalPadding = width < 768 ? 48 : 96;
+  
+  // Constrain to max-w-7xl (1280px) and subtract padding
+  const availableWidth = Math.min(width - horizontalPadding, 1280);
   
   return {
     width: availableWidth,
-    height: availableHeight,
+    height: Math.max(availableHeight, 600), // Min height 600px
   };
 }
 

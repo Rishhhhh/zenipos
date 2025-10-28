@@ -124,11 +124,10 @@ export default function Dashboard() {
           sensors={sensors}
         >
           <div 
-            className="relative w-full mx-auto" 
+            className="relative w-full mx-auto bg-card/20 rounded-lg overflow-hidden" 
             style={{ 
               height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
-              width: `${GRID_CONFIG.CANVAS_WIDTH}px`,
-              maxWidth: '100%',
+              minHeight: '600px',
             }}
           >
             {/* Backdrop for Maximized Widget */}
