@@ -39,15 +39,15 @@ export function WidgetHeader({
         ? "opacity-100" 
         : "opacity-0 group-hover:opacity-100 transition-opacity duration-200"
     )}>
-      {isMinimized && (
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-            <WidgetIcon className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <h3 className="text-sm font-semibold">{widgetName}</h3>
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+          <WidgetIcon className="h-3.5 w-3.5 text-primary" />
         </div>
-      )}
-      {!isMinimized && <h3 className="text-sm font-medium truncate">{widgetName}</h3>}
+        <h3 className={cn(
+          "text-sm truncate",
+          isMinimized ? "font-semibold" : "font-medium"
+        )}>{widgetName}</h3>
+      </div>
       
       {/* Action Buttons */}
       <div className="flex items-center gap-1">

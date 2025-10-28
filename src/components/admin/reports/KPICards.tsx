@@ -22,7 +22,7 @@ export function KPICards({ data, sparklineData }: KPICardsProps) {
       <MagicBento
         title="Sales per Hour"
         value={`RM ${data.salesPerHour.toFixed(2)}`}
-        icon={<DollarSign className="h-6 w-6" />}
+        icon={<DollarSign className="h-6 w-6 text-primary" />}
         sparklineData={sparklineData?.sales}
         subtitle="Average hourly revenue"
       />
@@ -30,7 +30,7 @@ export function KPICards({ data, sparklineData }: KPICardsProps) {
       <MagicBento
         title="COGS %"
         value={`${data.cogsPercentage.toFixed(1)}%`}
-        icon={<Percent className="h-6 w-6" />}
+        icon={<Percent className="h-6 w-6 text-primary" />}
         threshold={{ warning: 35, danger: 40 }}
         subtitle="Cost of goods sold"
       />
@@ -38,7 +38,7 @@ export function KPICards({ data, sparklineData }: KPICardsProps) {
       <MagicBento
         title="Food Cost %"
         value={`${data.foodCostPercentage.toFixed(1)}%`}
-        icon={<TrendingUp className="h-6 w-6" />}
+        icon={<TrendingUp className="h-6 w-6 text-primary" />}
         threshold={{ warning: 35, danger: 40 }}
         subtitle="Target: ≤ 35%"
       />
@@ -46,14 +46,14 @@ export function KPICards({ data, sparklineData }: KPICardsProps) {
       <MagicBento
         title="Avg Ticket"
         value={`RM ${data.avgTicket.toFixed(2)}`}
-        icon={<Users className="h-6 w-6" />}
+        icon={<Users className="h-6 w-6 text-primary" />}
         subtitle="Average order value"
       />
 
       <MagicBento
         title="Labor %"
         value={`${data.laborPercentage.toFixed(1)}%`}
-        icon={<AlertTriangle className="h-6 w-6" />}
+        icon={<AlertTriangle className="h-6 w-6 text-primary" />}
         threshold={{ warning: 30, danger: 35 }}
         subtitle="Labor cost percentage"
       />
@@ -61,7 +61,7 @@ export function KPICards({ data, sparklineData }: KPICardsProps) {
       <MagicBento
         title="Void Rate"
         value={`${data.voidRate.toFixed(2)}%`}
-        icon={<XCircle className="h-6 w-6" />}
+        icon={<XCircle className="h-6 w-6 text-primary" />}
         threshold={{ warning: 2, danger: 5 }}
         subtitle="Percentage of voided items"
       />
