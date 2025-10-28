@@ -54,7 +54,7 @@ export function WidgetLibrary({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card max-w-4xl max-h-[80vh] flex flex-col">
+      <DialogContent className="glass-card max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-2xl">Widget Library</DialogTitle>
         </DialogHeader>
@@ -71,8 +71,8 @@ export function WidgetLibrary({
         </div>
 
         {/* Category Tabs */}
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}>
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid grid-flow-col auto-cols-fr w-full">
             {categories.map(cat => (
               <TabsTrigger key={cat} value={cat} className="capitalize">
                 {cat}
@@ -80,7 +80,7 @@ export function WidgetLibrary({
             ))}
           </TabsList>
 
-          <TabsContent value={selectedCategory} className="flex-1 overflow-y-auto mt-4">
+          <TabsContent value={selectedCategory} className="flex-1 overflow-y-auto max-h-[60vh] mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredWidgets.map(widget => {
                 const Icon = widget.icon;

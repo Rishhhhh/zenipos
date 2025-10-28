@@ -84,3 +84,27 @@ export function snapSizeToGrid(width: number, height: number) {
     height: snapToGrid(height),
   };
 }
+
+/**
+ * Snap size to grid in real-time (for live resize preview)
+ */
+export function snapSizeToGridRealtime(width: number, height: number) {
+  return snapSizeToGrid(width, height);
+}
+
+/**
+ * Check if widget is at maximum size
+ */
+export function isAtMaxSize(width: number, height: number, maxWidth: number, maxHeight: number): boolean {
+  return width >= maxWidth || height >= maxHeight;
+}
+
+/**
+ * Calculate grid cells from pixel dimensions
+ */
+export function calculateGridCells(width: number, height: number) {
+  return {
+    cols: Math.round(width / GRID_CONFIG.CELL_SIZE),
+    rows: Math.round(height / GRID_CONFIG.CELL_SIZE),
+  };
+}

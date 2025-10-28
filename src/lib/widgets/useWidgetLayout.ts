@@ -7,6 +7,8 @@ export interface WidgetPosition {
   width?: number;
   height?: number;
   zIndex: number;
+  isMinimized?: boolean;
+  isMaximized?: boolean;
 }
 
 export interface WidgetLayout {
@@ -17,14 +19,14 @@ export interface WidgetLayout {
 const DEFAULT_LAYOUT: WidgetLayout = {
   widgetOrder: ["quick-pos", "active-orders", "sales"],
   widgetPositions: {
-    // Quick POS: Top-left, 5 cols x 7 rows (400x560px)
-    "quick-pos": { x: 0, y: 0, width: 400, height: 560, zIndex: 1 },
+    // Quick POS: Top-left, 8x8 cols (640x640px) - grid aligned
+    "quick-pos": { x: 0, y: 0, width: 640, height: 640, zIndex: 1, isMinimized: false, isMaximized: false },
     
-    // Active Orders: Top-middle, 5 cols x 4 rows (400x320px)
-    "active-orders": { x: 480, y: 0, width: 400, height: 320, zIndex: 2 },
+    // Active Orders: Top-middle, 5x4 cols (400x320px) - grid aligned
+    "active-orders": { x: 640, y: 0, width: 400, height: 320, zIndex: 2, isMinimized: false, isMaximized: false },
     
-    // Sales: Top-right, 5 cols x 4 rows (400x320px)
-    "sales": { x: 880, y: 0, width: 400, height: 320, zIndex: 3 },
+    // Sales: Top-right, 5x4 cols (400x320px) - grid aligned  
+    "sales": { x: 640, y: 320, width: 400, height: 320, zIndex: 3, isMinimized: false, isMaximized: false },
   },
 };
 
@@ -117,16 +119,23 @@ export function useWidgetLayout() {
   const addWidget = useCallback((widgetId: string, defaultSize: { cols: number; rows: number }) => {
     setLayout(prev => {
       const maxZ = Math.max(...Object.values(prev.widgetPositions).map(p => p.zIndex), 0);
+      
+      // Use auto-placement to find empty spot
+      const { findEmptyGridSpace } = require('./autoPlacement');
+      const position = findEmptyGridSpace(prev.widgetPositions, defaultSize);
+      
       return {
         widgetOrder: [...prev.widgetOrder, widgetId],
         widgetPositions: {
           ...prev.widgetPositions,
           [widgetId]: {
-            x: 20,
-            y: 20,
-            width: defaultSize.cols * 250,
-            height: defaultSize.rows * 300,
+            x: position.x,
+            y: position.y,
+            width: defaultSize.cols * 80,
+            height: defaultSize.rows * 80,
             zIndex: maxZ + 1,
+            isMinimized: false,
+            isMaximized: false,
           },
         },
       };
@@ -149,6 +158,55 @@ export function useWidgetLayout() {
     setLayout(DEFAULT_LAYOUT);
   }, []);
 
+  const toggleMinimize = useCallback((widgetId: string) => {
+    setLayout(prev => ({
+      ...prev,
+      widgetPositions: {
+        ...prev.widgetPositions,
+        [widgetId]: {
+          ...prev.widgetPositions[widgetId],
+          isMinimized: !prev.widgetPositions[widgetId].isMinimized,
+          isMaximized: false,
+        },
+      },
+    }));
+  }, []);
+
+  const toggleMaximize = useCallback((widgetId: string) => {
+    setLayout(prev => {
+      const current = prev.widgetPositions[widgetId];
+      const isMaximized = !current.isMaximized;
+      
+      return {
+        ...prev,
+        widgetPositions: {
+          ...prev.widgetPositions,
+          [widgetId]: {
+            ...current,
+            isMaximized,
+            isMinimized: false,
+            // Store original size when maximizing
+            ...(isMaximized ? {
+              _originalX: current.x,
+              _originalY: current.y,
+              _originalWidth: current.width,
+              _originalHeight: current.height,
+              x: 0,
+              y: 0,
+              width: 1280,
+              height: 800,
+            } : {
+              x: (current as any)._originalX || current.x,
+              y: (current as any)._originalY || current.y,
+              width: (current as any)._originalWidth || current.width,
+              height: (current as any)._originalHeight || current.height,
+            }),
+          },
+        },
+      };
+    });
+  }, []);
+
   return {
     layout,
     updateOrder,
@@ -157,5 +215,7 @@ export function useWidgetLayout() {
     addWidget,
     removeWidget,
     resetLayout,
+    toggleMinimize,
+    toggleMaximize,
   };
 }

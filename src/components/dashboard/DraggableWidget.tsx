@@ -1,33 +1,55 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useDraggable } from "@dnd-kit/core";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Grip } from "lucide-react";
-import { snapSizeToGrid } from "@/lib/widgets/gridSystem";
+import { snapSizeToGridRealtime, isAtMaxSize } from "@/lib/widgets/gridSystem";
+import { WidgetHeader } from "./WidgetHeader";
+import { ResizeTooltip } from "./ResizeTooltip";
 
 interface DraggableWidgetProps {
   id: string;
   children: React.ReactNode;
-  position: { x: number; y: number; width?: number; height?: number; zIndex: number };
+  position: { 
+    x: number; 
+    y: number; 
+    width?: number; 
+    height?: number; 
+    zIndex: number;
+    isMinimized?: boolean;
+    isMaximized?: boolean;
+  };
+  isAnyDragging: boolean;
+  isDraggingThis: boolean;
+  widgetName: string;
   onPositionChange: (position: { x?: number; y?: number; width?: number; height?: number }) => void;
   onBringToFront: () => void;
+  onMinimize: () => void;
+  onMaximize: () => void;
+  onConfigure: () => void;
+  onClose: () => void;
 }
 
 export function DraggableWidget({ 
   id, 
   children, 
   position, 
+  isAnyDragging,
+  isDraggingThis,
+  widgetName,
   onPositionChange,
-  onBringToFront 
+  onBringToFront,
+  onMinimize,
+  onMaximize,
+  onConfigure,
+  onClose,
 }: DraggableWidgetProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
-    isDragging,
-  } = useSortable({ id });
+  } = useDraggable({ id });
 
   const [isResizing, setIsResizing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -35,9 +57,12 @@ export function DraggableWidget({
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const widgetDef = getWidgetById(id);
 
+  const isMinimized = position.isMinimized || false;
+  const isMaximized = position.isMaximized || false;
+
   // Bring to front when clicked
   const handleMouseDown = () => {
-    if (!isDragging && !isResizing) {
+    if (!isDraggingThis && !isResizing) {
       onBringToFront();
     }
   };
@@ -66,33 +91,24 @@ export function DraggableWidget({
       const deltaX = e.clientX - startPosRef.current.x;
       const deltaY = e.clientY - startPosRef.current.y;
 
-      const minWidth = widgetDef?.minSize.width || 250;
+      const minWidth = widgetDef?.minSize.width || 320;
       const maxWidth = widgetDef?.maxSize.width || 1000;
-      const minHeight = widgetDef?.minSize.height || 200;
+      const minHeight = widgetDef?.minSize.height || 320;
       const maxHeight = widgetDef?.maxSize.height || 800;
 
-      const newWidth = Math.max(minWidth, Math.min(maxWidth, startPosRef.current.width + deltaX));
-      const newHeight = Math.max(minHeight, Math.min(maxHeight, startPosRef.current.height + deltaY));
+      const rawWidth = Math.max(minWidth, Math.min(maxWidth, startPosRef.current.width + deltaX));
+      const rawHeight = Math.max(minHeight, Math.min(maxHeight, startPosRef.current.height + deltaY));
 
-      // Live preview (no snapping during drag)
-      onPositionChange({ width: newWidth, height: newHeight });
+      // Snap to grid in real-time
+      const snapped = snapSizeToGridRealtime(rawWidth, rawHeight);
+      
+      onPositionChange({ width: snapped.width, height: snapped.height });
     };
 
     const handleMouseUp = () => {
       setIsResizing(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      
-      // Snap final size to grid
-      const currentWidth = position.width || widgetDef?.minSize.width || 400;
-      const currentHeight = position.height || widgetDef?.minSize.height || 400;
-      const snapped = snapSizeToGrid(currentWidth, currentHeight);
-      
-      // Apply snapped size
-      onPositionChange({
-        width: snapped.width,
-        height: snapped.height,
-      });
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -104,19 +120,31 @@ export function DraggableWidget({
     };
   }, [isResizing, onPositionChange, widgetDef]);
 
+  const currentWidth = position.width || widgetDef?.minSize.width || 400;
+  const currentHeight = position.height || widgetDef?.minSize.height || 400;
+
+  const atMaxSize = widgetDef && isAtMaxSize(
+    currentWidth,
+    currentHeight,
+    widgetDef.maxSize.width,
+    widgetDef.maxSize.height
+  );
+
+  // Only apply transform if this widget is being dragged
   const style = {
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
-    width: position.width || widgetDef?.minSize.width || 'auto',
-    height: position.height || widgetDef?.minSize.height || 'auto',
+    width: isMinimized ? currentWidth : currentWidth,
+    height: isMinimized ? 50 : currentHeight,
     minWidth: widgetDef?.minSize.width,
     maxWidth: widgetDef?.maxSize.width,
-    minHeight: widgetDef?.minSize.height,
+    minHeight: isMinimized ? 50 : widgetDef?.minSize.height,
     maxHeight: widgetDef?.maxSize.height,
-    zIndex: isDragging ? 9999 : position.zIndex,
-    transform: CSS.Transform.toString(transform),
+    zIndex: isDraggingThis ? 9999 : position.zIndex,
+    transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition: 'none',
+    pointerEvents: (isAnyDragging && !isDraggingThis) ? 'none' as const : 'auto' as const,
   };
 
   return (
@@ -127,38 +155,68 @@ export function DraggableWidget({
       }}
       style={style}
       className={cn(
-        "cursor-grab active:cursor-grabbing group",
+        "group rounded-lg overflow-hidden bg-card border-2 border-border shadow-lg",
+        !isMinimized && "cursor-grab active:cursor-grabbing",
         "transition-shadow duration-200",
-        isDragging && "shadow-2xl opacity-95",
-        isResizing && "shadow-xl"
+        isDraggingThis && "shadow-2xl opacity-95 border-primary",
+        isResizing && "shadow-xl",
+        isMinimized && "opacity-80"
       )}
       onMouseDown={handleMouseDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...attributes}
-      {...listeners}
+      {...(isMinimized ? {} : listeners)}
     >
       <div className="h-full w-full relative">
-        {children}
-        
-        {/* Resize Handle - inside widget, shown on hover */}
-        {isHovered && !isDragging && (
-          <div
-            className={cn(
-              "absolute bottom-3 right-3 w-8 h-8 z-[100]",
-              "cursor-nwse-resize",
-              "bg-primary/20 hover:bg-primary/40 rounded-md",
-              "flex items-center justify-center",
-              "transition-all duration-200",
-              "shadow-md border border-primary/30",
-              "hover:scale-110 hover:shadow-lg",
-              isResizing && "bg-primary/50 scale-110 shadow-lg"
-            )}
-            onMouseDown={handleResizeStart}
-            aria-label="Resize widget"
-          >
-            <Grip className="w-4 h-4 text-primary rotate-45" />
+        {/* Widget Header */}
+        <WidgetHeader
+          widgetId={id}
+          widgetName={widgetName}
+          isMinimized={isMinimized}
+          isMaximized={isMaximized}
+          onMinimize={onMinimize}
+          onMaximize={onMaximize}
+          onClose={onClose}
+          onConfigure={onConfigure}
+        />
+
+        {/* Widget Content */}
+        {!isMinimized && (
+          <div className="h-full w-full pt-2">
+            {children}
           </div>
+        )}
+        
+        {/* Resize Handle */}
+        {!isMinimized && !isMaximized && isHovered && !isDraggingThis && (
+          <>
+            <div
+              className={cn(
+                "absolute bottom-3 right-3 w-8 h-8 z-[100]",
+                "cursor-nwse-resize",
+                "bg-primary/20 hover:bg-primary/40 rounded-md",
+                "flex items-center justify-center",
+                "transition-all duration-200",
+                "shadow-md border border-primary/30",
+                "hover:scale-110 hover:shadow-lg",
+                isResizing && "bg-primary/50 scale-110 shadow-lg",
+                atMaxSize && "border-destructive bg-destructive/20"
+              )}
+              onMouseDown={handleResizeStart}
+              aria-label="Resize widget"
+            >
+              <Grip className={cn(
+                "w-4 h-4 rotate-45",
+                atMaxSize ? "text-destructive" : "text-primary"
+              )} />
+            </div>
+            <ResizeTooltip 
+              width={currentWidth} 
+              height={currentHeight} 
+              isVisible={isResizing} 
+            />
+          </>
         )}
       </div>
     </div>

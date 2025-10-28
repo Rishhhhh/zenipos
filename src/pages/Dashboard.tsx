@@ -1,6 +1,5 @@
 import { useState, Suspense } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
 import { DraggableWidget } from "@/components/dashboard/DraggableWidget";
 import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
@@ -20,8 +19,9 @@ export default function Dashboard() {
   const userRole = employee?.role || "cashier";
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   
-  const { layout, updateOrder, updatePosition, bringToFront, addWidget, removeWidget, resetLayout } = useWidgetLayout();
+  const { layout, updateOrder, updatePosition, bringToFront, addWidget, removeWidget, resetLayout, toggleMinimize, toggleMaximize } = useWidgetLayout();
 
   // Configure sensors for press-and-hold dragging (500ms)
   const mouseSensor = useSensor(MouseSensor, {
@@ -34,6 +34,7 @@ export default function Dashboard() {
 
   const handleDragStart = (event: DragStartEvent) => {
     const widgetId = event.active.id as string;
+    setActiveDragId(widgetId);
     bringToFront(widgetId);
     haptics.medium();
   };
@@ -42,6 +43,8 @@ export default function Dashboard() {
     const { active, delta } = event;
     const widgetId = active.id as string;
     const currentPos = layout.widgetPositions[widgetId];
+    
+    setActiveDragId(null);
     
     if (currentPos) {
       const rawX = currentPos.x + delta.x;
@@ -103,48 +106,47 @@ export default function Dashboard() {
           onDragEnd={handleDragEnd}
           sensors={sensors}
         >
-          <SortableContext items={layout.widgetOrder} strategy={rectSortingStrategy}>
-            <div 
-              className="relative w-full mx-auto" 
-              style={{ 
-                height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
-                maxWidth: `${GRID_CONFIG.CANVAS_WIDTH}px`,
-              }}
-            >
-              <GridOverlay />
-              {layout.widgetOrder.map((widgetId) => {
-                const widgetDef = getWidgetById(widgetId);
-                if (!widgetDef) return null;
+          <div 
+            className="relative w-full mx-auto" 
+            style={{ 
+              height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
+              maxWidth: `${GRID_CONFIG.CANVAS_WIDTH}px`,
+            }}
+          >
+            <GridOverlay />
+            {layout.widgetOrder.map((widgetId) => {
+              const widgetDef = getWidgetById(widgetId);
+              if (!widgetDef) return null;
 
-                const position = layout.widgetPositions[widgetId];
-                if (!position) return null;
+              const position = layout.widgetPositions[widgetId];
+              if (!position) return null;
 
-                const WidgetComponent = widgetDef.component;
+              const WidgetComponent = widgetDef.component;
 
-                return (
-                  <DraggableWidget
-                    key={widgetId}
-                    id={widgetId}
-                    position={position}
-                    onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
-                    onBringToFront={() => bringToFront(widgetId)}
-                  >
-                    <Suspense fallback={<Skeleton className="h-full w-full" />}>
-                      <div className="h-full w-full relative group">
-                        <WidgetMenu 
-                          widgetId={widgetId}
-                          widgetName={widgetDef.name}
-                          onConfigure={() => setConfigModalWidget(widgetId)}
-                          onDelete={() => removeWidget(widgetId)}
-                        />
-                        <WidgetComponent />
-                      </div>
-                    </Suspense>
-                  </DraggableWidget>
-                );
-              })}
-            </div>
-          </SortableContext>
+              return (
+                <DraggableWidget
+                  key={widgetId}
+                  id={widgetId}
+                  position={position}
+                  isAnyDragging={activeDragId !== null}
+                  isDraggingThis={activeDragId === widgetId}
+                  onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
+                  onBringToFront={() => bringToFront(widgetId)}
+                  onMinimize={() => toggleMinimize(widgetId)}
+                  onMaximize={() => toggleMaximize(widgetId)}
+                  onConfigure={() => setConfigModalWidget(widgetId)}
+                  onClose={() => removeWidget(widgetId)}
+                  widgetName={widgetDef.name}
+                >
+                  <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                    <div className="h-full w-full relative">
+                      <WidgetComponent />
+                    </div>
+                  </Suspense>
+                </DraggableWidget>
+              );
+            })}
+          </div>
         </DndContext>
 
         {/* Help Text */}
