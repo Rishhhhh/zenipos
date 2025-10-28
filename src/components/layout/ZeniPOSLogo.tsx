@@ -11,14 +11,15 @@ export function ZeniPOSLogo({
   theme = 'color',
   className 
 }: ZeniPOSLogoProps) {
+  // Determine logo source based on variant and theme
   const logoSrc = 
     variant === 'full' 
       ? theme === 'color'
-        ? '/logos/zenipos-full-color.svg'
-        : '/logos/zenipos-full-white.svg'
+        ? '/logos/zenipos-full-color.svg'    // Full logo with gold POS
+        : '/logos/zenipos-full-white.svg'    // Full logo all white
       : theme === 'color'
-        ? '/logos/zenipos-icon-color.png'
-        : '/logos/zenipos-icon-white.svg';
+        ? '/logos/zenipos-icon-black.svg'    // Z icon in black
+        : '/logos/zenipos-icon-white.svg';   // Z icon in white
   
   return (
     <img 

@@ -9,13 +9,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/logos/zenipos-icon-color.png",
+      "src": "/logos/zenipos-full-color.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logos/zenipos-icon-color.png",
+      "src": "/logos/zenipos-full-color.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -26,17 +26,17 @@
     {
       "name": "Point of Sale",
       "url": "/pos",
-      "icons": [{ "src": "/logos/zenipos-icon-color.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/logos/zenipos-full-color.png", "sizes": "192x192" }]
     },
     {
       "name": "Kitchen Display",
       "url": "/kds",
-      "icons": [{ "src": "/logos/zenipos-icon-color.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/logos/zenipos-full-color.png", "sizes": "192x192" }]
     },
     {
       "name": "Reports",
       "url": "/admin/reports",
-      "icons": [{ "src": "/logos/zenipos-icon-color.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/logos/zenipos-full-color.png", "sizes": "192x192" }]
     }
   ],
   "screenshots": []
