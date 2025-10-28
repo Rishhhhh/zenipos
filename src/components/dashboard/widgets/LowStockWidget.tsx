@@ -55,7 +55,12 @@ export function LowStockWidget() {
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto mb-3 space-y-2.5">
+      <div className={cn(
+        "flex-1 min-h-0 mb-3",
+        lowStockItems && lowStockItems.length > 0 
+          ? "overflow-y-auto space-y-2.5" 
+          : "flex items-center justify-center"
+      )}>
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full rounded-lg" />
@@ -136,9 +141,10 @@ export function LowStockWidget() {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <PackageX className="h-12 w-12 mb-2 opacity-50" />
-            <p className="text-sm">All items in stock</p>
+          <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
+            <PackageX className="h-16 w-16 mb-3 opacity-40" />
+            <p className="text-sm font-medium">All items in stock</p>
+            <p className="text-xs mt-1 opacity-60">No reorder alerts</p>
           </div>
         )}
       </div>

@@ -49,13 +49,13 @@ export function RevenueChartWidget() {
   const peakHour = revenueData?.reduce((max, d) => d.revenue > max.revenue ? d : max, { hour: '', revenue: 0 });
 
   return (
-    <Card className="glass-card p-5 min-h-[300px] min-w-[450px] flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <Card className="glass-card p-5 h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">Revenue Trend</h3>
+          <h3 className="font-semibold text-base md:text-lg">Revenue Trend</h3>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
           {peakHour && peakHour.revenue > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Star className="h-3.5 w-3.5 text-primary fill-primary" />
@@ -67,19 +67,19 @@ export function RevenueChartWidget() {
               <Clock className="h-3 w-3" />
               Today
             </p>
-            <p className="text-xl font-bold text-primary">
+            <p className="text-lg md:text-xl font-bold text-primary">
               RM {totalRevenue.toFixed(2)}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-[180px]">
         {isLoading ? (
           <Skeleton className="w-full h-full rounded-lg" />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />

@@ -95,7 +95,7 @@ export function QuickPOSWidget() {
 
       {/* Category Tabs */}
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-3">
-        <TabsList className="grid w-full grid-cols-3 h-8">
+        <TabsList className="flex w-full gap-1 h-8">
           <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
           {categories?.slice(0, 2).map(cat => (
             <TabsTrigger key={cat.id} value={cat.id} className="text-xs truncate">
@@ -106,7 +106,7 @@ export function QuickPOSWidget() {
       </Tabs>
 
       {/* Menu Items Grid */}
-      <div className="flex-1 overflow-y-auto mb-3 min-h-0">
+      <div className="flex-1 overflow-y-auto mb-3 min-h-0 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
         {isLoading ? (
           <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
