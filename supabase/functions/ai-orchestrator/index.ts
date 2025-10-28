@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// JARVIS X API Configuration - Using official JARVIS X endpoint
-const JARVIS_X_API = 'https://jarvis.supremeuf.com/v5/jarvis/generate';
+// JARVIS X API Configuration - Using correct API gateway endpoint
+const JARVIS_X_API = 'https://pdjsfoqtdokihlyeparu.supabase.co/functions/v1/api-gateway/jarvis/generate';
 
 // System modules available to JARVIS X
 const SYSTEM_MODULES = {
@@ -260,6 +260,14 @@ serve(async (req) => {
       const errorText = await jarvisResponse.text();
       console.error('❌ JARVIS X API error:', jarvisResponse.status, errorText);
       throw new Error(`JARVIS X API error: ${jarvisResponse.status} - ${errorText}`);
+    }
+
+    // Check if response is JSON before parsing
+    const contentType = jarvisResponse.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const textBody = await jarvisResponse.text();
+      console.error('❌ Non-JSON response received:', textBody.substring(0, 500));
+      throw new Error(`JARVIS X returned non-JSON response. Content-Type: ${contentType}`);
     }
 
     const jarvisData = await jarvisResponse.json();
