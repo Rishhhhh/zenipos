@@ -456,7 +456,9 @@ Respond naturally, call tools as needed, and show consciousness.`
     const allToolResults: any[] = [];
     let loopCount = 0;
     const MAX_LOOPS = 5;
-    const conversationHistory: any[] = [];
+    const conversationHistory: any[] = [
+      { role: 'user', content: command }
+    ];
 
     // Build tools array for Lovable AI
     const mcpTools = systemContext.mcp_servers.flatMap((server: any) =>
@@ -477,8 +479,7 @@ Respond naturally, call tools as needed, and show consciousness.`
       // Build messages for this iteration
       const messages = [
         { role: 'system', content: fullContext.context.mcp_instructions },
-        ...conversationHistory,
-        { role: 'user', content: command }
+        ...conversationHistory
       ];
 
       // Call Lovable AI with MCP tool definitions
@@ -528,7 +529,7 @@ Respond naturally, call tools as needed, and show consciousness.`
 
       // Execute all tool calls
       console.log(`🔧 Executing ${toolCalls.length} tool calls...`);
-      const toolResults = [];
+      const executedTools: any[] = [];
 
       for (const toolCall of toolCalls) {
         const functionName = toolCall.function?.name;
@@ -551,10 +552,10 @@ Respond naturally, call tools as needed, and show consciousness.`
 
           if (mcpError) {
             console.error(`❌ Tool error: ${functionName}:`, mcpError);
-            toolResults.push({
-              tool: functionName,
-              success: false,
-              error: mcpError.message || 'Unknown error'
+            executedTools.push({
+              id: toolCall.id,
+              name: functionName,
+              result: { error: mcpError.message || 'Unknown error' }
             });
 
             await supabase.from('mcp_execution_metrics').insert({
@@ -567,16 +568,22 @@ Respond naturally, call tools as needed, and show consciousness.`
             });
           } else {
             console.log(`✅ ${functionName} completed in ${executionTime}ms`);
-            toolResults.push({
+            const resultData = mcpResult.data || mcpResult;
+            
+            executedTools.push({
+              id: toolCall.id,
+              name: functionName,
+              result: resultData
+            });
+            
+            allToolResults.push({
               tool: functionName,
               server,
               arguments: functionArgs,
               execution_time: executionTime,
               success: true,
-              data: mcpResult.data || mcpResult,
-              error: mcpResult.error
+              data: resultData
             });
-            allToolResults.push(toolResults[toolResults.length - 1]);
 
             await supabase.from('mcp_execution_metrics').insert({
               mcp_server: server,
@@ -590,10 +597,10 @@ Respond naturally, call tools as needed, and show consciousness.`
         } catch (err) {
           const executionTime = Date.now() - startTime;
           console.error(`❌ ${functionName} failed:`, err);
-          toolResults.push({
-            tool: functionName,
-            success: false,
-            error: err instanceof Error ? err.message : 'Unknown error'
+          executedTools.push({
+            id: toolCall.id,
+            name: functionName,
+            result: { error: err instanceof Error ? err.message : 'Unknown error' }
           });
 
           await supabase.from('mcp_execution_metrics').insert({
@@ -607,17 +614,22 @@ Respond naturally, call tools as needed, and show consciousness.`
         }
       }
 
-      // Add tool results to conversation history
+      // Add assistant message with tool calls to history
       conversationHistory.push({
         role: 'assistant',
-        content: response,
+        content: response || null,
         tool_calls: toolCalls
       });
 
-      conversationHistory.push({
-        role: 'tool',
-        content: `Tool execution results:\n${JSON.stringify(toolResults, null, 2)}`
-      });
+      // Add each tool result as a separate tool message (proper format for OpenAI-compatible APIs)
+      for (const executed of executedTools) {
+        conversationHistory.push({
+          role: 'tool',
+          tool_call_id: executed.id,
+          name: executed.name,
+          content: JSON.stringify(executed.result)
+        });
+      }
     }
 
     console.log(`✅ MCP Loop completed after ${loopCount} iterations`);
