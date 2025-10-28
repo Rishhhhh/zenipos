@@ -14,6 +14,7 @@ import CustomerScreen from "./pages/CustomerScreen";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MacDock } from "./components/navigation/MacDock";
 import { FloatingSimulationControl } from "./components/simulation/FloatingSimulationControl";
+import { AIFloatingButton } from "./components/ai/AIFloatingButton";
 import { useAuth } from "./contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useSimulationStore } from "./lib/store/simulation";
