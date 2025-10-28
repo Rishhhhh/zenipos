@@ -135,15 +135,15 @@ export function DraggableWidget({
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
-    width: currentWidth,
-    height: isMinimized ? 56 : currentHeight,
+    width: isMinimized ? currentWidth : currentWidth,
+    height: isMinimized ? 50 : currentHeight,
     minWidth: widgetDef?.minSize.width,
     maxWidth: widgetDef?.maxSize.width,
-    minHeight: isMinimized ? 56 : widgetDef?.minSize.height,
+    minHeight: isMinimized ? 50 : widgetDef?.minSize.height,
     maxHeight: widgetDef?.maxSize.height,
     zIndex: isDraggingThis ? 9999 : position.zIndex,
     transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    transition: isDraggingThis || isResizing ? 'none' : 'height 0.3s ease, box-shadow 0.2s ease, all 0.2s ease',
+    transition: 'none',
     pointerEvents: (isAnyDragging && !isDraggingThis) ? 'none' as const : 'auto' as const,
   };
 
@@ -155,17 +155,18 @@ export function DraggableWidget({
       }}
       style={style}
       className={cn(
-        "group rounded-lg overflow-hidden bg-card border-2 shadow-lg transition-all duration-300 ease-in-out",
-        isMinimized ? "border-primary/40 bg-card/80 cursor-grab hover:border-primary hover:bg-card" : "border-border cursor-grab",
-        "active:cursor-grabbing",
+        "group rounded-lg overflow-hidden bg-card border-2 border-border shadow-lg",
+        !isMinimized && "cursor-grab active:cursor-grabbing",
+        "transition-shadow duration-200",
         isDraggingThis && "shadow-2xl opacity-95 border-primary",
-        isResizing && "shadow-xl"
+        isResizing && "shadow-xl",
+        isMinimized && "opacity-80"
       )}
       onMouseDown={handleMouseDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       {...attributes}
-      {...listeners}
+      {...(isMinimized ? {} : listeners)}
     >
       <div className="h-full w-full relative">
         {/* Widget Header */}
@@ -180,16 +181,10 @@ export function DraggableWidget({
           onConfigure={onConfigure}
         />
 
-        {isMinimized && (
-          <div className="absolute left-0 right-0 bottom-0 h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0" />
-        )}
-
         {/* Widget Content */}
         {!isMinimized && (
-          <div className="h-full w-full overflow-hidden pt-2">
-            <div className="h-full w-full overflow-auto px-1">
-              {children}
-            </div>
+          <div className="h-full w-full pt-2">
+            {children}
           </div>
         )}
         

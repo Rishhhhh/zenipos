@@ -78,12 +78,10 @@ export function QuickPOSWidget() {
     return cartItem?.quantity || 0;
   };
 
-  const gridCols = config.itemsPerRow;
-
   return (
-    <Card className="glass-card h-full flex flex-col overflow-hidden">
+    <Card className="glass-card p-4 flex flex-col overflow-hidden h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Coffee className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-lg">Quick POS</h3>
@@ -96,29 +94,27 @@ export function QuickPOSWidget() {
       </div>
 
       {/* Category Tabs */}
-      <div className="px-4 pt-3 flex-shrink-0">
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-          <TabsList className="grid w-full grid-cols-3 h-8">
-            <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-            {categories?.slice(0, 2).map(cat => (
-              <TabsTrigger key={cat.id} value={cat.id} className="text-xs truncate">
-                {cat.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-3">
+        <TabsList className="grid w-full grid-cols-3 h-8">
+          <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+          {categories?.slice(0, 2).map(cat => (
+            <TabsTrigger key={cat.id} value={cat.id} className="text-xs truncate">
+              {cat.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Menu Items Grid */}
-      <div className="flex-1 overflow-y-auto px-4 pt-3 min-h-0">
+      <div className="flex-1 overflow-y-auto mb-3 min-h-0">
         {isLoading ? (
-          <div className={cn("grid gap-2 pb-3", GRID_COLS_MAP[gridCols])}>
+          <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-24 bg-accent/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : menuItems && menuItems.length > 0 ? (
-          <div className={cn("grid gap-2 pb-3", GRID_COLS_MAP[gridCols])}>
+          <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {menuItems.map((item) => {
               const quantity = getCartQuantity(item.id);
               const inStock = item.in_stock;
@@ -166,41 +162,40 @@ export function QuickPOSWidget() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Utensils className="h-12 w-12 mb-2 opacity-50" />
             <p className="text-sm">No items available</p>
           </div>
         )}
       </div>
 
-      {/* Mini Cart Summary & Checkout */}
-      <div className="border-t p-4 bg-background/50 flex-shrink-0 space-y-2">
-        {totalItems > 0 && (
-          <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Cart: {totalItems} items</span>
-              </div>
-              <span className="text-lg font-bold text-primary">RM {totalPrice.toFixed(2)}</span>
+      {/* Mini Cart Summary */}
+      {totalItems > 0 && (
+        <div className="p-3 bg-primary/10 rounded-lg mb-2 border border-primary/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Cart: {totalItems} items</span>
             </div>
+            <span className="text-lg font-bold text-primary">RM {totalPrice.toFixed(2)}</span>
           </div>
-        )}
-        
-        <Button
-          onClick={() => {
-            navigate("/pos");
-            haptics.light();
-          }}
-          className="w-full h-10"
-          variant={totalItems > 0 ? "default" : "outline"}
-          size="lg"
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          {totalItems > 0 ? `Checkout (${totalItems})` : "Open Full POS"}
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
+        </div>
+      )}
+
+      {/* Checkout Button */}
+      <Button
+        onClick={() => {
+          navigate("/pos");
+          haptics.light();
+        }}
+        className="w-full h-10"
+        variant={totalItems > 0 ? "default" : "outline"}
+        size="lg"
+      >
+        <ShoppingCart className="mr-2 h-4 w-4" />
+        {totalItems > 0 ? `Checkout (${totalItems})` : "Open Full POS"}
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Button>
     </Card>
   );
 }

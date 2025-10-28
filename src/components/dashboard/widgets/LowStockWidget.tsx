@@ -136,7 +136,7 @@ export function LowStockWidget() {
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <PackageX className="h-12 w-12 mb-2 opacity-50" />
             <p className="text-sm">All items in stock</p>
           </div>

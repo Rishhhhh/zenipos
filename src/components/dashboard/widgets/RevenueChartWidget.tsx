@@ -49,32 +49,32 @@ export function RevenueChartWidget() {
   const peakHour = revenueData?.reduce((max, d) => d.revenue > max.revenue ? d : max, { hour: '', revenue: 0 });
 
   return (
-    <Card className="glass-card p-5 min-h-[300px] min-w-[450px] flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
+    <Card className="glass-card p-5 min-h-[300px] min-w-[450px] flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-lg">Revenue Trend</h3>
         </div>
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex items-center gap-4">
           {peakHour && peakHour.revenue > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Star className="h-3.5 w-3.5 text-primary fill-primary" />
               <span>Peak: {peakHour.hour}</span>
             </div>
           )}
           <div className="text-right">
-            <p className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
               Today
             </p>
-            <p className="text-xl font-bold text-primary whitespace-nowrap">
+            <p className="text-xl font-bold text-primary">
               RM {totalRevenue.toFixed(2)}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <Skeleton className="w-full h-full rounded-lg" />
         ) : (
