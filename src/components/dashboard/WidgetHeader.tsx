@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Minimize2, Maximize2, X, Settings, LayoutDashboard } from "lucide-react";
+import { Minimize2, Maximize2, X, Settings, LayoutDashboard, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 
@@ -48,18 +48,49 @@ export function WidgetHeader({
         </div>
       )}
       {!isMinimized && <h3 className="text-sm font-medium truncate">{widgetName}</h3>}
+      
+      {/* Action Buttons */}
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={(e) => {
-            e.stopPropagation();
-            onConfigure();
-          }}
-        >
-          <Settings className="h-3.5 w-3.5" />
-        </Button>
+        {!isMaximized && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onConfigure();
+                }}
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Configure</TooltipContent>
+          </Tooltip>
+        )}
+
+        {!isMaximized && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMinimize();
+                }}
+              >
+                {isMinimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isMinimized ? "Restore" : "Minimize"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -68,40 +99,35 @@ export function WidgetHeader({
               className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
-                onMinimize();
+                onMaximize();
               }}
             >
-              {isMinimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+              {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{isMinimized ? "Restore" : "Minimize"}</p>
+            {isMaximized ? "Restore" : "Maximize"}
           </TooltipContent>
         </Tooltip>
-        {!isMinimized && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMaximize();
-            }}
-          >
-            {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-          </Button>
+
+        {!isMaximized && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Close</TooltipContent>
+          </Tooltip>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-        >
-          <X className="h-3.5 w-3.5" />
-        </Button>
       </div>
     </div>
     </TooltipProvider>

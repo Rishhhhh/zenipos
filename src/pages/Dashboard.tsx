@@ -23,6 +23,11 @@ export default function Dashboard() {
   const [viewportKey, setViewportKey] = useState(0);
   
   const { layout, updateOrder, updatePosition, bringToFront, addWidget, removeWidget, resetLayout, toggleMinimize, toggleMaximize } = useWidgetLayout();
+  
+  // Track maximized widget for backdrop overlay
+  const maximizedWidget = layout.widgetOrder.find(id => 
+    layout.widgetPositions[id]?.isMaximized
+  );
 
   // Listen for viewport resize to recalculate grid
   useEffect(() => {
@@ -126,6 +131,15 @@ export default function Dashboard() {
               maxWidth: '100%',
             }}
           >
+            {/* Backdrop for Maximized Widget */}
+            {maximizedWidget && (
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] animate-in fade-in duration-300"
+                onClick={() => toggleMaximize(maximizedWidget)}
+                aria-label="Click to restore widget"
+              />
+            )}
+            
             <GridOverlay />
             {layout.widgetOrder.map((widgetId) => {
               const widgetDef = getWidgetById(widgetId);
@@ -166,6 +180,7 @@ export default function Dashboard() {
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
           <p>Press and hold (0.5s) any widget to drag • Magnetically snaps to grid</p>
           <p>Drag bottom-right corner to resize • All widgets fit in viewport</p>
+          <p>Click maximize for full-screen • Press Escape or click backdrop to restore</p>
         </div>
       </div>
 

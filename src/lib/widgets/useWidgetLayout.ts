@@ -187,7 +187,7 @@ export function useWidgetLayout() {
   const toggleMaximize = useCallback((widgetId: string) => {
     setLayout(prev => {
       const current = prev.widgetPositions[widgetId];
-      const isMaximized = !current.isMaximized;
+      const isCurrentlyMaximized = current.isMaximized;
       
       return {
         ...prev,
@@ -195,23 +195,21 @@ export function useWidgetLayout() {
           ...prev.widgetPositions,
           [widgetId]: {
             ...current,
-            isMaximized,
+            isMaximized: !isCurrentlyMaximized,
             isMinimized: false,
-            // Store original size when maximizing
-            ...(isMaximized ? {
+            ...(!isCurrentlyMaximized ? {
+              // Store originals when maximizing
               _originalX: current.x,
               _originalY: current.y,
               _originalWidth: current.width,
               _originalHeight: current.height,
-              x: 0,
-              y: 0,
-              width: 1280,
-              height: 800,
+              // Don't set x/y/width/height - DraggableWidget handles via CSS
             } : {
-              x: (current as any)._originalX || current.x,
-              y: (current as any)._originalY || current.y,
-              width: (current as any)._originalWidth || current.width,
-              height: (current as any)._originalHeight || current.height,
+              // Restore originals when un-maximizing
+              x: current._originalX || current.x,
+              y: current._originalY || current.y,
+              width: current._originalWidth || current.width,
+              height: current._originalHeight || current.height,
             }),
           },
         },

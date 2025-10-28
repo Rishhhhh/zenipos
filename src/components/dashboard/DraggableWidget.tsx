@@ -6,6 +6,7 @@ import { Grip } from "lucide-react";
 import { snapSizeToGridRealtime, isAtMaxSize } from "@/lib/widgets/gridSystem";
 import { WidgetHeader } from "./WidgetHeader";
 import { ResizeTooltip } from "./ResizeTooltip";
+import { haptics } from "@/lib/haptics";
 
 interface DraggableWidgetProps {
   id: string;
@@ -59,6 +60,21 @@ export function DraggableWidget({
 
   const isMinimized = position.isMinimized || false;
   const isMaximized = position.isMaximized || false;
+
+  // Escape key handler for maximized widgets
+  useEffect(() => {
+    if (!isMaximized) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onMaximize(); // Toggle maximize off
+        haptics.light();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMaximized, onMaximize]);
 
   // Bring to front when clicked
   const handleMouseDown = () => {
@@ -131,7 +147,17 @@ export function DraggableWidget({
   );
 
   // Only apply transform if this widget is being dragged
-  const style = {
+  const style = isMaximized ? {
+    // Full-screen overlay mode
+    position: 'fixed' as const,
+    inset: 0,
+    width: '100vw',
+    height: '100vh',
+    zIndex: 9999,
+    transition: 'none',
+    pointerEvents: 'auto' as const,
+  } : {
+    // Normal/minimized mode
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
@@ -156,7 +182,9 @@ export function DraggableWidget({
       style={style}
       className={cn(
         "group rounded-lg overflow-hidden bg-card border-2 shadow-lg",
+        isMaximized && "rounded-none border-0 shadow-none",
         isMinimized ? "border-primary/40 bg-card/80 cursor-grab" : "border-border cursor-grab",
+        isMaximized && "cursor-default",
         "active:cursor-grabbing transition-all duration-300 ease-in-out",
         isDraggingThis && "shadow-2xl opacity-95 border-primary",
         isResizing && "shadow-xl",
@@ -165,8 +193,8 @@ export function DraggableWidget({
       onMouseDown={handleMouseDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      {...attributes}
-      {...listeners}
+      {...(isMaximized ? {} : attributes)}
+      {...(isMaximized ? {} : listeners)}
     >
       <div className="h-full w-full relative">
         {/* Widget Header */}
