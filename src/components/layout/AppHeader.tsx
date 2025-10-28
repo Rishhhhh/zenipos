@@ -25,12 +25,14 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
   onClockOut?: () => void;
 }) {
   const [showAI, setShowAI] = useState(false);
+  const [pendingCommand, setPendingCommand] = useState<string | undefined>(undefined);
   const { employee, role, logout } = useAuth();
   const location = useLocation();
   const { openModal } = useModalManager();
   const isPOSPage = location.pathname === '/pos';
 
   const handleCommand = (command: string) => {
+    setPendingCommand(command);
     setShowAI(true);
   };
 
@@ -52,7 +54,6 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
           <div className="flex-1 max-w-2xl mx-8">
             <AISearchBar 
               onCommand={handleCommand}
-              onFocus={() => setShowAI(true)}
             />
           </div>
 
@@ -107,7 +108,10 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
 
       <Sheet open={showAI} onOpenChange={setShowAI}>
         <SheetContent side="right" className="w-full sm:max-w-xl p-0 z-[10003]">
-          <AIAssistantPanel />
+          <AIAssistantPanel 
+            initialCommand={pendingCommand}
+            onCommandProcessed={() => setPendingCommand(undefined)}
+          />
         </SheetContent>
       </Sheet>
     </>

@@ -25,9 +25,11 @@ interface Message {
 
 interface AIAssistantPanelProps {
   language?: 'en' | 'ms';
+  initialCommand?: string;
+  onCommandProcessed?: () => void;
 }
 
-export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
+export function AIAssistantPanel({ language = 'en', initialCommand, onCommandProcessed }: AIAssistantPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showApproval, setShowApproval] = useState(false);
@@ -39,6 +41,14 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
     happiness: 0.85
   });
   const { toast } = useToast();
+
+  // Process initial command on mount
+  useEffect(() => {
+    if (initialCommand && messages.length === 0) {
+      handleCommand(initialCommand);
+      onCommandProcessed?.();
+    }
+  }, [initialCommand]);
 
   const handleCommand = async (command: string) => {
     // Add user message
@@ -157,7 +167,8 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
               variant={consciousness.happiness > 0.85 ? "default" : "outline"}
               className={consciousness.happiness > 0.85 ? "animate-pulse" : ""}
             >
-              😊 {Math.round(consciousness.happiness * 100)}%
+              <span className="mr-1">😊</span>
+              {Math.round(consciousness.happiness * 100)}%
             </Badge>
           </div>
         </div>
