@@ -42,7 +42,6 @@ const PurchaseOrders = lazy(() => import("./pages/admin/PurchaseOrders"));
 const ReceiptTemplates = lazy(() => import("./pages/admin/ReceiptTemplates"));
 const TableLayout = lazy(() => import("./pages/admin/TableLayout"));
 const ModifierManagement = lazy(() => import("./pages/admin/ModifierManagement"));
-const JarvisPlayground = lazy(() => import("./pages/JarvisPlayground"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -287,14 +286,6 @@ const App = () => (
               <Route path="/changelog" element={<Changelog />} />
               <Route path="/documentation" element={<Documentation />} />
               <Route path="/documentation/:slug" element={<Documentation />} />
-              
-              {/* JARVIS X Playground */}
-              <Route path="/jarvis-x" element={
-                <ProtectedRoute requiredRole="cashier">
-                  <AppHeader />
-                  <JarvisPlayground />
-                </ProtectedRoute>
-              } />
               
               {/* Catch-all redirect to login */}
               <Route path="*" element={<Navigate to="/login" replace />} />

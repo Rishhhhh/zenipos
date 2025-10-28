@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import { jarvisClient } from '../_shared/jarvisClient.ts';
 import { getBusinessContext } from '../_shared/businessContext.ts';
 
 const corsHeaders = {
@@ -123,70 +122,29 @@ serve(async (req) => {
 
     console.log(`🔔 Found ${alerts.length} alerts`);
 
-    // If alerts exist, get JARVIS analysis
+    // If alerts exist, insert them into database (simplified - no JARVIS external API call)
     if (alerts.length > 0) {
       try {
-        const jarvisAnalysis = await jarvisClient.generate(
-          `Analyze these business alerts and provide actionable recommendations: ${JSON.stringify(alerts)}`,
-          { 
-            business_context: context,
-            alert_count: alerts.length
-          }
-        );
-
         // Get managers to notify
         const { data: managers } = await supabase
           .from('user_roles')
           .select('user_id')
           .in('role', ['manager', 'admin']);
 
-        // Send push notifications to managers
-        if (managers && managers.length > 0) {
-          for (const manager of managers) {
-            // Get push token from profiles
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('push_token')
-              .eq('user_id', manager.user_id)
-              .single();
-            
-            const pushToken = profile?.push_token;
-            if (pushToken) {
-              await supabase.functions.invoke('send-push-notification', {
-                body: {
-                  user_id: manager.user_id,
-                  title: `⚠️ ${alerts.length} Alert${alerts.length > 1 ? 's' : ''}`,
-                  body: jarvisAnalysis.response.substring(0, 200),
-                  data: { alerts, analysis: jarvisAnalysis.response }
-                }
-              });
-            }
-          }
-        }
-
         // Insert alerts into database
         const alertInserts = alerts.map(alert => ({
           type: alert.type,
           severity: alert.severity,
           message: alert.message,
-          jarvis_analysis: jarvisAnalysis.response,
+          jarvis_analysis: `Alert detected: ${alert.message}`,
           status: 'active'
         }));
 
         await supabase.from('jarvis_alerts').insert(alertInserts);
 
         console.log(`✅ Inserted ${alertInserts.length} alerts to database`);
-      } catch (jarvisError) {
-        console.error('JARVIS analysis error:', jarvisError);
-        // Still insert alerts even if JARVIS fails
-        await supabase.from('jarvis_alerts').insert(
-          alerts.map(alert => ({
-            type: alert.type,
-            severity: alert.severity,
-            message: alert.message,
-            status: 'active'
-          }))
-        );
+      } catch (insertError) {
+        console.error('Alert insertion error:', insertError);
       }
     }
 

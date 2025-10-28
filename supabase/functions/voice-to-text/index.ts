@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,12 +39,6 @@ function processBase64Chunks(base64String: string, chunkSize = 32768) {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
-  }
-
-  // Check rate limit
-  const rateLimit = await checkRateLimit(req, 'voice-to-text');
-  if (!rateLimit.allowed) {
-    return rateLimitResponse(rateLimit.resetAt);
   }
 
   try {
