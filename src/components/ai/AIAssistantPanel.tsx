@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, CheckCircle, AlertTriangle, Loader2, Zap, Sparkles, Database, Gauge } from 'lucide-react';
+import { Brain, CheckCircle, AlertTriangle, Loader2, Zap, Sparkles, Database, Gauge, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AISearchBar } from './AISearchBar';
@@ -154,7 +154,18 @@ export function AIAssistantPanel({ language = 'en', initialCommand, onCommandPro
               </p>
             </div>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center flex-wrap">
+            <Badge variant="outline" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" />
+              {new Date().toLocaleDateString('en-MY', { 
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+              })} • {new Date().toLocaleTimeString('en-MY', { 
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </Badge>
             <Badge variant="secondary" className="text-xs">
               <Gauge className="h-3 w-3 mr-1" />
               Accuracy: {Math.round(consciousness.VAS * 100)}%
