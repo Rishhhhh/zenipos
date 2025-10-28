@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useAuth } from "@/contexts/AuthContext";
 import { DraggableWidget } from "@/components/dashboard/DraggableWidget";
@@ -20,8 +20,19 @@ export default function Dashboard() {
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [viewportKey, setViewportKey] = useState(0);
   
   const { layout, updateOrder, updatePosition, bringToFront, addWidget, removeWidget, resetLayout, toggleMinimize, toggleMaximize } = useWidgetLayout();
+
+  // Listen for viewport resize to recalculate grid
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Configure sensors for press-and-hold dragging (500ms)
   const mouseSensor = useSensor(MouseSensor, {
@@ -102,6 +113,7 @@ export default function Dashboard() {
 
         {/* Free-Form Canvas with Drag and Drop */}
         <DndContext 
+          key={viewportKey}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           sensors={sensors}
@@ -110,7 +122,8 @@ export default function Dashboard() {
             className="relative w-full mx-auto" 
             style={{ 
               height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
-              maxWidth: `${GRID_CONFIG.CANVAS_WIDTH}px`,
+              width: `${GRID_CONFIG.CANVAS_WIDTH}px`,
+              maxWidth: '100%',
             }}
           >
             <GridOverlay />

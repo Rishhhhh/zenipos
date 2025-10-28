@@ -1,17 +1,43 @@
+/**
+ * Get viewport-aware canvas dimensions
+ * Uses available viewport space minus header/padding
+ */
+export function getViewportDimensions() {
+  const width = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  const height = typeof window !== 'undefined' ? window.innerHeight : 800;
+  
+  // Account for padding and header (approx 200px total)
+  const availableHeight = height - 200;
+  const availableWidth = Math.min(width - 48, 1920); // Max width 1920px, minus padding
+  
+  return {
+    width: availableWidth,
+    height: availableHeight,
+  };
+}
+
 export const GRID_CONFIG = {
-  // Grid cell size (pixels)
-  CELL_SIZE: 80,
+  // Grid cell size (pixels) - 75% of original 80px
+  CELL_SIZE: 60,
   
-  // Canvas constraints (match max-w-7xl container)
-  CANVAS_WIDTH: 1280,
-  CANVAS_HEIGHT: 800, // Reduce from 1000px to fit without scrolling
+  // Dynamic canvas constraints based on viewport
+  get CANVAS_WIDTH() {
+    return getViewportDimensions().width;
+  },
+  get CANVAS_HEIGHT() {
+    return getViewportDimensions().height;
+  },
   
-  // Calculated grid dimensions
-  COLS: 16, // 1280 / 80
-  ROWS: 10, // 800 / 80
+  // Calculated grid dimensions (dynamic)
+  get COLS() {
+    return Math.floor(this.CANVAS_WIDTH / this.CELL_SIZE);
+  },
+  get ROWS() {
+    return Math.floor(this.CANVAS_HEIGHT / this.CELL_SIZE);
+  },
   
-  // Snap threshold (pixels) - how close to snap
-  SNAP_THRESHOLD: 40, // Half cell size for "soft" magnetic feel
+  // Snap threshold (pixels) - half of cell size for "soft" magnetic feel
+  SNAP_THRESHOLD: 30, // Half of 60px
 };
 
 /**
