@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Minimize2, Maximize2, X, Settings } from "lucide-react";
+import { Minimize2, Maximize2, X, Settings, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 
 interface WidgetHeaderProps {
   widgetId: string;
@@ -24,6 +25,10 @@ export function WidgetHeader({
   onClose,
   onConfigure,
 }: WidgetHeaderProps) {
+  // Get widget icon from catalog
+  const widgetDefinition = getWidgetById(widgetId);
+  const WidgetIcon = widgetDefinition?.icon || LayoutDashboard;
+
   return (
     <TooltipProvider>
       <div className={cn(
@@ -36,8 +41,8 @@ export function WidgetHeader({
     )}>
       {isMinimized && (
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
-            <span className="text-xs">📊</span>
+          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+            <WidgetIcon className="h-3.5 w-3.5 text-primary" />
           </div>
           <h3 className="text-sm font-semibold">{widgetName}</h3>
         </div>
