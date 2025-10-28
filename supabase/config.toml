@@ -1,5 +1,26 @@
 project_id = "eiutjobcaojpnlzgqhis"
 
+[functions.mcp-pos]
+verify_jwt = true
+
+[functions.mcp-inventory]
+verify_jwt = true
+
+[functions.mcp-analytics]
+verify_jwt = true
+
+[functions.mcp-kds]
+verify_jwt = true
+
+[functions.mcp-employees]
+verify_jwt = true
+
+[functions.mcp-customers]
+verify_jwt = true
+
+[functions.mcp-menu]
+verify_jwt = true
+
 [functions.employee-login]
 verify_jwt = false
 

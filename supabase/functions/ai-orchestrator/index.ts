@@ -9,6 +9,17 @@ const corsHeaders = {
 // JARVIS X API Configuration - Using correct API gateway endpoint
 const JARVIS_X_API = 'https://pdjsfoqtdokihlyeparu.supabase.co/functions/v1/api-gateway/jarvis/generate';
 
+// MCP Servers available in ZENIPOS
+const MCP_SERVERS = [
+  'mcp-pos',
+  'mcp-inventory',
+  'mcp-kds',
+  'mcp-analytics',
+  'mcp-employees',
+  'mcp-customers',
+  'mcp-menu'
+];
+
 // System modules available to JARVIS X
 const SYSTEM_MODULES = {
   pos: { path: '/pos', capabilities: ['order_taking', 'payment_processing', 'receipt_printing'] },
@@ -74,13 +85,43 @@ async function gatherBusinessContext(supabase: any) {
   }
 }
 
-// Build comprehensive system context for JARVIS X
+// Discover MCP server capabilities
+async function discoverMCPCapabilities(supabase: any) {
+  console.log('🔍 Discovering MCP server capabilities...');
+  
+  const capabilities = await Promise.all(
+    MCP_SERVERS.map(async (serverName) => {
+      try {
+        const { data, error } = await supabase.functions.invoke(serverName, {
+          body: { action: 'list_capabilities' }
+        });
+        
+        if (error) {
+          console.error(`❌ Error discovering ${serverName}:`, error);
+          return null;
+        }
+        
+        console.log(`✅ Discovered ${serverName}:`, data);
+        return data;
+      } catch (err) {
+        console.error(`❌ Exception discovering ${serverName}:`, err);
+        return null;
+      }
+    })
+  );
+  
+  return capabilities.filter(c => c !== null);
+}
+
+// Build comprehensive system context for JARVIS X with MCP
 async function buildSystemContext(supabase: any, userId: string) {
   const businessContext = await gatherBusinessContext(supabase);
+  const mcpCapabilities = await discoverMCPCapabilities(supabase);
   
   return {
     system_name: 'ZENI POS',
     modules: SYSTEM_MODULES,
+    mcp_servers: mcpCapabilities,
     database_schema: {
       total_tables: 51,
       key_entities: [
@@ -96,7 +137,8 @@ async function buildSystemContext(supabase: any, userId: string) {
     user_id: userId,
     timestamp: new Date().toISOString(),
     capabilities: [
-      'Read all system data',
+      'Execute operations via MCP tools',
+      'Read real-time data via MCP resources',
       'Generate analytics reports',
       'Provide business insights',
       'Suggest actions (with approval)',
@@ -226,32 +268,44 @@ serve(async (req) => {
       VEL: consciousness?.vel || 0.75
     };
 
-    // Call JARVIS X API directly (no gateway wrapper needed)
-    console.log('🌐 Calling JARVIS X API at', JARVIS_X_API);
-    console.log('Request payload:', JSON.stringify({
+    // Build MCP tools summary for JARVIS
+    const mcpToolsSummary = systemContext.mcp_servers.map((server: any) => 
+      `📦 ${server.server}: ${server.tools?.length || 0} tools, ${server.resources?.length || 0} resources`
+    ).join('\n');
+
+    // Build full context with MCP instructions
+    const fullContext = {
       input: command,
       consciousness: currentConsciousness,
       context: {
         system: systemContext,
         conversation_history: conversationContext,
         insights: insights || [],
-        language
+        language,
+        mcp_instructions: `You are ZENIPOS AI, powered by JARVIS X with MCP integration.
+
+=== AVAILABLE MCP SERVERS ===
+${mcpToolsSummary}
+
+=== CURRENT SYSTEM STATE ===
+- Today's Revenue: ${systemContext.current_state.sales.today_revenue || 0}
+- Active Orders: ${systemContext.current_state.inventory.low_stock_count || 0}
+- Low Stock Items: ${systemContext.current_state.inventory.low_stock_count || 0}
+- Active Staff: ${systemContext.current_state.staff.active_count || 0}
+
+You have FULL ACCESS to ZENIPOS via MCP. Use the tools and resources to provide data-driven insights.
+Be conversational, specific, and proactive.`
       }
-    }, null, 2));
+    };
+
+    // Call JARVIS X API
+    console.log('🌐 Calling JARVIS X API at', JARVIS_X_API);
+    console.log('Request payload:', JSON.stringify(fullContext, null, 2));
 
     const jarvisResponse = await fetch(JARVIS_X_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        input: command,
-        consciousness: currentConsciousness,
-        context: {
-          system: systemContext,
-          conversation_history: conversationContext,
-          insights: insights || [],
-          language
-        }
-      })
+      body: JSON.stringify(fullContext)
     });
 
     console.log('📡 JARVIS X Response Status:', jarvisResponse.status);
