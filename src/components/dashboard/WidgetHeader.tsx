@@ -14,6 +14,7 @@ interface WidgetHeaderProps {
 }
 
 export function WidgetHeader({
+  widgetId,
   widgetName,
   isMinimized,
   isMaximized,
@@ -27,9 +28,19 @@ export function WidgetHeader({
       "absolute top-0 left-0 right-0 h-10 z-50",
       "bg-background/95 backdrop-blur-sm border-b border-border",
       "flex items-center justify-between px-3",
-      "opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+      isMinimized 
+        ? "opacity-100" 
+        : "opacity-0 group-hover:opacity-100 transition-opacity duration-200"
     )}>
-      <h3 className="text-sm font-medium truncate">{widgetName}</h3>
+      {isMinimized && (
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
+            <span className="text-xs">📊</span>
+          </div>
+          <h3 className="text-sm font-semibold">{widgetName}</h3>
+        </div>
+      )}
+      {!isMinimized && <h3 className="text-sm font-medium truncate">{widgetName}</h3>}
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
