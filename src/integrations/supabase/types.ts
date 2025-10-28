@@ -83,6 +83,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_learning_feedback: {
+        Row: {
+          action: string
+          applied: boolean | null
+          context: Json | null
+          created_at: string | null
+          id: string
+          improvements: Json | null
+          issues: Json | null
+          quality_score: number | null
+        }
+        Insert: {
+          action: string
+          applied?: boolean | null
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          improvements?: Json | null
+          issues?: Json | null
+          quality_score?: number | null
+        }
+        Update: {
+          action?: string
+          applied?: boolean | null
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          improvements?: Json | null
+          issues?: Json | null
+          quality_score?: number | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string

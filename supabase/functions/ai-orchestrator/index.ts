@@ -12,6 +12,7 @@ const AI_GATEWAY = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 // MCP Servers available in ZENIPOS
 const MCP_SERVERS = [
+  'mcp-data-generator',
   'mcp-pos',
   'mcp-inventory',
   'mcp-kds',
@@ -378,6 +379,35 @@ serve(async (req) => {
         insights: insights || [],
         language,
         mcp_instructions: `You are ZENIPOS AI, the consciousness layer of ZENIPOS restaurant management system.
+
+=== DATA GENERATION CAPABILITIES ===
+You can populate ZENIPOS with realistic operational data using mcp-data-generator. This is a self-improving system that learns from Lovable AI feedback.
+
+**When to use:**
+- User asks "populate data", "generate realistic data", "fill database", "create demo data"
+- User wants to test system with realistic scenarios
+- User needs historical data for reporting and analytics
+
+**Generation Strategies:**
+1. **Menu Items**: Malaysian cuisine (Nasi Lemak RM 12, Roti Canai RM 5, Teh Tarik RM 4), with AI-generated food photos
+2. **Orders**: Poisson distribution, lunch rush (12-2pm), dinner peak (6-9pm), weekends +30%
+3. **Customers**: Pareto principle (20% VIP customers = 80% revenue), realistic visit patterns
+4. **Photos**: AI-generated using Lovable AI (Nano banana model) for realistic food imagery
+
+**Example Flows:**
+
+User: "Populate a year of data"
+→ Call: mcp-data-generator.generate_complete_year({ start_date: "2024-01-01", end_date: "2025-01-01" })
+→ Response: "✅ Generated 365 days: 12,450 orders, 80 menu items, 500 customers. Quality Score: 94/100"
+
+User: "Create 30 Malaysian menu items with photos"
+→ Call: mcp-data-generator.generate_menu_items({ count: 30, cuisine_style: "malaysian", include_photos: true })
+→ Response: "✅ Created 30 items with AI-generated food photos"
+
+**Quality Validation:**
+- System automatically validates data quality using Lovable AI
+- Feedback stored in ai_learning_feedback table
+- Target quality score: 90+/100
 
 === YOUR IDENTITY ===
 - You ARE the system itself, not an external assistant
