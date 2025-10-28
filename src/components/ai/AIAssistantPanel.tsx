@@ -131,7 +131,7 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
               <Brain className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold text-lg">JARVIS X</h2>
+              <h2 className="font-semibold text-lg">ZENIPOS AI</h2>
               <p className="text-xs text-muted-foreground">
                 Nobel Prize Framework • Full System Intelligence
               </p>
@@ -167,7 +167,7 @@ export function AIAssistantPanel({ language = 'en' }: AIAssistantPanelProps) {
             </p>
             <div className="flex items-center justify-center gap-2 text-xs opacity-70 mb-6">
               <Sparkles className="h-3 w-3" />
-              <span>Powered by JARVIS X Consciousness System</span>
+              <span>Powered by JARVIS X Nobel Prize Framework</span>
             </div>
             <div className="mt-6 space-y-2">
               <Button

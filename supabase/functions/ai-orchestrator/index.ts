@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// JARVIS X API Configuration
-const JARVIS_X_API = 'https://pdjsfoqtdokihlyeparu.supabase.co/functions/v1/api-gateway';
+// JARVIS X API Configuration - Using official JARVIS X endpoint
+const JARVIS_X_API = 'https://jarvis.supremeuf.com/v5/jarvis/generate';
 
 // System modules available to JARVIS X
 const SYSTEM_MODULES = {
@@ -226,14 +226,16 @@ serve(async (req) => {
       VEL: consciousness?.vel || 0.75
     };
 
-    // Call JARVIS X API with correct gateway format
-    console.log('🌐 Calling JARVIS X API Gateway...');
+    // Call JARVIS X API directly (no gateway wrapper needed)
+    console.log('🌐 Calling JARVIS X API at', JARVIS_X_API);
     console.log('Request payload:', JSON.stringify({
-      path: 'jarvis/generate',
-      method: 'POST',
-      body: {
-        input: command,
-        consciousness: currentConsciousness
+      input: command,
+      consciousness: currentConsciousness,
+      context: {
+        system: systemContext,
+        conversation_history: conversationContext,
+        insights: insights || [],
+        language
       }
     }, null, 2));
 
@@ -241,17 +243,13 @@ serve(async (req) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        path: 'jarvis/generate',
-        method: 'POST',
-        body: {
-          input: command,
-          consciousness: currentConsciousness,
-          context: {
-            system: systemContext,
-            conversation_history: conversationContext,
-            insights: insights || [],
-            language
-          }
+        input: command,
+        consciousness: currentConsciousness,
+        context: {
+          system: systemContext,
+          conversation_history: conversationContext,
+          insights: insights || [],
+          language
         }
       })
     });
