@@ -37,7 +37,8 @@ export function DockIcon({ icon: Icon, label, shortcut, isActive, onClick }: Doc
             className={cn(
               'dock-icon relative flex items-center justify-center',
               'w-14 h-14 rounded-2xl transition-all duration-300',
-              'hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2',
+              'hover:bg-primary/10 hover:shadow-lg hover:shadow-primary/20',
+              'focus-visible:outline-none focus-visible:ring-2',
               'focus-visible:ring-primary focus-visible:ring-offset-2',
               isClicked && 'animate-dock-bounce'
             )}
@@ -49,12 +50,15 @@ export function DockIcon({ icon: Icon, label, shortcut, isActive, onClick }: Doc
             }}
             aria-label={`${label} (${shortcut})`}
           >
-            <Icon className="w-6 h-6 text-foreground" />
+            <Icon className={cn(
+              "w-6 h-6 transition-colors duration-200",
+              isActive ? "text-primary" : "text-foreground"
+            )} />
             
-            {/* Active indicator */}
+            {/* Active indicator - enhanced gold glow */}
             {isActive && (
               <div 
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-md shadow-primary/50"
                 aria-label="Active"
               />
             )}
