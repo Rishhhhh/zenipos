@@ -153,7 +153,7 @@ export function DraggableWidget({
     inset: 0,
     width: '100vw',
     height: '100vh',
-    zIndex: 9999,
+    zIndex: 45,
     transition: 'none',
     pointerEvents: 'auto' as const,
   } : {
@@ -167,7 +167,7 @@ export function DraggableWidget({
     maxWidth: widgetDef?.maxSize.width,
     minHeight: isMinimized ? 56 : widgetDef?.minSize.height,
     maxHeight: widgetDef?.maxSize.height,
-    zIndex: isDraggingThis ? 9999 : position.zIndex,
+    zIndex: isDraggingThis ? 40 : Math.min(position.zIndex, 39),
     transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition: isDraggingThis || isResizing ? 'none' : 'width 0.3s ease, height 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease',
     pointerEvents: (isAnyDragging && !isDraggingThis) ? 'none' as const : 'auto' as const,

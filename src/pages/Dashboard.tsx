@@ -137,7 +137,7 @@ export default function Dashboard() {
             {/* Backdrop for Maximized Widget */}
             {maximizedWidget && (
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] animate-in fade-in duration-300"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[44] animate-in fade-in duration-300"
                 onClick={() => toggleMaximize(maximizedWidget)}
                 aria-label="Click to restore widget"
               />

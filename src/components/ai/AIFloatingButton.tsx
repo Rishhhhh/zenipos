@@ -14,14 +14,14 @@ export function AIFloatingButton() {
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-[60]"
         size="icon"
       >
         <Brain className="h-6 w-6" />
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl p-0">
+        <SheetContent side="right" className="w-full sm:max-w-xl p-0 z-[60]">
           <AIAssistantPanel />
         </SheetContent>
       </Sheet>
