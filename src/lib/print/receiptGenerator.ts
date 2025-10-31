@@ -95,6 +95,67 @@ export function generate80mmKitchenTicket(ticket: KitchenTicket): string {
 }
 
 /**
+ * Generate drinks bar ticket HTML (80mm)
+ */
+export function generateDrinksTicket(ticket: KitchenTicket): string {
+  // Filter for beverage items
+  const drinkItems = ticket.items.filter(item => {
+    const name = item.name.toLowerCase();
+    return (
+      name.includes('drink') ||
+      name.includes('teh') ||
+      name.includes('kopi') ||
+      name.includes('coffee') ||
+      name.includes('tea') ||
+      name.includes('juice') ||
+      name.includes('soda') ||
+      name.includes('water') ||
+      name.includes('latte') ||
+      name.includes('cappuccino') ||
+      name.includes('shake') ||
+      name.includes('smoothie')
+    );
+  });
+
+  // Return empty if no drinks
+  if (drinkItems.length === 0) return '';
+
+  // Use same template as kitchen ticket but with DRINKS BAR station
+  const template = `
+    <div style="width: 80mm; font-family: monospace; font-size: 16px;">
+      <h1 style="text-align: center; margin: 15px 0; font-size: 24px;">🥤 DRINKS BAR</h1>
+      <h2 style="text-align: center; margin: 10px 0; font-size: 20px;">Order #${ticket.order_number}</h2>
+      
+      <p style="margin: 10px 0;">Time: ${new Date(ticket.timestamp).toLocaleTimeString()}</p>
+      
+      <hr style="border: 2px solid #000;">
+      
+      ${drinkItems.map(item => `
+        <div style="margin: 15px 0;">
+          <p style="font-size: 22px; font-weight: bold; margin: 5px 0;">
+            ${item.quantity}x ${item.name.toUpperCase()}
+          </p>
+        </div>
+      `).join('')}
+      
+      <hr style="border: 2px solid #000;">
+      
+      ${ticket.notes ? `
+        <p style="font-style: italic; margin: 10px 0; font-size: 14px;">
+          Note: ${ticket.notes}
+        </p>
+      ` : ''}
+      
+      <p style="margin: 15px 0; font-size: 18px;">
+        Total Drinks: ${drinkItems.reduce((sum, item) => sum + item.quantity, 0)}
+      </p>
+    </div>
+  `;
+  
+  return template;
+}
+
+/**
  * Generate refund receipt HTML
  */
 export function generateRefundReceipt(receipt: Receipt, refundData: {
