@@ -28,7 +28,8 @@ import {
   NfcIcon,
   Zap,
   Store,
-  Brain
+  Brain,
+  CreditCard
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
