@@ -383,6 +383,33 @@ export type Database = {
           },
         ]
       }
+      customer_display_sessions: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_activity: string | null
+          mode: string
+          pos_session_id: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_activity?: string | null
+          mode?: string
+          pos_session_id?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_activity?: string | null
+          mode?: string
+          pos_session_id?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           branch_id: string | null
@@ -1190,6 +1217,51 @@ export type Database = {
           rule_name?: string
           rule_type?: string
           rule_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      marketing_content: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_seconds: number | null
+          id: string
+          is_active: boolean | null
+          media_type: string
+          media_url: string
+          schedule_end: string | null
+          schedule_start: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          media_type: string
+          media_url: string
+          schedule_end?: string | null
+          schedule_start?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url?: string
+          schedule_end?: string | null
+          schedule_start?: string | null
+          title?: string
           updated_at?: string | null
         }
         Relationships: []

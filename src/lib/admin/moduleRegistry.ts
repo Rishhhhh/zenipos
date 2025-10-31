@@ -268,21 +268,21 @@ export const ADMIN_MODULES = {
       name: "Devices",
       icon: Server,
       path: "/admin/devices",
-      description: "Manage POS terminals, printers, KDS",
+      description: "Manage POS devices and printers",
     },
     {
       id: "nfc-cards",
       name: "NFC Cards",
-      icon: NfcIcon,
+      icon: CreditCard,
       path: "/admin/nfc-cards",
-      description: "Manage table NFC cards",
-      fetchStats: async () => {
-        const { count } = await supabase
-          .from('nfc_cards')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'active');
-        return [{ label: 'Active Cards', value: count || 0 }];
-      }
+      description: "Manage NFC table cards",
+    },
+    {
+      id: "marketing-content",
+      name: "Marketing Content",
+      icon: Monitor,
+      path: "/admin/marketing-content",
+      description: "Manage customer display content",
     },
   ],
 };
