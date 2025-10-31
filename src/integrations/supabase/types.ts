@@ -1140,6 +1140,64 @@ export type Database = {
         }
         Relationships: []
       }
+      kds_item_status: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          order_item_id: string
+          staff_id: string | null
+          started_at: string | null
+          station_id: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_item_id: string
+          staff_id?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          status: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_item_id?: string
+          staff_id?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kds_item_status_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kds_item_status_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kds_item_status_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_ledger: {
         Row: {
           balance_after: number
@@ -1423,16 +1481,19 @@ export type Database = {
           branch_id: string | null
           category_id: string | null
           cost: number | null
+          course_sequence: number | null
           created_at: string | null
           description: string | null
           id: string
           image_url: string | null
           in_stock: boolean | null
           name: string
+          prep_time_minutes: number | null
           price: number
           sku: string | null
           sst_exempted: boolean | null
           sst_rate: number | null
+          station_id: string | null
           tax_rate: number | null
           track_inventory: boolean | null
           updated_at: string | null
@@ -1442,16 +1503,19 @@ export type Database = {
           branch_id?: string | null
           category_id?: string | null
           cost?: number | null
+          course_sequence?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
           name: string
+          prep_time_minutes?: number | null
           price: number
           sku?: string | null
           sst_exempted?: boolean | null
           sst_rate?: number | null
+          station_id?: string | null
           tax_rate?: number | null
           track_inventory?: boolean | null
           updated_at?: string | null
@@ -1461,16 +1525,19 @@ export type Database = {
           branch_id?: string | null
           category_id?: string | null
           cost?: number | null
+          course_sequence?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
           name?: string
+          prep_time_minutes?: number | null
           price?: number
           sku?: string | null
           sst_exempted?: boolean | null
           sst_rate?: number | null
+          station_id?: string | null
           tax_rate?: number | null
           track_inventory?: boolean | null
           updated_at?: string | null
@@ -1488,6 +1555,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
             referencedColumns: ["id"]
           },
         ]
@@ -1610,36 +1684,73 @@ export type Database = {
       }
       order_items: {
         Row: {
+          assigned_to: string | null
           created_at: string | null
+          dietary_alerts: string[] | null
+          fire_time: string | null
           id: string
           menu_item_id: string | null
           modifiers: Json | null
           notes: string | null
           order_id: string | null
+          prep_time_actual: number | null
+          prepared_at: string | null
+          priority: number | null
           quantity: number
+          ready_at: string | null
+          started_at: string | null
+          station_id: string | null
+          status: string | null
           unit_price: number
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string | null
+          dietary_alerts?: string[] | null
+          fire_time?: string | null
           id?: string
           menu_item_id?: string | null
           modifiers?: Json | null
           notes?: string | null
           order_id?: string | null
+          prep_time_actual?: number | null
+          prepared_at?: string | null
+          priority?: number | null
           quantity: number
+          ready_at?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          status?: string | null
           unit_price: number
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string | null
+          dietary_alerts?: string[] | null
+          fire_time?: string | null
           id?: string
           menu_item_id?: string | null
           modifiers?: Json | null
           notes?: string | null
           order_id?: string | null
+          prep_time_actual?: number | null
+          prepared_at?: string | null
+          priority?: number | null
           quantity?: number
+          ready_at?: string | null
+          started_at?: string | null
+          station_id?: string | null
+          status?: string | null
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_items_menu_item_id_fkey"
             columns: ["menu_item_id"]
@@ -1652,6 +1763,55 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_priorities: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string
+          priority_level: number | null
+          reason: string | null
+          set_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id: string
+          priority_level?: number | null
+          reason?: string | null
+          set_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          priority_level?: number | null
+          reason?: string | null
+          set_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_priorities_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_priorities_set_by_fkey"
+            columns: ["set_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]

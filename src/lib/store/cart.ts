@@ -24,11 +24,14 @@ interface CartState {
   discount: number;
   appliedPromotions: EvaluationResult[];
   table_id: string | null;
+  tableId: string | null; // Alias for convenience
+  tableName: string | null;
   order_type: 'dine_in' | 'takeaway';
   
   // Actions
   setSessionId: (id: string) => void;
   setTableId: (id: string | null) => void;
+  setTable: (id: string | null, label?: string | null) => void;
   setOrderType: (type: 'dine_in' | 'takeaway') => void;
   addItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
   removeItem: (id: string) => void;
@@ -53,10 +56,13 @@ export const useCartStore = create<CartState>((set, get) => ({
   discount: 0,
   appliedPromotions: [],
   table_id: null,
+  tableId: null,
+  tableName: null,
   order_type: 'takeaway',
   
   setSessionId: (id) => set({ sessionId: id }),
-  setTableId: (id) => set({ table_id: id }),
+  setTableId: (id) => set({ table_id: id, tableId: id }),
+  setTable: (id, label = null) => set({ table_id: id, tableId: id, tableName: label }),
   setOrderType: (type) => set({ order_type: type }),
   
   addItem: (item) => set((state) => {
@@ -108,7 +114,15 @@ export const useCartStore = create<CartState>((set, get) => ({
     )
   })),
   
-  clearCart: () => set({ items: [], sessionId: crypto.randomUUID(), appliedPromotions: [], table_id: null, order_type: 'takeaway' }),
+  clearCart: () => set({ 
+    items: [], 
+    sessionId: crypto.randomUUID(), 
+    appliedPromotions: [], 
+    table_id: null, 
+    tableId: null,
+    tableName: null,
+    order_type: 'takeaway' 
+  }),
   
   applyPromotions: (results) => set({ appliedPromotions: results }),
   
