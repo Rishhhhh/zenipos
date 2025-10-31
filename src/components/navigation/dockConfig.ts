@@ -1,4 +1,4 @@
-import { Monitor, ChefHat, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen } from 'lucide-react';
+import { Monitor, ChefHat, Flame, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type AppRole = 'cashier' | 'manager' | 'admin';
@@ -39,11 +39,19 @@ export const DOCK_APPS: DockApp[] = [
     roles: ['cashier', 'manager', 'admin'],
   },
   {
+    id: 'expo',
+    label: 'Expo',
+    icon: Flame,
+    route: '/expo-station',
+    shortcut: '⌘3',
+    roles: ['cashier', 'manager', 'admin'],
+  },
+  {
     id: 'inventory',
     label: 'Inventory',
     icon: Package,
     route: '/admin/inventory',
-    shortcut: '⌘3',
+    shortcut: '⌘4',
     roles: ['manager', 'admin'],
   },
   {
@@ -51,7 +59,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Reports',
     icon: BarChart3,
     route: '/admin/reports',
-    shortcut: '⌘4',
+    shortcut: '⌘5',
     roles: ['manager', 'admin'],
   },
   {
@@ -59,7 +67,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Admin',
     icon: Settings,
     route: '/admin',
-    shortcut: '⌘5',
+    shortcut: '⌘6',
     roles: ['admin'],
   },
   {
@@ -67,7 +75,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Changelog',
     icon: FileText,
     route: '/changelog',
-    shortcut: '⌘6',
+    shortcut: '⌘7',
     roles: ['manager', 'admin'],
   },
   {
@@ -75,7 +83,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Docs',
     icon: BookOpen,
     route: '/documentation',
-    shortcut: '⌘7',
+    shortcut: '⌘8',
     roles: ['manager', 'admin'],
   },
 ];

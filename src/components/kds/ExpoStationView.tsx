@@ -1,58 +1,121 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { Flame, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { Flame, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
+interface CourseStatus {
+  course_number: number;
+  course_name: string;
+  items_count: number;
+  held_count: number;
+  fired_count: number;
+  preparing_count: number;
+  completed_count: number;
+  status: string;
+  fired_at: string | null;
+}
+
+interface Order {
+  id: string;
+  table_id?: string;
+  order_type: string;
+  created_at: string;
+  current_course: number;
+  course_timing_rules: {
+    gap_minutes: number;
+    vip_custom: boolean;
+  };
+}
 
 export function ExpoStationView() {
+  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [now, setNow] = useState(new Date());
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const { data: orders = [] } = useQuery({
+  // Fetch orders with course control
+  const { data: orders, isLoading } = useQuery({
     queryKey: ['expo-orders'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select(`
-          *,
-          table:tables(label),
-          items:order_items(
-            *,
-            menu_item:menu_items(name),
-            station:stations(name, type)
-          ),
-          priority:order_priorities(priority_level, reason)
-        `)
+        .select('*')
         .in('status', ['pending', 'preparing'])
         .order('created_at', { ascending: true });
-
+      
       if (error) throw error;
-      return data;
+      return data as unknown as Order[];
     },
-    refetchInterval: 2000,
+    refetchInterval: 5000,
   });
 
+  // Fetch course status for selected order
+  const { data: courseStatus } = useQuery({
+    queryKey: ['course-status', selectedOrder],
+    queryFn: async () => {
+      if (!selectedOrder) return null;
+      
+      const { data, error } = await supabase
+        .rpc('get_order_course_status' as any, { order_id_param: selectedOrder });
+      
+      if (error) throw error;
+      return data as unknown as CourseStatus[];
+    },
+    enabled: !!selectedOrder,
+    refetchInterval: 3000,
+  });
+
+  // Fire course mutation
+  const fireCourse = useMutation({
+    mutationFn: async ({ orderId, courseNumber }: { orderId: string; courseNumber: number }) => {
+      const { data, error } = await supabase.rpc('fire_course' as any, {
+        order_id_param: orderId,
+        course_number_param: courseNumber,
+      });
+
+      if (error) throw error;
+      
+      const result = data as unknown as { success: boolean; error?: string; items_fired?: number };
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fire course');
+      }
+      
+      return result;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Course Fired",
+        description: `${data.items_fired} items sent to kitchen`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['expo-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['course-status'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to fire course",
+        description: error.message,
+      });
+    },
+  });
+
+  // Subscribe to realtime updates
   useEffect(() => {
     const channel = supabase
-      .channel('expo-station')
+      .channel('expo-updates')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['expo-orders'] });
-        }
+        { event: '*', schema: 'public', table: 'orders' },
+        () => queryClient.invalidateQueries({ queryKey: ['expo-orders'] })
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'course_fires' },
+        () => queryClient.invalidateQueries({ queryKey: ['course-status'] })
       )
       .subscribe();
 
@@ -61,191 +124,208 @@ export function ExpoStationView() {
     };
   }, [queryClient]);
 
-  const fireOrderMutation = useMutation({
-    mutationFn: async (orderId: string) => {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: 'preparing' })
-        .eq('id', orderId);
+  // Auto-select first order
+  useEffect(() => {
+    if (orders && orders.length > 0 && !selectedOrder) {
+      setSelectedOrder(orders[0].id);
+    }
+  }, [orders, selectedOrder]);
 
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expo-orders'] });
-      toast.success('Order fired to kitchen!');
-    },
-  });
-
-  const completeOrderMutation = useMutation({
-    mutationFn: async (orderId: string) => {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: 'completed' })
-        .eq('id', orderId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expo-orders'] });
-      toast.success('Order served!');
-    },
-  });
-
-  const getOrderProgress = (items: any[]) => {
-    const total = items.length;
-    const ready = items.filter(i => i.status === 'ready').length;
-    const preparing = items.filter(i => i.status === 'preparing').length;
-    return { total, ready, preparing, pending: total - ready - preparing };
+  const getCourseStatusColor = (status: string) => {
+    switch (status) {
+      case 'held': return 'bg-muted text-muted-foreground';
+      case 'active': return 'bg-warning/20 text-warning border-warning';
+      case 'completed': return 'bg-success/20 text-success border-success';
+      default: return 'bg-muted';
+    }
   };
 
-  const canFireOrder = (items: any[]) => {
-    return items.every(i => i.status === 'ready');
+  const getCourseIcon = (status: string) => {
+    switch (status) {
+      case 'held': return Clock;
+      case 'active': return Flame;
+      case 'completed': return CheckCircle2;
+      default: return AlertCircle;
+    }
   };
 
-  const getStationStatus = (items: any[], stationName: string) => {
-    const stationItems = items.filter(i => i.station?.name === stationName);
-    if (stationItems.length === 0) return null;
-    
-    const ready = stationItems.filter(i => i.status === 'ready').length;
-    const total = stationItems.length;
-    
-    return { ready, total, isComplete: ready === total };
+  const canFireCourse = (course: CourseStatus, currentCourse: number) => {
+    return course.held_count > 0 && course.course_number >= currentCourse;
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen p-8 flex items-center justify-center">
+        <p className="text-muted-foreground">Loading expo station...</p>
+      </div>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="h-screen p-8 flex items-center justify-center">
+        <Card className="p-12 text-center">
+          <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-success" />
+          <p className="text-xl font-semibold">All Clear!</p>
+          <p className="text-muted-foreground mt-2">No orders in queue</p>
+        </Card>
+      </div>
+    );
+  }
+
+  const selectedOrderData = orders.find(o => o.id === selectedOrder);
 
   return (
-    <div className="h-screen bg-background p-6 overflow-auto">
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
-          <Flame className="w-10 h-10 text-orange-500" />
-          Expo Station
-        </h1>
-        <p className="text-muted-foreground text-lg mt-1">
-          {orders.length} active orders
-        </p>
+    <div className="h-screen flex">
+      {/* Order List Sidebar */}
+      <div className="w-80 border-r bg-muted/30 p-4 overflow-y-auto">
+        <h2 className="text-lg font-bold mb-4">Active Orders ({orders.length})</h2>
+        <div className="space-y-2">
+          {orders.map((order) => (
+            <Card
+              key={order.id}
+              className={`cursor-pointer transition-all ${
+                selectedOrder === order.id ? 'border-primary shadow-md' : ''
+              }`}
+              onClick={() => setSelectedOrder(order.id)}
+            >
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold">
+                      {order.table_id ? `Table ${order.table_id}` : order.order_type}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      #{order.id.substring(0, 8)}
+                    </p>
+                  </div>
+                  <Badge variant="outline">
+                    Course {order.current_course}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {orders.map((order) => {
-          const progress = getOrderProgress(order.items);
-          const priority = order.priority?.[0]?.priority_level || 0;
-          const allReady = canFireOrder(order.items);
-          
-          // Group items by station
-          const stations = Array.from(new Set(order.items.map(i => i.station?.name).filter(Boolean)));
-
-          return (
-            <Card key={order.id} className={`p-6 ${allReady ? 'border-2 border-green-500' : ''}`}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {order.order_type === 'dine_in' && order.table
-                      ? `Table ${(order.table as any).label || 'Unknown'}`
-                      : `Order #${order.id.slice(0, 8)}`}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(order.created_at).toLocaleTimeString()}
-                  </p>
-                </div>
-                {priority > 0 && (
-                  <Badge variant="destructive">
-                    {priority === 3 ? 'RUSH' : priority === 2 ? 'VIP' : 'HIGH'}
+      {/* Course Control Panel */}
+      <div className="flex-1 p-8 overflow-y-auto">
+        {selectedOrderData && courseStatus && (
+          <>
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold mb-2">Expo Station</h1>
+              <div className="flex items-center gap-4">
+                <p className="text-lg text-muted-foreground">
+                  {selectedOrderData.table_id 
+                    ? `Table ${selectedOrderData.table_id}` 
+                    : selectedOrderData.order_type}
+                </p>
+                {selectedOrderData.course_timing_rules.vip_custom && (
+                  <Badge variant="outline" className="bg-primary/10">
+                    VIP Custom Timing
                   </Badge>
                 )}
               </div>
+            </div>
 
-              {/* Station Status */}
-              <div className="mb-4 space-y-2">
-                {stations.map((station) => {
-                  const status = getStationStatus(order.items, station);
-                  if (!status) return null;
-                  
-                  return (
-                    <div key={station} className="flex items-center justify-between p-2 bg-card rounded">
-                      <span className="text-sm font-medium">{station}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          {status.ready}/{status.total}
-                        </span>
-                        {status.isComplete ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Clock className="w-4 h-4 text-orange-500" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {courseStatus.map((course) => {
+                const Icon = getCourseIcon(course.status);
+                const canFire = canFireCourse(course, selectedOrderData.current_course);
+
+                return (
+                  <Card
+                    key={course.course_number}
+                    className={`${getCourseStatusColor(course.status)} transition-all`}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Icon className="h-5 w-5" />
+                            Course {course.course_number}
+                          </CardTitle>
+                          <p className="text-sm mt-1">{course.course_name}</p>
+                        </div>
+                        <Badge variant="outline">
+                          {course.items_count} items
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {/* Status Breakdown */}
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {course.held_count > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span>{course.held_count} held</span>
+                            </div>
+                          )}
+                          {course.fired_count > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Flame className="h-4 w-4 text-warning" />
+                              <span>{course.fired_count} fired</span>
+                            </div>
+                          )}
+                          {course.preparing_count > 0 && (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-4 w-4 text-blue-500" />
+                              <span>{course.preparing_count} preparing</span>
+                            </div>
+                          )}
+                          {course.completed_count > 0 && (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 text-success" />
+                              <span>{course.completed_count} ready</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Fire Time */}
+                        {course.fired_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Fired {formatDistanceToNow(new Date(course.fired_at), { addSuffix: true })}
+                          </p>
+                        )}
+
+                        {/* Fire Button */}
+                        {canFire && (
+                          <Button
+                            className="w-full"
+                            size="lg"
+                            onClick={() => fireCourse.mutate({
+                              orderId: selectedOrderData.id,
+                              courseNumber: course.course_number,
+                            })}
+                            disabled={fireCourse.isPending}
+                          >
+                            <Flame className="h-4 w-4 mr-2" />
+                            Fire Course {course.course_number}
+                          </Button>
+                        )}
+
+                        {/* Timing Info */}
+                        {course.status === 'held' && 
+                         course.course_number > selectedOrderData.current_course && (
+                          <p className="text-xs text-muted-foreground italic">
+                            Waiting for Course {selectedOrderData.current_course} to complete
+                          </p>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>Progress</span>
-                  <span>{progress.ready}/{progress.total} ready</span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      allReady ? 'bg-green-500' : 'bg-primary'
-                    }`}
-                    style={{ width: `${(progress.ready / progress.total) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Items List */}
-              <div className="space-y-2 mb-4">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center justify-between p-2 rounded ${
-                      item.status === 'ready'
-                        ? 'bg-green-500/10 border border-green-500'
-                        : item.status === 'preparing'
-                        ? 'bg-orange-500/10 border border-orange-500'
-                        : 'bg-card border border-border'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{item.quantity}×</span>
-                      <span className="text-sm">{item.menu_item.name}</span>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {item.station?.name || 'N/A'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Button */}
-              {allReady ? (
-                <Button
-                  onClick={() => completeOrderMutation.mutate(order.id)}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  size="lg"
-                >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Serve Order
-                </Button>
-              ) : (
-                <div className="text-center p-3 bg-muted rounded">
-                  <p className="text-sm text-muted-foreground">
-                    Waiting for {progress.total - progress.ready} items
-                  </p>
-                </div>
-              )}
-            </Card>
-          );
-        })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
-
-      {orders.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-96">
-          <CheckCircle className="w-24 h-24 text-green-500 mb-4" />
-          <h2 className="text-3xl font-bold text-foreground mb-2">All Clear!</h2>
-          <p className="text-xl text-muted-foreground">No active orders</p>
-        </div>
-      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { useSimulationStore } from "./lib/store/simulation";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const POS = lazy(() => import("./pages/POS"));
 const KDS = lazy(() => import("./pages/KDS"));
+const ExpoStation = lazy(() => import("./pages/ExpoStation"));
 const Admin = lazy(() => import("./pages/Admin"));
 const MenuManagement = lazy(() => import("./pages/admin/MenuManagement"));
 const PromotionManagement = lazy(() => import("./pages/admin/PromotionManagement"));
@@ -167,6 +168,12 @@ const App = () => (
                 <ProtectedRoute requiredRole="cashier">
                   <AppHeader />
                   <KDS />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/expo-station" element={
+                <ProtectedRoute requiredRole="cashier">
+                  <ExpoStation />
                 </ProtectedRoute>
               } />
               
