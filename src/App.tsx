@@ -43,6 +43,9 @@ const PurchaseOrders = lazy(() => import("./pages/admin/PurchaseOrders"));
 const ReceiptTemplates = lazy(() => import("./pages/admin/ReceiptTemplates"));
 const TableLayout = lazy(() => import("./pages/admin/TableLayout"));
 const ModifierManagement = lazy(() => import("./pages/admin/ModifierManagement"));
+const StationManagement = lazy(() => import("./pages/admin/StationManagement"));
+const DeviceManagement = lazy(() => import("./pages/admin/DeviceManagement"));
+const StationRoutingConfig = lazy(() => import("./pages/admin/StationRoutingConfig"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -280,6 +283,27 @@ const App = () => (
                 <ProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <ModifierManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/stations" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <StationManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/devices" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <DeviceManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/station-routing/:stationId" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <StationRoutingConfig />
                 </ProtectedRoute>
               } />
               

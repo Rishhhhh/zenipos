@@ -460,33 +460,86 @@ export type Database = {
         }
         Relationships: []
       }
+      device_health_log: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_health_log_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       devices: {
         Row: {
           branch_id: string | null
           created_at: string | null
+          device_capabilities: Json | null
+          health_check_interval: number | null
           id: string
+          ip_address: string | null
           last_seen: string | null
+          mac_address: string | null
           name: string
           role: string | null
           station_id: string | null
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
           branch_id?: string | null
           created_at?: string | null
+          device_capabilities?: Json | null
+          health_check_interval?: number | null
           id?: string
+          ip_address?: string | null
           last_seen?: string | null
+          mac_address?: string | null
           name: string
           role?: string | null
           station_id?: string | null
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
           branch_id?: string | null
           created_at?: string | null
+          device_capabilities?: Json | null
+          health_check_interval?: number | null
           id?: string
+          ip_address?: string | null
           last_seen?: string | null
+          mac_address?: string | null
           name?: string
           role?: string | null
           station_id?: string | null
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -2062,33 +2115,157 @@ export type Database = {
           },
         ]
       }
+      station_devices: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          id: string
+          is_primary: boolean | null
+          role: string
+          settings: Json | null
+          station_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          id?: string
+          is_primary?: boolean | null
+          role: string
+          settings?: Json | null
+          station_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          is_primary?: boolean | null
+          role?: string
+          settings?: Json | null
+          station_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "station_devices_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      station_routing_rules: {
+        Row: {
+          auto_display: boolean | null
+          auto_print: boolean | null
+          category_id: string | null
+          created_at: string | null
+          id: string
+          menu_item_id: string | null
+          prep_time_estimate: number | null
+          priority: number | null
+          station_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_display?: boolean | null
+          auto_print?: boolean | null
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string | null
+          prep_time_estimate?: number | null
+          priority?: number | null
+          station_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_display?: boolean | null
+          auto_print?: boolean | null
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string | null
+          prep_time_estimate?: number | null
+          priority?: number | null
+          station_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_routing_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "station_routing_rules_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "station_routing_rules_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stations: {
         Row: {
           active: boolean | null
           branch_id: string | null
+          color: string | null
           created_at: string | null
+          icon: string | null
           id: string
           name: string
           route_rules: Json | null
+          settings: Json | null
+          sort_order: number | null
           type: string | null
+          updated_at: string | null
         }
         Insert: {
           active?: boolean | null
           branch_id?: string | null
+          color?: string | null
           created_at?: string | null
+          icon?: string | null
           id?: string
           name: string
           route_rules?: Json | null
+          settings?: Json | null
+          sort_order?: number | null
           type?: string | null
+          updated_at?: string | null
         }
         Update: {
           active?: boolean | null
           branch_id?: string | null
+          color?: string | null
           created_at?: string | null
+          icon?: string | null
           id?: string
           name?: string
           route_rules?: Json | null
+          settings?: Json | null
+          sort_order?: number | null
           type?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {

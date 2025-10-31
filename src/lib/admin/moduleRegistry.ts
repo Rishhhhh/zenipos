@@ -15,6 +15,8 @@ import {
   Activity,
   Shield,
   Settings,
+  Layers,
+  Server,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -241,6 +243,20 @@ export const ADMIN_MODULES = {
       icon: Settings,
       path: "/admin/receipt-templates",
       description: "Design receipt layouts",
+    },
+    {
+      id: "stations",
+      name: "Stations",
+      icon: Layers,
+      path: "/admin/stations",
+      description: "Configure kitchen stations and routing",
+    },
+    {
+      id: "devices",
+      name: "Devices",
+      icon: Server,
+      path: "/admin/devices",
+      description: "Manage POS terminals, printers, KDS",
     },
   ],
 };
