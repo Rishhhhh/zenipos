@@ -8,15 +8,27 @@ import {
   ShoppingCart,
   Users,
   Heart,
+  Building,
+  Receipt,
+  BarChart3,
   TrendingUp,
+  FileBarChart,
+  BookOpen,
+  AlertTriangle,
+  Activity,
+  Clock,
+  Bell,
+  UserCog,
+  Settings,
+  Shield,
+  Database,
+  Monitor,
+  Server,
+  Layers,
+  NfcIcon,
   Zap,
   Store,
-  Brain,
-  Activity,
-  Shield,
-  Settings,
-  Layers,
-  Server,
+  Brain
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -257,6 +269,20 @@ export const ADMIN_MODULES = {
       icon: Server,
       path: "/admin/devices",
       description: "Manage POS terminals, printers, KDS",
+    },
+    {
+      id: "nfc-cards",
+      name: "NFC Cards",
+      icon: NfcIcon,
+      path: "/admin/nfc-cards",
+      description: "Manage table NFC cards",
+      fetchStats: async () => {
+        const { count } = await supabase
+          .from('nfc_cards')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'active');
+        return [{ label: 'Active Cards', value: count || 0 }];
+      }
     },
   ],
 };

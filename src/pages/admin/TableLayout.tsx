@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, NfcIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
@@ -20,7 +20,14 @@ export default function TableLayout() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tables')
-        .select('*')
+        .select(`
+          *,
+          nfc_cards (
+            id,
+            card_uid,
+            status
+          )
+        `)
         .order('label');
       if (error) throw error;
       return data || [];
@@ -146,7 +153,14 @@ export default function TableLayout() {
                 className={`p-6 cursor-pointer transition-all hover:scale-105 ${getStatusColor(table.status)}`}
               >
                 <div className="text-center">
-                  <div className="text-2xl font-bold mb-2">{table.label}</div>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className="text-2xl font-bold">{table.label}</div>
+                    {table.nfc_cards && (
+                      <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                        <NfcIcon className="h-3 w-3" />
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center justify-center gap-1 text-sm mb-3">
                     <Users className="h-4 w-4" />
                     <span>{table.seats} seats</span>

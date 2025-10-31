@@ -1476,6 +1476,66 @@ export type Database = {
           },
         ]
       }
+      nfc_cards: {
+        Row: {
+          branch_id: string | null
+          card_uid: string
+          created_at: string | null
+          id: string
+          issued_at: string
+          last_scanned_at: string | null
+          notes: string | null
+          scan_count: number
+          security_hash: string
+          status: string
+          table_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          card_uid: string
+          created_at?: string | null
+          id?: string
+          issued_at?: string
+          last_scanned_at?: string | null
+          notes?: string | null
+          scan_count?: number
+          security_hash: string
+          status?: string
+          table_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          card_uid?: string
+          created_at?: string | null
+          id?: string
+          issued_at?: string
+          last_scanned_at?: string | null
+          notes?: string | null
+          scan_count?: number
+          security_hash?: string
+          status?: string
+          table_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_cards_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfc_cards_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -2468,6 +2528,7 @@ export type Database = {
           created_at: string | null
           id: string
           label: string
+          nfc_card_id: string | null
           seats: number
           status: string
         }
@@ -2476,6 +2537,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           label: string
+          nfc_card_id?: string | null
           seats?: number
           status?: string
         }
@@ -2484,6 +2546,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           label?: string
+          nfc_card_id?: string | null
           seats?: number
           status?: string
         }
@@ -2493,6 +2556,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_nfc_card_id_fkey"
+            columns: ["nfc_card_id"]
+            isOneToOne: false
+            referencedRelation: "nfc_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -2921,6 +2991,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_nfc_scan: { Args: { card_uid_param: string }; Returns: string }
       log_performance_metric: {
         Args: {
           _budget_ms: number

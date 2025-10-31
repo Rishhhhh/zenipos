@@ -46,6 +46,7 @@ const ModifierManagement = lazy(() => import("./pages/admin/ModifierManagement")
 const StationManagement = lazy(() => import("./pages/admin/StationManagement"));
 const DeviceManagement = lazy(() => import("./pages/admin/DeviceManagement"));
 const StationRoutingConfig = lazy(() => import("./pages/admin/StationRoutingConfig"));
+const NFCCardManagement = lazy(() => import("./pages/admin/NFCCardManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -304,6 +305,13 @@ const App = () => (
                 <ProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <StationRoutingConfig />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/nfc-cards" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <NFCCardManagement />
                 </ProtectedRoute>
               } />
               

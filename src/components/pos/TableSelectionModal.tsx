@@ -5,8 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, ShoppingBag } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, ShoppingBag, NfcIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { NFCCardScanner } from '@/components/nfc/NFCCardScanner';
 
 interface TableSelectionModalProps {
   open: boolean;
@@ -69,7 +71,16 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
           <DialogTitle>Select Table or Order Type</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <Tabs defaultValue="manual" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manual">Manual Selection</TabsTrigger>
+            <TabsTrigger value="nfc">
+              <NfcIcon className="mr-2 h-4 w-4" />
+              NFC Scan
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="manual" className="space-y-6 mt-4">
           {/* Quick Actions */}
           <div className="grid grid-cols-2 gap-4">
             <Button
@@ -126,7 +137,17 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
               </div>
             )}
           </div>
-        </div>
+        </TabsContent>
+
+        <TabsContent value="nfc" className="mt-4">
+          <NFCCardScanner
+            onScanSuccess={(tableId) => {
+              onSelect(tableId, 'dine_in');
+            }}
+            onCancel={() => onOpenChange(false)}
+          />
+        </TabsContent>
+      </Tabs>
       </DialogContent>
     </Dialog>
   );
