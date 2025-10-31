@@ -2017,6 +2017,8 @@ export type Database = {
           fire_time: string | null
           id: string
           menu_item_id: string | null
+          modification_notes: string | null
+          modified: boolean | null
           modifiers: Json | null
           notes: string | null
           order_id: string | null
@@ -2037,6 +2039,8 @@ export type Database = {
           fire_time?: string | null
           id?: string
           menu_item_id?: string | null
+          modification_notes?: string | null
+          modified?: boolean | null
           modifiers?: Json | null
           notes?: string | null
           order_id?: string | null
@@ -2057,6 +2061,8 @@ export type Database = {
           fire_time?: string | null
           id?: string
           menu_item_id?: string | null
+          modification_notes?: string | null
+          modified?: boolean | null
           modifiers?: Json | null
           notes?: string | null
           order_id?: string | null
@@ -2097,6 +2103,86 @@ export type Database = {
             columns: ["station_id"]
             isOneToOne: false
             referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_modifications: {
+        Row: {
+          approval_required: boolean | null
+          approval_status: string | null
+          approved_by: string | null
+          created_at: string | null
+          id: string
+          modification_type: string
+          modified_by: string | null
+          new_value: Json | null
+          order_id: string
+          order_item_id: string | null
+          previous_value: Json | null
+          reason: string | null
+          wastage_cost: number | null
+          wastage_logged: boolean | null
+        }
+        Insert: {
+          approval_required?: boolean | null
+          approval_status?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          modification_type: string
+          modified_by?: string | null
+          new_value?: Json | null
+          order_id: string
+          order_item_id?: string | null
+          previous_value?: Json | null
+          reason?: string | null
+          wastage_cost?: number | null
+          wastage_logged?: boolean | null
+        }
+        Update: {
+          approval_required?: boolean | null
+          approval_status?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          modification_type?: string
+          modified_by?: string | null
+          new_value?: Json | null
+          order_id?: string
+          order_item_id?: string | null
+          previous_value?: Json | null
+          reason?: string | null
+          wastage_cost?: number | null
+          wastage_logged?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_modifications_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_modifications_modified_by_fkey"
+            columns: ["modified_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_modifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_modifications_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
         ]
@@ -2154,6 +2240,10 @@ export type Database = {
           id: string
           metadata: Json | null
           order_type: Database["public"]["Enums"]["order_type"] | null
+          recall_approved: boolean | null
+          recall_requested: boolean | null
+          recall_requested_at: string | null
+          recall_requested_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["order_status"] | null
           subtotal: number | null
@@ -2172,6 +2262,10 @@ export type Database = {
           id?: string
           metadata?: Json | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
+          recall_approved?: boolean | null
+          recall_requested?: boolean | null
+          recall_requested_at?: string | null
+          recall_requested_by?: string | null
           session_id: string
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal?: number | null
@@ -2190,6 +2284,10 @@ export type Database = {
           id?: string
           metadata?: Json | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
+          recall_approved?: boolean | null
+          recall_requested?: boolean | null
+          recall_requested_at?: string | null
+          recall_requested_by?: string | null
           session_id?: string
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal?: number | null
@@ -2204,6 +2302,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_recall_requested_by_fkey"
+            columns: ["recall_requested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -3570,8 +3675,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_items_to_order: {
+        Args: { new_items: Json; order_id_param: string }
+        Returns: undefined
+      }
       aggregate_branch_stats: {
         Args: { _branch_id: string; _stat_date?: string }
+        Returns: undefined
+      }
+      approve_recall: {
+        Args: { modification_id_param: string; order_id_param: string }
         Returns: undefined
       }
       approve_request_with_pin: {
@@ -3812,6 +3925,10 @@ export type Database = {
         }
         Returns: string
       }
+      recall_order: {
+        Args: { order_id_param: string; reason_param: string }
+        Returns: Json
+      }
       reject_approval_request: {
         Args: { pin_param: string; request_id_param: string }
         Returns: boolean
@@ -3822,6 +3939,14 @@ export type Database = {
       }
       start_break: {
         Args: { break_type_param?: string; shift_id_param: string }
+        Returns: string
+      }
+      void_order_item: {
+        Args: {
+          order_item_id_param: string
+          reason_param: string
+          requires_approval_param?: boolean
+        }
         Returns: string
       }
     }

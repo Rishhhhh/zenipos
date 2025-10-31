@@ -6,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, RotateCcw, Edit } from "lucide-react";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import { RecallOrderModal } from "@/components/pos/RecallOrderModal";
+import { ModifyOrderModal } from "@/components/pos/ModifyOrderModal";
+import { Badge } from "@/components/ui/badge";
 
 interface Order {
   id: string;
@@ -16,6 +19,7 @@ interface Order {
   status: string;
   total: number;
   created_at: string;
+  recall_requested?: boolean;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -33,6 +37,8 @@ export default function KDS() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [now, setNow] = useState(new Date());
+  const [selectedOrderForRecall, setSelectedOrderForRecall] = useState<string | null>(null);
+  const [selectedOrderForModify, setSelectedOrderForModify] = useState<string | null>(null);
 
   // Update timer every second
   useEffect(() => {
@@ -217,21 +223,57 @@ export default function KDS() {
                   ))}
                 </div>
 
-                <Button
-                  className="w-full"
-                  size="lg"
-                  variant="default"
-                  onClick={() => bumpOrder.mutate(order.id)}
-                  disabled={bumpOrder.isPending}
-                >
-                  <Check className="h-5 w-5 mr-2" />
-                  Bump Order
-                </Button>
+                {order.recall_requested && (
+                  <Badge variant="destructive" className="w-full mb-2">
+                    Recall Requested - Awaiting Approval
+                  </Badge>
+                )}
+
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedOrderForRecall(order.id)}
+                    disabled={order.recall_requested}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedOrderForModify(order.id)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    className="col-span-1"
+                    variant="default"
+                    onClick={() => bumpOrder.mutate(order.id)}
+                    disabled={bumpOrder.isPending}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </div>
               </Card>
             );
           })}
         </div>
       )}
+
+      <RecallOrderModal
+        open={!!selectedOrderForRecall}
+        onOpenChange={(open) => !open && setSelectedOrderForRecall(null)}
+        orderId={selectedOrderForRecall || ''}
+        orderNumber={selectedOrderForRecall?.substring(0, 8) || ''}
+        onSuccess={() => setSelectedOrderForRecall(null)}
+      />
+
+      <ModifyOrderModal
+        open={!!selectedOrderForModify}
+        onOpenChange={(open) => !open && setSelectedOrderForModify(null)}
+        orderId={selectedOrderForModify || ''}
+        orderNumber={selectedOrderForModify?.substring(0, 8) || ''}
+      />
     </div>
   );
 }

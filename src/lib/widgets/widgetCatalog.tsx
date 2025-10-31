@@ -24,6 +24,7 @@ const LoyaltyStatsWidget = lazy(() => import("@/components/dashboard/widgets/Loy
 const ActiveShiftsWidget = lazy(() => import("@/components/dashboard/widgets/ActiveShiftsWidget").then(m => ({ default: m.ActiveShiftsWidget })));
 const LaborCostWidget = lazy(() => import("@/components/dashboard/widgets/LaborCostWidget").then(m => ({ default: m.LaborCostWidget })));
 const EightySixWidget = lazy(() => import("@/components/dashboard/widgets/EightySixWidget").then(m => ({ default: m.EightySixWidget })));
+const PendingModsWidget = lazy(() => import("@/components/dashboard/widgets/PendingModsWidget").then(m => ({ default: m.PendingModsWidget })));
 
 export interface WidgetDefinition {
   id: string;
@@ -78,6 +79,23 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
         hasCompactMode: true,
+      },
+    },
+    {
+      id: "pending-mods",
+      component: PendingModsWidget,
+      name: "Pending Approvals",
+      description: "Order modifications awaiting manager approval",
+      icon: AlertTriangle,
+      roles: ["manager", "admin"],
+      category: "pos",
+      defaultSize: { cols: 5, rows: 5 },
+      minSize: { width: 300, height: 300 },
+      maxSize: { width: 540, height: 540 },
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
+        dataType: 'status-list',
+        hasCompactMode: false,
       },
     },
   ],

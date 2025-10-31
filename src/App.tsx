@@ -53,6 +53,7 @@ const TipReports = lazy(() => import("./pages/admin/TipReports"));
 const OpenTabs = lazy(() => import("./pages/admin/OpenTabs"));
 const ShiftManagement = lazy(() => import("./pages/admin/ShiftManagement"));
 const EightySixManagement = lazy(() => import("./pages/admin/EightySixManagement"));
+const PendingModifications = lazy(() => import("./pages/admin/PendingModifications"));
 const StationKDS = lazy(() => import("./pages/StationKDS"));
 const TabletPOS = lazy(() => import("./pages/TabletPOS"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -359,6 +360,13 @@ const App = () => (
                 <ProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <EightySixManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/pending-modifications" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <PendingModifications />
                 </ProtectedRoute>
               } />
               
