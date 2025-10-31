@@ -89,6 +89,14 @@ export default {
       backgroundSize: {
         'grid-80': '80px 80px',
       },
+      minHeight: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      minWidth: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
       keyframes: {
         "accordion-down": {
           from: {

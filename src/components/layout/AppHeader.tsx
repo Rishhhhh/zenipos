@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ZeniPOSLogo } from './ZeniPOSLogo';
+import { QueueStatusBadge } from '@/components/offline/QueueStatusBadge';
 
 export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut }: {
   currentShiftId?: string | null;
@@ -64,6 +65,9 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Offline sync status */}
+            <QueueStatusBadge />
+
             {/* Clock In/Out for POS page */}
             {isPOSPage && employee && currentShiftId !== undefined && (
               <>

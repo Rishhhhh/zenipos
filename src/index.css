@@ -410,4 +410,61 @@ macOS-inspired black/red/white theme with glass morphism
       animation: none !important;
     }
   }
+
+  /* ===================================
+     Touch Optimization
+     =================================== */
+
+  /* Touch device optimizations */
+  @media (pointer: coarse) {
+    /* Minimum touch targets for all interactive elements */
+    button, a, input[type="checkbox"], input[type="radio"], [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Prevent iOS zoom on input focus */
+    body {
+      font-size: 16px;
+    }
+    
+    input, textarea, select {
+      font-size: 16px;
+    }
+    
+    /* Increase tap areas */
+    .tap-target {
+      padding: 12px;
+    }
+
+    /* Larger hit areas for small icons */
+    .icon-button {
+      padding: 12px;
+    }
+  }
+
+  /* Tablet-specific styles (768px - 1024px) */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    /* Larger fonts for tablets */
+    .pos-item-name {
+      font-size: 1.125rem;
+    }
+    
+    .pos-price {
+      font-size: 1.25rem;
+    }
+
+    /* Optimize grid layouts for tablets */
+    .pos-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  /* Large tablets and small desktops */
+  @media (min-width: 1024px) and (max-width: 1280px) {
+    .pos-grid {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+  }
 }
