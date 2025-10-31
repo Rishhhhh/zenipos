@@ -1,9 +1,7 @@
 import React, { memo } from 'react';
-// @ts-ignore - react-window types may not be perfect
-import * as ReactWindow from 'react-window';
+// @ts-expect-error - Types will load after package installation
+import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-
-const FixedSizeList = (ReactWindow as any).FixedSizeList;
 
 interface VirtualListProps<T> {
   items: T[];
