@@ -23,6 +23,7 @@ const LowStockWidget = lazy(() => import("@/components/dashboard/widgets/LowStoc
 const LoyaltyStatsWidget = lazy(() => import("@/components/dashboard/widgets/LoyaltyStatsWidget").then(m => ({ default: m.LoyaltyStatsWidget })));
 const ActiveShiftsWidget = lazy(() => import("@/components/dashboard/widgets/ActiveShiftsWidget").then(m => ({ default: m.ActiveShiftsWidget })));
 const LaborCostWidget = lazy(() => import("@/components/dashboard/widgets/LaborCostWidget").then(m => ({ default: m.LaborCostWidget })));
+const EightySixWidget = lazy(() => import("@/components/dashboard/widgets/EightySixWidget").then(m => ({ default: m.EightySixWidget })));
 
 export interface WidgetDefinition {
   id: string;
@@ -147,6 +148,23 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       maxSize: { width: 540, height: 540 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
+        dataType: 'status-list',
+        hasCompactMode: false,
+      },
+    },
+    {
+      id: "eighty-six",
+      component: EightySixWidget,
+      name: "86 List",
+      description: "Items currently out of stock (86'd)",
+      icon: AlertTriangle,
+      roles: ["cashier", "manager", "admin"],
+      category: "inventory",
+      defaultSize: { cols: 5, rows: 5 },
+      minSize: { width: 300, height: 300 },
+      maxSize: { width: 540, height: 540 },
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
         hasCompactMode: false,
       },

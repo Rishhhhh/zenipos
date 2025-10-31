@@ -52,6 +52,7 @@ const Approvals = lazy(() => import("./pages/admin/Approvals"));
 const TipReports = lazy(() => import("./pages/admin/TipReports"));
 const OpenTabs = lazy(() => import("./pages/admin/OpenTabs"));
 const ShiftManagement = lazy(() => import("./pages/admin/ShiftManagement"));
+const EightySixManagement = lazy(() => import("./pages/admin/EightySixManagement"));
 const StationKDS = lazy(() => import("./pages/StationKDS"));
 const TabletPOS = lazy(() => import("./pages/TabletPOS"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -351,6 +352,13 @@ const App = () => (
                 <ProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <ShiftManagement />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/eighty-six" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <EightySixManagement />
                 </ProtectedRoute>
               } />
               

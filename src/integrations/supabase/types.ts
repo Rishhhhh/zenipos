@@ -776,6 +776,83 @@ export type Database = {
         }
         Relationships: []
       }
+      eighty_six_items: {
+        Row: {
+          active: boolean | null
+          alternative_items: Json | null
+          auto_generated: boolean | null
+          branch_id: string | null
+          created_at: string | null
+          created_by: string | null
+          estimated_return_at: string | null
+          id: string
+          menu_item_id: string
+          notification_sent: boolean | null
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          alternative_items?: Json | null
+          auto_generated?: boolean | null
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          estimated_return_at?: string | null
+          id?: string
+          menu_item_id: string
+          notification_sent?: boolean | null
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          alternative_items?: Json | null
+          auto_generated?: boolean | null
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          estimated_return_at?: string | null
+          id?: string
+          menu_item_id?: string
+          notification_sent?: boolean | null
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eighty_six_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eighty_six_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eighty_six_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eighty_six_items_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       einvoice_docs: {
         Row: {
           buyer_tin: string | null
@@ -3566,6 +3643,21 @@ export type Database = {
           start_at: string
         }[]
       }
+      get_active_eighty_six_items: {
+        Args: { branch_id_param?: string }
+        Returns: {
+          alternative_items: Json
+          auto_generated: boolean
+          created_at: string
+          created_by_name: string
+          estimated_return_at: string
+          id: string
+          menu_item_category: string
+          menu_item_id: string
+          menu_item_name: string
+          reason: string
+        }[]
+      }
       get_active_shift: { Args: { employee_id_param: string }; Returns: string }
       get_current_consciousness: {
         Args: never
@@ -3710,9 +3802,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_item_eighty_six: {
+        Args: {
+          alternative_items_param?: Json
+          branch_id_param?: string
+          estimated_return_param?: string
+          menu_item_id_param: string
+          reason_param: string
+        }
+        Returns: string
+      }
       reject_approval_request: {
         Args: { pin_param: string; request_id_param: string }
         Returns: boolean
+      }
+      restore_eighty_six_item: {
+        Args: { eighty_six_id_param: string }
+        Returns: undefined
       }
       start_break: {
         Args: { break_type_param?: string; shift_id_param: string }

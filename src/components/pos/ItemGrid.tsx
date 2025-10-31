@@ -5,6 +5,8 @@ import { ImageIcon, Tag } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { EightySixBadge } from "@/components/ui/eighty-six-badge";
+import { useEightySixItems } from "@/hooks/useEightySixItems";
 
 interface MenuItem {
   id: string;
@@ -39,6 +41,9 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
     staleTime: 60000,
   });
   
+  // Check for 86'd items
+  const { isEightySixed, getEightySixInfo } = useEightySixItems();
+  
   const filteredItems = items?.filter(item => 
     !categoryId || item.category_id === categoryId
   ) || [];
@@ -60,22 +65,28 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
     <div className="h-full p-4 overflow-y-auto">
       <h2 className="text-lg font-semibold mb-4 text-foreground">Menu Items</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {filteredItems.map(item => (
-          <Card
-            key={item.id}
-            className={`p-0 cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col h-40 overflow-hidden relative ${
-              !item.in_stock ? 'opacity-60' : ''
-            }`}
-            onClick={() => {
-              if (item.in_stock) {
-                onAddItem({
-                  menu_item_id: item.id,
-                  name: item.name,
-                  price: Number(item.price),
-                });
-              }
-            }}
-          >
+        {filteredItems.map(item => {
+          const is86d = isEightySixed(item.id);
+          const eightySixInfo = is86d ? getEightySixInfo(item.id) : null;
+          const isAvailable = item.in_stock && !is86d;
+          
+          return (
+            <Card
+              key={item.id}
+              className={`p-0 cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col h-40 overflow-hidden relative ${
+                !isAvailable ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
+              onClick={() => {
+                if (isAvailable) {
+                  onAddItem({
+                    menu_item_id: item.id,
+                    name: item.name,
+                    price: Number(item.price),
+                  });
+                }
+              }}
+              title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
+            >
             {/* Image */}
             {item.image_url ? (
               <img
@@ -103,20 +114,26 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
               </p>
             </div>
 
-            {/* Status Badge */}
-                  {!item.in_stock && (
-                    <Badge variant="destructive" className="absolute top-2 right-2">
-                      Unavailable
-                    </Badge>
-                  )}
-                  {item.in_stock && hasActivePromos && (
-                    <Badge variant="default" className="absolute top-2 left-2 bg-success text-white">
-                      <Tag className="h-3 w-3 mr-1" />
-                      Promo
-                    </Badge>
-                  )}
-          </Card>
-        ))}
+              {/* Status Badge */}
+              {is86d && (
+                <div className="absolute top-2 right-2">
+                  <EightySixBadge size="sm" />
+                </div>
+              )}
+              {!item.in_stock && !is86d && (
+                <Badge variant="destructive" className="absolute top-2 right-2">
+                  Unavailable
+                </Badge>
+              )}
+              {isAvailable && hasActivePromos && (
+                <Badge variant="default" className="absolute top-2 left-2 bg-success text-white">
+                  <Tag className="h-3 w-3 mr-1" />
+                  Promo
+                </Badge>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
