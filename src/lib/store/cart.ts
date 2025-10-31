@@ -90,6 +90,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       entity: 'cart',
       entity_id: id,
       diff: { item_name: item.name, quantity: item.quantity, price: item.price },
+      requires_approval: !managerId, // Flag if no manager ID provided
     });
     
     set((state) => ({

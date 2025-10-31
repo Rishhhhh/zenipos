@@ -116,6 +116,60 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_requests: {
+        Row: {
+          action_context: Json | null
+          action_type: string
+          approval_pin_verified: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          requested_by: string | null
+          status: string | null
+        }
+        Insert: {
+          action_context?: Json | null
+          action_type: string
+          approval_pin_verified?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          requested_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          action_context?: Json | null
+          action_type?: string
+          approval_pin_verified?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          requested_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -749,6 +803,8 @@ export type Database = {
           pay_rate: number | null
           phone: string | null
           pin: string
+          pin_last_changed: string | null
+          pin_rotation_days: number | null
           role: Database["public"]["Enums"]["app_role"] | null
           updated_at: string | null
         }
@@ -764,6 +820,8 @@ export type Database = {
           pay_rate?: number | null
           phone?: string | null
           pin: string
+          pin_last_changed?: string | null
+          pin_rotation_days?: number | null
           role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
         }
@@ -779,6 +837,8 @@ export type Database = {
           pay_rate?: number | null
           phone?: string | null
           pin?: string
+          pin_last_changed?: string | null
+          pin_rotation_days?: number | null
           role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
         }
@@ -3059,6 +3119,10 @@ export type Database = {
         Args: { _branch_id: string; _stat_date?: string }
         Returns: undefined
       }
+      approve_request_with_pin: {
+        Args: { pin_param: string; request_id_param: string }
+        Returns: boolean
+      }
       calculate_cogs: {
         Args: { end_date: string; start_date: string }
         Returns: {
@@ -3233,6 +3297,10 @@ export type Database = {
           _page_path: string
         }
         Returns: undefined
+      }
+      reject_approval_request: {
+        Args: { pin_param: string; request_id_param: string }
+        Returns: boolean
       }
     }
     Enums: {

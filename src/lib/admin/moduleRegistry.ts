@@ -285,6 +285,14 @@ export const ADMIN_MODULES = {
       path: "/admin/marketing-content",
       description: "Manage customer display content",
     },
+    {
+      id: "approvals",
+      name: "Manager Approvals",
+      icon: Shield,
+      path: "/admin/approvals",
+      description: "Review and approve pending requests",
+      badge: "Live",
+    },
   ],
 };
 
