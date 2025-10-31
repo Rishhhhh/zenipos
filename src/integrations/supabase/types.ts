@@ -116,6 +116,33 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_escalation_rules: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          escalate_to_role: Database["public"]["Enums"]["app_role"] | null
+          id: string
+          notify_channels: string[] | null
+          timeout_minutes: number | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          escalate_to_role?: Database["public"]["Enums"]["app_role"] | null
+          id?: string
+          notify_channels?: string[] | null
+          timeout_minutes?: number | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          escalate_to_role?: Database["public"]["Enums"]["app_role"] | null
+          id?: string
+          notify_channels?: string[] | null
+          timeout_minutes?: number | null
+        }
+        Relationships: []
+      }
       approval_requests: {
         Row: {
           action_context: Json | null
@@ -169,6 +196,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      approval_rules: {
+        Row: {
+          action_type: string
+          amount_threshold: number | null
+          created_at: string | null
+          id: string
+          min_approver_role: Database["public"]["Enums"]["app_role"]
+          requires_two_approvals: boolean | null
+        }
+        Insert: {
+          action_type: string
+          amount_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          min_approver_role: Database["public"]["Enums"]["app_role"]
+          requires_two_approvals?: boolean | null
+        }
+        Update: {
+          action_type?: string
+          amount_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          min_approver_role?: Database["public"]["Enums"]["app_role"]
+          requires_two_approvals?: boolean | null
+        }
+        Relationships: []
       }
       audit_log: {
         Row: {
