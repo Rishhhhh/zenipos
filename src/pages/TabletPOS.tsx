@@ -74,28 +74,27 @@ export default function TabletPOS() {
     },
   });
 
-  const { data: tables } = useQuery<any[]>({
+  const { data: tablesData } = useQuery({
     queryKey: ['tables'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tables')
-        .select('*')
-        .eq('active', true)
+        .select('id, label, status, seats, nfc_card_id')
         .order('label');
       if (error) throw error;
-      return data || [];
+      return data;
     },
   });
-  
-  const tableList = tables || [];
 
-  const handleNFCScan = async (cardData: any) => {
-    const table = tableList.find(t => t.nfc_card_id === cardData.card_uid);
+  const tables = tablesData || [];
+
+  const handleNFCScan = async (tableId: string) => {
+    const table = tables.find(t => t.id === tableId);
     if (table) {
       setTable(table.id, table.label);
       toast.success(`Loaded Table ${table.label}`);
     } else {
-      toast.error('Table not found for this NFC card');
+      toast.error('Table not found');
     }
   };
 
@@ -140,13 +139,7 @@ export default function TabletPOS() {
               />
             </div>
           </div>
-          <NFCCardScanner onScanSuccess={async (tableId) => {
-            const table = tables.find(t => t.id === tableId);
-            if (table) {
-              setTable(table.id, table.label);
-              toast.success(`Loaded Table ${table.label}`);
-            }
-          }} />
+          <NFCCardScanner onScanSuccess={handleNFCScan} />
         </div>
       </div>
 
@@ -221,7 +214,7 @@ export default function TabletPOS() {
 
           <TabsContent value="tables" className="flex-1 overflow-auto p-4 pt-0 mt-4">
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {tableList.map((table) => (
+              {tables.map((table) => (
                 <Card
                   key={table.id}
                   className={`p-6 text-center cursor-pointer hover:border-primary transition-colors ${
