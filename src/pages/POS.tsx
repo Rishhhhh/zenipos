@@ -219,11 +219,12 @@ export default function POS() {
         open={showSplitBill}
         onOpenChange={setShowSplitBill}
         items={items}
-        onConfirm={(splits) => {
+        total={getTotal()}
+        onSplitConfirm={(splits) => {
           // Handle split bills - create separate orders
           toast({
-            title: `Bill split into ${splits.length} orders`,
-            description: 'Each bill can now be paid separately',
+            title: `Bill split into ${splits.length} parts`,
+            description: 'Each split can now be paid separately',
           });
           setShowSplitBill(false);
           // TODO: Implement actual order splitting logic

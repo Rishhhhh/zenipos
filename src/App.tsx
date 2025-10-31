@@ -49,6 +49,8 @@ const StationRoutingConfig = lazy(() => import("./pages/admin/StationRoutingConf
 const NFCCardManagement = lazy(() => import("./pages/admin/NFCCardManagement"));
 const MarketingContent = lazy(() => import("./pages/admin/MarketingContent"));
 const Approvals = lazy(() => import("./pages/admin/Approvals"));
+const TipReports = lazy(() => import("./pages/admin/TipReports"));
+const OpenTabs = lazy(() => import("./pages/admin/OpenTabs"));
 const StationKDS = lazy(() => import("./pages/StationKDS"));
 const TabletPOS = lazy(() => import("./pages/TabletPOS"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -329,6 +331,18 @@ const App = () => (
               <Route path="/admin/approvals" element={
                 <ProtectedRoute requiredRole="manager">
                   <Approvals />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/tip-reports" element={
+                <ProtectedRoute requiredRole="manager">
+                  <TipReports />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/open-tabs" element={
+                <ProtectedRoute requiredRole="manager">
+                  <OpenTabs />
                 </ProtectedRoute>
               } />
               

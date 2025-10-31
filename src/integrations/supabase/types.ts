@@ -1742,6 +1742,89 @@ export type Database = {
           },
         ]
       }
+      open_tabs: {
+        Row: {
+          card_brand: string | null
+          card_last_4: string | null
+          closed_at: string | null
+          closed_by: string | null
+          current_balance: number | null
+          customer_name: string | null
+          id: string
+          opened_at: string | null
+          opened_by: string | null
+          order_id: string | null
+          pre_auth_amount: number | null
+          pre_auth_ref: string | null
+          status: string | null
+          table_id: string | null
+          transfer_notes: string | null
+        }
+        Insert: {
+          card_brand?: string | null
+          card_last_4?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          current_balance?: number | null
+          customer_name?: string | null
+          id?: string
+          opened_at?: string | null
+          opened_by?: string | null
+          order_id?: string | null
+          pre_auth_amount?: number | null
+          pre_auth_ref?: string | null
+          status?: string | null
+          table_id?: string | null
+          transfer_notes?: string | null
+        }
+        Update: {
+          card_brand?: string | null
+          card_last_4?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          current_balance?: number | null
+          customer_name?: string | null
+          id?: string
+          opened_at?: string | null
+          opened_by?: string | null
+          order_id?: string | null
+          pre_auth_amount?: number | null
+          pre_auth_ref?: string | null
+          status?: string | null
+          table_id?: string | null
+          transfer_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_tabs_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "open_tabs_opened_by_fkey"
+            columns: ["opened_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "open_tabs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "open_tabs_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           assigned_to: string | null
@@ -1983,42 +2066,133 @@ export type Database = {
         }
         Relationships: []
       }
-      payments: {
+      payment_splits: {
         Row: {
           amount: number
-          change_given: number | null
           created_at: string | null
+          created_by: string | null
+          guest_name: string | null
           id: string
-          method: Database["public"]["Enums"]["payment_method"]
+          items: Json | null
           order_id: string | null
-          provider: string | null
-          provider_ref: string | null
-          status: Database["public"]["Enums"]["payment_status"] | null
-          tip: number | null
+          payment_id: string | null
+          seat_numbers: number[] | null
+          split_number: number
+          split_type: string | null
         }
         Insert: {
           amount: number
-          change_given?: number | null
           created_at?: string | null
+          created_by?: string | null
+          guest_name?: string | null
           id?: string
-          method: Database["public"]["Enums"]["payment_method"]
+          items?: Json | null
           order_id?: string | null
-          provider?: string | null
-          provider_ref?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          tip?: number | null
+          payment_id?: string | null
+          seat_numbers?: number[] | null
+          split_number: number
+          split_type?: string | null
         }
         Update: {
           amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          guest_name?: string | null
+          id?: string
+          items?: Json | null
+          order_id?: string | null
+          payment_id?: string | null
+          seat_numbers?: number[] | null
+          split_number?: number
+          split_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_splits_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_splits_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_splits_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          approval_code: string | null
+          card_brand: string | null
+          card_last_4: string | null
+          change_given: number | null
+          created_at: string | null
+          gratuity_percentage: number | null
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          order_id: string | null
+          payment_device: string | null
+          provider: string | null
+          provider_ref: string | null
+          signature_data: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          terminal_id: string | null
+          tip: number | null
+          tip_amount: number | null
+          tip_type: string | null
+        }
+        Insert: {
+          amount: number
+          approval_code?: string | null
+          card_brand?: string | null
+          card_last_4?: string | null
           change_given?: number | null
           created_at?: string | null
+          gratuity_percentage?: number | null
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          order_id?: string | null
+          payment_device?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          signature_data?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          terminal_id?: string | null
+          tip?: number | null
+          tip_amount?: number | null
+          tip_type?: string | null
+        }
+        Update: {
+          amount?: number
+          approval_code?: string | null
+          card_brand?: string | null
+          card_last_4?: string | null
+          change_given?: number | null
+          created_at?: string | null
+          gratuity_percentage?: number | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           order_id?: string | null
+          payment_device?: string | null
           provider?: string | null
           provider_ref?: string | null
+          signature_data?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          terminal_id?: string | null
           tip?: number | null
+          tip_amount?: number | null
+          tip_type?: string | null
         }
         Relationships: [
           {
@@ -3152,6 +3326,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      close_expired_tabs: { Args: never; Returns: number }
       close_shift: { Args: { shift_id_param: string }; Returns: undefined }
       credit_loyalty_points: {
         Args: {
@@ -3250,6 +3425,17 @@ export type Database = {
           refunds: number
           sales: number
           voids: number
+        }[]
+      }
+      get_tip_report: {
+        Args: { end_date_param: string; start_date_param: string }
+        Returns: {
+          card_tips: number
+          cash_tips: number
+          employee_id: string
+          employee_name: string
+          tip_count: number
+          total_tips: number
         }[]
       }
       get_top_loyal_customers: {
