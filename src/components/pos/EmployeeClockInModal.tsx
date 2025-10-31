@@ -41,7 +41,20 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
         throw new Error('Employee already has an active shift');
       }
 
-      // Create shift
+      // Get geolocation if available
+      let location = null;
+      if ('geolocation' in navigator) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          location = `${position.coords.latitude},${position.coords.longitude}`;
+        } catch (e) {
+          console.warn('Geolocation not available');
+        }
+      }
+
+      // Create shift with clock-in metadata
       const { data: { user } } = await supabase.auth.getUser();
       const { data: shift, error: shiftError } = await supabase
         .from('shifts')
@@ -49,6 +62,7 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
           employee_id: employee.id,
           user_id: user?.id || null,
           status: 'active',
+          clock_in_location: location,
         })
         .select()
         .single();

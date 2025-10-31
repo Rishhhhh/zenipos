@@ -51,6 +51,7 @@ const MarketingContent = lazy(() => import("./pages/admin/MarketingContent"));
 const Approvals = lazy(() => import("./pages/admin/Approvals"));
 const TipReports = lazy(() => import("./pages/admin/TipReports"));
 const OpenTabs = lazy(() => import("./pages/admin/OpenTabs"));
+const ShiftManagement = lazy(() => import("./pages/admin/ShiftManagement"));
 const StationKDS = lazy(() => import("./pages/StationKDS"));
 const TabletPOS = lazy(() => import("./pages/TabletPOS"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -343,6 +344,13 @@ const App = () => (
               <Route path="/admin/open-tabs" element={
                 <ProtectedRoute requiredRole="manager">
                   <OpenTabs />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/shift-management" element={
+                <ProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <ShiftManagement />
                 </ProtectedRoute>
               } />
               

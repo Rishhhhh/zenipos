@@ -22,6 +22,7 @@ const TopItemsWidget = lazy(() => import("@/components/dashboard/widgets/TopItem
 const LowStockWidget = lazy(() => import("@/components/dashboard/widgets/LowStockWidget").then(m => ({ default: m.LowStockWidget })));
 const LoyaltyStatsWidget = lazy(() => import("@/components/dashboard/widgets/LoyaltyStatsWidget").then(m => ({ default: m.LoyaltyStatsWidget })));
 const ActiveShiftsWidget = lazy(() => import("@/components/dashboard/widgets/ActiveShiftsWidget").then(m => ({ default: m.ActiveShiftsWidget })));
+const LaborCostWidget = lazy(() => import("@/components/dashboard/widgets/LaborCostWidget").then(m => ({ default: m.LaborCostWidget })));
 
 export interface WidgetDefinition {
   id: string;
@@ -186,6 +187,23 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
         hasCompactMode: true,
+      },
+    },
+    {
+      id: "labor-cost",
+      component: LaborCostWidget,
+      name: "Labor Cost",
+      description: "Real-time labor cost tracking and budget compliance",
+      icon: DollarSign,
+      roles: ["manager", "admin"],
+      category: "employees",
+      defaultSize: { cols: 5, rows: 5 },
+      minSize: { width: 300, height: 300 },
+      maxSize: { width: 540, height: 540 },
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
+        dataType: 'financial',
+        hasCompactMode: false,
       },
     },
   ],

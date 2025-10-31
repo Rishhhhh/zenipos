@@ -6,6 +6,7 @@ import { LowStockConfigPanel } from "./widgets/config/LowStockConfigPanel";
 import { ActiveShiftsConfigPanel } from "./widgets/config/ActiveShiftsConfigPanel";
 import { LoyaltyStatsConfigPanel } from "./widgets/config/LoyaltyStatsConfigPanel";
 import { ActiveOrdersConfigPanel } from "./widgets/config/ActiveOrdersConfigPanel";
+import { LaborCostConfigPanel } from "./widgets/config/LaborCostConfigPanel";
 import { BaseWidgetConfig } from "@/types/widgetConfigs";
 
 interface WidgetConfigRouterProps {
@@ -32,6 +33,8 @@ export function WidgetConfigRouter({ widgetId, config, onConfigChange }: WidgetC
       return <LoyaltyStatsConfigPanel config={config} onConfigChange={onConfigChange} />;
     case 'active-orders':
       return <ActiveOrdersConfigPanel config={config} onConfigChange={onConfigChange} />;
+    case 'labor-cost':
+      return <LaborCostConfigPanel config={config} onConfigChange={onConfigChange} />;
     default:
       return (
         <div className="text-center py-8 text-muted-foreground">

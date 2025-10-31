@@ -386,6 +386,60 @@ export type Database = {
           },
         ]
       }
+      break_logs: {
+        Row: {
+          auto_ended: boolean | null
+          break_type: string
+          created_at: string | null
+          duration_minutes: number | null
+          employee_id: string
+          end_at: string | null
+          id: string
+          notes: string | null
+          shift_id: string
+          start_at: string
+        }
+        Insert: {
+          auto_ended?: boolean | null
+          break_type?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          employee_id: string
+          end_at?: string | null
+          id?: string
+          notes?: string | null
+          shift_id: string
+          start_at?: string
+        }
+        Update: {
+          auto_ended?: boolean | null
+          break_type?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          employee_id?: string
+          end_at?: string | null
+          id?: string
+          notes?: string | null
+          shift_id?: string
+          start_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "break_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "break_logs_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_float_events: {
         Row: {
           created_at: string | null
@@ -1254,6 +1308,59 @@ export type Database = {
             columns: ["station_id"]
             isOneToOne: false
             referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labor_budget: {
+        Row: {
+          actual_labor_cost: number | null
+          actual_labor_percentage: number | null
+          branch_id: string | null
+          budget_date: string
+          created_at: string | null
+          id: string
+          overtime_hours: number | null
+          target_labor_cost: number | null
+          target_labor_percentage: number
+          total_hours: number | null
+          total_sales: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_labor_cost?: number | null
+          actual_labor_percentage?: number | null
+          branch_id?: string | null
+          budget_date: string
+          created_at?: string | null
+          id?: string
+          overtime_hours?: number | null
+          target_labor_cost?: number | null
+          target_labor_percentage: number
+          total_hours?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_labor_cost?: number | null
+          actual_labor_percentage?: number | null
+          branch_id?: string | null
+          budget_date?: string
+          created_at?: string | null
+          id?: string
+          overtime_hours?: number | null
+          target_labor_cost?: number | null
+          target_labor_percentage?: number
+          total_hours?: number | null
+          total_sales?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labor_budget_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
         ]
@@ -2573,19 +2680,94 @@ export type Database = {
           },
         ]
       }
+      shift_schedules: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          created_by: string | null
+          employee_id: string
+          end_time: string
+          id: string
+          notes: string | null
+          role: string | null
+          scheduled_date: string
+          start_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          employee_id: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          scheduled_date: string
+          start_time: string
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          employee_id?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          scheduled_date?: string
+          start_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_schedules_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_schedules_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
+          break_end_at: string | null
           break_minutes: number | null
+          break_start_at: string | null
+          break_type: string | null
           clock_in_at: string
+          clock_in_location: string | null
+          clock_in_photo_url: string | null
           clock_out_at: string | null
+          clock_out_location: string | null
+          clock_out_photo_url: string | null
           closed_by: string | null
           created_at: string | null
           discounts_given: number | null
           employee_id: string
           id: string
+          nfc_card_uid: string | null
           notes: string | null
           orders_processed: number | null
+          overtime_minutes: number | null
           refunds_count: number | null
+          scheduled_end: string | null
+          scheduled_start: string | null
           status: string | null
           total_hours: number | null
           total_sales: number | null
@@ -2594,17 +2776,28 @@ export type Database = {
           voids_count: number | null
         }
         Insert: {
+          break_end_at?: string | null
           break_minutes?: number | null
+          break_start_at?: string | null
+          break_type?: string | null
           clock_in_at?: string
+          clock_in_location?: string | null
+          clock_in_photo_url?: string | null
           clock_out_at?: string | null
+          clock_out_location?: string | null
+          clock_out_photo_url?: string | null
           closed_by?: string | null
           created_at?: string | null
           discounts_given?: number | null
           employee_id: string
           id?: string
+          nfc_card_uid?: string | null
           notes?: string | null
           orders_processed?: number | null
+          overtime_minutes?: number | null
           refunds_count?: number | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
           status?: string | null
           total_hours?: number | null
           total_sales?: number | null
@@ -2613,17 +2806,28 @@ export type Database = {
           voids_count?: number | null
         }
         Update: {
+          break_end_at?: string | null
           break_minutes?: number | null
+          break_start_at?: string | null
+          break_type?: string | null
           clock_in_at?: string
+          clock_in_location?: string | null
+          clock_in_photo_url?: string | null
           clock_out_at?: string | null
+          clock_out_location?: string | null
+          clock_out_photo_url?: string | null
           closed_by?: string | null
           created_at?: string | null
           discounts_given?: number | null
           employee_id?: string
           id?: string
+          nfc_card_uid?: string | null
           notes?: string | null
           orders_processed?: number | null
+          overtime_minutes?: number | null
           refunds_count?: number | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
           status?: string | null
           total_hours?: number | null
           total_sales?: number | null
@@ -3310,6 +3514,17 @@ export type Database = {
         Args: { points: number }
         Returns: number
       }
+      calculate_labor_metrics: {
+        Args: { branch_id_param: string; date_param?: string }
+        Returns: {
+          active_employees: number
+          labor_percentage: number
+          overtime_hours: number
+          total_hours: number
+          total_labor_cost: number
+          total_sales: number
+        }[]
+      }
       calculate_points_earned: { Args: { amount: number }; Returns: number }
       can_access_branch: {
         Args: { _branch_id: string; _user_id: string }
@@ -3339,6 +3554,17 @@ export type Database = {
       decrement_inventory_on_order: {
         Args: { order_id_param: string }
         Returns: undefined
+      }
+      end_break: { Args: { break_id_param: string }; Returns: undefined }
+      get_active_break: {
+        Args: { employee_id_param: string }
+        Returns: {
+          break_id: string
+          break_type: string
+          duration_minutes: number
+          shift_id: string
+          start_at: string
+        }[]
       }
       get_active_shift: { Args: { employee_id_param: string }; Returns: string }
       get_current_consciousness: {
@@ -3487,6 +3713,10 @@ export type Database = {
       reject_approval_request: {
         Args: { pin_param: string; request_id_param: string }
         Returns: boolean
+      }
+      start_break: {
+        Args: { break_type_param?: string; shift_id_param: string }
+        Returns: string
       }
     }
     Enums: {
