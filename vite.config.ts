@@ -18,28 +18,34 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-core': ['react', 'react-dom', 'react-router-dom'],
-          'ui-radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-switch',
-          ],
-          'tanstack': ['@tanstack/react-query'],
-          'chart': ['recharts'],
-          'supabase': ['@supabase/supabase-js'],
-          'admin': [
-            './src/pages/admin',
-            './src/components/admin',
-          ],
-          'manager-features': [
-            './src/pages/KDS.tsx',
-            './src/pages/ExpoStation.tsx',
-            './src/pages/StationKDS.tsx',
-            './src/pages/ManagerDashboard.tsx',
-          ],
+        manualChunks: (id) => {
+          // Group npm packages
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-core';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'ui-radix';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'tanstack';
+            }
+            if (id.includes('recharts')) {
+              return 'chart';
+            }
+            if (id.includes('@supabase/supabase-js')) {
+              return 'supabase';
+            }
+          }
+          // Group local admin files
+          if (id.includes('src/pages/admin') || id.includes('src/components/admin')) {
+            return 'admin';
+          }
+          // Group manager feature pages
+          if (id.includes('src/pages/KDS') || id.includes('src/pages/ExpoStation') || 
+              id.includes('src/pages/StationKDS') || id.includes('src/pages/ManagerDashboard')) {
+            return 'manager-features';
+          }
         }
       }
     },
