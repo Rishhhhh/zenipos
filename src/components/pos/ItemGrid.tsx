@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 // @ts-ignore - react-window types issue
-import { FixedSizeGrid } from "react-window";
+import * as ReactWindow from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
+
+const { FixedSizeGrid } = ReactWindow as any;
 
 interface MenuItem {
   id: string;
