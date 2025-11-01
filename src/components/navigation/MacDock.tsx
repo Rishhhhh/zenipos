@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGesture } from '@use-gesture/react';
+import { haptics } from '@/lib/haptics';
 import { DockIcon } from './DockIcon';
 import { DockSeparator } from './DockSeparator';
 import { getVisibleApps, DOCK_UTILITIES } from './dockConfig';
@@ -12,6 +14,7 @@ export function MacDock() {
   const location = useLocation();
   const { theme, setTheme } = useTheme();
   const { role, logout } = useAuth();
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   const visibleApps = getVisibleApps(role as AppRole);
 
@@ -70,8 +73,55 @@ export function MacDock() {
     return false;
   };
 
+  // Two-finger horizontal swipe to switch modules
+  const bindSwipe = useGesture(
+    {
+      onDrag: ({ movement: [mx], last, touches, velocity: [vx] }) => {
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+        if (!isTouchDevice || touches !== 2) return;
+        
+        if (!last) {
+          setSwipeOffset(mx);
+        } else {
+          const shouldSwitch = Math.abs(mx) > 100 || Math.abs(vx) > 0.5;
+          
+          if (shouldSwitch) {
+            const currentRoute = location.pathname;
+            const routes = visibleApps.map(app => app.route);
+            const currentIndex = routes.indexOf(currentRoute);
+            
+            if (mx < 0 && currentIndex < routes.length - 1) {
+              // Swipe left: next module
+              navigate(routes[currentIndex + 1]);
+              haptics.medium();
+            } else if (mx > 0 && currentIndex > 0) {
+              // Swipe right: previous module
+              navigate(routes[currentIndex - 1]);
+              haptics.medium();
+            }
+          }
+          
+          setSwipeOffset(0);
+        }
+      }
+    },
+    {
+      drag: { 
+        axis: 'x',
+        filterTaps: true 
+      }
+    }
+  );
+
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10002] dock-container">
+    <div 
+      {...bindSwipe()}
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10002] dock-container touch-none"
+      style={{
+        transform: `translate(-50%, ${swipeOffset !== 0 ? Math.abs(swipeOffset) * 0.1 : 0}px)`,
+        transition: swipeOffset === 0 ? 'transform 0.2s ease-out' : 'none'
+      }}
+    >
       <div className="glass-dock rounded-2xl px-3 py-2 flex items-center gap-0.5 shadow-2xl border border-primary/10">
         {/* App Icons */}
         {visibleApps.map((app) => (

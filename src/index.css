@@ -515,3 +515,51 @@ button, a, input, textarea, select,
     }
   }
 }
+
+/* Enhanced touch targets for mobile */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 12px !important;
+  }
+  
+  /* Larger resize handles on touch devices */
+  .touch-target[class*="cursor-se-resize"],
+  .widget-resize-handle {
+    width: 56px !important;
+    height: 56px !important;
+  }
+  
+  /* Prevent accidental text selection during gestures */
+  .touch-none {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Enable momentum scrolling */
+  .touch-scroll, .touch-pan-y {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+  
+  /* Disable pull-to-refresh on dashboard */
+  body.on-dashboard {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Visual feedback for active gestures */
+.gesture-active {
+  opacity: 0.9;
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* GPU acceleration for gesture-sensitive elements */
+@media (pointer: coarse) {
+  .glass, .glass-card, .card, button, .badge {
+    will-change: transform;
+  }
+}

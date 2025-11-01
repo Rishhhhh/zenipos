@@ -5,6 +5,7 @@ import { DraggableWidget } from "@/components/dashboard/DraggableWidget";
 import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
 import { WidgetMenu } from "@/components/dashboard/WidgetMenu";
 import { WidgetConfigModal } from "@/components/dashboard/WidgetConfigModal";
+import { GestureHints } from "@/components/dashboard/GestureHints";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
 import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
@@ -202,6 +203,9 @@ export default function Dashboard() {
         open={!!configModalWidget}
         onOpenChange={(open) => !open && setConfigModalWidget(null)}
       />
+
+      {/* Touch Gesture Hints */}
+      <GestureHints />
     </div>
   );
 }

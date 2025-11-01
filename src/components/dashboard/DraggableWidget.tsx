@@ -1,5 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import { useState, useRef, useEffect } from "react";
+import { usePinch, useGesture } from "@use-gesture/react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Grip } from "lucide-react";
@@ -53,8 +54,11 @@ export function DraggableWidget({
   } = useDraggable({ id });
 
   const [isResizing, setIsResizing] = useState(false);
+  const [isPinching, setIsPinching] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [activeGesture, setActiveGesture] = useState<'drag' | 'pinch' | 'resize' | null>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
+  const initialSizeRef = useRef({ width: 0, height: 0 });
   const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const widgetDef = getWidgetById(id);
 
@@ -78,10 +82,73 @@ export function DraggableWidget({
 
   // Bring to front when clicked
   const handleMouseDown = () => {
-    if (!isDraggingThis && !isResizing) {
+    if (!isDraggingThis && !isResizing && !isPinching) {
       onBringToFront();
     }
   };
+
+  // Pinch gesture for touchscreen resize
+  const bindPinch = usePinch(({ offset: [scale], first, last }) => {
+    if (isMaximized || isMinimized) return;
+    
+    if (first) {
+      setIsPinching(true);
+      setActiveGesture('pinch');
+      initialSizeRef.current = { 
+        width: currentWidth, 
+        height: currentHeight 
+      };
+      haptics.medium();
+    }
+
+    const newWidth = Math.max(
+      widgetDef?.minSize.width || 320,
+      Math.min(widgetDef?.maxSize.width || 1000, initialSizeRef.current.width * scale)
+    );
+    const newHeight = Math.max(
+      widgetDef?.minSize.height || 320,
+      Math.min(widgetDef?.maxSize.height || 800, initialSizeRef.current.height * scale)
+    );
+
+    // Snap to grid
+    const snapped = snapSizeToGridRealtime(newWidth, newHeight);
+    onPositionChange({ width: snapped.width, height: snapped.height });
+
+    if (last) {
+      setIsPinching(false);
+      setActiveGesture(null);
+      haptics.light();
+    }
+  }, {
+    eventOptions: { passive: false },
+    scaleBounds: { min: 0.5, max: 2 },
+    rubberband: true,
+    enabled: !isMaximized && !isMinimized
+  });
+
+  // Multi-finger swipe and double-tap gestures
+  const bindGestures = useGesture(
+    {
+      onDrag: ({ swipe: [swipeX, swipeY], touches, last }) => {
+        // Three-finger swipe down to minimize
+        if (last && touches === 3 && swipeY === 1) {
+          onMinimize();
+          haptics.light();
+        }
+      },
+      onDoubleClick: () => {
+        // Double-tap to maximize/restore
+        onMaximize();
+        haptics.medium();
+      }
+    },
+    {
+      drag: { 
+        swipe: { distance: 50, velocity: 0.3 },
+        filterTaps: true 
+      }
+    }
+  );
 
   // Unified pointer event handler (mouse + touch)
   const getClientCoords = (e: React.MouseEvent | React.TouchEvent) => {
@@ -96,6 +163,7 @@ export function DraggableWidget({
     e.stopPropagation();
     e.preventDefault();
     setIsResizing(true);
+    setActiveGesture('resize');
     onBringToFront();
     haptics.medium();
     
@@ -138,6 +206,7 @@ export function DraggableWidget({
 
     const handlePointerEnd = () => {
       setIsResizing(false);
+      setActiveGesture(null);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       haptics.light();
@@ -199,15 +268,18 @@ export function DraggableWidget({
         setNodeRef(el);
         (widgetRef as any).current = el;
       }}
+      {...bindPinch()}
+      {...bindGestures()}
       style={style}
       className={cn(
-        "group rounded-lg overflow-hidden bg-card border-2 shadow-lg",
+        "group rounded-lg overflow-hidden bg-card border-2 shadow-lg touch-none",
         isMaximized && "rounded-none border-0 shadow-none",
         isMinimized ? "border-primary/40 bg-card/80 cursor-grab" : "border-border cursor-grab",
         isMaximized && "cursor-default",
         "active:cursor-grabbing transition-all duration-300 ease-in-out",
         isDraggingThis && "shadow-2xl opacity-95 border-primary",
         isResizing && "shadow-xl",
+        isPinching && "gesture-active",
         isMinimized && "hover:border-primary hover:bg-card"
       )}
       onMouseDown={handleMouseDown}
@@ -215,8 +287,8 @@ export function DraggableWidget({
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={() => setIsHovered(true)}
       onTouchEnd={() => setIsHovered(false)}
-      {...(isMaximized || isResizing ? {} : attributes)}
-      {...(isMaximized || isResizing ? {} : listeners)}
+      {...(isMaximized || isResizing || isPinching ? {} : attributes)}
+      {...(isMaximized || isResizing || isPinching ? {} : listeners)}
     >
       <div className="h-full w-full relative">
         {/* Widget Header */}
@@ -246,12 +318,12 @@ export function DraggableWidget({
         )}
         
         {/* Resize Handle */}
-        {!isMinimized && !isMaximized && isHovered && !isDraggingThis && (
+        {!isMinimized && !isMaximized && isHovered && !isDraggingThis && !isPinching && (
           <>
             <div
               className={cn(
                 "widget-resize-handle absolute bottom-3 right-3 w-12 h-12 z-[100]",
-                "cursor-nwse-resize touch-none",
+                "cursor-nwse-resize touch-none touch-target",
                 "bg-primary/20 hover:bg-primary/40 active:bg-primary/50 rounded-lg",
                 "flex items-center justify-center",
                 "transition-all duration-200",
@@ -276,6 +348,17 @@ export function DraggableWidget({
               isVisible={isResizing} 
             />
           </>
+        )}
+
+        {/* Pinch indicator */}
+        {isPinching && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+                          bg-background/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg 
+                          border border-border pointer-events-none z-50">
+            <p className="text-sm font-medium">
+              {Math.round(currentWidth)}×{Math.round(currentHeight)}
+            </p>
+          </div>
         )}
       </div>
     </div>
