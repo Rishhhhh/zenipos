@@ -37,44 +37,12 @@ Updated `eslint.config.js` with stricter unused import detection:
 ## 2. Performance Budgets & CI/CD ✅
 
 ### Bundle Size Monitoring
-Add these scripts to `package.json`:
-
-```json
-{
-  "scripts": {
-    "test:bundle": "bundlesize",
-    "test:perf": "lighthouse http://localhost:8080 --view",
-    "prepare": "husky install"
-  },
-  "bundlesize": [
-    {
-      "path": "./dist/assets/index-*.js",
-      "maxSize": "300 KB",
-      "compression": "gzip"
-    },
-    {
-      "path": "./dist/assets/index-*.css",
-      "maxSize": "50 KB",
-      "compression": "gzip"
-    },
-    {
-      "path": "./dist/assets/react-core-*.js",
-      "maxSize": "150 KB",
-      "compression": "gzip"
-    },
-    {
-      "path": "./dist/assets/admin-*.js",
-      "maxSize": "200 KB",
-      "compression": "gzip"
-    }
-  ]
-}
-```
+Bundle size monitoring is handled automatically by GitHub Actions CI/CD pipeline (no local dependencies needed).
 
 ### GitHub Actions Workflow
 Created `.github/workflows/performance-checks.yml`:
-- **Bundle Size Checks:** Fails build if bundles exceed limits
-- **Lighthouse CI:** Automated performance audits on PR
+- **Bundle Size Checks:** Native shell commands calculate bundle sizes
+- **Lighthouse CI:** Uses `treosh/lighthouse-ci-action@v11` (no local install needed)
 - **Artifact Upload:** Bundle stats and Lighthouse reports
 
 ### Lighthouse Budgets
@@ -85,19 +53,8 @@ Created `.github/lighthouse-budget.json`:
 - Script budget: 300KB
 - CSS budget: 50KB
 
-### Pre-commit Hooks (Optional)
-Install Husky for git hooks:
-```bash
-npm install -D husky
-npx husky init
-```
-
-Create `.husky/pre-commit`:
-```bash
-#!/usr/bin/env sh
-npm run lint
-npm run build:dev
-```
+### Pre-commit Hooks
+Pre-commit hooks can be added manually by creating `.husky/pre-commit` if desired, but are not required for CI/CD pipeline to function.
 
 ---
 
@@ -157,17 +114,12 @@ CREATE TABLE performance_alerts (
 
 ---
 
-## 4. Dependencies Installed ✅
+## 4. CI/CD Pipeline Setup ✅
 
-```json
-{
-  "devDependencies": {
-    "bundlesize": "latest",
-    "lighthouse": "latest",
-    "husky": "latest"
-  }
-}
-```
+No local dependencies required! All performance checks run via GitHub Actions:
+- Bundle size analysis uses native shell commands
+- Lighthouse CI uses GitHub Actions marketplace action
+- No Python/native compilation dependencies needed
 
 ---
 
@@ -185,17 +137,17 @@ await resolveAlert(alertId);
 ```
 
 ### Check Bundle Size
+Bundle sizes are automatically checked in CI/CD pipeline. To check locally:
 ```bash
 npm run build
-npm run test:bundle
+find dist/assets -name "*.js" -o -name "*.css" | xargs ls -lh
 ```
 
 ### Run Lighthouse Audit
-```bash
-npm run build
-npm run preview &
-npm run test:perf
-```
+Lighthouse runs automatically in CI/CD. For local testing, use Chrome DevTools:
+1. Build and preview: `npm run build && npm run preview`
+2. Open Chrome DevTools → Lighthouse tab
+3. Click "Analyze page load"
 
 ### View Web Vitals
 1. Navigate to Dashboard
