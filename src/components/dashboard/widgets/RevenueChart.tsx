@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, Clock, Star } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+import { LazyAreaChart } from "@/components/charts/LazyAreaChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { RevenueChartConfig } from "@/types/widgetConfigs";
@@ -76,55 +76,14 @@ export default function RevenueChart() {
         {isLoading ? (
           <Skeleton className="w-full h-full rounded-lg" />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="hsl(var(--border))" 
-                opacity={0.3}
-              />
-              <XAxis 
-                dataKey="hour" 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `${value}`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  padding: "8px 12px",
-                }}
-                formatter={(value: number) => [`RM ${value.toFixed(2)}`, "Revenue"]}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2.5}
-                fill="url(#revenueGradient)"
-                dot={config.showDataPoints ? { fill: "hsl(var(--primary))", r: 3 } : false}
-                activeDot={{ r: 5, fill: "hsl(var(--primary))" }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <LazyAreaChart
+            data={revenueData || []}
+            dataKey="revenue"
+            xAxisKey="hour"
+            height="100%"
+            strokeColor="hsl(var(--primary))"
+            fillColor="url(#revenueGradient)"
+          />
         )}
       </div>
     </Card>
