@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
+import { channelManager } from '@/lib/realtime/channelManager';
 
 export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
 
@@ -24,31 +25,6 @@ export function useCustomerDisplaySync(displaySessionId: string) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Subscribe to display session updates
-    const channel = supabase
-      .channel(`customer-display:${displaySessionId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'customer_display_sessions',
-          filter: `session_id=eq.${displaySessionId}`,
-        },
-        (payload) => {
-          console.log('Display session updated:', payload);
-        }
-      )
-      .on('broadcast', { event: 'display-update' }, ({ payload }) => {
-        console.log('Display update received:', payload);
-        setDisplaySession(payload);
-      })
-      .subscribe((status) => {
-        setIsConnected(status === 'SUBSCRIBED');
-        console.log('Customer display subscription status:', status);
-      });
-
-    // Create or update display session in DB
     const initSession = async () => {
       const { error } = await supabase
         .from('customer_display_sessions')
@@ -61,12 +37,25 @@ export function useCustomerDisplaySync(displaySessionId: string) {
       if (error) {
         console.error('Failed to init display session:', error);
       }
+      
+      setIsConnected(true);
     };
 
     initSession();
 
+    const cleanup = channelManager.subscribe(
+      `customer-display:${displaySessionId}`,
+      (payload) => {
+        console.log('Display session updated:', payload);
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          setDisplaySession(payload.new as DisplaySession);
+        }
+      }
+    );
+
     return () => {
-      supabase.removeChannel(channel);
+      cleanup();
+      setIsConnected(false);
     };
   }, [displaySessionId]);
 

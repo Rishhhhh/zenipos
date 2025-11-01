@@ -1,4 +1,4 @@
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, memo, useMemo } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { DraggableWidget } from "@/components/dashboard/DraggableWidget";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
@@ -72,6 +72,56 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
     }
   };
 
+  const MemoizedDraggableWidget = memo(DraggableWidget, (prev, next) => {
+    return (
+      prev.id === next.id &&
+      prev.position.x === next.position.x &&
+      prev.position.y === next.position.y &&
+      prev.position.width === next.position.width &&
+      prev.position.height === next.position.height &&
+      prev.position.zIndex === next.position.zIndex &&
+      prev.position.isMinimized === next.position.isMinimized &&
+      prev.position.isMaximized === next.position.isMaximized &&
+      prev.isAnyDragging === next.isAnyDragging &&
+      prev.isDraggingThis === next.isDraggingThis
+    );
+  });
+
+  const widgetComponents = useMemo(() => {
+    return layout.widgetOrder.map((widgetId) => {
+      const widgetDef = getWidgetById(widgetId);
+      if (!widgetDef) return null;
+
+      const position = layout.widgetPositions[widgetId];
+      if (!position) return null;
+
+      const WidgetComponent = widgetDef.component;
+
+      return (
+        <MemoizedDraggableWidget
+          key={widgetId}
+          id={widgetId}
+          position={position}
+          isAnyDragging={activeDragId !== null}
+          isDraggingThis={activeDragId === widgetId}
+          onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
+          onBringToFront={() => bringToFront(widgetId)}
+          onMinimize={() => toggleMinimize(widgetId)}
+          onMaximize={() => toggleMaximize(widgetId)}
+          onConfigure={() => onConfigure(widgetId)}
+          onClose={() => removeWidget(widgetId)}
+          widgetName={widgetDef.name}
+        >
+          <Suspense fallback={<Skeleton className="h-full w-full" />}>
+            <div className="h-full w-full relative">
+              <WidgetComponent />
+            </div>
+          </Suspense>
+        </MemoizedDraggableWidget>
+      );
+    });
+  }, [layout.widgetOrder, layout.widgetPositions, activeDragId, maximizedWidget, onConfigure, updatePosition, bringToFront, toggleMinimize, toggleMaximize, removeWidget]);
+
   return (
     <DndContext
       key={viewportKey}
@@ -96,38 +146,7 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
         )}
         
         <GridOverlay />
-        {layout.widgetOrder.map((widgetId) => {
-          const widgetDef = getWidgetById(widgetId);
-          if (!widgetDef) return null;
-
-          const position = layout.widgetPositions[widgetId];
-          if (!position) return null;
-
-          const WidgetComponent = widgetDef.component;
-
-          return (
-            <DraggableWidget
-              key={widgetId}
-              id={widgetId}
-              position={position}
-              isAnyDragging={activeDragId !== null}
-              isDraggingThis={activeDragId === widgetId}
-              onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
-              onBringToFront={() => bringToFront(widgetId)}
-              onMinimize={() => toggleMinimize(widgetId)}
-              onMaximize={() => toggleMaximize(widgetId)}
-              onConfigure={() => onConfigure(widgetId)}
-              onClose={() => removeWidget(widgetId)}
-              widgetName={widgetDef.name}
-            >
-              <Suspense fallback={<Skeleton className="h-full w-full" />}>
-                <div className="h-full w-full relative">
-                  <WidgetComponent />
-                </div>
-              </Suspense>
-            </DraggableWidget>
-          );
-        })}
+        {widgetComponents}
       </div>
     </DndContext>
   );
