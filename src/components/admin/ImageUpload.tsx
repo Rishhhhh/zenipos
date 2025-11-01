@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { uploadMenuImage, deleteMenuImage } from '@/lib/storage/imageUpload';
+import { uploadMenuImage, deleteMenuImage, ImageUploadResult } from '@/lib/storage/imageUpload';
 import { useToast } from '@/hooks/use-toast';
 
 interface ImageUploadProps {
   value?: string;
-  onUpload: (url: string) => void;
+  onUpload: (data: ImageUploadResult) => void;
   onDelete?: () => void;
   maxSizeMB?: number;
 }
@@ -46,11 +46,11 @@ export function ImageUpload({
     try {
       // Use temporary user ID until auth is implemented
       const userId = 'temp-user';
-      const url = await uploadMenuImage(file, userId);
-      onUpload(url);
+      const result = await uploadMenuImage(file, userId);
+      onUpload(result);
       toast({
         title: 'Image uploaded',
-        description: 'Your image has been uploaded successfully',
+        description: 'Multi-variant images generated successfully',
       });
     } catch (error) {
       console.error('Upload error:', error);

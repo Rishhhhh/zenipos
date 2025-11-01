@@ -1783,7 +1783,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_srcset_jpeg: string | null
+          image_srcset_webp: string | null
           image_url: string | null
+          image_variants: Json | null
           in_stock: boolean | null
           name: string
           prep_time_minutes: number | null
@@ -1805,7 +1808,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_srcset_jpeg?: string | null
+          image_srcset_webp?: string | null
           image_url?: string | null
+          image_variants?: Json | null
           in_stock?: boolean | null
           name: string
           prep_time_minutes?: number | null
@@ -1827,7 +1833,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_srcset_jpeg?: string | null
+          image_srcset_webp?: string | null
           image_url?: string | null
+          image_variants?: Json | null
           in_stock?: boolean | null
           name?: string
           prep_time_minutes?: number | null

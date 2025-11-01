@@ -30,6 +30,16 @@ export default defineConfig(({ mode }) => ({
           'tanstack': ['@tanstack/react-query'],
           'chart': ['recharts'],
           'supabase': ['@supabase/supabase-js'],
+          'admin': [
+            './src/pages/admin',
+            './src/components/admin',
+          ],
+          'manager-features': [
+            './src/pages/KDS.tsx',
+            './src/pages/ExpoStation.tsx',
+            './src/pages/StationKDS.tsx',
+            './src/pages/ManagerDashboard.tsx',
+          ],
         }
       }
     },

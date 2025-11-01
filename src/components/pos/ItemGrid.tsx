@@ -87,14 +87,29 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
               }}
               title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
             >
-            {/* Image */}
+            {/* Responsive Image */}
             {item.image_url ? (
-              <img
-                src={item.image_url}
-                alt={item.name}
-                className="w-full h-24 object-cover"
-                loading="lazy"
-              />
+              <picture>
+                <source
+                  type="image/webp"
+                  srcSet={(item as any).image_srcset_webp || undefined}
+                  sizes="(max-width: 768px) 50vw, 200px"
+                />
+                <source
+                  type="image/jpeg"
+                  srcSet={(item as any).image_srcset_jpeg || undefined}
+                  sizes="(max-width: 768px) 50vw, 200px"
+                />
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="w-full h-24 object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width="200"
+                  height="96"
+                />
+              </picture>
             ) : (
               <div className="w-full h-24 bg-muted flex items-center justify-center">
                 <ImageIcon className="h-8 w-8 text-muted-foreground" />
