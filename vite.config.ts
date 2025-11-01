@@ -30,9 +30,6 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('@tanstack/react-query')) {
               return 'tanstack';
             }
-            if (id.includes('recharts')) {
-              return 'chart';
-            }
             if (id.includes('@supabase/supabase-js')) {
               return 'supabase';
             }

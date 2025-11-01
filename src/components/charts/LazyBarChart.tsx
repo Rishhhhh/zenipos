@@ -1,28 +1,6 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Lazy load recharts components
-const LazyRechartsBarChart = lazy(() =>
-  import("recharts").then((module) => ({ default: module.BarChart }))
-);
-const LazyRechartsBar = lazy(() =>
-  import("recharts").then((module) => ({ default: module.Bar }))
-);
-const LazyRechartsXAxis = lazy(() =>
-  import("recharts").then((module) => ({ default: module.XAxis }))
-);
-const LazyRechartsYAxis = lazy(() =>
-  import("recharts").then((module) => ({ default: module.YAxis }))
-);
-const LazyRechartsTooltip = lazy(() =>
-  import("recharts").then((module) => ({ default: module.Tooltip }))
-);
-const LazyRechartsCartesianGrid = lazy(() =>
-  import("recharts").then((module) => ({ default: module.CartesianGrid }))
-);
-const LazyRechartsResponsiveContainer = lazy(() =>
-  import("recharts").then((module) => ({ default: module.ResponsiveContainer }))
-);
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 
 interface LazyBarChartProps {
   data: any[];
@@ -43,32 +21,32 @@ export function LazyBarChart({
 }: LazyBarChartProps) {
   return (
     <Suspense fallback={<Skeleton className="w-full" style={{ height }} />}>
-      <LazyRechartsResponsiveContainer width="100%" height={height} className={className}>
-        <LazyRechartsBarChart data={data}>
-          <LazyRechartsCartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <LazyRechartsXAxis
+      <ResponsiveContainer width="100%" height={height} className={className}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis
             dataKey={xAxisKey}
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
-          <LazyRechartsYAxis
+          <YAxis
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
-          <LazyRechartsTooltip
+          <Tooltip
             contentStyle={{
               backgroundColor: "hsl(var(--card))",
               border: "1px solid hsl(var(--border))",
               borderRadius: "8px",
             }}
           />
-          <LazyRechartsBar dataKey={dataKey} fill={fillColor} radius={[8, 8, 0, 0]} />
-        </LazyRechartsBarChart>
-      </LazyRechartsResponsiveContainer>
+          <Bar dataKey={dataKey} fill={fillColor} radius={[8, 8, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
     </Suspense>
   );
 }
