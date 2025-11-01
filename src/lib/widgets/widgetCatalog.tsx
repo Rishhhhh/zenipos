@@ -10,6 +10,7 @@ import {
   UserPlus,
   Clock,
   Award,
+  Activity,
 } from "lucide-react";
 import { lazy } from "react";
 
@@ -25,6 +26,7 @@ const ActiveShiftsWidget = lazy(() => import("@/components/dashboard/widgets/Act
 const LaborCostWidget = lazy(() => import("@/components/dashboard/widgets/LaborCostWidget").then(m => ({ default: m.LaborCostWidget })));
 const EightySixWidget = lazy(() => import("@/components/dashboard/widgets/EightySixWidget").then(m => ({ default: m.EightySixWidget })));
 const PendingModsWidget = lazy(() => import("@/components/dashboard/widgets/PendingModsWidget").then(m => ({ default: m.PendingModsWidget })));
+const WebVitalsWidget = lazy(() => import("@/components/dashboard/widgets/WebVitalsWidget").then(m => ({ default: m.WebVitalsWidget })));
 
 export interface WidgetDefinition {
   id: string;
@@ -239,6 +241,25 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'financial',
+        hasCompactMode: false,
+      },
+    },
+  ],
+  performance: [
+    {
+      id: "web-vitals",
+      component: WebVitalsWidget,
+      name: "Core Web Vitals",
+      description: "Monitor LCP, FID, CLS, and TTI performance metrics",
+      icon: Activity,
+      roles: ["admin"],
+      category: "performance",
+      defaultSize: { cols: 5, rows: 5 },
+      minSize: { width: 300, height: 300 },
+      maxSize: { width: 540, height: 540 },
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
+        dataType: 'status-list',
         hasCompactMode: false,
       },
     },

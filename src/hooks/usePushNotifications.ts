@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getUserAgent } from '@/lib/utils/deviceDetection';
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
@@ -130,7 +131,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 function getDeviceType(): string {
-  const ua = navigator.userAgent;
+  const ua = getUserAgent();
   if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
     return 'tablet';
   }

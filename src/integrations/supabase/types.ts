@@ -2556,6 +2556,42 @@ export type Database = {
           },
         ]
       }
+      performance_alerts: {
+        Row: {
+          created_at: string | null
+          id: string
+          measured_value: number
+          metric_type: string
+          page_path: string
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string
+          threshold_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          measured_value: number
+          metric_type: string
+          page_path: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity: string
+          threshold_value: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          measured_value?: number
+          metric_type?: string
+          page_path?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          threshold_value?: number
+        }
+        Relationships: []
+      }
       performance_metrics: {
         Row: {
           browser: string | null
