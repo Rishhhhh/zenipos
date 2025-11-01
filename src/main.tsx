@@ -2,12 +2,39 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initSentry } from "./lib/monitoring/sentry";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Initialize Sentry before rendering app
 initSentry();
 
-// Render app first
-createRoot(document.getElementById("root")!).render(<App />);
+// Clear old service worker and caches
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => {
+      registration.unregister();
+      console.log('🔄 Cleared old service worker');
+    });
+  });
+  
+  caches.keys().then(keys => {
+    keys.forEach(key => caches.delete(key));
+    console.log('🔄 Cleared all caches');
+  });
+  
+  // Re-register service worker after clearing
+  setTimeout(() => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('✅ Service worker registered'))
+      .catch(err => console.error('❌ SW registration failed:', err));
+  }, 1000);
+}
+
+// Render app with error boundary
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
 
 // Initialize offline & payment systems after React has loaded
 setTimeout(() => {

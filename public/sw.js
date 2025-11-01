@@ -1,7 +1,8 @@
-// ZeniPOS Service Worker v3 - Advanced Caching & Offline Support
-const CACHE_NAME = 'zenipos-v3';
-const IMAGE_CACHE = 'zenipos-images-v2';
-const API_CACHE = 'zenipos-api-v2';
+// ZeniPOS Service Worker v1.0.1 - Advanced Caching & Offline Support
+const SW_VERSION = '1.0.1';
+const CACHE_NAME = `zenipos-v${SW_VERSION}`;
+const IMAGE_CACHE = 'zenipos-images-v3';
+const API_CACHE = 'zenipos-api-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -95,7 +96,7 @@ self.addEventListener('fetch', (event) => {
       caches.open(IMAGE_CACHE).then((cache) => {
         return cache.match(request).then((cachedResponse) => {
           const fetchPromise = fetch(request).then((networkResponse) => {
-            if (networkResponse.ok) {
+            if (networkResponse.ok && request.method === 'GET') {
               cache.put(request, networkResponse.clone());
             }
             return networkResponse;
@@ -113,7 +114,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         return cachedResponse || fetch(request).then((response) => {
-          if (response.ok) {
+          if (response.ok && request.method === 'GET') {
             return caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, response.clone());
               return response;
@@ -130,7 +131,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok) {
+        if (response.ok && request.method === 'GET') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseToCache);
@@ -190,7 +191,9 @@ async function staleWhileRevalidate(request, tableName) {
         }
       });
       
-      cache.put(request, responseWithMeta);
+      if (request.method === 'GET') {
+        cache.put(request, responseWithMeta);
+      }
     }
     return response;
   }).catch(() => cached);
@@ -203,7 +206,7 @@ async function staleWhileRevalidate(request, tableName) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.method === 'GET') {
       const cache = await caches.open(API_CACHE);
       cache.put(request, response.clone());
     }
@@ -237,7 +240,9 @@ async function cacheFirst(request) {
     
     // Stale cache, refresh in background
     fetch(request).then(response => {
-      if (response.ok) cache.put(request, response);
+      if (response.ok && request.method === 'GET') {
+        cache.put(request, response);
+      }
     });
     
     return cached;
@@ -245,7 +250,7 @@ async function cacheFirst(request) {
   
   // No cache, fetch from network
   const response = await fetch(request);
-  if (response.ok) {
+  if (response.ok && request.method === 'GET') {
     cache.put(request, response.clone());
   }
   return response;
