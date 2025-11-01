@@ -13,7 +13,7 @@ import { NFCCardScanner } from '@/components/nfc/NFCCardScanner';
 interface TableSelectionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (tableId: string | null, orderType: 'dine_in' | 'takeaway') => void;
+  onSelect: (tableId: string | null, orderType: 'dine_in' | 'takeaway', nfcCardId?: string | null) => void;
 }
 
 export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelectionModalProps) {
@@ -141,8 +141,9 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
 
         <TabsContent value="nfc" className="mt-4">
           <NFCCardScanner
-            onScanSuccess={(tableId) => {
-              onSelect(tableId, 'dine_in');
+            onScanSuccess={(tableId, nfcCardId) => {
+              onSelect(tableId, 'dine_in', nfcCardId);
+              onOpenChange(false);
             }}
             onCancel={() => onOpenChange(false)}
           />

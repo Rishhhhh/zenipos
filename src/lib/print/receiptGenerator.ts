@@ -3,7 +3,7 @@ import { Receipt, KitchenTicket } from './PrintService';
 /**
  * Generate 58mm customer receipt HTML
  */
-export function generate58mmReceipt(receipt: Receipt, options?: {
+export function generate58mmReceipt(receipt: Receipt & { einvoice_enabled?: boolean }, options?: {
   restaurantName?: string;
   address?: string;
   cashier?: string;
@@ -46,10 +46,19 @@ export function generate58mmReceipt(receipt: Receipt, options?: {
       
       <p style="margin: 5px 0;">Payment: ${receipt.payment_method || 'Cash'}</p>
       
+      ${receipt.einvoice_enabled ? `
+        <hr style="border: 1px dashed #000;">
+        <div style="background: #f0f0f0; padding: 8px; margin: 5px 0; border-radius: 4px;">
+          <p style="margin: 3px 0; font-weight: bold; font-size: 11px;">📄 e-Invoice: Pending</p>
+          <p style="margin: 3px 0; font-size: 10px;">MyInvois submission in progress</p>
+          <p style="margin: 3px 0; font-size: 10px;">QR code will be available shortly</p>
+        </div>
+      ` : ''}
+      
       <hr style="border: 1px dashed #000;">
       
       <p style="text-align: center; margin: 10px 0;">Thank you!</p>
-      <p style="text-align: center; font-size: 10px;">Powered by MyPOS</p>
+      <p style="text-align: center; font-size: 10px;">Powered by ZeniPOS</p>
     </div>
   `;
   

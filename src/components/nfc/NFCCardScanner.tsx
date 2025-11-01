@@ -6,13 +6,14 @@ import { nfcCardManager } from "@/lib/nfc/NFCCardManager";
 import { toast } from "sonner";
 
 interface NFCCardScannerProps {
-  onScanSuccess: (tableId: string) => void;
+  onScanSuccess: (tableId: string, nfcCardId?: string) => void;
   onCancel?: () => void;
 }
 
 export const NFCCardScanner = ({ onScanSuccess, onCancel }: NFCCardScannerProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
+  const [scannedCardId, setScannedCardId] = useState<string | null>(null);
 
   const handleScan = async () => {
     setIsScanning(true);
@@ -23,8 +24,9 @@ export const NFCCardScanner = ({ onScanSuccess, onCancel }: NFCCardScannerProps)
 
       if (result.isValid) {
         setScanStatus('success');
+        setScannedCardId(result.cardId || null);
         setTimeout(() => {
-          onScanSuccess(result.tableId);
+          onScanSuccess(result.tableId, result.cardId);
         }, 500);
       } else {
         setScanStatus('error');

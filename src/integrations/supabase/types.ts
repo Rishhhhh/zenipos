@@ -2300,8 +2300,10 @@ export type Database = {
           created_by: string | null
           customer_id: string | null
           discount: number | null
+          einvoice_enabled: boolean | null
           id: string
           metadata: Json | null
+          nfc_card_id: string | null
           order_type: Database["public"]["Enums"]["order_type"] | null
           recall_approved: boolean | null
           recall_requested: boolean | null
@@ -2322,8 +2324,10 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           discount?: number | null
+          einvoice_enabled?: boolean | null
           id?: string
           metadata?: Json | null
+          nfc_card_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
@@ -2344,8 +2348,10 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           discount?: number | null
+          einvoice_enabled?: boolean | null
           id?: string
           metadata?: Json | null
+          nfc_card_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
@@ -2360,6 +2366,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_orders_nfc_card"
+            columns: ["nfc_card_id"]
+            isOneToOne: false
+            referencedRelation: "nfc_cards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_branch_id_fkey"
             columns: ["branch_id"]
