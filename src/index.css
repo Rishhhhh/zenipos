@@ -223,10 +223,31 @@ macOS-inspired black/red/white theme with glass morphism
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
 
-  /* Smooth transitions for theme changes */
-  * {
-    @apply transition-colors duration-200;
-  }
+/* Selective transitions for theme changes (only where visible) */
+body, 
+.glass, .glass-card, .glass-dock,
+[class*="bg-"], [class*="text-"], [class*="border-"],
+button, a, input, textarea, select,
+.card, .badge, .alert {
+  transition: background-color 0.15s ease, 
+              color 0.15s ease, 
+              border-color 0.15s ease;
+}
+
+/* Explicitly disable transitions for layout elements */
+.grid, .flex, [class*="absolute"], [class*="fixed"] {
+  transition: none !important;
+}
+
+/* GPU acceleration for theme-sensitive elements */
+.glass, .glass-card, .card, button, .badge {
+  will-change: background-color, color;
+}
+
+/* Remove will-change after theme settles (via JS) */
+.theme-stable {
+  will-change: auto;
+}
 
   /* Login screen animations */
   @keyframes login-card-enter {
@@ -416,22 +437,48 @@ macOS-inspired black/red/white theme with glass morphism
      =================================== */
 
   /* Touch device optimizations */
+  /* Touch optimization for coarse pointers (touchscreens) */
   @media (pointer: coarse) {
-    /* Minimum touch targets for all interactive elements */
-    button, a, input[type="checkbox"], input[type="radio"], [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
+    /* Minimum touch target size for all interactive elements */
+    button, a, [role="button"], input, select, textarea {
+      min-height: 44px !important;
     }
-    
-    /* Prevent iOS zoom on input focus */
-    body {
-      font-size: 16px;
+
+    /* Prevent font size zoom on iOS input focus */
+    input, select, textarea {
+      font-size: 16px !important;
     }
-    
-    input, textarea, select {
-      font-size: 16px;
+
+    /* Dashboard widget touch enhancements */
+    .widget-resize-handle {
+      min-width: 56px !important;
+      min-height: 56px !important;
+      bottom: 0.5rem !important;
+      right: 0.5rem !important;
     }
-    
+
+    .widget-header button {
+      min-width: 48px !important;
+      min-height: 48px !important;
+    }
+
+    /* Prevent accidental drags on touch */
+    .widget-draggable {
+      touch-action: none;
+    }
+
+    /* Larger hit areas for all controls */
+    [data-touch-target] {
+      min-width: 48px !important;
+      min-height: 48px !important;
+    }
+
+    /* POS and KDS button enhancements */
+    .pos-item-button, .kds-action-button {
+      min-height: 56px !important;
+      padding: 12px !important;
+    }
+
     /* Increase tap areas */
     .tap-target {
       padding: 12px;
