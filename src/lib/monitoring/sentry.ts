@@ -82,6 +82,9 @@ async function logPerformanceMetric(metricType: string, duration: number, metada
   const budget = getPerformanceBudget(metricType);
   
   try {
+    // Extract only safe fields, filter out 'component' and other unsafe fields
+    const { component, ...safeMetadata } = metadata || {};
+    
     const { error } = await supabase
       .from('performance_metrics')
       .insert({
@@ -92,7 +95,6 @@ async function logPerformanceMetric(metricType: string, duration: number, metada
         device_type: getDeviceType(),
         browser: navigator.userAgent,
         connection_type: getConnectionType(),
-        ...metadata
       });
 
     if (error) {

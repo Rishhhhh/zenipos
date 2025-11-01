@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
 
@@ -76,8 +76,10 @@ export function useCustomerDisplaySync(displaySessionId: string) {
 // Hook for POS to broadcast to customer display
 export function useBroadcastToCustomerDisplay() {
   const cart = useCartStore();
+  const debounceTimerRef = useRef<NodeJS.Timeout>();
 
-  const broadcastUpdate = async (displaySessionId: string, update: Partial<DisplaySession>) => {
+  // Memoize broadcast function to prevent re-creation
+  const broadcastUpdate = useCallback(async (displaySessionId: string, update: Partial<DisplaySession>) => {
     const channel = supabase.channel(`customer-display:${displaySessionId}`);
     
     await channel.subscribe();
@@ -97,43 +99,67 @@ export function useBroadcastToCustomerDisplay() {
         mode: update.mode || 'ordering',
         last_activity: new Date().toISOString(),
       });
-  };
+      
+    // Cleanup channel after broadcast
+    setTimeout(() => {
+      supabase.removeChannel(channel);
+    }, 1000);
+  }, [cart.sessionId]);
 
-  const broadcastOrderUpdate = (displaySessionId: string) => {
-    broadcastUpdate(displaySessionId, {
-      mode: 'ordering',
-      posSessionId: cart.sessionId,
-      cartItems: cart.items,
-      subtotal: cart.getSubtotal(),
-      tax: cart.getTax(),
-      total: cart.getTotal(),
-      discount: cart.getDiscount(),
-    });
-  };
+  // Debounced version of broadcastOrderUpdate (300ms)
+  const broadcastOrderUpdate = useCallback((displaySessionId: string) => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Wait 300ms before broadcasting
+    debounceTimerRef.current = setTimeout(() => {
+      broadcastUpdate(displaySessionId, {
+        mode: 'ordering',
+        posSessionId: cart.sessionId,
+        cartItems: cart.items,
+        subtotal: cart.getSubtotal(),
+        tax: cart.getTax(),
+        total: cart.getTotal(),
+        discount: cart.getDiscount(),
+      });
+    }, 300);
+  }, [cart.sessionId, cart.items, cart.getSubtotal, cart.getTax, cart.getTotal, cart.getDiscount, broadcastUpdate]);
 
-  const broadcastPayment = (displaySessionId: string, qrCodeUrl?: string) => {
+  // Immediate broadcasts (not debounced - one-time actions)
+  const broadcastPayment = useCallback((displaySessionId: string, qrCodeUrl?: string) => {
     broadcastUpdate(displaySessionId, {
       mode: 'payment',
       posSessionId: cart.sessionId,
       total: cart.getTotal(),
       paymentQR: qrCodeUrl,
     });
-  };
+  }, [cart.sessionId, cart.getTotal, broadcastUpdate]);
 
-  const broadcastComplete = (displaySessionId: string, change?: number) => {
+  const broadcastComplete = useCallback((displaySessionId: string, change?: number) => {
     broadcastUpdate(displaySessionId, {
       mode: 'complete',
       posSessionId: cart.sessionId,
       change,
     });
-  };
+  }, [cart.sessionId, broadcastUpdate]);
 
-  const broadcastIdle = (displaySessionId: string) => {
+  const broadcastIdle = useCallback((displaySessionId: string) => {
     broadcastUpdate(displaySessionId, {
       mode: 'idle',
       posSessionId: null,
     });
-  };
+  }, [broadcastUpdate]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return {
     broadcastOrderUpdate,

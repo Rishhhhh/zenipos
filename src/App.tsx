@@ -121,8 +121,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000, // 1s - aggressive caching for <200ms target
+      staleTime: 5 * 60 * 1000, // 5 minutes - menu data changes rarely
       refetchOnWindowFocus: false,
+      gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
     },
   },
 });
