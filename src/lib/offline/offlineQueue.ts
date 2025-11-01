@@ -5,7 +5,8 @@ import { RetryStrategy } from './retryStrategy';
 
 interface QueuedAction {
   id: string;
-  type: 'order' | 'payment' | 'update';
+  type: 'order' | 'payment' | 'update' | 'analytics' | 'audit';
+  priority: 'critical' | 'high' | 'low';
   data: any;
   timestamp: number;
   retries: number;
@@ -41,10 +42,11 @@ export class OfflineQueue {
     }
   }
 
-  addToQueue(type: QueuedAction['type'], data: any) {
+  addToQueue(type: QueuedAction['type'], data: any, priority: QueuedAction['priority'] = 'high') {
     const action: QueuedAction = {
       id: `${Date.now()}-${Math.random()}`,
       type,
+      priority,
       data,
       timestamp: Date.now(),
       retries: 0,
@@ -53,23 +55,42 @@ export class OfflineQueue {
     this.queue.push(action);
     this.saveQueue();
     
-    console.log('Added to offline queue:', action);
+    console.log(`[Queue] Added ${priority} priority ${type}:`, action.id);
+    
+    // Process critical actions immediately
+    if (priority === 'critical' && navigator.onLine) {
+      this.processAction(action).then(() => {
+        this.queue = this.queue.filter(a => a.id !== action.id);
+        this.saveQueue();
+      }).catch(err => {
+        console.error('[Queue] Failed to process critical action:', err);
+      });
+    }
   }
 
   async processQueue() {
     if (!navigator.onLine) {
-      console.log('Still offline, skipping queue processing');
+      console.log('[Queue] Still offline, skipping queue processing');
       return;
     }
 
-    // Process IndexedDB orders first
+    // Sort by priority: critical > high > low
+    const priorityOrder = { critical: 0, high: 1, low: 2 };
+    const sortedQueue = [...this.queue].sort((a, b) => 
+      priorityOrder[a.priority] - priorityOrder[b.priority]
+    );
+
+    // Process critical and high priority immediately
+    const criticalAndHigh = sortedQueue.filter(a => a.priority !== 'low');
+    const lowPriority = sortedQueue.filter(a => a.priority === 'low');
+
+    // Process IndexedDB orders first (critical)
     const unsyncedOrders = await getUnsyncedOrders();
     console.log(`[Queue] Found ${unsyncedOrders.length} unsynced orders in IndexedDB`);
 
     for (const order of unsyncedOrders) {
       try {
         await this.retryStrategy.retryWithBackoff(async () => {
-          // Sync order to Supabase
           await this.syncOrderToSupabase(order);
           await markOrderSynced(order.id);
         });
@@ -78,23 +99,21 @@ export class OfflineQueue {
       }
     }
 
-    // Process localStorage queue
-    const toProcess = [...this.queue];
+    // Process critical/high priority synchronously
     const failed: QueuedAction[] = [];
-
-    for (const action of toProcess) {
+    for (const action of criticalAndHigh) {
       try {
         await this.retryStrategy.retryWithBackoff(async () => {
           await this.processAction(action);
         });
-        console.log('Successfully processed:', action);
+        console.log('[Queue] Processed:', action.type, action.id);
         this.queue = this.queue.filter(a => a.id !== action.id);
       } catch (error) {
-        console.error('Failed to process action:', action, error);
+        console.error('[Queue] Failed to process:', action.type, error);
         action.retries++;
         
         if (action.retries >= MAX_RETRIES) {
-          console.error('Max retries reached for action:', action);
+          console.error('[Queue] Max retries reached:', action.id);
           this.queue = this.queue.filter(a => a.id !== action.id);
         } else {
           failed.push(action);
@@ -102,35 +121,125 @@ export class OfflineQueue {
       }
     }
 
-    this.queue = failed;
+    // Process low priority in background (non-blocking)
+    if (lowPriority.length > 0) {
+      this.processLowPriorityBackground(lowPriority);
+    }
+
+    this.queue = [...failed, ...lowPriority];
     this.saveQueue();
 
     return {
-      processed: toProcess.length + unsyncedOrders.length - failed.length,
+      processed: criticalAndHigh.length + unsyncedOrders.length - failed.length,
       failed: failed.length,
+      background: lowPriority.length,
     };
+  }
+
+  private processLowPriorityBackground(actions: QueuedAction[]) {
+    console.log(`[Queue] Processing ${actions.length} low-priority items in background`);
+    
+    const processBatch = async () => {
+      for (const action of actions) {
+        try {
+          await this.processAction(action);
+          this.queue = this.queue.filter(a => a.id !== action.id);
+          this.saveQueue();
+          console.log('[Queue] Background processed:', action.type, action.id);
+        } catch (error) {
+          console.error('[Queue] Background process failed:', action.type, error);
+          action.retries++;
+          if (action.retries >= MAX_RETRIES) {
+            this.queue = this.queue.filter(a => a.id !== action.id);
+            this.saveQueue();
+          }
+        }
+        
+        // Yield to main thread between actions
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    };
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => processBatch(), { timeout: 5000 });
+    } else {
+      setTimeout(() => processBatch(), 100);
+    }
   }
 
   private async syncOrderToSupabase(order: OfflineOrder) {
     console.log('[Queue] Syncing order to Supabase:', order.id);
-    // Implementation will be done when integrating with actual Supabase sync
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    // Insert order - using any cast to bypass strict type checking
+    const insertedOrder = await (supabase.from('orders') as any).insert({
+      order_type: order.type,
+      status: order.status,
+      subtotal: order.subtotal,
+      tax: order.tax,
+      total: order.total,
+    }).select().single();
+    
+    if (insertedOrder.error) throw insertedOrder.error;
+    
+    // Insert order items
+    if (order.items && order.items.length > 0 && insertedOrder.data) {
+      const itemsResult = await (supabase.from('order_items') as any).insert(
+        order.items.map((item: any) => ({
+          order_id: insertedOrder.data.id,
+          menu_item_id: item.menuItemId || item.menu_item_id,
+          quantity: item.quantity,
+          unit_price: item.price,
+          notes: item.notes,
+        }))
+      );
+      
+      if (itemsResult.error) throw itemsResult.error;
+    }
   }
 
   private async processAction(action: QueuedAction) {
-    // This would integrate with your actual sync logic
-    // For now, just a placeholder
+    const { supabase } = await import('@/integrations/supabase/client');
+    
     switch (action.type) {
       case 'order':
         // Sync order to Supabase
-        console.log('Syncing order:', action.data);
+        const { error: orderError } = await supabase
+          .from('orders')
+          .insert(action.data);
+        if (orderError) throw orderError;
         break;
+        
       case 'payment':
         // Sync payment to Supabase
-        console.log('Syncing payment:', action.data);
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert(action.data);
+        if (paymentError) throw paymentError;
         break;
+        
       case 'update':
         // Sync update to Supabase
-        console.log('Syncing update:', action.data);
+        const { error: updateError } = await supabase
+          .from(action.data.table)
+          .update(action.data.values)
+          .eq('id', action.data.id);
+        if (updateError) throw updateError;
+        break;
+        
+      case 'analytics':
+      case 'audit':
+        // Low-priority background sync
+        const { error: logError } = await supabase
+          .from('audit_log')
+          .insert({
+            action: action.type,
+            entity: action.data.entity,
+            entity_id: action.data.entity_id,
+            diff: action.data.diff,
+          });
+        if (logError) throw logError;
         break;
     }
   }
