@@ -44,11 +44,12 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
     case 'quick-pos':
       return {
         ...baseConfig,
+        displayDensity: 'full',
         itemsPerRow: 3,
         showImages: true,
         quickAddMode: true,
         defaultCategoryId: undefined,
-        cartPosition: 'bottom',
+        cartPosition: 'side',
       } as QuickPOSConfig;
 
     case 'sales':

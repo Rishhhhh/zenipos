@@ -17,7 +17,8 @@ export interface SalesWidgetConfig extends BaseWidgetConfig {
 }
 
 export interface QuickPOSConfig extends BaseWidgetConfig {
-  itemsPerRow: 2 | 3 | 4;
+  displayDensity: 'compact' | 'full';
+  itemsPerRow: 2 | 3;
   showImages: boolean;
   quickAddMode: boolean;
   defaultCategoryId?: string;
