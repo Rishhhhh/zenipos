@@ -14,7 +14,6 @@ export interface SalesWidgetConfig extends BaseWidgetConfig {
   goalTracking: { enabled: boolean; dailyTarget: number };
   showSparklines: boolean;
   showTrends: boolean;
-  showTrendFooter: boolean;
 }
 
 export interface QuickPOSConfig extends BaseWidgetConfig {
@@ -47,7 +46,6 @@ export interface LowStockConfig extends BaseWidgetConfig {
   sortBy: 'stockLevel' | 'alphabetical' | 'lastUpdated';
   showSupplier: boolean;
   autoReorder: boolean;
-  maxItems: number;
 }
 
 export interface ActiveShiftsConfig extends BaseWidgetConfig {
@@ -73,9 +71,4 @@ export interface ActiveOrdersConfig extends BaseWidgetConfig {
   alertThresholdMinutes: number;
   viewMode: 'list' | 'kanban';
   compactMode: boolean;
-}
-
-export interface EightySixConfig extends BaseWidgetConfig {
-  maxItems: number;
-  branchId?: string;
 }

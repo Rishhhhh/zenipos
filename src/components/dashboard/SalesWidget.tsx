@@ -70,20 +70,20 @@ export function SalesWidget() {
   });
 
   return (
-    <Card className="glass-card p-3 w-[360px] h-[300px] flex flex-col">
+    <Card className="glass-card p-5 min-h-[300px] min-w-[400px] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">Today's Sales</h3>
+          <DollarSign className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-lg">Today's Sales</h3>
         </div>
         <Button
           onClick={() => refetch()}
           variant="ghost"
           size="sm"
-          className="h-7 w-7 p-0"
+          className="h-8 w-8 p-0"
         >
-          <RefreshCw className="h-3 w-3" />
+          <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
 
@@ -178,14 +178,14 @@ export function SalesWidget() {
       </div>
 
       {/* Trend Indicators */}
-      {config.showTrendFooter && todayStats && (
-        <div className="mt-3 pt-3 border-t border-border/50">
-          <div className="grid grid-cols-2 gap-3 text-xs">
+      {todayStats && (
+        <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               {todayStats.revenueTrend >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-success" />
+                <TrendingUp className="h-4 w-4 text-success" />
               ) : (
-                <TrendingDown className="h-3 w-3 text-danger" />
+                <TrendingDown className="h-4 w-4 text-danger" />
               )}
               <span className="text-muted-foreground">
                 Revenue {todayStats.revenueTrend >= 0 ? "up" : "down"}{" "}
@@ -194,9 +194,9 @@ export function SalesWidget() {
             </div>
             <div className="flex items-center gap-2">
               {todayStats.orderTrend >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-success" />
+                <TrendingUp className="h-4 w-4 text-success" />
               ) : (
-                <TrendingDown className="h-3 w-3 text-danger" />
+                <TrendingDown className="h-4 w-4 text-danger" />
               )}
               <span className="text-muted-foreground">
                 Orders {todayStats.orderTrend >= 0 ? "up" : "down"}{" "}

@@ -10,8 +10,7 @@ import {
   LowStockConfig,
   ActiveShiftsConfig,
   LoyaltyStatsConfig,
-  ActiveOrdersConfig,
-  EightySixConfig
+  ActiveOrdersConfig
 } from "@/types/widgetConfigs";
 
 export interface WidgetConfig extends BaseWidgetConfig {}
@@ -60,7 +59,6 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         goalTracking: { enabled: false, dailyTarget: 0 },
         showSparklines: true,
         showTrends: true,
-        showTrendFooter: true,
       } as SalesWidgetConfig;
 
     case 'revenue-chart':
@@ -90,7 +88,6 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         sortBy: 'stockLevel',
         showSupplier: true,
         autoReorder: false,
-        maxItems: 3,
       } as LowStockConfig;
 
     case 'active-shifts':
@@ -123,12 +120,6 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         viewMode: 'list',
         compactMode: false,
       } as ActiveOrdersConfig;
-
-    case 'eighty-six':
-      return {
-        ...baseConfig,
-        maxItems: 3,
-      } as EightySixConfig;
 
     default:
       return baseConfig;

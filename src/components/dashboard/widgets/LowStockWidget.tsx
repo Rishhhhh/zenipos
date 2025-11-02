@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, ArrowRight, PackageX } from "lucide-react";
+import { AlertTriangle, ArrowRight, PackageX, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LowStockConfig } from "@/types/widgetConfigs";
+import { Progress } from "@/components/ui/progress";
 
 export function LowStockWidget() {
   const navigate = useNavigate();
   const { config } = useWidgetConfig<LowStockConfig>('low-stock');
-  const maxItems = config.maxItems || 3;
 
   const { data: lowStockItems, isLoading } = useQuery({
     queryKey: ["low-stock-items"],
@@ -29,78 +29,122 @@ export function LowStockWidget() {
       // Filter items where current_qty <= reorder_point
       return data?.filter(item => 
         Number(item.current_qty) <= Number(item.reorder_point)
-      ).slice(0, maxItems);
+      ).slice(0, 5);
     },
     refetchInterval: 2 * 60 * 1000, // Refresh every 2 minutes
   });
 
-  const getStockBadge = (current: number, reorder: number) => {
+  const getStockLevel = (current: number, reorder: number) => {
     const percentage = (current / reorder) * 100;
-    if (percentage <= 10) return { label: "Critical", variant: "destructive" as const };
-    if (percentage <= 30) return { label: "Low", variant: "outline" as const };
-    return { label: "OK", variant: "secondary" as const };
+    if (percentage <= 10) return { color: "text-destructive", bg: "bg-destructive/20", level: "Critical" };
+    if (percentage <= 30) return { color: "text-warning", bg: "bg-warning/20", level: "Low" };
+    return { color: "text-success", bg: "bg-success/20", level: "OK" };
   };
 
   return (
-    <Card className="glass-card p-3 w-[240px] h-[240px] flex flex-col">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <AlertTriangle className="h-4 w-4 text-warning" />
-          <h3 className="font-semibold text-xs">Low Stock</h3>
+    <Card className="glass-card p-5 h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-warning" />
+          <h3 className="font-semibold text-lg">Low Stock Alert</h3>
         </div>
         {lowStockItems && lowStockItems.length > 0 && (
-          <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30 h-5 text-[10px] px-1.5">
-            {lowStockItems.length}
+          <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">
+            {lowStockItems.length} items
           </Badge>
         )}
       </div>
 
       <div className={cn(
-        "flex-1 min-h-0",
+        "flex-1 min-h-0 mb-3",
         lowStockItems && lowStockItems.length > 0 
-          ? "space-y-1.5 overflow-y-auto" 
+          ? "overflow-y-auto space-y-2.5" 
           : "flex items-center justify-center"
       )}>
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-md" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))
         ) : lowStockItems && lowStockItems.length > 0 ? (
           lowStockItems.map((item) => {
-            const stockBadge = getStockBadge(Number(item.current_qty), Number(item.reorder_point));
+            const stockInfo = getStockLevel(Number(item.current_qty), Number(item.reorder_point));
+            const percentage = Math.min(100, (Number(item.current_qty) / Number(item.reorder_point)) * 100);
+            const isCritical = percentage <= 10;
 
             return (
               <div 
                 key={item.id} 
-                className="p-2 rounded-md bg-accent/30 border border-border/50 hover:bg-accent/50 transition-colors"
+                className={cn(
+                  "p-3 rounded-lg border transition-all hover:shadow-md",
+                  isCritical ? "bg-destructive/5 border-destructive/30" : "bg-accent/30 border-border/50"
+                )}
               >
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-warning/20 flex-shrink-0">
-                    <PackageX className="h-3.5 w-3.5 text-warning" />
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0",
+                    isCritical ? "bg-destructive/20" : "bg-warning/20"
+                  )}>
+                    {isCritical ? (
+                      <PackageX className="h-5 w-5 text-destructive animate-pulse" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-warning" />
+                    )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <p className="font-semibold text-xs line-clamp-1">{item.name}</p>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm line-clamp-1">{item.name}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {item.current_qty} {item.unit} left (reorder at {item.reorder_point})
+                        </p>
+                      </div>
                       <Badge 
-                        variant={stockBadge.variant}
-                        className="text-[9px] h-4 px-1 whitespace-nowrap"
+                        variant="outline" 
+                        className={cn(
+                          "text-xs h-5 px-2 whitespace-nowrap",
+                          stockInfo.color,
+                          isCritical && "animate-pulse"
+                        )}
                       >
-                        {stockBadge.label}
+                        {stockInfo.level}
                       </Badge>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {item.current_qty} {item.unit}
-                    </p>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Stock Level</span>
+                        <span className={cn("font-semibold", stockInfo.color)}>
+                          {percentage.toFixed(0)}%
+                        </span>
+                      </div>
+                      <Progress 
+                        value={percentage} 
+                        className={cn("h-2", isCritical && "animate-pulse")}
+                      />
+                    </div>
+                    
+                    {config.autoReorder && isCritical && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full mt-2 h-7 text-xs"
+                        onClick={() => navigate("/admin/purchase-orders")}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Create PO
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center text-muted-foreground">
-            <PackageX className="h-10 w-10 mb-2 opacity-40" />
-            <p className="text-xs font-medium">All stocked</p>
+          <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
+            <PackageX className="h-16 w-16 mb-3 opacity-40" />
+            <p className="text-sm font-medium">All items in stock</p>
+            <p className="text-xs mt-1 opacity-60">No reorder alerts</p>
           </div>
         )}
       </div>
@@ -110,10 +154,10 @@ export function LowStockWidget() {
           onClick={() => navigate("/admin/inventory")}
           variant="outline"
           size="sm"
-          className="w-full mt-2 h-7 text-xs"
+          className="w-full"
         >
-          View All
-          <ArrowRight className="ml-1 h-3 w-3" />
+          View Inventory
+          <ArrowRight className="ml-2 h-3 w-3" />
         </Button>
       )}
     </Card>
