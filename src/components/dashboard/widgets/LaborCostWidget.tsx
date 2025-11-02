@@ -1,142 +1,190 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, TrendingDown, Users, Clock, AlertTriangle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { DollarSign, TrendingUp, TrendingDown, RefreshCw, Clock, Users } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useWidgetConfig } from '@/hooks/useWidgetConfig';
+import { LaborCostConfig } from '@/types/widgetConfigs';
+import { cn } from '@/lib/utils';
+import { Sparkline } from '@/components/ui/sparkline';
 
-interface LaborCostWidgetProps {
-  branchId?: string;
-  targetPercentage?: number;
-}
-
-export function LaborCostWidget({ branchId, targetPercentage = 25 }: LaborCostWidgetProps) {
-  const { data: metrics, isLoading } = useQuery({
-    queryKey: ['labor-metrics', branchId],
+export function LaborCostWidget() {
+  const { config } = useWidgetConfig<LaborCostConfig>('labor-cost');
+  
+  // Fetch current labor metrics
+  const { data: metrics, isLoading, refetch } = useQuery({
+    queryKey: ['labor-metrics'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('calculate_labor_metrics', {
-        branch_id_param: branchId || null,
+        branch_id_param: null,
       });
       if (error) throw error;
       return data?.[0];
     },
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: config.refreshInterval * 1000,
   });
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Labor Cost</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-32 flex items-center justify-center">
-            <div className="animate-pulse text-muted-foreground">Loading...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Fetch sparkline data (last 8 hours)
+  const { data: sparklineData } = useQuery({
+    queryKey: ['labor-sparkline'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_labor_sparkline', {
+        hours_back: 8,
+      });
+      if (error) {
+        console.error('Sparkline error:', error);
+        return [];
+      }
+      return data?.map((d: any) => Number(d.labor_percentage) || 0) || [];
+    },
+    enabled: config.showSparkline,
+    refetchInterval: config.refreshInterval * 1000,
+  });
 
   const laborPercentage = Number(metrics?.labor_percentage || 0);
-  const isOverBudget = laborPercentage > targetPercentage;
-  const variance = laborPercentage - targetPercentage;
+  const isOverBudget = laborPercentage > config.targetPercentage;
+  const variance = laborPercentage - config.targetPercentage;
+  const progressMax = config.targetPercentage * 1.5;
+
+  const getProgressColor = () => {
+    if (laborPercentage > config.targetPercentage * 1.2) return 'bg-destructive';
+    if (laborPercentage > config.targetPercentage) return 'bg-warning';
+    return 'bg-success';
+  };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Labor Cost</CardTitle>
-        <DollarSign className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Labor Percentage */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold">
-                  {laborPercentage.toFixed(1)}%
-                </span>
-                {isOverBudget ? (
-                  <Badge variant="destructive" className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +{variance.toFixed(1)}%
-                  </Badge>
-                ) : (
-                  <Badge variant="default" className="flex items-center gap-1">
-                    <TrendingDown className="h-3 w-3" />
-                    {variance.toFixed(1)}%
-                  </Badge>
+    <Card className={cn(
+      "glass-card flex flex-col w-[240px] h-[240px]",
+      config.compactMode ? "p-2.5" : "p-3"
+    )}>
+      {/* Header */}
+      <div className={cn(
+        "flex items-center justify-between",
+        config.compactMode ? "mb-2" : "mb-3"
+      )}>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-base">
+            {config.compactMode ? "Labor" : "Labor Cost"}
+          </h3>
+        </div>
+        <Button
+          onClick={() => refetch()}
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {/* Content */}
+      <div className={cn(
+        "flex-1 flex flex-col justify-between",
+        config.compactMode ? "h-[208px]" : "h-[192px]"
+      )}>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-12 w-full rounded" />
+            <Skeleton className="h-8 w-full rounded mt-2" />
+            <Skeleton className="h-10 w-full rounded mt-2" />
+            {config.showSparkline && !config.compactMode && (
+              <Skeleton className="h-10 w-full rounded mt-2" />
+            )}
+          </>
+        ) : (
+          <>
+            {/* Labor Percentage (Hero Element) */}
+            <div className="text-center">
+              <div className={cn(
+                "font-bold text-primary",
+                config.compactMode ? "text-4xl" : "text-3xl"
+              )}>
+                {laborPercentage.toFixed(1)}%
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Target: {config.targetPercentage.toFixed(1)}%
+              </p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className={cn(
+              config.compactMode ? "h-10 py-1" : "h-8"
+            )}>
+              <Progress 
+                value={laborPercentage} 
+                max={progressMax}
+                className={cn(
+                  "w-full",
+                  config.compactMode ? "h-3" : "h-2"
                 )}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                Target: {targetPercentage}%
-              </span>
-            </div>
-            <Progress 
-              value={laborPercentage} 
-              max={targetPercentage * 1.5}
-              className="h-2"
-            />
-          </div>
-
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <DollarSign className="h-3 w-3" />
-                <span>Labor Cost</span>
-              </div>
-              <p className="text-lg font-semibold">
-                RM {Number(metrics?.total_labor_cost || 0).toFixed(2)}
-              </p>
+                indicatorClassName={getProgressColor()}
+              />
             </div>
 
-            <div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <DollarSign className="h-3 w-3" />
-                <span>Sales</span>
-              </div>
-              <p className="text-lg font-semibold">
-                RM {Number(metrics?.total_sales || 0).toFixed(2)}
-              </p>
+            {/* Status Badge */}
+            <div className="flex items-center justify-center">
+              {isOverBudget ? (
+                <Badge variant="destructive" className={cn(
+                  "flex items-center gap-1.5",
+                  config.compactMode ? "text-base px-3 py-1" : "text-sm px-2 py-0.5"
+                )}>
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  +{Math.abs(variance).toFixed(1)}% Over Budget
+                </Badge>
+              ) : (
+                <Badge variant="default" className={cn(
+                  "flex items-center gap-1.5 bg-success/20 text-success",
+                  config.compactMode ? "text-base px-3 py-1" : "text-sm px-2 py-0.5"
+                )}>
+                  <TrendingDown className="h-3.5 w-3.5" />
+                  {Math.abs(variance).toFixed(1)}% Under Budget
+                </Badge>
+              )}
             </div>
 
-            <div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <Clock className="h-3 w-3" />
-                <span>Hours Worked</span>
-              </div>
-              <p className="text-lg font-semibold">
-                {Number(metrics?.total_hours || 0).toFixed(1)}h
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <Users className="h-3 w-3" />
-                <span>Active Staff</span>
-              </div>
-              <p className="text-lg font-semibold">
-                {metrics?.active_employees || 0}
-              </p>
-            </div>
-          </div>
-
-          {/* Overtime Alert */}
-          {Number(metrics?.overtime_hours || 0) > 0 && (
-            <div className="flex items-center gap-2 p-2 bg-warning/10 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              <div>
-                <p className="text-xs font-medium">Overtime Alert</p>
-                <p className="text-xs text-muted-foreground">
-                  {Number(metrics.overtime_hours).toFixed(1)}h overtime today
+            {/* Sparkline OR Mini Metrics */}
+            {config.showSparkline && !config.compactMode ? (
+              <div className="space-y-1">
+                <div className="h-10 flex items-center justify-center">
+                  {sparklineData && sparklineData.length > 0 ? (
+                    <Sparkline 
+                      data={sparklineData} 
+                      width={200} 
+                      height={36}
+                      className="text-primary"
+                    />
+                  ) : (
+                    <div className="h-9 w-full bg-muted/20 rounded animate-pulse" />
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Last 8 Hours
                 </p>
               </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
+            ) : config.compactMode ? (
+              <div className="space-y-1.5 text-center">
+                <p className="text-xs text-muted-foreground">
+                  RM {Number(metrics?.total_labor_cost || 0).toFixed(2)} / RM {Number(metrics?.total_sales || 0).toFixed(2)}
+                </p>
+                <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {Number(metrics?.total_hours || 0).toFixed(1)}h
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    {metrics?.active_employees || 0} staff
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </div>
     </Card>
   );
 }

@@ -73,3 +73,14 @@ export interface ActiveOrdersConfig extends BaseWidgetConfig {
   viewMode: 'list' | 'kanban';
   compactMode: boolean;
 }
+
+export interface LaborCostConfig extends BaseWidgetConfig {
+  targetPercentage: number;
+  showSparkline: boolean;
+  showOvertimeAlert: boolean;
+}
+
+export interface EightySixConfig extends BaseWidgetConfig {
+  maxItems: 3 | 5 | 10;
+  showLastUpdated: boolean;
+}

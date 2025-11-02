@@ -10,7 +10,9 @@ import {
   LowStockConfig,
   ActiveShiftsConfig,
   LoyaltyStatsConfig,
-  ActiveOrdersConfig
+  ActiveOrdersConfig,
+  LaborCostConfig,
+  EightySixConfig,
 } from "@/types/widgetConfigs";
 
 export interface WidgetConfig extends BaseWidgetConfig {}
@@ -90,16 +92,31 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         maxItems: 3,
       } as LowStockConfig;
 
-    case 'active-shifts':
-      return {
-        ...baseConfig,
-        showPhotos: true,
-        showRoles: true,
-        showLaborCost: false,
-        timeFormat: '12hr',
-        groupBy: 'shiftTime',
-        viewMode: 'list',
-      } as ActiveShiftsConfig;
+      case 'active-shifts':
+        return {
+          ...baseConfig,
+          showPhotos: true,
+          showRoles: true,
+          showLaborCost: false,
+          timeFormat: '12hr',
+          groupBy: 'shiftTime',
+          viewMode: 'list',
+        } as ActiveShiftsConfig;
+
+      case 'labor-cost':
+        return {
+          ...baseConfig,
+          targetPercentage: 25,
+          showSparkline: true,
+          showOvertimeAlert: false,
+        } as LaborCostConfig;
+
+      case 'eighty-six':
+        return {
+          ...baseConfig,
+          maxItems: 3,
+          showLastUpdated: true,
+        } as EightySixConfig;
 
     case 'loyalty-stats':
       return {

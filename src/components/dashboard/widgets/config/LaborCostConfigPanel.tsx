@@ -1,13 +1,8 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface LaborCostConfig {
-  targetPercentage: number;
-  refreshInterval: number;
-  showOvertimeAlert: boolean;
-  branchId?: string;
-}
+import { Switch } from '@/components/ui/switch';
+import { LaborCostConfig } from '@/types/widgetConfigs';
 
 interface LaborCostConfigPanelProps {
   config: LaborCostConfig;
@@ -40,34 +35,41 @@ export function LaborCostConfigPanel({ config, onConfigChange }: LaborCostConfig
         <Select
           value={config.refreshInterval.toString()}
           onValueChange={(value) =>
-            onConfigChange({ ...config, refreshInterval: parseInt(value) })
+            onConfigChange({ ...config, refreshInterval: parseInt(value) as 5 | 30 | 60 | 300 })
           }
         >
           <SelectTrigger id="refreshInterval">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="30000">30 seconds</SelectItem>
-            <SelectItem value="60000">1 minute</SelectItem>
-            <SelectItem value="120000">2 minutes</SelectItem>
-            <SelectItem value="300000">5 minutes</SelectItem>
+            <SelectItem value="30">30 seconds</SelectItem>
+            <SelectItem value="60">1 minute</SelectItem>
+            <SelectItem value="120">2 minutes</SelectItem>
+            <SelectItem value="300">5 minutes</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="showOvertimeAlert"
-          checked={config.showOvertimeAlert}
-          onChange={(e) =>
-            onConfigChange({ ...config, showOvertimeAlert: e.target.checked })
+      <div className="flex items-center justify-between">
+        <Label htmlFor="show-sparkline">Show 8-Hour Trend</Label>
+        <Switch
+          id="show-sparkline"
+          checked={config.showSparkline ?? true}
+          onCheckedChange={(checked) => 
+            onConfigChange({ ...config, showSparkline: checked })
           }
-          className="h-4 w-4"
         />
-        <Label htmlFor="showOvertimeAlert" className="cursor-pointer">
-          Show overtime alerts
-        </Label>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="compact-mode">Compact Mode</Label>
+        <Switch
+          id="compact-mode"
+          checked={config.compactMode ?? false}
+          onCheckedChange={(checked) => 
+            onConfigChange({ ...config, compactMode: checked })
+          }
+        />
       </div>
     </div>
   );

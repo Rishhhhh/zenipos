@@ -3907,6 +3907,13 @@ export type Database = {
           total_spent: number
         }[]
       }
+      get_labor_sparkline: {
+        Args: { hours_back?: number }
+        Returns: {
+          hour_label: string
+          labor_percentage: number
+        }[]
+      }
       get_low_stock_items: {
         Args: never
         Returns: {
