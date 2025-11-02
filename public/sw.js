@@ -1,8 +1,8 @@
-// ZeniPOS Service Worker v1.0.1 - Advanced Caching & Offline Support
-const SW_VERSION = '1.0.1';
+// ZeniPOS Service Worker v1.0.2 - Advanced Caching & Offline Support
+const SW_VERSION = '1.0.2';
 const CACHE_NAME = `zenipos-v${SW_VERSION}`;
-const IMAGE_CACHE = 'zenipos-images-v3';
-const API_CACHE = 'zenipos-api-v3';
+const IMAGE_CACHE = 'zenipos-images-v4';
+const API_CACHE = 'zenipos-api-v4';
 
 const STATIC_ASSETS = [
   '/',

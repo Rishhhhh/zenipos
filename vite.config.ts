@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Group npm packages
+          // Group npm packages only
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
               return 'react-core';
@@ -34,18 +34,10 @@ export default defineConfig(({ mode }) => ({
               return 'supabase';
             }
           }
-          // Group local admin files
-          if (id.includes('src/pages/admin') || id.includes('src/components/admin')) {
-            return 'admin';
-          }
-          // Group manager feature pages
-          if (id.includes('src/pages/KDS') || id.includes('src/pages/ExpoStation') || 
-              id.includes('src/pages/StationKDS') || id.includes('src/pages/ManagerDashboard')) {
-            return 'manager-features';
-          }
         }
       }
     },
     chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 0,
   },
 }));
