@@ -56,6 +56,7 @@ export interface ActiveShiftsConfig extends BaseWidgetConfig {
   showLaborCost: boolean;
   timeFormat: '12hr' | '24hr';
   groupBy: 'role' | 'shiftTime' | 'alphabetical';
+  viewMode: 'grid' | 'list';
 }
 
 export interface LoyaltyStatsConfig extends BaseWidgetConfig {
@@ -73,6 +74,12 @@ export interface ActiveOrdersConfig extends BaseWidgetConfig {
   alertThresholdMinutes: number;
   viewMode: 'list' | 'kanban';
   compactMode: boolean;
+}
+
+export interface LaborCostConfig extends BaseWidgetConfig {
+  targetPercentage: number;
+  showSparkline: boolean;
+  branchId?: string;
 }
 
 export interface EightySixConfig extends BaseWidgetConfig {

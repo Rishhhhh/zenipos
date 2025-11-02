@@ -58,6 +58,24 @@ export function ActiveShiftsConfigPanel({ config, onConfigChange }: ActiveShifts
         </div>
 
         <div className="space-y-2">
+          <Label>View Mode</Label>
+          <RadioGroup
+            value={config.viewMode}
+            onValueChange={(value) => onConfigChange({ ...config, viewMode: value as any })}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="list" id="list" />
+              <Label htmlFor="list" className="font-normal">List View (detailed)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="grid" id="grid" />
+              <Label htmlFor="grid" className="font-normal">Grid View (compact avatars)</Label>
+            </div>
+          </RadioGroup>
+          <p className="text-xs text-muted-foreground">Grid mode: 3×2 avatar layout for small widgets</p>
+        </div>
+
+        <div className="space-y-2">
           <Label>Group By</Label>
           <RadioGroup
             value={config.groupBy}

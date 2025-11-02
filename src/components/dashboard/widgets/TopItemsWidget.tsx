@@ -65,45 +65,47 @@ export function TopItemsWidget() {
   };
 
   return (
-    <Card className="glass-card p-5 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-4">
-        <Trophy className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-lg">Top Selling Items</h3>
+    <Card className="glass-card p-4 w-[360px] h-[300px] flex flex-col">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy className="h-4 w-4 text-primary" />
+        <h3 className="font-semibold text-sm">Top Selling Items</h3>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
           ))
         ) : topItems && topItems.length > 0 ? (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {topItems.slice(0, config.topN).map((item, index) => (
               <div 
                 key={index} 
                 className={cn(
-                  "bg-gradient-to-r rounded-lg p-3 border transition-all hover:shadow-md",
+                  "bg-gradient-to-r rounded-lg p-2.5 border transition-all hover:shadow-md",
                   index === 0 ? "from-yellow-500/10 to-transparent border-yellow-500/30" :
                   index === 1 ? "from-gray-400/10 to-transparent border-gray-400/30" :
                   index === 2 ? "from-amber-600/10 to-transparent border-amber-600/30" :
                   "from-accent/30 to-transparent border-border/50"
                 )}
               >
-                <div className="flex items-start gap-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background/80 border border-border/50 flex-shrink-0">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-background/80 border border-border/50 flex-shrink-0">
                     {getRankIcon(index)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="font-semibold text-sm line-clamp-1">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h4 className="font-semibold text-xs line-clamp-1">
                         {item.name}
                       </h4>
-                      <span className="text-sm font-bold text-primary whitespace-nowrap">
-                        RM {item.revenue.toFixed(2)}
-                      </span>
+                      {!config.compactMode && (
+                        <span className="text-xs font-bold text-primary whitespace-nowrap">
+                          RM {item.revenue.toFixed(2)}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-accent rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-accent rounded-full overflow-hidden">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
@@ -118,7 +120,7 @@ export function TopItemsWidget() {
                         />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className="text-xs h-5 px-2">
+                        <Badge variant="outline" className="text-xs h-5 px-1.5">
                           {item.quantity}
                         </Badge>
                         {config.showPercentages && topItems[0] && (
@@ -135,8 +137,8 @@ export function TopItemsWidget() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <TrendingUp className="h-12 w-12 mb-2 opacity-50" />
-            <p className="text-sm">No sales data yet</p>
+            <TrendingUp className="h-10 w-10 mb-2 opacity-50" />
+            <p className="text-xs">No sales data yet</p>
           </div>
         )}
       </div>

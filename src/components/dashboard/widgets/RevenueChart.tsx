@@ -47,11 +47,11 @@ export default function RevenueChart() {
   const peakHour = revenueData?.reduce((max, d) => d.revenue > max.revenue ? d : max, { hour: '', revenue: 0 });
 
   return (
-    <Card className="glass-card p-5 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+    <Card className="glass-card p-4 w-[480px] h-[360px] flex flex-col">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-base md:text-lg">Revenue Trend</h3>
+          <h3 className="font-semibold text-base">Revenue Trend</h3>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {peakHour && peakHour.revenue > 0 && (
@@ -65,14 +65,14 @@ export default function RevenueChart() {
               <Clock className="h-3 w-3" />
               Today
             </p>
-            <p className="text-lg md:text-xl font-bold text-primary">
+            <p className="text-lg font-bold text-primary">
               RM {totalRevenue.toFixed(2)}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-[180px]">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <Skeleton className="w-full h-full rounded-lg" />
         ) : (
