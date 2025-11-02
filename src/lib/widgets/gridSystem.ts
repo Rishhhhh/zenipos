@@ -20,6 +20,20 @@ export function getViewportDimensions() {
   };
 }
 
+// Fixed widget size presets (aligned to grid)
+export const WIDGET_SIZE_PRESETS = {
+  S: { width: 240, height: 240, cols: 4, rows: 4 },    // Compact KPIs
+  M: { width: 360, height: 300, cols: 6, rows: 5 },    // Standard lists
+  L: { width: 480, height: 360, cols: 8, rows: 6 },    // Expanded views
+  XL: { width: 600, height: 480, cols: 10, rows: 8 },  // Interactive
+} as const;
+
+export type WidgetSize = keyof typeof WIDGET_SIZE_PRESETS;
+
+export function getWidgetDimensions(preset: WidgetSize) {
+  return WIDGET_SIZE_PRESETS[preset];
+}
+
 export const GRID_CONFIG = {
   // Grid cell size (pixels) - 75% of original 80px
   CELL_SIZE: 60,
@@ -103,30 +117,6 @@ export function constrainToCanvas(
     x: Math.max(0, Math.min(x, maxX)),
     y: Math.max(0, Math.min(y, maxY)),
   };
-}
-
-/**
- * Snap widget size to grid cell multiples (for cleaner layouts)
- */
-export function snapSizeToGrid(width: number, height: number) {
-  return {
-    width: snapToGrid(width),
-    height: snapToGrid(height),
-  };
-}
-
-/**
- * Snap size to grid in real-time (for live resize preview)
- */
-export function snapSizeToGridRealtime(width: number, height: number) {
-  return snapSizeToGrid(width, height);
-}
-
-/**
- * Check if widget is at maximum size
- */
-export function isAtMaxSize(width: number, height: number, maxWidth: number, maxHeight: number): boolean {
-  return width >= maxWidth || height >= maxHeight;
 }
 
 /**

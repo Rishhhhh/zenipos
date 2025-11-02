@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { findEmptyGridSpace } from "./autoPlacement";
+import { getLayoutForRole } from "./roleLayouts";
 
 export interface WidgetPosition {
   x: number;
@@ -22,62 +23,25 @@ export interface WidgetLayout {
   widgetPositions: Record<string, WidgetPosition>;
 }
 
-const DEFAULT_LAYOUT: WidgetLayout = {
-  widgetOrder: ["quick-pos", "active-orders", "sales"],
-  widgetPositions: {
-    // Quick POS: Top-left, 10x10 cells (600x600px) - grid aligned
-    "quick-pos": { x: 0, y: 0, width: 600, height: 600, zIndex: 1, isMinimized: false, isMaximized: false },
-    
-    // Active Orders: Top-middle-right, 6x5 cells (360x300px) - grid aligned
-    "active-orders": { x: 660, y: 0, width: 360, height: 300, zIndex: 2, isMinimized: false, isMaximized: false },
-    
-    // Sales: Below active orders, 6x5 cells (360x300px) - grid aligned  
-    "sales": { x: 660, y: 360, width: 360, height: 300, zIndex: 3, isMinimized: false, isMaximized: false },
-  },
-};
-
 export function useWidgetLayout() {
   const { employee } = useAuth();
   const storageKey = `dashboard-layout-${employee?.id || 'default'}`;
+  
+  // Get role-based default layout
+  const getDefaultLayout = useCallback(() => {
+    return getLayoutForRole(employee?.role || 'cashier');
+  }, [employee?.role]);
   
   const [layout, setLayout] = useState<WidgetLayout>(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        
-        // Migrate old format (widgetSizes) to new format (widgetPositions)
-        if (parsed.widgetSizes && !parsed.widgetPositions) {
-          const migratedPositions: Record<string, WidgetPosition> = {};
-          let currentX = 20;
-          let currentY = 20;
-          
-          parsed.widgetOrder?.forEach((widgetId: string, index: number) => {
-            const size = parsed.widgetSizes[widgetId] || { cols: 1, rows: 1 };
-            migratedPositions[widgetId] = {
-              x: currentX,
-              y: currentY,
-              width: size.cols * 250,
-              height: size.rows * 300,
-              zIndex: index + 1,
-            };
-            
-            // Stack widgets vertically with some spacing
-            currentY += (size.rows * 300) + 20;
-          });
-          
-          return {
-            widgetOrder: parsed.widgetOrder || [],
-            widgetPositions: migratedPositions,
-          };
-        }
-        
-        return parsed;
+        return JSON.parse(saved);
       } catch {
-        return DEFAULT_LAYOUT;
+        return getDefaultLayout();
       }
     }
-    return DEFAULT_LAYOUT;
+    return getDefaultLayout();
   });
 
   // Debounced save to localStorage
@@ -160,8 +124,10 @@ export function useWidgetLayout() {
   }, []);
 
   const resetLayout = useCallback(() => {
-    setLayout(DEFAULT_LAYOUT);
-  }, []);
+    const defaultLayout = getDefaultLayout();
+    setLayout(defaultLayout);
+    localStorage.setItem(storageKey, JSON.stringify(defaultLayout));
+  }, [getDefaultLayout, storageKey]);
 
   const toggleMinimize = useCallback((widgetId: string) => {
     setLayout(prev => {

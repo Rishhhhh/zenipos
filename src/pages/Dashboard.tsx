@@ -41,11 +41,12 @@ export default function Dashboard() {
               Add Widget
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={resetLayout}
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Reset Layout
             </Button>
           </div>
         </div>
@@ -59,9 +60,8 @@ export default function Dashboard() {
 
         {/* Help Text */}
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Press and hold (0.35s) any widget to drag • Magnetically snaps to grid</p>
-          <p>Drag bottom-right corner to resize • All widgets fit in viewport</p>
-          <p>Click maximize for full-screen • Press Escape or click backdrop to restore</p>
+          <p>Press and hold (0.35s) to drag widgets • Auto-snaps to grid</p>
+          <p>Click maximize for full-screen • Press Escape to restore</p>
         </div>
       </div>
 

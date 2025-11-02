@@ -52,6 +52,7 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
     const currentPos = layout.widgetPositions[widgetId];
     
     setActiveDragId(null);
+    haptics.light();
     
     if (currentPos) {
       const rawX = currentPos.x + delta.x;
@@ -65,6 +66,7 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
         currentPos.height || 400
       );
       
+      // Only update position (x, y), not size
       updatePosition(widgetId, {
         x: constrained.x,
         y: constrained.y,
