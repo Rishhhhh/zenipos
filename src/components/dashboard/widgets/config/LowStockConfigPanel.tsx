@@ -18,6 +18,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
   const autoReorder = config.autoReorder ?? false;
   const refreshInterval = config.refreshInterval || 30;
   const compactMode = config.compactMode ?? false;
+  const maxItems = config.maxItems || 3;
 
   return (
     <div className="space-y-6">
@@ -123,6 +124,23 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
             checked={compactMode}
             onCheckedChange={(checked) => onConfigChange({ ...config, compactMode: checked })}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Max Items to Display</Label>
+          <Select
+            value={maxItems.toString()}
+            onValueChange={(value) => onConfigChange({ ...config, maxItems: parseInt(value) })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">3 items</SelectItem>
+              <SelectItem value="5">5 items</SelectItem>
+              <SelectItem value="8">8 items</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

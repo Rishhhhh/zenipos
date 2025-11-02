@@ -16,6 +16,7 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
   const comparisonPeriod = config.comparisonPeriod || 'yesterday';
   const showSparklines = config.showSparklines ?? true;
   const showTrends = config.showTrends ?? true;
+  const showTrendFooter = config.showTrendFooter ?? true;
   const refreshInterval = config.refreshInterval || 30;
   const compactMode = config.compactMode ?? false;
 
@@ -87,6 +88,15 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
             id="show-trends"
             checked={showTrends}
             onCheckedChange={(checked) => onConfigChange({ ...config, showTrends: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label htmlFor="show-trend-footer">Show Trend Footer</Label>
+          <Switch
+            id="show-trend-footer"
+            checked={showTrendFooter}
+            onCheckedChange={(checked) => onConfigChange({ ...config, showTrendFooter: checked })}
           />
         </div>
 

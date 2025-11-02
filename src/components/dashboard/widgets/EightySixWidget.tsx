@@ -1,98 +1,82 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { formatDistanceToNow } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useWidgetConfig } from '@/hooks/useWidgetConfig';
+import { EightySixConfig } from '@/types/widgetConfigs';
+import { EightySixBadge } from '@/components/ui/eighty-six-badge';
 
 export function EightySixWidget() {
   const navigate = useNavigate();
+  const { config } = useWidgetConfig<EightySixConfig>('eighty-six');
+  const maxItems = config.maxItems || 3;
 
   const { data: eightySixItems = [], isLoading } = useQuery({
     queryKey: ['eighty-six-items-widget'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_active_eighty_six_items');
       if (error) throw error;
-      return (data || []).slice(0, 5); // Show top 5
+      return (data || []).slice(0, maxItems);
     },
-    refetchInterval: 30000,
+    refetchInterval: (config.refreshInterval || 30) * 1000,
   });
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">86 List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-32 flex items-center justify-center">
-            <div className="animate-pulse text-muted-foreground">Loading...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">86 List</CardTitle>
-        <AlertTriangle className="h-4 w-4 text-warning" />
-      </CardHeader>
-      <CardContent>
-        {eightySixItems.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">
-              All items available
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold">{eightySixItems.length}</span>
-              <Badge variant="destructive">Out of Stock</Badge>
-            </div>
-
-            <div className="space-y-2">
-              {eightySixItems.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="p-2 bg-warning/5 rounded-lg border border-warning/20"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.menu_item_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.reason}
-                      </p>
-                    </div>
-                    {item.auto_generated && (
-                      <Badge variant="outline" className="text-xs ml-2">
-                        Auto
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => navigate('/admin/eighty-six')}
-            >
-              View All 86 Items
-            </Button>
-          </div>
+    <Card className="glass-card p-3 w-[240px] h-[240px] flex flex-col">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <h3 className="font-semibold text-xs">86 List</h3>
+        </div>
+        {eightySixItems.length > 0 && (
+          <Badge variant="destructive" className="h-5 text-[10px] px-1.5">
+            {eightySixItems.length}
+          </Badge>
         )}
-      </CardContent>
+      </div>
+
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse text-xs text-muted-foreground">Loading...</div>
+        </div>
+      ) : eightySixItems.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
+          <AlertTriangle className="h-10 w-10 mb-2 opacity-40" />
+          <p className="text-xs font-medium">All Available</p>
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 min-h-0 space-y-1.5 overflow-y-auto">
+            {eightySixItems.map((item: any) => (
+              <div
+                key={item.id}
+                className="p-2 bg-warning/5 rounded-md border border-warning/20 hover:bg-warning/10 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium line-clamp-1 flex-1">
+                    {item.menu_item_name}
+                  </p>
+                  <EightySixBadge size="sm" showIcon={false} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2 h-7 text-xs"
+            onClick={() => navigate('/admin/eighty-six')}
+          >
+            Manage
+            <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
+        </>
+      )}
     </Card>
   );
 }
