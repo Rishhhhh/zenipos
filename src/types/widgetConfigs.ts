@@ -54,6 +54,7 @@ export interface ActiveShiftsConfig extends BaseWidgetConfig {
   showLaborCost: boolean;
   timeFormat: '12hr' | '24hr';
   groupBy: 'role' | 'shiftTime' | 'alphabetical';
+  viewMode: 'grid' | 'list';
 }
 
 export interface LoyaltyStatsConfig extends BaseWidgetConfig {

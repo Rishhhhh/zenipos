@@ -98,13 +98,14 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         showLaborCost: false,
         timeFormat: '12hr',
         groupBy: 'shiftTime',
+        viewMode: 'list',
       } as ActiveShiftsConfig;
 
     case 'loyalty-stats':
       return {
         ...baseConfig,
         showTierProgress: true,
-        topNCustomers: 5,
+        topNCustomers: 3,
         showCustomerPhotos: true,
         showPointsConversion: true,
         showRedemptionRate: true,
