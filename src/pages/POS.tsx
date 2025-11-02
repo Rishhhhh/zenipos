@@ -361,8 +361,8 @@ export default function POS() {
             total={getTotal()}
             discount={getDiscount()}
             appliedPromotions={appliedPromotions}
-            onUpdateQuantity={(id, qty) => startTransition(() => updateQuantity(id, qty))}
-            onVoidItem={(id) => startTransition(() => voidItem(id))}
+            onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
+            onVoidItem={(id) => voidItem(id)}
             onSendToKDS={() => sendToKDS.mutate()}
             onSplitBill={() => setShowSplitBill(true)}
             isSending={sendToKDS.isPending}
