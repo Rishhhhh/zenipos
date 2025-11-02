@@ -65,9 +65,10 @@ export interface LoyaltyStatsConfig extends BaseWidgetConfig {
 }
 
 export interface ActiveOrdersConfig extends BaseWidgetConfig {
-  statusFilters: ('pending' | 'preparing' | 'ready')[];
+  statusFilters: ('pending' | 'preparing')[];
   sortBy: 'orderTime' | 'tableNumber' | 'priority';
   showTimer: boolean;
   alertThresholdMinutes: number;
   viewMode: 'list' | 'kanban';
+  compactMode: boolean;
 }

@@ -113,11 +113,12 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
     case 'active-orders':
       return {
         ...baseConfig,
-        statusFilters: ['pending', 'preparing', 'ready'],
+        statusFilters: ['pending', 'preparing'],
         sortBy: 'orderTime',
         showTimer: true,
         alertThresholdMinutes: 15,
         viewMode: 'list',
+        compactMode: false,
       } as ActiveOrdersConfig;
 
     default:
