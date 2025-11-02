@@ -45,8 +45,7 @@ export interface TopItemsConfig extends BaseWidgetConfig {
 export interface LowStockConfig extends BaseWidgetConfig {
   alertThreshold: { critical: number; low: number };
   sortBy: 'stockLevel' | 'alphabetical' | 'lastUpdated';
-  showSupplier: boolean;
-  autoReorder: boolean;
+  maxItems: 3 | 5 | 10;
 }
 
 export interface ActiveShiftsConfig extends BaseWidgetConfig {

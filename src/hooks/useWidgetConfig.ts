@@ -87,8 +87,7 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         ...baseConfig,
         alertThreshold: { critical: 10, low: 30 },
         sortBy: 'stockLevel',
-        showSupplier: true,
-        autoReorder: false,
+        maxItems: 3,
       } as LowStockConfig;
 
     case 'active-shifts':

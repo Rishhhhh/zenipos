@@ -65,13 +65,27 @@ export function TopItemsWidget() {
   };
 
   return (
-    <Card className="glass-card p-5 h-full flex flex-col">
-      <div className="flex items-center gap-2 mb-4">
-        <Trophy className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-lg">Top Selling Items</h3>
+    <Card className={cn(
+      "glass-card flex flex-col w-[360px] h-[300px]",
+      config.compactMode ? "p-3" : "p-5"
+    )}>
+      <div className={cn(
+        "flex items-center gap-2",
+        config.compactMode ? "mb-2" : "mb-4"
+      )}>
+        <Trophy className={cn(
+          "text-primary",
+          config.compactMode ? "h-4 w-4" : "h-5 w-5"
+        )} />
+        <h3 className={cn(
+          "font-semibold",
+          config.compactMode ? "text-base" : "text-lg"
+        )}>
+          Top Selling Items
+        </h3>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5">
+      <div className="h-[240px] overflow-y-auto space-y-2.5">
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-lg" />
@@ -82,7 +96,8 @@ export function TopItemsWidget() {
               <div 
                 key={index} 
                 className={cn(
-                  "bg-gradient-to-r rounded-lg p-3 border transition-all hover:shadow-md",
+                  "bg-gradient-to-r rounded-lg border transition-all hover:shadow-md",
+                  config.compactMode ? "p-2" : "p-3",
                   index === 0 ? "from-yellow-500/10 to-transparent border-yellow-500/30" :
                   index === 1 ? "from-gray-400/10 to-transparent border-gray-400/30" :
                   index === 2 ? "from-amber-600/10 to-transparent border-amber-600/30" :
@@ -90,20 +105,31 @@ export function TopItemsWidget() {
                 )}
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background/80 border border-border/50 flex-shrink-0">
+                  <div className={cn(
+                    "flex items-center justify-center rounded-full bg-background/80 border border-border/50 flex-shrink-0",
+                    config.compactMode ? "w-7 h-7" : "w-8 h-8"
+                  )}>
                     {getRankIcon(index)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className={cn(
+                      "flex items-start justify-between gap-2",
+                      config.compactMode ? "mb-1" : "mb-2"
+                    )}>
                       <h4 className="font-semibold text-sm line-clamp-1">
                         {item.name}
                       </h4>
-                      <span className="text-sm font-bold text-primary whitespace-nowrap">
-                        RM {item.revenue.toFixed(2)}
-                      </span>
+                      {!config.compactMode && (
+                        <span className="text-sm font-bold text-primary whitespace-nowrap">
+                          RM {item.revenue.toFixed(2)}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-accent rounded-full overflow-hidden">
+                      <div className={cn(
+                        "flex-1 bg-accent rounded-full overflow-hidden",
+                        config.compactMode ? "h-1.5" : "h-2"
+                      )}>
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
@@ -118,7 +144,13 @@ export function TopItemsWidget() {
                         />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className="text-xs h-5 px-2">
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-xs px-2",
+                            config.compactMode ? "h-4" : "h-5"
+                          )}
+                        >
                           {item.quantity}
                         </Badge>
                         {config.showPercentages && topItems[0] && (

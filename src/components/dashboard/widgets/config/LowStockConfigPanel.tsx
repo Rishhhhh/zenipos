@@ -14,8 +14,7 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
   // Provide defaults for nested properties that might not exist in old configs
   const alertThreshold = config.alertThreshold || { critical: 10, low: 30 };
   const sortBy = config.sortBy || 'stockLevel';
-  const showSupplier = config.showSupplier ?? true;
-  const autoReorder = config.autoReorder ?? false;
+  const maxItems = config.maxItems || 3;
   const refreshInterval = config.refreshInterval || 30;
   const compactMode = config.compactMode ?? false;
 
@@ -79,24 +78,22 @@ export function LowStockConfigPanel({ config, onConfigChange }: LowStockConfigPa
           </RadioGroup>
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="show-supplier">Show Supplier</Label>
-          <Switch
-            id="show-supplier"
-            checked={showSupplier}
-            onCheckedChange={(checked) => onConfigChange({ ...config, showSupplier: checked })}
-          />
+        <div className="space-y-2">
+          <Label>Max Items to Display</Label>
+          <Select
+            value={maxItems.toString()}
+            onValueChange={(value) => onConfigChange({ ...config, maxItems: parseInt(value) as 3 | 5 | 10 })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">3 items</SelectItem>
+              <SelectItem value="5">5 items</SelectItem>
+              <SelectItem value="10">10 items</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="auto-reorder">Auto-Reorder</Label>
-          <Switch
-            id="auto-reorder"
-            checked={autoReorder}
-            onCheckedChange={(checked) => onConfigChange({ ...config, autoReorder: checked })}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">Show "Create PO" button for critical items</p>
 
         <div className="space-y-2">
           <Label>Refresh Interval</Label>
