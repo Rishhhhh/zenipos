@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
 import { channelManager } from '@/lib/realtime/channelManager';
+import { enqueue } from '@/lib/perf/broadcastQueue';
 
 export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
 
@@ -67,32 +68,24 @@ export function useBroadcastToCustomerDisplay() {
   const cart = useCartStore();
   const debounceTimerRef = useRef<NodeJS.Timeout>();
 
-  // Memoize broadcast function to prevent re-creation
+  // Use throttled broadcast queue for performance
   const broadcastUpdate = useCallback(async (displaySessionId: string, update: Partial<DisplaySession>) => {
-    const channel = supabase.channel(`customer-display:${displaySessionId}`);
-    
-    await channel.subscribe();
-    
-    await channel.send({
-      type: 'broadcast',
-      event: 'display-update',
-      payload: update,
-    });
+    try {
+      // Update DB for persistence
+      await supabase
+        .from('customer_display_sessions')
+        .upsert({
+          session_id: displaySessionId,
+          pos_session_id: cart.sessionId,
+          mode: update.mode || 'ordering',
+          last_activity: new Date().toISOString(),
+        });
 
-    // Also update DB for persistence
-    await supabase
-      .from('customer_display_sessions')
-      .upsert({
-        session_id: displaySessionId,
-        pos_session_id: cart.sessionId,
-        mode: update.mode || 'ordering',
-        last_activity: new Date().toISOString(),
-      });
-      
-    // Cleanup channel after broadcast
-    setTimeout(() => {
-      supabase.removeChannel(channel);
-    }, 1000);
+      // Use throttled broadcast queue instead of direct channel.send()
+      enqueue(`customer-display:${displaySessionId}`, update);
+    } catch (error) {
+      console.error('Broadcast update failed:', error);
+    }
   }, [cart.sessionId]);
 
   // Debounced version of broadcastOrderUpdate (300ms)

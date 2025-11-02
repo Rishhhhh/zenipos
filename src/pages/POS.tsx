@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useModalManager } from "@/hooks/useModalManager";
 import { usePromotions } from "@/lib/hooks/usePromotions";
 import { useBroadcastToCustomerDisplay } from "@/hooks/useCustomerDisplaySync";
@@ -264,7 +264,7 @@ export default function POS() {
         menuItemName={pendingItem?.name || ''}
         onConfirm={(modifiers) => {
           if (pendingItem) {
-            addItem({ ...pendingItem, modifiers });
+            startTransition(() => addItem({ ...pendingItem, modifiers }));
             setPendingItem(null);
           }
         }}
@@ -361,8 +361,8 @@ export default function POS() {
             total={getTotal()}
             discount={getDiscount()}
             appliedPromotions={appliedPromotions}
-            onUpdateQuantity={updateQuantity}
-            onVoidItem={voidItem}
+            onUpdateQuantity={(id, qty) => startTransition(() => updateQuantity(id, qty))}
+            onVoidItem={(id) => startTransition(() => voidItem(id))}
             onSendToKDS={() => sendToKDS.mutate()}
             onSplitBill={() => setShowSplitBill(true)}
             isSending={sendToKDS.isPending}

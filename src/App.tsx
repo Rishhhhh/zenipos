@@ -3,7 +3,8 @@ import { useModalManager } from "./hooks/useModalManager";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -117,16 +118,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     </>
   );
 }
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes - menu data changes rarely
-      refetchOnWindowFocus: false,
-      gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
-    },
-  },
-});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

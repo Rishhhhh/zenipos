@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,14 +36,24 @@ export default function KDS() {
   usePerformanceMonitor('KDS');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [now, setNow] = useState(new Date());
+  const [ticks, setTicks] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const lastUpdateRef = useRef(Date.now());
   const [selectedOrderForRecall, setSelectedOrderForRecall] = useState<string | null>(null);
   const [selectedOrderForModify, setSelectedOrderForModify] = useState<string | null>(null);
 
-  // Update timer every second
+  // Optimized RAF timer (updates every 500ms)
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
+    const loop = () => {
+      const now = Date.now();
+      if (now - lastUpdateRef.current >= 500) {
+        setTicks(t => t + 1);
+        lastUpdateRef.current = now;
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => rafRef.current && cancelAnimationFrame(rafRef.current);
   }, []);
 
   // Fetch pending orders
@@ -177,9 +187,9 @@ export default function KDS() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {orders?.map(order => {
-            const elapsedTime = formatDistanceToNow(new Date(order.created_at), {
-              addSuffix: false,
-            });
+            const elapsedTime = useMemo(() => 
+              formatDistanceToNow(new Date(order.created_at), { addSuffix: false })
+            , [order.created_at, ticks]);
             
             return (
               <Card

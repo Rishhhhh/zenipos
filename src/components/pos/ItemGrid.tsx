@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
+import { memo, useCallback } from "react";
 // @ts-ignore - react-window types issue
 import * as ReactWindow from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -55,7 +56,15 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
   
   const hasActivePromos = promotions && promotions.length > 0;
   
-  const ItemCell = ({ columnIndex, rowIndex, style, data }: any) => {
+  const handleItemClick = useCallback((item: MenuItem) => {
+    onAddItem({
+      menu_item_id: item.id,
+      name: item.name,
+      price: Number(item.price),
+    });
+  }, [onAddItem]);
+  
+  const ItemCell = memo(({ columnIndex, rowIndex, style, data }: any) => {
     const { items, columnCount, onAddItem, isEightySixed, getEightySixInfo, hasActivePromos } = data;
     const index = rowIndex * columnCount + columnIndex;
     const item = items[index];
@@ -72,15 +81,7 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
           className={`h-full cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col overflow-hidden relative ${
             !isAvailable ? 'opacity-60 cursor-not-allowed' : ''
           }`}
-          onClick={() => {
-            if (isAvailable) {
-              onAddItem({
-                menu_item_id: item.id,
-                name: item.name,
-                price: Number(item.price),
-              });
-            }
-          }}
+          onClick={() => isAvailable && handleItemClick(item)}
           title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
         >
           {item.image_url ? (
@@ -140,7 +141,14 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
         </Card>
       </div>
     );
-  };
+  }, (prev, next) => {
+    const prevItem = prev.data.items[prev.rowIndex * prev.data.columnCount + prev.columnIndex];
+    const nextItem = next.data.items[next.rowIndex * next.data.columnCount + next.columnIndex];
+    if (!prevItem && !nextItem) return true;
+    if (!prevItem || !nextItem) return false;
+    return prevItem.id === nextItem.id && prevItem.price === nextItem.price && 
+           prevItem.in_stock === nextItem.in_stock && prevItem.image_url === nextItem.image_url;
+  });
 
   if (isLoading) {
     return (

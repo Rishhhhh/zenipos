@@ -18,6 +18,8 @@ const MAX_RETRIES = 3;
 export class OfflineQueue {
   private queue: QueuedAction[] = [];
   private retryStrategy = new RetryStrategy();
+  private batchBuffer: QueuedAction[] = [];
+  private flushTimer: any = null;
 
   constructor() {
     this.loadQueue();
@@ -53,19 +55,38 @@ export class OfflineQueue {
     };
 
     this.queue.push(action);
+    this.batchBuffer.push(action);
     this.saveQueue();
     
     console.log(`[Queue] Added ${priority} priority ${type}:`, action.id);
     
-    // Process critical actions immediately
-    if (priority === 'critical' && navigator.onLine) {
-      this.processAction(action).then(() => {
-        this.queue = this.queue.filter(a => a.id !== action.id);
-        this.saveQueue();
-      }).catch(err => {
-        console.error('[Queue] Failed to process critical action:', err);
-      });
+    // Schedule batch flush
+    if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => this.flushBatch(), 250);
     }
+    if (this.batchBuffer.length >= 25 || priority === 'critical') {
+      clearTimeout(this.flushTimer);
+      this.flushBatch();
+    }
+  }
+  
+  private async flushBatch() {
+    if (!this.batchBuffer.length || !navigator.onLine) return;
+    const batch = [...this.batchBuffer];
+    this.batchBuffer = [];
+    this.flushTimer = null;
+    
+    for (const action of batch) {
+      const delay = Math.min(5000, 1000 * Math.pow(2, action.retries));
+      await new Promise(r => setTimeout(r, delay));
+      try {
+        await this.processAction(action);
+        this.queue = this.queue.filter(a => a.id !== action.id);
+      } catch (err) {
+        if (action.retries++ >= 5) this.queue = this.queue.filter(a => a.id !== action.id);
+      }
+    }
+    this.saveQueue();
   }
 
   async processQueue() {
