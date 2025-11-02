@@ -39,7 +39,7 @@ export function ActiveShiftsWidget() {
         };
       });
     },
-    refetchInterval: 60 * 1000,
+    refetchInterval: 60 * 1000, // Refresh every minute
   });
 
   const totalLaborCost = activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0;
@@ -51,62 +51,6 @@ export function ActiveShiftsWidget() {
     return { bg: "bg-success/10", text: "text-success", border: "border-success/30" };
   };
 
-  // Grid view for S size (240x240)
-  if (config.viewMode === 'grid') {
-    const displayShifts = activeShifts?.slice(0, 6) || [];
-    
-    return (
-      <Card className="glass-card p-3 w-[240px] h-[240px] flex flex-col">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-primary" />
-            <h3 className="font-semibold text-xs">Active Shifts</h3>
-          </div>
-          {activeShifts && activeShifts.length > 0 && (
-            <Badge variant="default" className="bg-success/20 text-success text-xs h-5 px-1.5">
-              {activeShifts.length}
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex-1 min-h-0">
-          {isLoading ? (
-            <div className="grid grid-cols-3 gap-2 h-full">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="w-full h-16 rounded-lg" />
-              ))}
-            </div>
-          ) : displayShifts.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2 h-full">
-              {displayShifts.map((shift) => (
-                <div 
-                  key={shift.id} 
-                  className="flex flex-col items-center justify-center p-1 rounded-lg border border-success/30 bg-success/5 hover:bg-success/10 transition-all relative group"
-                >
-                  <Avatar className="h-12 w-12 border-2 border-success">
-                    <AvatarFallback className="bg-success/20 text-success font-semibold text-xs">
-                      {shift.employees?.name?.substring(0, 2).toUpperCase() || "??"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-success rounded-full border border-background animate-pulse" />
-                  <p className="text-xs font-medium mt-1 text-center line-clamp-1 w-full px-0.5">
-                    {shift.employees?.name?.split(' ')[0] || "Unknown"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <UserCircle className="h-8 w-8 mb-1 opacity-50" />
-              <p className="text-xs">No active shifts</p>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  }
-
-  // List view for M/L sizes
   return (
     <Card className="glass-card p-5 min-h-[300px] min-w-[350px] flex flex-col">
       <div className="flex items-center justify-between mb-4">

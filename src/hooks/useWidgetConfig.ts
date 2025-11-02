@@ -11,7 +11,6 @@ import {
   ActiveShiftsConfig,
   LoyaltyStatsConfig,
   ActiveOrdersConfig,
-  LaborCostConfig,
   EightySixConfig
 } from "@/types/widgetConfigs";
 
@@ -102,15 +101,7 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         showLaborCost: false,
         timeFormat: '12hr',
         groupBy: 'shiftTime',
-        viewMode: 'list',
       } as ActiveShiftsConfig;
-
-    case 'labor-cost':
-      return {
-        ...baseConfig,
-        targetPercentage: 25,
-        showSparkline: true,
-      } as LaborCostConfig;
 
     case 'loyalty-stats':
       return {
