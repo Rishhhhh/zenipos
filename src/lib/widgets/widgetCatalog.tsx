@@ -36,7 +36,7 @@ export interface WidgetDefinition {
   icon: React.ComponentType<any>;
   roles: ("cashier" | "manager" | "admin")[];
   category: string;
-  fixedSize: 'S' | 'M' | 'L' | 'XL';
+  fixedSize: 'XS' | 'S' | 'S_TALL' | 'M' | 'M_WIDE' | 'M_TALL' | 'L' | 'L_WIDE' | 'L_TALL' | 'XL' | 'XL_WIDE' | 'XXL';
   defaultSize: { cols: number; rows: number };
   capabilities: {
     supportedDisplayTypes: ('chart' | 'table' | 'cards' | 'gauge')[];
@@ -57,7 +57,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["cashier", "manager", "admin"],
       category: "pos",
       fixedSize: 'XL',
-      defaultSize: { cols: 10, rows: 8 },
+      defaultSize: { cols: 14, rows: 11 },
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'text-list',
@@ -72,8 +72,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: ChefHat,
       roles: ["cashier", "manager", "admin"],
       category: "pos",
-      fixedSize: 'L',
-      defaultSize: { cols: 8, rows: 6 },
+      fixedSize: 'L_TALL',
+      defaultSize: { cols: 9, rows: 12 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -88,8 +88,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: AlertTriangle,
       roles: ["manager", "admin"],
       category: "pos",
-      fixedSize: 'M',
-      defaultSize: { cols: 6, rows: 5 },
+      fixedSize: 'M_TALL',
+      defaultSize: { cols: 7, rows: 9 },
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
@@ -106,8 +106,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: BarChart3,
       roles: ["manager", "admin"],
       category: "analytics",
-      fixedSize: 'M',
-      defaultSize: { cols: 6, rows: 5 },
+      fixedSize: 'M_WIDE',
+      defaultSize: { cols: 10, rows: 6 },
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -122,8 +122,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: TrendingUp,
       roles: ["manager", "admin"],
       category: "analytics",
-      fixedSize: 'L',
-      defaultSize: { cols: 8, rows: 6 },
+      fixedSize: 'L_WIDE',
+      defaultSize: { cols: 14, rows: 7 },
       capabilities: {
         supportedDisplayTypes: ['chart'],
         dataType: 'time-series',
@@ -138,8 +138,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: Star,
       roles: ["manager", "admin"],
       category: "analytics",
-      fixedSize: 'M',
-      defaultSize: { cols: 6, rows: 5 },
+      fixedSize: 'M_TALL',
+      defaultSize: { cols: 7, rows: 9 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'text-list',
@@ -156,8 +156,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: AlertTriangle,
       roles: ["manager", "admin"],
       category: "inventory",
-      fixedSize: 'S',
-      defaultSize: { cols: 4, rows: 4 },
+      fixedSize: 'S_TALL',
+      defaultSize: { cols: 5, rows: 8 },
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -172,8 +172,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: AlertTriangle,
       roles: ["cashier", "manager", "admin"],
       category: "inventory",
-      fixedSize: 'S',
-      defaultSize: { cols: 4, rows: 4 },
+      fixedSize: 'S_TALL',
+      defaultSize: { cols: 5, rows: 8 },
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
@@ -191,7 +191,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       roles: ["manager", "admin"],
       category: "customers",
       fixedSize: 'M',
-      defaultSize: { cols: 6, rows: 5 },
+      defaultSize: { cols: 8, rows: 7 },
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -242,8 +242,8 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: Activity,
       roles: ["admin"],
       category: "performance",
-      fixedSize: 'S',
-      defaultSize: { cols: 4, rows: 4 },
+      fixedSize: 'M',
+      defaultSize: { cols: 8, rows: 7 },
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',

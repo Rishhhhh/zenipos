@@ -130,13 +130,15 @@ export function DraggableWidget({
       }}
       style={style}
       className={cn(
-        "group rounded-lg overflow-hidden bg-card border-2 shadow-lg touch-none",
-        isMaximized && "rounded-none border-0 shadow-none",
-        isMinimized ? "border-primary/40 bg-card/80 cursor-grab" : "border-border cursor-grab",
-        isMaximized && "cursor-default",
-        "active:cursor-grabbing transition-all duration-300 ease-in-out",
-        isDraggingThis && "shadow-2xl opacity-95 border-primary",
-        isMinimized && "hover:border-primary hover:bg-card"
+        "group rounded-xl backdrop-blur-md transition-all duration-300",
+        "bg-card/95 border border-border/60",
+        // Enhanced shadows for depth
+        !isDraggingThis && !isMaximized && "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.03)]",
+        !isDraggingThis && !isMaximized && "hover:shadow-[0_4px_8px_rgba(0,0,0,0.08),0_8px_20px_rgba(0,0,0,0.06)]",
+        isDraggingThis && "cursor-grabbing shadow-[0_8px_16px_rgba(0,0,0,0.12),0_16px_32px_rgba(0,0,0,0.1)] ring-2 ring-primary/30 scale-[1.02]",
+        !isDraggingThis && !isMaximized && "cursor-grab hover:border-primary/50",
+        isMaximized && "cursor-default shadow-2xl rounded-none border-0",
+        isMinimized && "overflow-hidden border-primary/40 bg-card/80 hover:border-primary hover:bg-card"
       )}
       onMouseDown={handleMouseDown}
       {...(isMaximized ? {} : attributes)}
