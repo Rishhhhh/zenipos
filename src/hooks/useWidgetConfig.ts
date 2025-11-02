@@ -59,6 +59,7 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         goalTracking: { enabled: false, dailyTarget: 0 },
         showSparklines: true,
         showTrends: true,
+        showTrendFooter: true,
       } as SalesWidgetConfig;
 
     case 'revenue-chart':

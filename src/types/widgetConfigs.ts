@@ -14,6 +14,7 @@ export interface SalesWidgetConfig extends BaseWidgetConfig {
   goalTracking: { enabled: boolean; dailyTarget: number };
   showSparklines: boolean;
   showTrends: boolean;
+  showTrendFooter: boolean;
 }
 
 export interface QuickPOSConfig extends BaseWidgetConfig {

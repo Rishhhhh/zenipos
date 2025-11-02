@@ -6,6 +6,7 @@ import { LazyAreaChart } from "@/components/charts/LazyAreaChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { RevenueChartConfig } from "@/types/widgetConfigs";
+import { cn } from "@/lib/utils";
 
 export default function RevenueChart() {
   const { config } = useWidgetConfig<RevenueChartConfig>('revenue-chart');
@@ -47,14 +48,28 @@ export default function RevenueChart() {
   const peakHour = revenueData?.reduce((max, d) => d.revenue > max.revenue ? d : max, { hour: '', revenue: 0 });
 
   return (
-    <Card className="glass-card p-5 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+    <Card className={cn(
+      "glass-card flex flex-col w-[480px] h-[360px]",
+      config.compactMode ? "p-3" : "p-5"
+    )}>
+      <div className={cn(
+        "flex items-center justify-between gap-2 flex-wrap",
+        config.compactMode ? "mb-2" : "mb-4"
+      )}>
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-base md:text-lg">Revenue Trend</h3>
+          <TrendingUp className={cn(
+            "text-primary",
+            config.compactMode ? "h-4 w-4" : "h-5 w-5"
+          )} />
+          <h3 className={cn(
+            "font-semibold",
+            config.compactMode ? "text-base" : "text-lg"
+          )}>
+            Revenue Trend
+          </h3>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {peakHour && peakHour.revenue > 0 && (
+          {!config.compactMode && peakHour && peakHour.revenue > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Star className="h-3.5 w-3.5 text-primary fill-primary" />
               <span>Peak: {peakHour.hour}</span>
@@ -65,14 +80,19 @@ export default function RevenueChart() {
               <Clock className="h-3 w-3" />
               Today
             </p>
-            <p className="text-lg md:text-xl font-bold text-primary">
+            <p className={cn(
+              "font-bold text-primary",
+              config.compactMode ? "text-base" : "text-lg"
+            )}>
               RM {totalRevenue.toFixed(2)}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-[180px]">
+      <div className={cn(
+        config.compactMode ? "h-[316px]" : "h-[308px]"
+      )}>
         {isLoading ? (
           <Skeleton className="w-full h-full rounded-lg" />
         ) : (

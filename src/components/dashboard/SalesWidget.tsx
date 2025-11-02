@@ -70,12 +70,26 @@ export function SalesWidget() {
   });
 
   return (
-    <Card className="glass-card p-5 min-h-[300px] min-w-[400px] flex flex-col">
+    <Card className={cn(
+      "glass-card flex flex-col w-[360px] h-[300px]",
+      config.compactMode ? "p-3" : "p-5"
+    )}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={cn(
+        "flex items-center justify-between",
+        config.compactMode ? "mb-2" : "mb-4"
+      )}>
         <div className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">Today's Sales</h3>
+          <DollarSign className={cn(
+            "text-primary",
+            config.compactMode ? "h-4 w-4" : "h-5 w-5"
+          )} />
+          <h3 className={cn(
+            "font-semibold",
+            config.compactMode ? "text-base" : "text-lg"
+          )}>
+            Today's Sales
+          </h3>
         </div>
         <Button
           onClick={() => refetch()}
@@ -88,9 +102,12 @@ export function SalesWidget() {
       </div>
 
       {/* Metrics Display */}
-      <div className="flex-1 min-h-0">
+      <div className={cn(
+        "overflow-y-auto",
+        config.showTrendFooter ? "h-[208px]" : "h-[256px]"
+      )}>
         {isLoading ? (
-          <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3")}>
+          <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-3")}>
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
@@ -146,7 +163,7 @@ export function SalesWidget() {
           </div>
         </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+          <div className="grid grid-cols-3 gap-4 h-full">
           <MagicBento
             title="Revenue"
             value={`RM ${todayStats?.revenue.toFixed(2) || "0.00"}`}
@@ -177,9 +194,12 @@ export function SalesWidget() {
         )}
       </div>
 
-      {/* Trend Indicators */}
-      {todayStats && (
-        <div className="mt-4 pt-4 border-t border-border/50">
+      {/* Trend Indicators Footer - Optional */}
+      {config.showTrendFooter && todayStats && (
+        <div className={cn(
+          "pt-4 border-t border-border/50",
+          config.compactMode ? "mt-2" : "mt-4"
+        )}>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               {todayStats.revenueTrend >= 0 ? (
