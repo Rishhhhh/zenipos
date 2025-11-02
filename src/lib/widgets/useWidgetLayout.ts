@@ -134,20 +134,42 @@ export function useWidgetLayout() {
       const currentPos = prev.widgetPositions[widgetId];
       const isCurrentlyMinimized = currentPos.isMinimized;
 
-      return {
-        ...prev,
-        widgetPositions: {
-          ...prev.widgetPositions,
-          [widgetId]: {
-            ...currentPos,
-            isMinimized: !isCurrentlyMinimized,
-            isMaximized: false,
-            // Store original width when minimizing, restore when un-minimizing
-            _originalWidth: !isCurrentlyMinimized ? currentPos.width : undefined,
-            width: !isCurrentlyMinimized ? 300 : (currentPos._originalWidth || currentPos.width),
+      if (isCurrentlyMinimized) {
+        // UN-MINIMIZING: Restore to normal
+        return {
+          ...prev,
+          widgetPositions: {
+            ...prev.widgetPositions,
+            [widgetId]: {
+              ...currentPos,
+              isMinimized: false,
+              isMaximized: false,
+              // Restore original dimensions
+              width: currentPos._originalWidth || currentPos.width,
+              height: currentPos._originalHeight || currentPos.height,
+              // Clear stored originals now that we're back to normal
+              _originalWidth: undefined,
+              _originalHeight: undefined,
+            },
           },
-        },
-      };
+        };
+      } else {
+        // MINIMIZING: Store originals
+        return {
+          ...prev,
+          widgetPositions: {
+            ...prev.widgetPositions,
+            [widgetId]: {
+              ...currentPos,
+              isMinimized: true,
+              isMaximized: false,
+              // Store originals
+              _originalWidth: currentPos.width,
+              _originalHeight: currentPos.height,
+            },
+          },
+        };
+      }
     });
   }, []);
 
@@ -157,38 +179,51 @@ export function useWidgetLayout() {
       const isCurrentlyMaximized = current.isMaximized;
       const isCurrentlyMinimized = current.isMinimized;
       
-      return {
-        ...prev,
-        widgetPositions: {
-          ...prev.widgetPositions,
-          [widgetId]: {
-            ...current,
-            isMaximized: !isCurrentlyMaximized,
-            isMinimized: false,
-            ...(!isCurrentlyMaximized ? {
-              // Store originals when maximizing
+      if (!isCurrentlyMaximized) {
+        // MAXIMIZING: Store current state
+        return {
+          ...prev,
+          widgetPositions: {
+            ...prev.widgetPositions,
+            [widgetId]: {
+              ...current,
+              isMaximized: true,
+              isMinimized: false,
+              // Store position (for restoring after maximize)
               _originalX: current.x,
               _originalY: current.y,
-              // If currently minimized, use the stored original width, not 300px
-              _originalWidth: isCurrentlyMinimized && current._originalWidth 
-                ? current._originalWidth 
-                : current.width,
-              _originalHeight: current.height,
+              // Store dimensions - use already-stored originals if available (from minimize)
+              _originalWidth: current._originalWidth || current.width,
+              _originalHeight: current._originalHeight || current.height,
               // Remember if it was minimized before maximizing
               _wasMinimized: isCurrentlyMinimized,
-              // Don't set x/y/width/height - DraggableWidget handles via CSS
-            } : {
-              // Restore originals when un-maximizing
+            },
+          },
+        };
+      } else {
+        // UN-MAXIMIZING: Restore to previous state
+        return {
+          ...prev,
+          widgetPositions: {
+            ...prev.widgetPositions,
+            [widgetId]: {
+              ...current,
+              isMaximized: false,
+              // Restore position
               x: current._originalX || current.x,
               y: current._originalY || current.y,
-              width: current._originalWidth || current.width,
-              height: current._originalHeight || current.height,
-              // If it was minimized before maximizing, restore to minimized state
+              // If it was minimized before maximizing, go back to minimized
               isMinimized: current._wasMinimized || false,
-            }),
+              // Keep the stored originals (don't clear them yet)
+              // They'll be cleared when fully un-minimizing
+              _originalWidth: current._originalWidth,
+              _originalHeight: current._originalHeight,
+              // Clear the "was minimized" flag
+              _wasMinimized: undefined,
+            },
           },
-        },
-      };
+        };
+      }
     });
   }, []);
 

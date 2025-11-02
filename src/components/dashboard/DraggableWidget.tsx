@@ -80,13 +80,32 @@ export function DraggableWidget({
   const currentWidth = position.width || 400;
   const currentHeight = position.height || 400;
 
+  // Calculate display dimensions based on state
+  const getDisplayDimensions = () => {
+    if (isMaximized) {
+      return { width: '100vw', height: '100vh' };
+    }
+    
+    if (isMinimized) {
+      return { width: 300, height: 56 };
+    }
+    
+    // Normal state: use actual stored dimensions
+    return {
+      width: currentWidth,
+      height: currentHeight,
+    };
+  };
+
+  const dims = getDisplayDimensions();
+
   // Only apply transform if this widget is being dragged
   const style = isMaximized ? {
     // Full-screen overlay mode
     position: 'fixed' as const,
     inset: 0,
-    width: '100vw',
-    height: '100vh',
+    width: dims.width,
+    height: dims.height,
     zIndex: 45,
     transition: 'none',
     pointerEvents: 'auto' as const,
@@ -95,8 +114,8 @@ export function DraggableWidget({
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
-    width: isMinimized ? 300 : currentWidth,
-    height: isMinimized ? 56 : currentHeight,
+    width: dims.width,
+    height: dims.height,
     zIndex: isDraggingThis ? 40 : Math.min(position.zIndex, 39),
     transform: isDraggingThis && transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition: isDraggingThis ? 'none' : 'width 0.3s ease, height 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease',
@@ -143,8 +162,14 @@ export function DraggableWidget({
 
         {/* Widget Content */}
         {!isMinimized && (
-          <div className="h-full w-full pt-2 overflow-hidden flex flex-col">
-            <div className="flex-1 min-h-0 overflow-auto">
+          <div className={cn(
+            "h-full w-full pt-2 overflow-hidden flex flex-col",
+            isMaximized && "items-center justify-center"
+          )}>
+            <div className={cn(
+              "flex-1 min-h-0",
+              isMaximized ? "max-w-7xl w-full" : "overflow-auto"
+            )}>
               {children}
             </div>
           </div>
