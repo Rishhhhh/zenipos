@@ -84,3 +84,19 @@ export interface EightySixConfig extends BaseWidgetConfig {
   maxItems: 3 | 5 | 10;
   showLastUpdated: boolean;
 }
+
+export interface PendingModsConfig extends BaseWidgetConfig {
+  maxItems: 3 | 5 | 7 | 10;
+  showWastageCost: boolean;
+  sortBy: 'time' | 'wastage';
+}
+
+export interface WebVitalsConfig extends BaseWidgetConfig {
+  showAlertCount: boolean;
+  thresholds: {
+    lcp: number;
+    fid: number;
+    cls: number;
+    tti: number;
+  };
+}

@@ -13,6 +13,8 @@ import {
   ActiveOrdersConfig,
   LaborCostConfig,
   EightySixConfig,
+  PendingModsConfig,
+  WebVitalsConfig,
 } from "@/types/widgetConfigs";
 
 export interface WidgetConfig extends BaseWidgetConfig {}
@@ -117,6 +119,26 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
           maxItems: 3,
           showLastUpdated: true,
         } as EightySixConfig;
+
+      case 'pending-mods':
+        return {
+          ...baseConfig,
+          maxItems: 5,
+          showWastageCost: true,
+          sortBy: 'time',
+        } as PendingModsConfig;
+
+      case 'web-vitals':
+        return {
+          ...baseConfig,
+          showAlertCount: false,
+          thresholds: {
+            lcp: 2500,
+            fid: 100,
+            cls: 0.1,
+            tti: 2000,
+          },
+        } as WebVitalsConfig;
 
     case 'loyalty-stats':
       return {
