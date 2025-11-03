@@ -20,6 +20,12 @@ function useContainerDimensions() {
   useEffect(() => {
     if (!ref.current) return;
     
+    // Immediate initial measurement
+    const rect = ref.current.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      setDimensions({ width: rect.width, height: rect.height });
+    }
+    
     const observer = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
       setDimensions({ width, height });
@@ -228,7 +234,11 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
           >
             {ItemCell}
           </FixedSizeGrid>
-        ) : null}
+        ) : (
+          <div className="p-4">
+            <p className="text-muted-foreground">Loading menu items...</p>
+          </div>
+        )}
       </div>
     </div>
   );
