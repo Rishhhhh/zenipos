@@ -8,10 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 import { memo, useCallback, useState, useEffect, useRef, useMemo } from "react";
-// @ts-ignore - react-window types issue
-import * as ReactWindow from "react-window";
-
-const { FixedSizeGrid } = ReactWindow as any;
+// @ts-expect-error - react-window types don't match runtime exports
+import { FixedSizeGrid } from "react-window";
 
 // Custom hook for container dimensions using ResizeObserver
 function useContainerDimensions() {
@@ -19,22 +17,15 @@ function useContainerDimensions() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    if (!ref.current) {
-      console.log('[useContainerDimensions] No ref.current');
-      return;
-    }
-    
-    console.log('[useContainerDimensions] Setting up observer');
+    if (!ref.current) return;
     
     const observer = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
-      console.log('[useContainerDimensions] ResizeObserver fired:', { width, height });
       setDimensions({ width, height });
     });
     
     observer.observe(ref.current);
     return () => {
-      console.log('[useContainerDimensions] Cleanup');
       observer.disconnect();
     };
   }, []);
@@ -64,14 +55,6 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
   // Hook for container dimensions - must be at top before any returns
   const { ref, width, height } = useContainerDimensions();
   
-  console.log('[ItemGrid] Render:', { 
-    itemsLength: items?.length, 
-    isLoading, 
-    categoryId,
-    width, 
-    height 
-  });
-  
   // Fetch active promotions
   const { data: promotions } = useQuery({
     queryKey: ['promotions', 'active'],
@@ -95,37 +78,11 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
     [items, categoryId]
   );
   
-  console.log('[ItemGrid] Filtered items:', { 
-    filteredLength: filteredItems.length,
-    totalItems: items?.length,
-    categoryId 
-  });
-  
   const hasActivePromos = promotions && promotions.length > 0;
   
   // Calculate grid dimensions
   const columnCount = Math.max(2, Math.floor(width / 220));
   const rowCount = Math.ceil(filteredItems.length / columnCount);
-  
-  console.log('[ItemGrid] Grid dimensions:', { 
-    columnCount, 
-    rowCount, 
-    width, 
-    height 
-  });
-  
-  // Log what we're about to render
-  if (width > 0 && height > 0) {
-    console.log('[ItemGrid] Will render FixedSizeGrid with:', { 
-      width, 
-      height, 
-      columnCount, 
-      rowCount, 
-      itemsCount: filteredItems.length 
-    });
-  } else {
-    console.log('[ItemGrid] Not rendering - dimensions:', { width, height });
-  }
   
   const handleItemClick = useCallback((item: MenuItem) => {
     onAddItem({
@@ -270,11 +227,7 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
           >
             {ItemCell}
           </FixedSizeGrid>
-        ) : (
-          <div className="p-4 text-muted-foreground">
-            Waiting for container dimensions... (width: {width}, height: {height})
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
