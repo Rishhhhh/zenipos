@@ -11,12 +11,8 @@ export interface WidgetPosition {
   height?: number;
   zIndex: number;
   isMinimized?: boolean;
-  isMaximized?: boolean;
   _originalWidth?: number;
   _originalHeight?: number;
-  _originalX?: number;
-  _originalY?: number;
-  _wasMinimized?: boolean;
 }
 
 export interface WidgetLayout {
@@ -113,7 +109,6 @@ export function useWidgetLayout() {
             height: defaultSize.rows * GRID_CONFIG.CELL_SIZE,
             zIndex: maxZ + 1,
             isMinimized: false,
-            isMaximized: false,
           },
         },
       };
@@ -152,7 +147,6 @@ export function useWidgetLayout() {
             [widgetId]: {
               ...currentPos,
               isMinimized: false,
-              isMaximized: false,
               // Restore original dimensions
               width: currentPos._originalWidth || currentPos.width,
               height: currentPos._originalHeight || currentPos.height,
@@ -171,64 +165,9 @@ export function useWidgetLayout() {
             [widgetId]: {
               ...currentPos,
               isMinimized: true,
-              isMaximized: false,
               // Store originals
               _originalWidth: currentPos.width,
               _originalHeight: currentPos.height,
-            },
-          },
-        };
-      }
-    });
-  }, []);
-
-  const toggleMaximize = useCallback((widgetId: string) => {
-    setLayout(prev => {
-      const current = prev.widgetPositions[widgetId];
-      const isCurrentlyMaximized = current.isMaximized;
-      const isCurrentlyMinimized = current.isMinimized;
-      
-      if (!isCurrentlyMaximized) {
-        // MAXIMIZING: Store current state
-        return {
-          ...prev,
-          widgetPositions: {
-            ...prev.widgetPositions,
-            [widgetId]: {
-              ...current,
-              isMaximized: true,
-              isMinimized: false,
-              // Store position (for restoring after maximize)
-              _originalX: current.x,
-              _originalY: current.y,
-              // Store dimensions - use already-stored originals if available (from minimize)
-              _originalWidth: current._originalWidth || current.width,
-              _originalHeight: current._originalHeight || current.height,
-              // Remember if it was minimized before maximizing
-              _wasMinimized: isCurrentlyMinimized,
-            },
-          },
-        };
-      } else {
-        // UN-MAXIMIZING: Restore to previous state
-        return {
-          ...prev,
-          widgetPositions: {
-            ...prev.widgetPositions,
-            [widgetId]: {
-              ...current,
-              isMaximized: false,
-              // Restore position
-              x: current._originalX || current.x,
-              y: current._originalY || current.y,
-              // If it was minimized before maximizing, go back to minimized
-              isMinimized: current._wasMinimized || false,
-              // Keep the stored originals (don't clear them yet)
-              // They'll be cleared when fully un-minimizing
-              _originalWidth: current._originalWidth,
-              _originalHeight: current._originalHeight,
-              // Clear the "was minimized" flag
-              _wasMinimized: undefined,
             },
           },
         };
@@ -245,6 +184,5 @@ export function useWidgetLayout() {
     removeWidget,
     resetLayout,
     toggleMinimize,
-    toggleMaximize,
   };
 }

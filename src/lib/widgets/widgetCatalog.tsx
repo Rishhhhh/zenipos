@@ -38,6 +38,7 @@ export interface WidgetDefinition {
   category: string;
   fixedSize: 'XS' | 'S' | 'S_TALL' | 'M' | 'M_WIDE' | 'M_TALL' | 'L' | 'L_WIDE' | 'L_TALL' | 'XL' | 'XL_WIDE' | 'XXL';
   defaultSize: { cols: number; rows: number };
+  moduleRoute: string; // Route to navigate when "Open in Full View" clicked
   capabilities: {
     supportedDisplayTypes: ('chart' | 'table' | 'cards' | 'gauge')[];
     dataType: 'financial' | 'text-list' | 'time-series' | 'status-list';
@@ -58,6 +59,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "pos",
       fixedSize: 'XL',
       defaultSize: { cols: 14, rows: 11 },
+      moduleRoute: "/pos",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'text-list',
@@ -74,6 +76,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "pos",
       fixedSize: 'L_TALL',
       defaultSize: { cols: 9, rows: 12 },
+      moduleRoute: "/kds",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -90,6 +93,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "pos",
       fixedSize: 'M_TALL',
       defaultSize: { cols: 7, rows: 9 },
+      moduleRoute: "/admin/pending-modifications",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
@@ -108,6 +112,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "analytics",
       fixedSize: 'M_WIDE',
       defaultSize: { cols: 10, rows: 6 },
+      moduleRoute: "/admin/reports",
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -124,6 +129,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "analytics",
       fixedSize: 'L_WIDE',
       defaultSize: { cols: 14, rows: 7 },
+      moduleRoute: "/admin/reports",
       capabilities: {
         supportedDisplayTypes: ['chart'],
         dataType: 'time-series',
@@ -140,6 +146,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "analytics",
       fixedSize: 'M_TALL',
       defaultSize: { cols: 7, rows: 9 },
+      moduleRoute: "/admin/reports",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'text-list',
@@ -158,6 +165,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "inventory",
       fixedSize: 'S_TALL',
       defaultSize: { cols: 5, rows: 8 },
+      moduleRoute: "/admin/inventory",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -174,6 +182,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "inventory",
       fixedSize: 'S_TALL',
       defaultSize: { cols: 5, rows: 8 },
+      moduleRoute: "/admin/eighty-six",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
@@ -192,6 +201,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "customers",
       fixedSize: 'M',
       defaultSize: { cols: 8, rows: 7 },
+      moduleRoute: "/admin/crm",
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -210,6 +220,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "employees",
       fixedSize: 'S',
       defaultSize: { cols: 4, rows: 4 },
+      moduleRoute: "/admin/shift-management",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -226,6 +237,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "employees",
       fixedSize: 'S',
       defaultSize: { cols: 4, rows: 4 },
+      moduleRoute: "/admin/employees",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'financial',
@@ -244,6 +256,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       category: "performance",
       fixedSize: 'M',
       defaultSize: { cols: 8, rows: 7 },
+      moduleRoute: "/admin/performance",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',

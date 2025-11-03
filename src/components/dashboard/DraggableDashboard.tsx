@@ -16,11 +16,7 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [viewportKey, setViewportKey] = useState(0);
   
-  const { layout, updatePosition, bringToFront, removeWidget, toggleMinimize, toggleMaximize } = useWidgetLayout();
-  
-  const maximizedWidget = layout.widgetOrder.find(id => 
-    layout.widgetPositions[id]?.isMaximized
-  );
+  const { layout, updatePosition, bringToFront, removeWidget, toggleMinimize } = useWidgetLayout();
 
   useEffect(() => {
     const handleResize = () => {
@@ -83,7 +79,6 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
       prev.position.height === next.position.height &&
       prev.position.zIndex === next.position.zIndex &&
       prev.position.isMinimized === next.position.isMinimized &&
-      prev.position.isMaximized === next.position.isMaximized &&
       prev.isAnyDragging === next.isAnyDragging &&
       prev.isDraggingThis === next.isDraggingThis
     );
@@ -109,7 +104,6 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
           onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
           onBringToFront={() => bringToFront(widgetId)}
           onMinimize={() => toggleMinimize(widgetId)}
-          onMaximize={() => toggleMaximize(widgetId)}
           onConfigure={() => onConfigure(widgetId)}
           onClose={() => removeWidget(widgetId)}
           widgetName={widgetDef.name}
@@ -122,7 +116,7 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
         </MemoizedDraggableWidget>
       );
     });
-  }, [layout.widgetOrder, layout.widgetPositions, activeDragId, maximizedWidget, onConfigure, updatePosition, bringToFront, toggleMinimize, toggleMaximize, removeWidget]);
+  }, [layout.widgetOrder, layout.widgetPositions, activeDragId, onConfigure, updatePosition, bringToFront, toggleMinimize, removeWidget]);
 
   return (
     <DndContext
@@ -139,14 +133,6 @@ export default function DraggableDashboard({ onConfigure }: DraggableDashboardPr
           overflow: 'visible',
         }}
       >
-        {maximizedWidget && (
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[44] animate-in fade-in duration-300"
-            onClick={() => toggleMaximize(maximizedWidget)}
-            aria-label="Click to restore widget"
-          />
-        )}
-        
         <GridOverlay />
         {widgetComponents}
       </div>

@@ -1,10 +1,11 @@
 import { useDraggable } from "@dnd-kit/core";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { WidgetHeader } from "./WidgetHeader";
 import { haptics } from "@/lib/haptics";
 import { AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DraggableWidgetProps {
   id: string;
@@ -16,7 +17,6 @@ interface DraggableWidgetProps {
     height?: number; 
     zIndex: number;
     isMinimized?: boolean;
-    isMaximized?: boolean;
   };
   isAnyDragging: boolean;
   isDraggingThis: boolean;
@@ -24,7 +24,6 @@ interface DraggableWidgetProps {
   onPositionChange: (position: { x?: number; y?: number; width?: number; height?: number }) => void;
   onBringToFront: () => void;
   onMinimize: () => void;
-  onMaximize: () => void;
   onConfigure: () => void;
   onClose: () => void;
 }
@@ -71,7 +70,6 @@ export function DraggableWidget({
   onPositionChange,
   onBringToFront,
   onMinimize,
-  onMaximize,
   onConfigure,
   onClose,
 }: DraggableWidgetProps) {
@@ -82,26 +80,18 @@ export function DraggableWidget({
     transform,
   } = useDraggable({ id });
 
+  const navigate = useNavigate();
   const widgetRef = useRef<HTMLDivElement>(null);
   const widgetDef = getWidgetById(id);
 
   const isMinimized = position.isMinimized || false;
-  const isMaximized = position.isMaximized || false;
 
-  // Escape key handler for maximized widgets
-  useEffect(() => {
-    if (!isMaximized) return;
-    
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onMaximize(); // Toggle maximize off
-        haptics.light();
-      }
-    };
-    
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isMaximized, onMaximize]);
+  const handleNavigateToModule = () => {
+    if (widgetDef?.moduleRoute) {
+      navigate(widgetDef.moduleRoute);
+      haptics.medium();
+    }
+  };
 
   // Bring to front when clicked
   const handleMouseDown = () => {
@@ -115,10 +105,6 @@ export function DraggableWidget({
 
   // Calculate display dimensions based on state
   const getDisplayDimensions = () => {
-    if (isMaximized) {
-      return { width: '100vw', height: '100vh' };
-    }
-    
     if (isMinimized) {
       return { width: 300, height: 56 };
     }
@@ -132,18 +118,8 @@ export function DraggableWidget({
 
   const dims = getDisplayDimensions();
 
-  // Only apply transform if this widget is being dragged
-  const style = isMaximized ? {
-    // Full-screen overlay mode
-    position: 'fixed' as const,
-    inset: 0,
-    width: dims.width,
-    height: dims.height,
-    zIndex: 45,
-    transition: 'none',
-    pointerEvents: 'auto' as const,
-  } : {
-    // Normal/minimized mode
+  // Normal/minimized mode
+  const style = {
     position: 'absolute' as const,
     left: position.x,
     top: position.y,
@@ -166,16 +142,15 @@ export function DraggableWidget({
         "group rounded-xl backdrop-blur-md transition-all duration-300",
         "bg-card/95 border border-border/60",
         // Enhanced shadows for depth
-        !isDraggingThis && !isMaximized && "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.03)]",
-        !isDraggingThis && !isMaximized && "hover:shadow-[0_4px_8px_rgba(0,0,0,0.08),0_8px_20px_rgba(0,0,0,0.06)]",
+        !isDraggingThis && "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.03)]",
+        !isDraggingThis && "hover:shadow-[0_4px_8px_rgba(0,0,0,0.08),0_8px_20px_rgba(0,0,0,0.06)]",
         isDraggingThis && "cursor-grabbing shadow-[0_8px_16px_rgba(0,0,0,0.12),0_16px_32px_rgba(0,0,0,0.1)] ring-2 ring-primary/30 scale-[1.02]",
-        !isDraggingThis && !isMaximized && "cursor-grab hover:border-primary/50",
-        isMaximized && "cursor-default shadow-2xl rounded-none border-0",
+        !isDraggingThis && "cursor-grab hover:border-primary/50",
         isMinimized && "overflow-hidden border-primary/40 bg-card/80 hover:border-primary hover:bg-card"
       )}
       onMouseDown={handleMouseDown}
-      {...(isMaximized ? {} : attributes)}
-      {...(isMaximized ? {} : listeners)}
+      {...attributes}
+      {...listeners}
     >
       <div className="h-full w-full relative">
         {/* Widget Header */}
@@ -183,9 +158,8 @@ export function DraggableWidget({
           widgetId={id}
           widgetName={widgetName}
           isMinimized={isMinimized}
-          isMaximized={isMaximized}
           onMinimize={onMinimize}
-          onMaximize={onMaximize}
+          onNavigateToModule={handleNavigateToModule}
           onClose={onClose}
           onConfigure={onConfigure}
         />
@@ -197,14 +171,8 @@ export function DraggableWidget({
 
         {/* Widget Content */}
         {!isMinimized && (
-          <div className={cn(
-            "h-full w-full pt-2 overflow-hidden flex flex-col",
-            isMaximized && "items-center justify-center"
-          )}>
-            <div className={cn(
-              "flex-1 min-h-0",
-              isMaximized ? "max-w-7xl w-full" : "overflow-auto"
-            )}>
+          <div className="h-full w-full pt-2 overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 overflow-auto">
               <WidgetErrorBoundary widgetId={id}>
                 {children}
               </WidgetErrorBoundary>
