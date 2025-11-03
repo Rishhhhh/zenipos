@@ -48,6 +48,9 @@ interface ItemGridProps {
 }
 
 export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridProps) {
+  // All hooks must be called at the top, before any conditional returns
+  const { ref, width } = useContainerDimensions();
+  
   // Fetch active promotions
   const { data: promotions } = useQuery({
     queryKey: ['promotions', 'active'],
@@ -70,6 +73,7 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
   ) || [];
   
   const hasActivePromos = promotions && promotions.length > 0;
+  const columnCount = Math.max(2, Math.floor(width / 220));
   
   const handleItemClick = useCallback((item: MenuItem) => {
     onAddItem({
@@ -168,9 +172,6 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
       </div>
     );
   }
-
-  const { ref, width } = useContainerDimensions();
-  const columnCount = Math.max(2, Math.floor(width / 220));
 
   return (
     <div className="h-full flex flex-col">
