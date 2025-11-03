@@ -18,21 +18,26 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-core': ['react', 'react-dom', 'react-router-dom'],
-          'ui-radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-switch',
-          ],
-          'tanstack': ['@tanstack/react-query'],
-          'chart': ['recharts'],
-          'supabase': ['@supabase/supabase-js'],
+        manualChunks: (id) => {
+          // Group npm packages only
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-core';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'ui-radix';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'tanstack';
+            }
+            if (id.includes('@supabase/supabase-js')) {
+              return 'supabase';
+            }
+          }
         }
       }
     },
     chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 0,
   },
 }));

@@ -515,3 +515,129 @@ button, a, input, textarea, select,
     }
   }
 }
+
+/* Enhanced touch targets for mobile */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 12px !important;
+  }
+  
+  /* Larger resize handles on touch devices */
+  .touch-target[class*="cursor-se-resize"],
+  .widget-resize-handle {
+    width: 56px !important;
+    height: 56px !important;
+  }
+  
+  /* Prevent accidental text selection during gestures */
+  .touch-none {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Enable momentum scrolling */
+  .touch-scroll, .touch-pan-y {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+  
+  /* Disable pull-to-refresh on dashboard */
+  body.on-dashboard {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Visual feedback for active gestures */
+.gesture-active {
+  opacity: 0.9;
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* GPU acceleration for gesture-sensitive elements */
+@media (pointer: coarse) {
+  .glass, .glass-card, .card, button, .badge {
+    will-change: transform;
+  }
+}
+
+/* ===================================
+   GPU Acceleration Extensions
+   =================================== */
+
+/* Draggable widgets - smooth 60fps drag operations */
+.widget-draggable {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* KDS order cards - smooth updates and transitions */
+.kds-order-card {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  contain: layout style paint;
+}
+
+/* POS item cards - instant touch feedback */
+.pos-item-card {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  contain: layout style paint;
+}
+
+/* Generic GPU-accelerated class */
+.gpu-accelerated {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Layout containment for isolated rendering */
+.contain-layout {
+  contain: layout style paint;
+}
+
+/* Cleanup animation - remove will-change after animation completes */
+@keyframes gpu-warmup {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+}
+
+.gpu-warmup {
+  animation: gpu-warmup 0.01s;
+}
+
+/* Remove will-change after transitions/animations complete */
+.transition-complete {
+  will-change: auto;
+}
+
+/* Optimize chart rendering */
+.recharts-surface {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Smooth scrolling containers */
+.smooth-scroll {
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent layout thrashing during animations */
+@media (prefers-reduced-motion: no-preference) {
+  /* Apply GPU acceleration only when animations are enabled */
+  .animate-on-mount {
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Clean up GPU memory after animations */
+.animation-ended {
+  will-change: auto !important;
+}

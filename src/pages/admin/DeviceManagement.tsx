@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash, TestTube, Activity } from "lucide-react";
-import { Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone } from "lucide-react";
+import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone } from "lucide-react";
 import {
   Dialog,
   DialogContent,

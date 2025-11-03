@@ -90,6 +90,15 @@ export function SalesConfigPanel({ config, onConfigChange }: SalesConfigPanelPro
           />
         </div>
 
+        <div className="flex items-center justify-between">
+          <Label htmlFor="show-trend-footer">Show Trend Footer</Label>
+          <Switch
+            id="show-trend-footer"
+            checked={config.showTrendFooter ?? true}
+            onCheckedChange={(checked) => onConfigChange({ ...config, showTrendFooter: checked })}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label>Refresh Interval</Label>
           <Select

@@ -33,31 +33,57 @@ export function GridOverlay() {
     };
   }, []);
 
-  const cols = Math.floor(dimensions.width / GRID_CONFIG.CELL_SIZE);
-  const rows = Math.floor(dimensions.height / GRID_CONFIG.CELL_SIZE);
+  const cellSize = GRID_CONFIG.CELL_SIZE;
+  const gapSize = GRID_CONFIG.GAP_SIZE;
+  const totalCellWidth = cellSize + gapSize;
+  
+  const cols = Math.floor(dimensions.width / totalCellWidth);
+  const rows = Math.floor(dimensions.height / totalCellWidth);
 
   const verticalLines = Array.from({ length: cols + 1 }, (_, i) => i);
   const horizontalLines = Array.from({ length: rows + 1 }, (_, i) => i);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 pointer-events-none opacity-10">
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none opacity-[0.08]">
       {dimensions.width > 0 && (
         <>
-          {/* Vertical lines */}
+          {/* Grid cells */}
           {verticalLines.map((i) => (
             <div
               key={`v-${i}`}
-              className="absolute top-0 bottom-0 w-px bg-primary"
-              style={{ left: i * GRID_CONFIG.CELL_SIZE }}
+              className="absolute top-0 bottom-0 w-px bg-primary/60"
+              style={{ left: i * totalCellWidth }}
             />
           ))}
           
-          {/* Horizontal lines */}
           {horizontalLines.map((i) => (
             <div
               key={`h-${i}`}
-              className="absolute left-0 right-0 h-px bg-primary"
-              style={{ top: i * GRID_CONFIG.CELL_SIZE }}
+              className="absolute left-0 right-0 h-px bg-primary/60"
+              style={{ top: i * totalCellWidth }}
+            />
+          ))}
+          
+          {/* Gap zones (darker lines) */}
+          {verticalLines.slice(1).map((i) => (
+            <div
+              key={`gap-v-${i}`}
+              className="absolute top-0 bottom-0 bg-border/30"
+              style={{ 
+                left: i * totalCellWidth - gapSize,
+                width: gapSize,
+              }}
+            />
+          ))}
+          
+          {horizontalLines.slice(1).map((i) => (
+            <div
+              key={`gap-h-${i}`}
+              className="absolute left-0 right-0 bg-border/30"
+              style={{ 
+                top: i * totalCellWidth - gapSize,
+                height: gapSize,
+              }}
             />
           ))}
         </>

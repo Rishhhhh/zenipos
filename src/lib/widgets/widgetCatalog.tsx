@@ -10,6 +10,7 @@ import {
   UserPlus,
   Clock,
   Award,
+  Activity,
 } from "lucide-react";
 import { lazy } from "react";
 
@@ -25,6 +26,7 @@ const ActiveShiftsWidget = lazy(() => import("@/components/dashboard/widgets/Act
 const LaborCostWidget = lazy(() => import("@/components/dashboard/widgets/LaborCostWidget").then(m => ({ default: m.LaborCostWidget })));
 const EightySixWidget = lazy(() => import("@/components/dashboard/widgets/EightySixWidget").then(m => ({ default: m.EightySixWidget })));
 const PendingModsWidget = lazy(() => import("@/components/dashboard/widgets/PendingModsWidget").then(m => ({ default: m.PendingModsWidget })));
+const WebVitalsWidget = lazy(() => import("@/components/dashboard/widgets/WebVitalsWidget").then(m => ({ default: m.WebVitalsWidget })));
 
 export interface WidgetDefinition {
   id: string;
@@ -34,9 +36,9 @@ export interface WidgetDefinition {
   icon: React.ComponentType<any>;
   roles: ("cashier" | "manager" | "admin")[];
   category: string;
+  fixedSize: 'XS' | 'S' | 'S_TALL' | 'M' | 'M_WIDE' | 'M_TALL' | 'L' | 'L_WIDE' | 'L_TALL' | 'XL' | 'XL_WIDE' | 'XXL';
   defaultSize: { cols: number; rows: number };
-  minSize: { width: number; height: number };
-  maxSize: { width: number; height: number };
+  moduleRoute: string; // Route to navigate when "Open in Full View" clicked
   capabilities: {
     supportedDisplayTypes: ('chart' | 'table' | 'cards' | 'gauge')[];
     dataType: 'financial' | 'text-list' | 'time-series' | 'status-list';
@@ -55,13 +57,13 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: ShoppingCart,
       roles: ["cashier", "manager", "admin"],
       category: "pos",
-      defaultSize: { cols: 10, rows: 10 },
-      minSize: { width: 360, height: 360 },
-      maxSize: { width: 900, height: 900 },
+      fixedSize: 'XL',
+      defaultSize: { cols: 14, rows: 11 },
+      moduleRoute: "/pos",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'text-list',
-        hasCompactMode: false,
+        hasCompactMode: true,
       },
     },
     {
@@ -72,9 +74,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: ChefHat,
       roles: ["cashier", "manager", "admin"],
       category: "pos",
-      defaultSize: { cols: 6, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 720, height: 780 },
+      fixedSize: 'L_TALL',
+      defaultSize: { cols: 9, rows: 12 },
+      moduleRoute: "/kds",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -89,9 +91,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: AlertTriangle,
       roles: ["manager", "admin"],
       category: "pos",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 540 },
+      fixedSize: 'M_TALL',
+      defaultSize: { cols: 7, rows: 9 },
+      moduleRoute: "/admin/pending-modifications",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
@@ -108,9 +110,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: BarChart3,
       roles: ["manager", "admin"],
       category: "analytics",
-      defaultSize: { cols: 6, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 720, height: 540 },
+      fixedSize: 'M_WIDE',
+      defaultSize: { cols: 10, rows: 6 },
+      moduleRoute: "/admin/reports",
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -125,9 +127,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: TrendingUp,
       roles: ["manager", "admin"],
       category: "analytics",
-      defaultSize: { cols: 8, rows: 5 },
-      minSize: { width: 420, height: 300 },
-      maxSize: { width: 960, height: 540 },
+      fixedSize: 'L_WIDE',
+      defaultSize: { cols: 14, rows: 7 },
+      moduleRoute: "/admin/reports",
       capabilities: {
         supportedDisplayTypes: ['chart'],
         dataType: 'time-series',
@@ -142,9 +144,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: Star,
       roles: ["manager", "admin"],
       category: "analytics",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 600 },
+      fixedSize: 'M_TALL',
+      defaultSize: { cols: 7, rows: 9 },
+      moduleRoute: "/admin/reports",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'text-list',
@@ -161,13 +163,13 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: AlertTriangle,
       roles: ["manager", "admin"],
       category: "inventory",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 540 },
+      fixedSize: 'S_TALL',
+      defaultSize: { cols: 5, rows: 8 },
+      moduleRoute: "/admin/inventory",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
-        hasCompactMode: false,
+        hasCompactMode: true,
       },
     },
     {
@@ -178,13 +180,13 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: AlertTriangle,
       roles: ["cashier", "manager", "admin"],
       category: "inventory",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 540 },
+      fixedSize: 'S_TALL',
+      defaultSize: { cols: 5, rows: 8 },
+      moduleRoute: "/admin/eighty-six",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',
-        hasCompactMode: false,
+        hasCompactMode: true,
       },
     },
   ],
@@ -197,9 +199,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: Users,
       roles: ["manager", "admin"],
       category: "customers",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 480 },
+      fixedSize: 'M',
+      defaultSize: { cols: 8, rows: 7 },
+      moduleRoute: "/admin/crm",
       capabilities: {
         supportedDisplayTypes: ['cards', 'table'],
         dataType: 'financial',
@@ -216,9 +218,9 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: Clock,
       roles: ["manager", "admin"],
       category: "employees",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 540 },
+      fixedSize: 'S',
+      defaultSize: { cols: 4, rows: 4 },
+      moduleRoute: "/admin/shift-management",
       capabilities: {
         supportedDisplayTypes: ['table', 'cards'],
         dataType: 'status-list',
@@ -233,13 +235,32 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       icon: DollarSign,
       roles: ["manager", "admin"],
       category: "employees",
-      defaultSize: { cols: 5, rows: 5 },
-      minSize: { width: 300, height: 300 },
-      maxSize: { width: 540, height: 540 },
+      fixedSize: 'S',
+      defaultSize: { cols: 4, rows: 4 },
+      moduleRoute: "/admin/employees",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'financial',
-        hasCompactMode: false,
+        hasCompactMode: true,
+      },
+    },
+  ],
+  performance: [
+    {
+      id: "web-vitals",
+      component: WebVitalsWidget,
+      name: "Core Web Vitals",
+      description: "Monitor LCP, FID, CLS, and TTI performance metrics",
+      icon: Activity,
+      roles: ["admin"],
+      category: "performance",
+      fixedSize: 'M',
+      defaultSize: { cols: 8, rows: 7 },
+      moduleRoute: "/admin/performance",
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
+        dataType: 'status-list',
+        hasCompactMode: true,
       },
     },
   ],

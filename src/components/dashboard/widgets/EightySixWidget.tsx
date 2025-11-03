@@ -1,98 +1,140 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Clock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, RefreshCw, Package } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useWidgetConfig } from '@/hooks/useWidgetConfig';
+import { EightySixConfig } from '@/types/widgetConfigs';
+import { cn } from '@/lib/utils';
+import { EightySixBadge } from '@/components/ui/eighty-six-badge';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 export function EightySixWidget() {
+  const { config } = useWidgetConfig<EightySixConfig>('eighty-six');
   const navigate = useNavigate();
 
-  const { data: eightySixItems = [], isLoading } = useQuery({
-    queryKey: ['eighty-six-items-widget'],
+  const { data: eightySixItems = [], isLoading, refetch, dataUpdatedAt } = useQuery({
+    queryKey: ['eighty-six-items-widget', config.maxItems],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_active_eighty_six_items');
       if (error) throw error;
-      return (data || []).slice(0, 5); // Show top 5
+      return (data || []).slice(0, config.maxItems);
     },
-    refetchInterval: 30000,
+    refetchInterval: config.refreshInterval * 1000,
   });
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">86 List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-32 flex items-center justify-center">
-            <div className="animate-pulse text-muted-foreground">Loading...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const lastUpdated = formatDistanceToNow(dataUpdatedAt, { addSuffix: true });
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">86 List</CardTitle>
-        <AlertTriangle className="h-4 w-4 text-warning" />
-      </CardHeader>
-      <CardContent>
-        {eightySixItems.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">
+    <Card className={cn(
+      "glass-card flex flex-col w-[240px] h-[240px]",
+      config.compactMode ? "p-2.5" : "p-3"
+    )}>
+      {/* Header */}
+      <div className={cn(
+        "flex items-center justify-between",
+        config.compactMode ? "mb-2" : "mb-3"
+      )}>
+        <div className="flex items-center gap-2">
+          <AlertTriangle className={cn(
+            "text-warning",
+            config.compactMode ? "h-3.5 w-3.5" : "h-4 w-4"
+          )} />
+          <h3 className={cn(
+            "font-semibold",
+            config.compactMode ? "text-sm" : "text-base"
+          )}>
+            {config.compactMode ? "86" : "86 List"}
+          </h3>
+          {eightySixItems.length > 0 && (
+            <Badge variant="destructive" className={cn(
+              config.compactMode ? "text-xs h-4 px-1.5" : "text-sm h-5 px-2"
+            )}>
+              {eightySixItems.length}
+            </Badge>
+          )}
+        </div>
+        <Button
+          onClick={() => refetch()}
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {/* Content */}
+      <div className={cn(
+        "flex-1 min-h-0",
+        config.showLastUpdated ? "mb-2" : ""
+      )}>
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className={cn(
+                "w-full rounded",
+                config.compactMode ? "h-[40px]" : "h-[48px]"
+              )} />
+            ))}
+          </div>
+        ) : eightySixItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <Package className={cn(
+              "mb-2 opacity-50",
+              config.compactMode ? "h-8 w-8" : "h-10 w-10"
+            )} />
+            <p className={cn(
+              "text-center",
+              config.compactMode ? "text-xs" : "text-sm"
+            )}>
               All items available
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold">{eightySixItems.length}</span>
-              <Badge variant="destructive">Out of Stock</Badge>
-            </div>
-
-            <div className="space-y-2">
-              {eightySixItems.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="p-2 bg-warning/5 rounded-lg border border-warning/20"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.menu_item_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.reason}
-                      </p>
-                    </div>
-                    {item.auto_generated && (
-                      <Badge variant="outline" className="text-xs ml-2">
-                        Auto
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => navigate('/admin/eighty-six')}
-            >
-              View All 86 Items
-            </Button>
+          <div className={cn(
+            "space-y-2 overflow-y-auto",
+            config.compactMode ? "max-h-[172px]" : "max-h-[164px]"
+          )}>
+            {eightySixItems.map((item: any) => (
+              <button
+                key={item.id}
+                onClick={() => navigate('/admin/eighty-six')}
+                className={cn(
+                  "w-full flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 transition-all hover:bg-destructive/10 hover:border-destructive/30",
+                  config.compactMode ? "px-2.5 py-2 h-[40px]" : "px-3 py-2.5 h-[48px]"
+                )}
+              >
+                <p className={cn(
+                  "font-medium line-clamp-1 text-left flex-1 mr-2",
+                  config.compactMode ? "text-[13px]" : "text-sm"
+                )}>
+                  {item.menu_item_name}
+                </p>
+                <EightySixBadge 
+                  size={config.compactMode ? "sm" : "default"}
+                  showIcon={false}
+                />
+              </button>
+            ))}
           </div>
         )}
-      </CardContent>
+      </div>
+
+      {/* Last Updated Footer */}
+      {config.showLastUpdated && !isLoading && (
+        <div className="pt-2 border-t border-border/30">
+          <p className={cn(
+            "text-muted-foreground text-center",
+            config.compactMode ? "text-[10px]" : "text-[11px]"
+          )}>
+            ⏰ Updated {lastUpdated}
+          </p>
+        </div>
+      )}
     </Card>
   );
 }

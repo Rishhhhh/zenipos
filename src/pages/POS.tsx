@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useModalManager } from "@/hooks/useModalManager";
 import { usePromotions } from "@/lib/hooks/usePromotions";
 import { useBroadcastToCustomerDisplay } from "@/hooks/useCustomerDisplaySync";
@@ -27,7 +27,7 @@ export default function POS() {
   // Track performance for this page
   usePerformanceMonitor('POS');
   
-  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, setTableId, setOrderType } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, setTableId, setOrderType } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
@@ -61,14 +61,13 @@ export default function POS() {
     }
   }, [items, customerDisplayId, broadcastOrderUpdate, broadcastIdle]);
 
-  // Show table selection on first load
+  // Enforce table selection on first load
   useEffect(() => {
-    if (!table_id && order_type === 'takeaway') {
-      // Auto-set takeaway
-    } else if (!table_id && order_type === 'dine_in') {
+    // If no table and no order type set, force selection
+    if (!table_id && !order_type) {
       setShowTableSelect(true);
     }
-  }, []);
+  }, [table_id, order_type]);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -107,13 +106,15 @@ export default function POS() {
       const discount = getDiscount();
       const total = getTotal();
 
-      // Create order
+      // Create order with NFC card tracking
+      const cartState = useCartStore.getState();
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           session_id: sessionId,
-          table_id: useCartStore.getState().table_id,
-          order_type: useCartStore.getState().order_type,
+          table_id: cartState.table_id,
+          order_type: cartState.order_type,
+          nfc_card_id: cartState.nfc_card_id,
           subtotal,
           tax,
           discount,
@@ -244,9 +245,15 @@ export default function POS() {
       <TableSelectionModal
         open={showTableSelect}
         onOpenChange={setShowTableSelect}
-        onSelect={(tableId, orderType) => {
-          setTableId(tableId);
-          setOrderType(orderType);
+        onSelect={(tableId, orderType, nfcCardId) => {
+          if (nfcCardId) {
+            // NFC scan: use setTableWithNFC to store card ID
+            useCartStore.getState().setTableWithNFC(tableId, nfcCardId);
+          } else {
+            // Manual selection
+            setTableId(tableId);
+            setOrderType(orderType);
+          }
         }}
       />
 
@@ -257,7 +264,7 @@ export default function POS() {
         menuItemName={pendingItem?.name || ''}
         onConfirm={(modifiers) => {
           if (pendingItem) {
-            addItem({ ...pendingItem, modifiers });
+            startTransition(() => addItem({ ...pendingItem, modifiers }));
             setPendingItem(null);
           }
         }}
@@ -326,8 +333,13 @@ export default function POS() {
             items={menuItems}
             isLoading={itemsLoading}
             onAddItem={(item) => {
-              // First check if table is selected for dine-in
-              if (!table_id && !order_type) {
+              // CRITICAL: Enforce table selection before adding any items
+              if (!table_id && order_type !== 'takeaway') {
+                toast({
+                  variant: 'destructive',
+                  title: 'Select Table First',
+                  description: 'Please select a table or choose takeaway before adding items',
+                });
                 setShowTableSelect(true);
                 return;
               }
@@ -349,8 +361,8 @@ export default function POS() {
             total={getTotal()}
             discount={getDiscount()}
             appliedPromotions={appliedPromotions}
-            onUpdateQuantity={updateQuantity}
-            onVoidItem={voidItem}
+            onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
+            onVoidItem={(id) => voidItem(id)}
             onSendToKDS={() => sendToKDS.mutate()}
             onSplitBill={() => setShowSplitBill(true)}
             isSending={sendToKDS.isPending}

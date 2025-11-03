@@ -1,11 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface EightySixConfig {
-  refreshInterval: number;
-  maxItems: number;
-  branchId?: string;
-}
+import { Switch } from '@/components/ui/switch';
+import { EightySixConfig } from '@/types/widgetConfigs';
 
 interface EightySixConfigPanelProps {
   config: EightySixConfig;
@@ -20,17 +16,17 @@ export function EightySixConfigPanel({ config, onConfigChange }: EightySixConfig
         <Select
           value={config.refreshInterval.toString()}
           onValueChange={(value) =>
-            onConfigChange({ ...config, refreshInterval: parseInt(value) })
+            onConfigChange({ ...config, refreshInterval: parseInt(value) as 5 | 30 | 60 | 300 })
           }
         >
           <SelectTrigger id="refreshInterval">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="15000">15 seconds</SelectItem>
-            <SelectItem value="30000">30 seconds</SelectItem>
-            <SelectItem value="60000">1 minute</SelectItem>
-            <SelectItem value="120000">2 minutes</SelectItem>
+            <SelectItem value="15">15 seconds</SelectItem>
+            <SelectItem value="30">30 seconds</SelectItem>
+            <SelectItem value="60">1 minute</SelectItem>
+            <SelectItem value="120">2 minutes</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -40,19 +36,43 @@ export function EightySixConfigPanel({ config, onConfigChange }: EightySixConfig
         <Select
           value={config.maxItems.toString()}
           onValueChange={(value) =>
-            onConfigChange({ ...config, maxItems: parseInt(value) })
+            onConfigChange({ ...config, maxItems: parseInt(value) as 3 | 5 | 10 })
           }
         >
           <SelectTrigger id="maxItems">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="3">3 items</SelectItem>
+            <SelectItem value="3">3 items (no scroll)</SelectItem>
             <SelectItem value="5">5 items</SelectItem>
             <SelectItem value="10">10 items</SelectItem>
-            <SelectItem value="20">20 items</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          3 items fit perfectly in widget. More items will scroll.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="show-last-updated">Show Last Updated</Label>
+        <Switch
+          id="show-last-updated"
+          checked={config.showLastUpdated ?? true}
+          onCheckedChange={(checked) => 
+            onConfigChange({ ...config, showLastUpdated: checked })
+          }
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="compact-mode">Compact Mode</Label>
+        <Switch
+          id="compact-mode"
+          checked={config.compactMode ?? false}
+          onCheckedChange={(checked) => 
+            onConfigChange({ ...config, compactMode: checked })
+          }
+        />
       </div>
     </div>
   );

@@ -1783,7 +1783,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_srcset_jpeg: string | null
+          image_srcset_webp: string | null
           image_url: string | null
+          image_variants: Json | null
           in_stock: boolean | null
           name: string
           prep_time_minutes: number | null
@@ -1805,7 +1808,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_srcset_jpeg?: string | null
+          image_srcset_webp?: string | null
           image_url?: string | null
+          image_variants?: Json | null
           in_stock?: boolean | null
           name: string
           prep_time_minutes?: number | null
@@ -1827,7 +1833,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_srcset_jpeg?: string | null
+          image_srcset_webp?: string | null
           image_url?: string | null
+          image_variants?: Json | null
           in_stock?: boolean | null
           name?: string
           prep_time_minutes?: number | null
@@ -2291,8 +2300,10 @@ export type Database = {
           created_by: string | null
           customer_id: string | null
           discount: number | null
+          einvoice_enabled: boolean | null
           id: string
           metadata: Json | null
+          nfc_card_id: string | null
           order_type: Database["public"]["Enums"]["order_type"] | null
           recall_approved: boolean | null
           recall_requested: boolean | null
@@ -2313,8 +2324,10 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           discount?: number | null
+          einvoice_enabled?: boolean | null
           id?: string
           metadata?: Json | null
+          nfc_card_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
@@ -2335,8 +2348,10 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           discount?: number | null
+          einvoice_enabled?: boolean | null
           id?: string
           metadata?: Json | null
+          nfc_card_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
@@ -2351,6 +2366,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_orders_nfc_card"
+            columns: ["nfc_card_id"]
+            isOneToOne: false
+            referencedRelation: "nfc_cards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_branch_id_fkey"
             columns: ["branch_id"]
@@ -2546,6 +2568,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      performance_alerts: {
+        Row: {
+          created_at: string | null
+          id: string
+          measured_value: number
+          metric_type: string
+          page_path: string
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string
+          threshold_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          measured_value: number
+          metric_type: string
+          page_path: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity: string
+          threshold_value: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          measured_value?: number
+          metric_type?: string
+          page_path?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          threshold_value?: number
+        }
+        Relationships: []
       }
       performance_metrics: {
         Row: {
@@ -3847,6 +3905,13 @@ export type Database = {
           total_points_earned: number
           total_points_redeemed: number
           total_spent: number
+        }[]
+      }
+      get_labor_sparkline: {
+        Args: { hours_back?: number }
+        Returns: {
+          hour_label: string
+          labor_percentage: number
         }[]
       }
       get_low_stock_items: {

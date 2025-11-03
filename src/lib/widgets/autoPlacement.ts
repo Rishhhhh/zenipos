@@ -15,20 +15,22 @@ export function findEmptyGridSpace(
   requiredSize: Size
 ): { x: number; y: number } {
   const cellSize = GRID_CONFIG.CELL_SIZE;
-  const requiredWidth = requiredSize.cols * cellSize;
-  const requiredHeight = requiredSize.rows * cellSize;
+  const gapSize = GRID_CONFIG.GAP_SIZE;
+  const totalCellSize = cellSize + gapSize;
+  const requiredWidth = requiredSize.cols * cellSize + (requiredSize.cols - 1) * gapSize;
+  const requiredHeight = requiredSize.rows * cellSize + (requiredSize.rows - 1) * gapSize;
 
   // Create a grid map to track occupied cells
   const gridMap: boolean[][] = Array(GRID_CONFIG.ROWS)
     .fill(false)
     .map(() => Array(GRID_CONFIG.COLS).fill(false));
 
-  // Mark occupied cells
+  // Mark occupied cells (account for gaps)
   Object.values(existingWidgets).forEach((pos) => {
-    const startCol = Math.floor(pos.x / cellSize);
-    const endCol = Math.ceil((pos.x + (pos.width || 0)) / cellSize);
-    const startRow = Math.floor(pos.y / cellSize);
-    const endRow = Math.ceil((pos.y + (pos.height || 0)) / cellSize);
+    const startCol = Math.floor(pos.x / totalCellSize);
+    const endCol = Math.ceil((pos.x + (pos.width || 0)) / totalCellSize);
+    const startRow = Math.floor(pos.y / totalCellSize);
+    const endRow = Math.ceil((pos.y + (pos.height || 0)) / totalCellSize);
 
     for (let row = startRow; row < endRow && row < GRID_CONFIG.ROWS; row++) {
       for (let col = startCol; col < endCol && col < GRID_CONFIG.COLS; col++) {
@@ -53,8 +55,8 @@ export function findEmptyGridSpace(
 
       if (canFit) {
         return {
-          x: col * cellSize,
-          y: row * cellSize,
+          x: col * totalCellSize,
+          y: row * totalCellSize,
         };
       }
     }

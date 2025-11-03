@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { findEmptyGridSpace } from "./autoPlacement";
+import { getLayoutForRole } from "./roleLayouts";
+import { GRID_CONFIG, validateDimensions } from "./gridSystem";
 
 export interface WidgetPosition {
   x: number;
@@ -9,12 +11,8 @@ export interface WidgetPosition {
   height?: number;
   zIndex: number;
   isMinimized?: boolean;
-  isMaximized?: boolean;
   _originalWidth?: number;
   _originalHeight?: number;
-  _originalX?: number;
-  _originalY?: number;
-  _wasMinimized?: boolean;
 }
 
 export interface WidgetLayout {
@@ -22,62 +20,25 @@ export interface WidgetLayout {
   widgetPositions: Record<string, WidgetPosition>;
 }
 
-const DEFAULT_LAYOUT: WidgetLayout = {
-  widgetOrder: ["quick-pos", "active-orders", "sales"],
-  widgetPositions: {
-    // Quick POS: Top-left, 10x10 cells (600x600px) - grid aligned
-    "quick-pos": { x: 0, y: 0, width: 600, height: 600, zIndex: 1, isMinimized: false, isMaximized: false },
-    
-    // Active Orders: Top-middle-right, 6x5 cells (360x300px) - grid aligned
-    "active-orders": { x: 660, y: 0, width: 360, height: 300, zIndex: 2, isMinimized: false, isMaximized: false },
-    
-    // Sales: Below active orders, 6x5 cells (360x300px) - grid aligned  
-    "sales": { x: 660, y: 360, width: 360, height: 300, zIndex: 3, isMinimized: false, isMaximized: false },
-  },
-};
-
 export function useWidgetLayout() {
   const { employee } = useAuth();
   const storageKey = `dashboard-layout-${employee?.id || 'default'}`;
+  
+  // Get role-based default layout
+  const getDefaultLayout = useCallback(() => {
+    return getLayoutForRole(employee?.role || 'cashier');
+  }, [employee?.role]);
   
   const [layout, setLayout] = useState<WidgetLayout>(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        
-        // Migrate old format (widgetSizes) to new format (widgetPositions)
-        if (parsed.widgetSizes && !parsed.widgetPositions) {
-          const migratedPositions: Record<string, WidgetPosition> = {};
-          let currentX = 20;
-          let currentY = 20;
-          
-          parsed.widgetOrder?.forEach((widgetId: string, index: number) => {
-            const size = parsed.widgetSizes[widgetId] || { cols: 1, rows: 1 };
-            migratedPositions[widgetId] = {
-              x: currentX,
-              y: currentY,
-              width: size.cols * 250,
-              height: size.rows * 300,
-              zIndex: index + 1,
-            };
-            
-            // Stack widgets vertically with some spacing
-            currentY += (size.rows * 300) + 20;
-          });
-          
-          return {
-            widgetOrder: parsed.widgetOrder || [],
-            widgetPositions: migratedPositions,
-          };
-        }
-        
-        return parsed;
+        return JSON.parse(saved);
       } catch {
-        return DEFAULT_LAYOUT;
+        return getDefaultLayout();
       }
     }
-    return DEFAULT_LAYOUT;
+    return getDefaultLayout();
   });
 
   // Debounced save to localStorage
@@ -94,6 +55,14 @@ export function useWidgetLayout() {
   }, []);
 
   const updatePosition = useCallback((widgetId: string, position: Partial<WidgetPosition>) => {
+    // Validate dimensions before updating
+    if (position.width !== undefined && position.height !== undefined) {
+      if (!validateDimensions(position.width, position.height)) {
+        console.error('Invalid widget dimensions:', position);
+        return; // Don't update with invalid dimensions
+      }
+    }
+    
     setLayout(prev => ({
       ...prev,
       widgetPositions: {
@@ -136,11 +105,10 @@ export function useWidgetLayout() {
           [widgetId]: {
             x: position.x,
             y: position.y,
-            width: defaultSize.cols * 60,
-            height: defaultSize.rows * 60,
+            width: defaultSize.cols * GRID_CONFIG.CELL_SIZE,
+            height: defaultSize.rows * GRID_CONFIG.CELL_SIZE,
             zIndex: maxZ + 1,
             isMinimized: false,
-            isMaximized: false,
           },
         },
       };
@@ -160,69 +128,50 @@ export function useWidgetLayout() {
   }, []);
 
   const resetLayout = useCallback(() => {
-    setLayout(DEFAULT_LAYOUT);
-  }, []);
+    const defaultLayout = getDefaultLayout();
+    setLayout(defaultLayout);
+    localStorage.setItem(storageKey, JSON.stringify(defaultLayout));
+  }, [getDefaultLayout, storageKey]);
 
   const toggleMinimize = useCallback((widgetId: string) => {
     setLayout(prev => {
       const currentPos = prev.widgetPositions[widgetId];
       const isCurrentlyMinimized = currentPos.isMinimized;
 
-      return {
-        ...prev,
-        widgetPositions: {
-          ...prev.widgetPositions,
-          [widgetId]: {
-            ...currentPos,
-            isMinimized: !isCurrentlyMinimized,
-            isMaximized: false,
-            // Store original width when minimizing, restore when un-minimizing
-            _originalWidth: !isCurrentlyMinimized ? currentPos.width : undefined,
-            width: !isCurrentlyMinimized ? 300 : (currentPos._originalWidth || currentPos.width),
+      if (isCurrentlyMinimized) {
+        // UN-MINIMIZING: Restore to normal
+        return {
+          ...prev,
+          widgetPositions: {
+            ...prev.widgetPositions,
+            [widgetId]: {
+              ...currentPos,
+              isMinimized: false,
+              // Restore original dimensions
+              width: currentPos._originalWidth || currentPos.width,
+              height: currentPos._originalHeight || currentPos.height,
+              // Clear stored originals now that we're back to normal
+              _originalWidth: undefined,
+              _originalHeight: undefined,
+            },
           },
-        },
-      };
-    });
-  }, []);
-
-  const toggleMaximize = useCallback((widgetId: string) => {
-    setLayout(prev => {
-      const current = prev.widgetPositions[widgetId];
-      const isCurrentlyMaximized = current.isMaximized;
-      const isCurrentlyMinimized = current.isMinimized;
-      
-      return {
-        ...prev,
-        widgetPositions: {
-          ...prev.widgetPositions,
-          [widgetId]: {
-            ...current,
-            isMaximized: !isCurrentlyMaximized,
-            isMinimized: false,
-            ...(!isCurrentlyMaximized ? {
-              // Store originals when maximizing
-              _originalX: current.x,
-              _originalY: current.y,
-              // If currently minimized, use the stored original width, not 300px
-              _originalWidth: isCurrentlyMinimized && current._originalWidth 
-                ? current._originalWidth 
-                : current.width,
-              _originalHeight: current.height,
-              // Remember if it was minimized before maximizing
-              _wasMinimized: isCurrentlyMinimized,
-              // Don't set x/y/width/height - DraggableWidget handles via CSS
-            } : {
-              // Restore originals when un-maximizing
-              x: current._originalX || current.x,
-              y: current._originalY || current.y,
-              width: current._originalWidth || current.width,
-              height: current._originalHeight || current.height,
-              // If it was minimized before maximizing, restore to minimized state
-              isMinimized: current._wasMinimized || false,
-            }),
+        };
+      } else {
+        // MINIMIZING: Store originals
+        return {
+          ...prev,
+          widgetPositions: {
+            ...prev.widgetPositions,
+            [widgetId]: {
+              ...currentPos,
+              isMinimized: true,
+              // Store originals
+              _originalWidth: currentPos.width,
+              _originalHeight: currentPos.height,
+            },
           },
-        },
-      };
+        };
+      }
     });
   }, []);
 
@@ -235,6 +184,5 @@ export function useWidgetLayout() {
     removeWidget,
     resetLayout,
     toggleMinimize,
-    toggleMaximize,
   };
 }
