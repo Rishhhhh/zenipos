@@ -107,7 +107,11 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
           className={`h-full cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col overflow-hidden relative ${
             !isAvailable ? 'opacity-60 cursor-not-allowed' : ''
           }`}
-          onClick={() => isAvailable && handleItemClick(item)}
+          onClick={() => isAvailable && onAddItem({
+            menu_item_id: item.id,
+            name: item.name,
+            price: Number(item.price),
+          })}
           title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
         >
           {item.image_url ? (
