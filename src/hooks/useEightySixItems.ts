@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export function useEightySixItems(branchId?: string) {
   const queryClient = useQueryClient();
-  const [eightySixedItemIds, setEightySixedItemIds] = useState<Set<string>>(new Set());
 
   const { data: eightySixItems = [] } = useQuery({
     queryKey: ['eighty-six-items', branchId],
@@ -18,10 +17,9 @@ export function useEightySixItems(branchId?: string) {
     refetchInterval: 30000,
   });
 
-  // Update set of 86'd item IDs
-  useEffect(() => {
-    const ids = new Set(eightySixItems.map((item: any) => item.menu_item_id));
-    setEightySixedItemIds(ids);
+  // Compute set of 86'd item IDs
+  const eightySixedItemIds = useMemo(() => {
+    return new Set(eightySixItems.map((item: any) => item.menu_item_id));
   }, [eightySixItems]);
 
   // Real-time subscription
@@ -37,7 +35,7 @@ export function useEightySixItems(branchId?: string) {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['eighty-six-items'] });
-          queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+          queryClient.invalidateQueries({ queryKey: ['menu_items'] });
         }
       )
       .subscribe();

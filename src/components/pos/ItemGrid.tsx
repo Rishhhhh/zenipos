@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
-import { memo, useCallback, useState, useEffect, useRef } from "react";
+import { memo, useCallback, useState, useEffect, useRef, useMemo } from "react";
 // @ts-ignore - react-window types issue
 import * as ReactWindow from "react-window";
 
@@ -89,9 +89,11 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
   // Check for 86'd items
   const { isEightySixed, getEightySixInfo } = useEightySixItems();
   
-  const filteredItems = items?.filter(item => 
-    !categoryId || item.category_id === categoryId
-  ) || [];
+  // Filter items by category if specified - memoized to prevent re-renders
+  const filteredItems = useMemo(() => 
+    items?.filter(item => !categoryId || item.category_id === categoryId) || [],
+    [items, categoryId]
+  );
   
   console.log('[ItemGrid] Filtered items:', { 
     filteredLength: filteredItems.length,
