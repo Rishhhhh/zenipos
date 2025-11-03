@@ -52,6 +52,9 @@ interface ItemGridProps {
 }
 
 export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridProps) {
+  // Hook for container dimensions - must be at top before any returns
+  const { ref, width, height } = useContainerDimensions();
+  
   // Fetch active promotions
   const { data: promotions } = useQuery({
     queryKey: ['promotions', 'active'],
@@ -74,6 +77,10 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
   ) || [];
   
   const hasActivePromos = promotions && promotions.length > 0;
+  
+  // Calculate grid dimensions
+  const columnCount = Math.max(2, Math.floor(width / 220));
+  const rowCount = Math.ceil(filteredItems.length / columnCount);
   
   const handleItemClick = useCallback((item: MenuItem) => {
     onAddItem({
@@ -187,10 +194,6 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
       </div>
     );
   }
-
-  const { ref, width, height } = useContainerDimensions();
-  const columnCount = Math.max(2, Math.floor(width / 220));
-  const rowCount = Math.ceil(filteredItems.length / columnCount);
 
   return (
     <div className="h-full flex flex-col">
