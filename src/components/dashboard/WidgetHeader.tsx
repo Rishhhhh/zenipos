@@ -50,20 +50,21 @@ export function WidgetHeader({
       </div>
       
       {/* Action Buttons */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 widget-header">
         {!isMaximized && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9 min-h-[44px] min-w-[44px] touch-none"
                 onClick={(e) => {
                   e.stopPropagation();
                   onConfigure();
                 }}
+                data-touch-target
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Configure</TooltipContent>
@@ -76,13 +77,14 @@ export function WidgetHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9 min-h-[44px] min-w-[44px] touch-none"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMinimize();
                 }}
+                data-touch-target
               >
-                {isMinimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+                {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -96,13 +98,14 @@ export function WidgetHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-9 w-9 min-h-[44px] min-w-[44px] touch-none"
               onClick={(e) => {
                 e.stopPropagation();
                 onMaximize();
               }}
+              data-touch-target
             >
-              {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+              {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Square className="h-4 w-4" />}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -116,13 +119,14 @@ export function WidgetHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
+                className="h-9 w-9 min-h-[44px] min-w-[44px] touch-none hover:bg-destructive/10 hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose();
                 }}
+                data-touch-target
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Close</TooltipContent>

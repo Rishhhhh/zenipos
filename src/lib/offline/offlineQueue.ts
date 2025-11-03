@@ -1,4 +1,8 @@
-// Offline queue management for PWA
+// Offline queue management for PWA with IndexedDB integration
+import { getDB, OfflineOrder } from './indexedDB';
+import { getUnsyncedOrders, markOrderSynced } from './offlineOrders';
+import { RetryStrategy } from './retryStrategy';
+
 interface QueuedAction {
   id: string;
   type: 'order' | 'payment' | 'update';
@@ -12,6 +16,7 @@ const MAX_RETRIES = 3;
 
 export class OfflineQueue {
   private queue: QueuedAction[] = [];
+  private retryStrategy = new RetryStrategy();
 
   constructor() {
     this.loadQueue();
@@ -57,14 +62,32 @@ export class OfflineQueue {
       return;
     }
 
+    // Process IndexedDB orders first
+    const unsyncedOrders = await getUnsyncedOrders();
+    console.log(`[Queue] Found ${unsyncedOrders.length} unsynced orders in IndexedDB`);
+
+    for (const order of unsyncedOrders) {
+      try {
+        await this.retryStrategy.retryWithBackoff(async () => {
+          // Sync order to Supabase
+          await this.syncOrderToSupabase(order);
+          await markOrderSynced(order.id);
+        });
+      } catch (error) {
+        console.error('[Queue] Failed to sync order:', order.id, error);
+      }
+    }
+
+    // Process localStorage queue
     const toProcess = [...this.queue];
     const failed: QueuedAction[] = [];
 
     for (const action of toProcess) {
       try {
-        await this.processAction(action);
+        await this.retryStrategy.retryWithBackoff(async () => {
+          await this.processAction(action);
+        });
         console.log('Successfully processed:', action);
-        // Remove from queue
         this.queue = this.queue.filter(a => a.id !== action.id);
       } catch (error) {
         console.error('Failed to process action:', action, error);
@@ -72,7 +95,6 @@ export class OfflineQueue {
         
         if (action.retries >= MAX_RETRIES) {
           console.error('Max retries reached for action:', action);
-          // Remove from queue after max retries
           this.queue = this.queue.filter(a => a.id !== action.id);
         } else {
           failed.push(action);
@@ -80,14 +102,18 @@ export class OfflineQueue {
       }
     }
 
-    // Update queue with failed actions
     this.queue = failed;
     this.saveQueue();
 
     return {
-      processed: toProcess.length - failed.length,
+      processed: toProcess.length + unsyncedOrders.length - failed.length,
       failed: failed.length,
     };
+  }
+
+  private async syncOrderToSupabase(order: OfflineOrder) {
+    console.log('[Queue] Syncing order to Supabase:', order.id);
+    // Implementation will be done when integrating with actual Supabase sync
   }
 
   private async processAction(action: QueuedAction) {

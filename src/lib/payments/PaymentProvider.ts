@@ -17,11 +17,29 @@ export interface PaymentResponse {
   error?: string;
 }
 
+export interface PreAuthRequest {
+  amount: number;
+  orderId: string;
+  cardToken?: string;
+}
+
+export interface PreAuthResponse {
+  success: boolean;
+  preAuthRef: string;
+  cardBrand?: string;
+  cardLast4?: string;
+  expiresAt?: Date;
+  error?: string;
+}
+
 export interface PaymentProvider {
   name: string;
   generateQRPayment(request: PaymentRequest): Promise<PaymentResponse>;
   verifyPayment(transactionId: string): Promise<boolean>;
   refund(transactionId: string, amount: number): Promise<boolean>;
+  preAuthorize(request: PreAuthRequest): Promise<PreAuthResponse>;
+  capturePreAuth(preAuthRef: string, finalAmount: number): Promise<boolean>;
+  releasePreAuth(preAuthRef: string): Promise<boolean>;
 }
 
 /**
@@ -70,6 +88,28 @@ export class StripeProvider implements PaymentProvider {
     
     return Promise.resolve(true);
   }
+
+  async preAuthorize(request: { amount: number; orderId: string }): Promise<any> {
+    console.log('🔒 [Stripe] Pre-authorize', request);
+    
+    return {
+      success: true,
+      preAuthRef: `preauth_stripe_${Date.now()}`,
+      cardBrand: 'Visa',
+      cardLast4: '4242',
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  }
+
+  async capturePreAuth(preAuthRef: string, finalAmount: number): Promise<boolean> {
+    console.log('💰 [Stripe] Capture pre-auth', preAuthRef, finalAmount);
+    return true;
+  }
+
+  async releasePreAuth(preAuthRef: string): Promise<boolean> {
+    console.log('🔓 [Stripe] Release pre-auth', preAuthRef);
+    return true;
+  }
 }
 
 /**
@@ -102,6 +142,28 @@ export class BillPLZProvider implements PaymentProvider {
   async refund(transactionId: string, amount: number): Promise<boolean> {
     console.log('💸 [BillPLZ] Refund', transactionId, amount);
     return Promise.resolve(true);
+  }
+
+  async preAuthorize(request: { amount: number; orderId: string }): Promise<any> {
+    console.log('🔒 [BillPLZ] Pre-authorize', request);
+    
+    return {
+      success: true,
+      preAuthRef: `preauth_billplz_${Date.now()}`,
+      cardBrand: 'BillPLZ',
+      cardLast4: '****',
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  }
+
+  async capturePreAuth(preAuthRef: string, finalAmount: number): Promise<boolean> {
+    console.log('💰 [BillPLZ] Capture pre-auth', preAuthRef, finalAmount);
+    return true;
+  }
+
+  async releasePreAuth(preAuthRef: string): Promise<boolean> {
+    console.log('🔓 [BillPLZ] Release pre-auth', preAuthRef);
+    return true;
   }
 }
 

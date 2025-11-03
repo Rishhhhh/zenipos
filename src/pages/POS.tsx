@@ -7,10 +7,11 @@ import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { useState, useEffect } from "react";
 import { useModalManager } from "@/hooks/useModalManager";
 import { usePromotions } from "@/lib/hooks/usePromotions";
+import { useBroadcastToCustomerDisplay } from "@/hooks/useCustomerDisplaySync";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin } from "lucide-react";
+import { MapPin, Monitor } from "lucide-react";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
@@ -19,6 +20,8 @@ import { CartSummary } from "@/components/pos/CartSummary";
 import { TableSelectionModal } from "@/components/pos/TableSelectionModal";
 import { ModifierSelectionModal } from "@/components/pos/ModifierSelectionModal";
 import { SplitBillModal } from "@/components/pos/SplitBillModal";
+import { LinkDisplayModal } from "@/components/pos/LinkDisplayModal";
+import { PrintPreviewModal } from "@/components/pos/PrintPreviewModal";
 
 export default function POS() {
   // Track performance for this page
@@ -32,10 +35,31 @@ export default function POS() {
   const [showTableSelect, setShowTableSelect] = useState(false);
   const [showModifierSelect, setShowModifierSelect] = useState(false);
   const [showSplitBill, setShowSplitBill] = useState(false);
+  const [showLinkDisplay, setShowLinkDisplay] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [pendingItem, setPendingItem] = useState<any>(null);
+  const [previewOrderData, setPreviewOrderData] = useState<any>(null);
+  
+  // Customer display linking
+  const [customerDisplayId, setCustomerDisplayId] = useState<string | null>(
+    () => localStorage.getItem('linked-customer-display')
+  );
+  
+  // Initialize broadcast hook
+  const { broadcastOrderUpdate, broadcastPayment, broadcastComplete, broadcastIdle } = 
+    useBroadcastToCustomerDisplay();
   
   // Auto-evaluate promotions
   usePromotions();
+
+  // Broadcast cart updates to customer display
+  useEffect(() => {
+    if (customerDisplayId && items.length > 0) {
+      broadcastOrderUpdate(customerDisplayId);
+    } else if (customerDisplayId && items.length === 0) {
+      broadcastIdle(customerDisplayId);
+    }
+  }, [items, customerDisplayId, broadcastOrderUpdate, broadcastIdle]);
 
   // Show table selection on first load
   useEffect(() => {
@@ -139,30 +163,33 @@ export default function POS() {
         description: `${items.length} items sent to kitchen`,
       });
       
-      // Auto-print kitchen ticket
-      const kitchenTicket = generate80mmKitchenTicket({
-        order_id: order.id,
-        order_number: order.id.substring(0, 8),
-        station: 'MAIN KITCHEN',
-        items: items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.price * item.quantity,
-        })),
+      // Show print preview
+      setPreviewOrderData({
+        orderId: order.id,
+        orderNumber: order.id.substring(0, 8),
+        items: items,
         subtotal: getSubtotal(),
         tax: getTax(),
         total: getTotal(),
         timestamp: new Date(),
       });
-      console.log('🍳 Auto-printing kitchen ticket:', kitchenTicket);
+      setShowPrintPreview(true);
       
-      // Open payment modal using modal manager
+      // Broadcast to customer display
+      if (customerDisplayId) {
+        broadcastPayment(customerDisplayId, undefined);
+      }
+      
+      // Open payment modal using modal manager (after print preview)
       openModal('payment', {
         orderId: order.id,
         orderNumber: order.id.substring(0, 8),
         total: getTotal(),
         onPaymentSuccess: () => {
+          // Broadcast completion
+          if (customerDisplayId) {
+            broadcastComplete(customerDisplayId, undefined);
+          }
           clearCart();
           queryClient.invalidateQueries({ queryKey: ['orders'] });
         },
@@ -179,8 +206,8 @@ export default function POS() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header: Table Badge (56px fixed) */}
-      <div className="h-14 border-b flex items-center px-4 flex-shrink-0">
+      {/* Header: Table Badge + Display Link (56px fixed) */}
+      <div className="h-14 border-b flex items-center px-4 gap-2 flex-shrink-0">
         {(table_id || order_type === 'takeaway') && (
           <Badge
             variant="secondary"
@@ -190,6 +217,27 @@ export default function POS() {
             <MapPin className="h-3 w-3 mr-1" />
             {order_type === 'takeaway' ? 'Takeaway' : `Table ${table_id}`}
           </Badge>
+        )}
+        
+        {/* Display Link Badge/Button */}
+        {customerDisplayId ? (
+          <Badge
+            variant="outline"
+            className="text-sm cursor-pointer hover:bg-accent"
+            onClick={() => setShowLinkDisplay(true)}
+          >
+            <Monitor className="h-3 w-3 mr-1" />
+            Display Linked
+          </Badge>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLinkDisplay(true)}
+          >
+            <Monitor className="h-4 w-4 mr-2" />
+            Link Display
+          </Button>
         )}
       </div>
 
@@ -230,6 +278,35 @@ export default function POS() {
           // TODO: Implement actual order splitting logic
         }}
       />
+
+      <LinkDisplayModal
+        open={showLinkDisplay}
+        onOpenChange={setShowLinkDisplay}
+        currentDisplayId={customerDisplayId}
+        onLink={(displayId) => {
+          setCustomerDisplayId(displayId);
+          localStorage.setItem('linked-customer-display', displayId);
+        }}
+        onUnlink={() => {
+          setCustomerDisplayId(null);
+          localStorage.removeItem('linked-customer-display');
+          if (customerDisplayId) {
+            broadcastIdle(customerDisplayId);
+          }
+        }}
+      />
+
+      {previewOrderData && (
+        <PrintPreviewModal
+          open={showPrintPreview}
+          onOpenChange={setShowPrintPreview}
+          orderData={previewOrderData}
+          onSendToPrinter={() => {
+            // Console logging happens inside the modal
+            setShowPrintPreview(false);
+          }}
+        />
+      )}
 
       {/* Main Content: Fixed Heights */}
       <div className="flex-1 flex overflow-hidden">

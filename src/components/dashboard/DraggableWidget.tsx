@@ -83,16 +83,27 @@ export function DraggableWidget({
     }
   };
 
+  // Unified pointer event handler (mouse + touch)
+  const getClientCoords = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) {
+      return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    }
+    return { clientX: e.clientX, clientY: e.clientY };
+  };
+
   // Resize handle
-  const handleResizeStart = (e: React.MouseEvent) => {
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setIsResizing(true);
     onBringToFront();
+    haptics.medium();
     
+    const coords = getClientCoords(e);
     const rect = widgetRef.current?.getBoundingClientRect();
     startPosRef.current = { 
-      x: e.clientX, 
-      y: e.clientY,
+      x: coords.clientX, 
+      y: coords.clientY,
       width: rect?.width || 0,
       height: rect?.height || 0,
     };
@@ -103,9 +114,13 @@ export function DraggableWidget({
   useEffect(() => {
     if (!isResizing) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startPosRef.current.x;
-      const deltaY = e.clientY - startPosRef.current.y;
+    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
+      const coords = 'touches' in e 
+        ? { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }
+        : { clientX: e.clientX, clientY: e.clientY };
+
+      const deltaX = coords.clientX - startPosRef.current.x;
+      const deltaY = coords.clientY - startPosRef.current.y;
 
       const minWidth = widgetDef?.minSize.width || 320;
       const maxWidth = widgetDef?.maxSize.width || 1000;
@@ -121,18 +136,23 @@ export function DraggableWidget({
       onPositionChange({ width: snapped.width, height: snapped.height });
     };
 
-    const handleMouseUp = () => {
+    const handlePointerEnd = () => {
       setIsResizing(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      haptics.light();
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handlePointerMove);
+    document.addEventListener('mouseup', handlePointerEnd);
+    document.addEventListener('touchmove', handlePointerMove);
+    document.addEventListener('touchend', handlePointerEnd);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handlePointerMove);
+      document.removeEventListener('mouseup', handlePointerEnd);
+      document.removeEventListener('touchmove', handlePointerMove);
+      document.removeEventListener('touchend', handlePointerEnd);
     };
   }, [isResizing, onPositionChange, widgetDef]);
 
@@ -193,8 +213,10 @@ export function DraggableWidget({
       onMouseDown={handleMouseDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      {...(isMaximized ? {} : attributes)}
-      {...(isMaximized ? {} : listeners)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setIsHovered(false)}
+      {...(isMaximized || isResizing ? {} : attributes)}
+      {...(isMaximized || isResizing ? {} : listeners)}
     >
       <div className="h-full w-full relative">
         {/* Widget Header */}
@@ -228,21 +250,23 @@ export function DraggableWidget({
           <>
             <div
               className={cn(
-                "absolute bottom-3 right-3 w-8 h-8 z-[100]",
-                "cursor-nwse-resize",
-                "bg-primary/20 hover:bg-primary/40 rounded-md",
+                "widget-resize-handle absolute bottom-3 right-3 w-12 h-12 z-[100]",
+                "cursor-nwse-resize touch-none",
+                "bg-primary/20 hover:bg-primary/40 active:bg-primary/50 rounded-lg",
                 "flex items-center justify-center",
                 "transition-all duration-200",
-                "shadow-md border border-primary/30",
-                "hover:scale-110 hover:shadow-lg",
+                "shadow-md border-2 border-primary/30",
+                "hover:scale-110 hover:shadow-lg active:scale-105",
                 isResizing && "bg-primary/50 scale-110 shadow-lg",
                 atMaxSize && "border-destructive bg-destructive/20"
               )}
               onMouseDown={handleResizeStart}
+              onTouchStart={handleResizeStart}
               aria-label="Resize widget"
+              data-touch-target
             >
               <Grip className={cn(
-                "w-4 h-4 rotate-45",
+                "w-5 h-5 rotate-45 pointer-events-none",
                 atMaxSize ? "text-destructive" : "text-primary"
               )} />
             </div>
