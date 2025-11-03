@@ -208,7 +208,7 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
       <div ref={ref} className="flex-1">
-        {width > 0 && height > 0 ? (
+        {width > 0 && height > 0 && FixedSizeGrid ? (
           <FixedSizeGrid
             columnCount={columnCount}
             columnWidth={width / columnCount}

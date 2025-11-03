@@ -15,7 +15,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ['react-window']
+  },
   build: {
+    commonjsOptions: {
+      include: [/react-window/, /node_modules/]
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
