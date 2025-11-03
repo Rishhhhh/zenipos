@@ -187,9 +187,7 @@ export default function KDS() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {orders?.map(order => {
-            const elapsedTime = useMemo(() => 
-              formatDistanceToNow(new Date(order.created_at), { addSuffix: false })
-            , [order.created_at, ticks]);
+            const elapsedTime = formatDistanceToNow(new Date(order.created_at), { addSuffix: false });
             
             return (
               <Card
