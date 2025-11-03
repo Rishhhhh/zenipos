@@ -13,7 +13,7 @@ import { NFCCardScanner } from '@/components/nfc/NFCCardScanner';
 interface TableSelectionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (tableId: string | null, orderType: 'dine_in' | 'takeaway', nfcCardId?: string | null) => void;
+  onSelect: (tableId: string | null, orderType: 'dine_in' | 'takeaway', tableLabel?: string | null, nfcCardId?: string | null) => void;
 }
 
 export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelectionModalProps) {
@@ -45,7 +45,7 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
     }
   };
 
-  const handleTableSelect = (tableId: string, status: string) => {
+  const handleTableSelect = (tableId: string, status: string, label: string) => {
     if (status !== 'available') {
       toast({
         variant: 'destructive',
@@ -55,12 +55,12 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
       return;
     }
     
-    onSelect(tableId, 'dine_in');
+    onSelect(tableId, 'dine_in', label);
     onOpenChange(false);
   };
 
   const handleTakeaway = () => {
-    onSelect(null, 'takeaway');
+    onSelect(null, 'takeaway', null);
     onOpenChange(false);
   };
 
@@ -120,7 +120,7 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
                     className={`p-4 cursor-pointer transition-all hover:scale-105 ${getStatusColor(table.status)} ${
                       table.status === 'available' ? 'hover:border-primary' : 'cursor-not-allowed opacity-60'
                     }`}
-                    onClick={() => handleTableSelect(table.id, table.status)}
+                    onClick={() => handleTableSelect(table.id, table.status, table.label)}
                   >
                     <div className="text-center">
                       <div className="text-xl font-bold mb-2">{table.label}</div>
@@ -142,7 +142,9 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
         <TabsContent value="nfc" className="mt-4">
           <NFCCardScanner
             onScanSuccess={(tableId, nfcCardId) => {
-              onSelect(tableId, 'dine_in', nfcCardId);
+              // Find table label for this tableId
+              const table = tables?.find(t => t.id === tableId);
+              onSelect(tableId, 'dine_in', table?.label || null, nfcCardId);
               onOpenChange(false);
             }}
             onCancel={() => onOpenChange(false)}

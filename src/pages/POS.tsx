@@ -27,7 +27,7 @@ export default function POS() {
   // Track performance for this page
   usePerformanceMonitor('POS');
   
-  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, setTableId, setOrderType } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, tableLabelShort, setTableId, setOrderType, setTableLabel } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
@@ -93,6 +93,22 @@ export default function POS() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch table label when table_id changes
+  const { data: selectedTable } = useQuery({
+    queryKey: ['table', table_id],
+    queryFn: async () => {
+      if (!table_id) return null;
+      const { data, error } = await supabase
+        .from('tables')
+        .select('label')
+        .eq('id', table_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!table_id,
   });
 
   // Send to KDS mutation
@@ -208,15 +224,15 @@ export default function POS() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header: Table Badge + Display Link (56px fixed) */}
-      <div className="h-14 border-b flex items-center px-4 gap-2 flex-shrink-0">
+      <div className="h-14 border-b flex items-center px-4 gap-3 flex-shrink-0">
         {(table_id || order_type === 'takeaway') && (
           <Badge
             variant="secondary"
-            className="text-sm cursor-pointer hover:bg-secondary/80"
+            className="text-base px-4 py-2 cursor-pointer hover:bg-secondary/80"
             onClick={() => setShowTableSelect(true)}
           >
-            <MapPin className="h-3 w-3 mr-1" />
-            {order_type === 'takeaway' ? 'Takeaway' : `Table ${table_id}`}
+            <MapPin className="h-4 w-4 mr-2" />
+            {order_type === 'takeaway' ? 'Takeaway' : `Table ${tableLabelShort || selectedTable?.label || '...'}`}
           </Badge>
         )}
         
@@ -224,19 +240,20 @@ export default function POS() {
         {customerDisplayId ? (
           <Badge
             variant="outline"
-            className="text-sm cursor-pointer hover:bg-accent"
+            className="text-base px-4 py-2 cursor-pointer hover:bg-accent"
             onClick={() => setShowLinkDisplay(true)}
           >
-            <Monitor className="h-3 w-3 mr-1" />
+            <Monitor className="h-4 w-4 mr-2" />
             Display Linked
           </Badge>
         ) : (
           <Button
             variant="outline"
-            size="sm"
+            size="lg"
+            className="h-10 px-6"
             onClick={() => setShowLinkDisplay(true)}
           >
-            <Monitor className="h-4 w-4 mr-2" />
+            <Monitor className="h-5 w-5 mr-2" />
             Link Display
           </Button>
         )}
@@ -245,7 +262,7 @@ export default function POS() {
       <TableSelectionModal
         open={showTableSelect}
         onOpenChange={setShowTableSelect}
-        onSelect={(tableId, orderType, nfcCardId) => {
+        onSelect={(tableId, orderType, tableLabel, nfcCardId) => {
           if (nfcCardId) {
             // NFC scan: use setTableWithNFC to store card ID
             useCartStore.getState().setTableWithNFC(tableId, nfcCardId);
@@ -253,6 +270,10 @@ export default function POS() {
             // Manual selection
             setTableId(tableId);
             setOrderType(orderType);
+          }
+          // Store table label
+          if (tableLabel) {
+            setTableLabel(tableLabel);
           }
         }}
       />

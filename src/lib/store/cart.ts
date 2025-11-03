@@ -26,12 +26,15 @@ interface CartState {
   table_id: string | null;
   tableId: string | null; // Alias for convenience
   tableName: string | null;
+  tableLabelShort: string | null; // Short label like "t1", "t2"
   nfc_card_id: string | null;
   order_type: 'dine_in' | 'takeaway' | null;
   
   // Actions
   setSessionId: (id: string) => void;
   setTableId: (id: string | null) => void;
+  setTableName: (name: string | null) => void;
+  setTableLabel: (label: string | null) => void;
   setTable: (id: string | null, label?: string | null) => void;
   setTableWithNFC: (tableId: string | null, nfcCardId: string | null, label?: string | null) => void;
   setOrderType: (type: 'dine_in' | 'takeaway') => void;
@@ -60,17 +63,21 @@ export const useCartStore = create<CartState>((set, get) => ({
   table_id: null,
   tableId: null,
   tableName: null,
+  tableLabelShort: null,
   nfc_card_id: null,
   order_type: null,
   
   setSessionId: (id) => set({ sessionId: id }),
   setTableId: (id) => set({ table_id: id, tableId: id }),
-  setTable: (id, label = null) => set({ table_id: id, tableId: id, tableName: label }),
+  setTableName: (name) => set({ tableName: name }),
+  setTableLabel: (label) => set({ tableLabelShort: label }),
+  setTable: (id, label = null) => set({ table_id: id, tableId: id, tableName: label, tableLabelShort: label }),
   setTableWithNFC: (tableId, nfcCardId, label = null) => set({ 
     table_id: tableId, 
     tableId: tableId, 
     nfc_card_id: nfcCardId,
     tableName: label,
+    tableLabelShort: label,
     order_type: 'dine_in' 
   }),
   setOrderType: (type) => set({ order_type: type }),
@@ -129,11 +136,12 @@ export const useCartStore = create<CartState>((set, get) => ({
     items: [], 
     sessionId: crypto.randomUUID(), 
     appliedPromotions: [], 
-    table_id: null, 
+    table_id: null,
     tableId: null,
     tableName: null,
+    tableLabelShort: null,
     nfc_card_id: null,
-    order_type: null 
+    order_type: null
   }),
   
   applyPromotions: (results) => set({ appliedPromotions: results }),

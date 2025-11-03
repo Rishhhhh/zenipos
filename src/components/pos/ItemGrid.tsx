@@ -20,7 +20,6 @@ function useContainerDimensions() {
   useEffect(() => {
     if (!ref.current) return;
     
-    // Immediate initial measurement with fallback
     const updateDimensions = () => {
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
@@ -29,24 +28,14 @@ function useContainerDimensions() {
       }
     };
     
-    // Try immediately
+    // Immediate measurement
     updateDimensions();
     
-    // Try again after a brief delay if still 0
-    const timeoutId = setTimeout(updateDimensions, 50);
-    
-    const observer = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect;
-      if (width > 0 && height > 0) {
-        setDimensions({ width, height });
-      }
-    });
-    
+    // ResizeObserver for dynamic updates
+    const observer = new ResizeObserver(updateDimensions);
     observer.observe(ref.current);
-    return () => {
-      clearTimeout(timeoutId);
-      observer.disconnect();
-    };
+    
+    return () => observer.disconnect();
   }, []);
 
   return { ref, ...dimensions };
@@ -225,7 +214,7 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
       <div className="p-4">
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
-      <div ref={ref} className="flex-1 overflow-hidden">
+      <div ref={ref} className="flex-1 overflow-hidden min-h-0">
         {width > 0 && height > 0 && FixedSizeGrid ? (
           <FixedSizeGrid
             columnCount={columnCount}
