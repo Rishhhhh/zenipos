@@ -8,10 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 import { memo, useCallback, useState, useEffect, useRef } from "react";
-// @ts-ignore - react-window types issue
-import * as ReactWindow from "react-window";
-
-const { FixedSizeGrid } = ReactWindow as any;
+// @ts-ignore - react-window has type export issues
+import { FixedSizeGrid } from "react-window";
 
 // Custom hook for container dimensions using ResizeObserver
 function useContainerDimensions() {
