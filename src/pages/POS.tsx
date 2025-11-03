@@ -11,7 +11,8 @@ import { useBroadcastToCustomerDisplay } from "@/hooks/useCustomerDisplaySync";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Monitor } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { MapPin, Monitor, ShoppingBag } from "lucide-react";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
@@ -93,6 +94,23 @@ export default function POS() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch selected table details
+  const { data: selectedTable } = useQuery({
+    queryKey: ['table', table_id],
+    queryFn: async () => {
+      if (!table_id) return null;
+      const { data, error } = await supabase
+        .from('tables')
+        .select('*')
+        .eq('id', table_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!table_id,
+    staleTime: 300000,
   });
 
   // Send to KDS mutation
@@ -208,38 +226,55 @@ export default function POS() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header: Table Badge + Display Link (56px fixed) */}
-      <div className="h-14 border-b flex items-center px-4 gap-2 flex-shrink-0">
-        {(table_id || order_type === 'takeaway') && (
-          <Badge
-            variant="secondary"
-            className="text-sm cursor-pointer hover:bg-secondary/80"
+      <div className="h-14 border-b flex items-center justify-between px-4 gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {table_id ? (
+            <Badge variant="default" className="text-base px-4 py-2">
+              <MapPin className="h-4 w-4 mr-2" />
+              {selectedTable?.label || `Table ${table_id}`}
+            </Badge>
+          ) : order_type === 'takeaway' ? (
+            <Badge variant="secondary" className="text-base px-4 py-2">
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              Takeaway Order
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-base px-4 py-2">
+              No Table Selected
+            </Badge>
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={() => setShowTableSelect(true)}
           >
-            <MapPin className="h-3 w-3 mr-1" />
-            {order_type === 'takeaway' ? 'Takeaway' : `Table ${table_id}`}
-          </Badge>
-        )}
+            {table_id || order_type ? 'Change Table' : 'Select Table'}
+          </Button>
+        </div>
         
         {/* Display Link Badge/Button */}
-        {customerDisplayId ? (
-          <Badge
-            variant="outline"
-            className="text-sm cursor-pointer hover:bg-accent"
-            onClick={() => setShowLinkDisplay(true)}
-          >
-            <Monitor className="h-3 w-3 mr-1" />
-            Display Linked
-          </Badge>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowLinkDisplay(true)}
-          >
-            <Monitor className="h-4 w-4 mr-2" />
-            Link Display
-          </Button>
-        )}
+        <div>
+          {customerDisplayId ? (
+            <Badge
+              variant="outline"
+              className="text-sm cursor-pointer hover:bg-accent"
+              onClick={() => setShowLinkDisplay(true)}
+            >
+              <Monitor className="h-3 w-3 mr-1" />
+              Display Linked
+            </Badge>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowLinkDisplay(true)}
+            >
+              <Monitor className="h-4 w-4 mr-2" />
+              Link Display
+            </Button>
+          )}
+        </div>
       </div>
 
       <TableSelectionModal
@@ -329,27 +364,31 @@ export default function POS() {
 
         {/* MIDDLE: Items (flex-grow, main scrollable) */}
         <div className="flex-1 overflow-y-auto bg-background">
-          <ItemGrid
-            items={menuItems}
-            isLoading={itemsLoading}
-            onAddItem={(item) => {
-              // CRITICAL: Enforce table selection before adding any items
-              if (!table_id && order_type !== 'takeaway') {
-                toast({
-                  variant: 'destructive',
-                  title: 'Select Table First',
-                  description: 'Please select a table or choose takeaway before adding items',
-                });
-                setShowTableSelect(true);
-                return;
-              }
-              
-              // Check for modifiers, if yes show modifier modal
-              setPendingItem(item);
-              setShowModifierSelect(true);
-            }}
-            categoryId={selectedCategoryId}
-          />
+          {!table_id && order_type !== 'takeaway' ? (
+            <div className="h-full flex items-center justify-center p-8">
+              <Card className="p-8 text-center max-w-md">
+                <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">Select a Table First</h3>
+                <p className="text-muted-foreground mb-4">
+                  Please select a table or choose takeaway to begin taking orders
+                </p>
+                <Button onClick={() => setShowTableSelect(true)} size="lg">
+                  Select Table
+                </Button>
+              </Card>
+            </div>
+          ) : (
+            <ItemGrid
+              items={menuItems}
+              isLoading={itemsLoading}
+              onAddItem={(item) => {
+                // Check for modifiers, if yes show modifier modal
+                setPendingItem(item);
+                setShowModifierSelect(true);
+              }}
+              categoryId={selectedCategoryId}
+            />
+          )}
         </div>
 
         {/* RIGHT: Cart (384px fixed, sticky checkout) */}
