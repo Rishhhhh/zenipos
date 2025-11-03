@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { findEmptyGridSpace } from "./autoPlacement";
 import { getLayoutForRole } from "./roleLayouts";
+import { GRID_CONFIG, validateDimensions } from "./gridSystem";
 
 export interface WidgetPosition {
   x: number;
@@ -58,6 +59,14 @@ export function useWidgetLayout() {
   }, []);
 
   const updatePosition = useCallback((widgetId: string, position: Partial<WidgetPosition>) => {
+    // Validate dimensions before updating
+    if (position.width !== undefined && position.height !== undefined) {
+      if (!validateDimensions(position.width, position.height)) {
+        console.error('Invalid widget dimensions:', position);
+        return; // Don't update with invalid dimensions
+      }
+    }
+    
     setLayout(prev => ({
       ...prev,
       widgetPositions: {
@@ -100,8 +109,8 @@ export function useWidgetLayout() {
           [widgetId]: {
             x: position.x,
             y: position.y,
-            width: defaultSize.cols * 60,
-            height: defaultSize.rows * 60,
+            width: defaultSize.cols * GRID_CONFIG.CELL_SIZE,
+            height: defaultSize.rows * GRID_CONFIG.CELL_SIZE,
             zIndex: maxZ + 1,
             isMinimized: false,
             isMaximized: false,

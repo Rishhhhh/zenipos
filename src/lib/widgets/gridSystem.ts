@@ -161,3 +161,17 @@ export function calculateGridCells(width: number, height: number) {
     rows: Math.round(height / GRID_CONFIG.CELL_SIZE),
   };
 }
+
+/**
+ * Validates widget dimensions to prevent crashes
+ */
+export function validateDimensions(width: number, height: number): boolean {
+  return (
+    !isNaN(width) && 
+    !isNaN(height) && 
+    width > 0 && 
+    height > 0 &&
+    isFinite(width) &&
+    isFinite(height)
+  );
+}

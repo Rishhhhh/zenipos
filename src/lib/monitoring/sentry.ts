@@ -95,7 +95,7 @@ async function logPerformanceMetric(metricType: string, duration: number, metada
       .insert({
         metric_type: metricType,
         page_path: metadata?.page || window.location.pathname,
-        duration_ms: duration,
+        duration_ms: Math.round(duration), // Round to integer for DB
         exceeded_budget: duration > budget,
         device_type: getDeviceType(),
         browser: navigator.userAgent,

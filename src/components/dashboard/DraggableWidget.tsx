@@ -1,9 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { WidgetHeader } from "./WidgetHeader";
 import { haptics } from "@/lib/haptics";
+import { AlertCircle } from "lucide-react";
 
 interface DraggableWidgetProps {
   id: string;
@@ -28,7 +29,39 @@ interface DraggableWidgetProps {
   onClose: () => void;
 }
 
-export function DraggableWidget({ 
+// Per-widget error boundary to prevent one widget from crashing the entire dashboard
+class WidgetErrorBoundary extends React.Component<
+  { children: React.ReactNode; widgetId: string },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error(`❌ Widget ${this.props.widgetId} crashed:`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-full p-4 text-center">
+          <div>
+            <AlertCircle className="h-8 w-8 text-danger mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Widget failed to load
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export function DraggableWidget({
   id, 
   children, 
   position, 
@@ -172,7 +205,9 @@ export function DraggableWidget({
               "flex-1 min-h-0",
               isMaximized ? "max-w-7xl w-full" : "overflow-auto"
             )}>
-              {children}
+              <WidgetErrorBoundary widgetId={id}>
+                {children}
+              </WidgetErrorBoundary>
             </div>
           </div>
         )}

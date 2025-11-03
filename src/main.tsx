@@ -24,8 +24,15 @@ if ('serviceWorker' in navigator) {
   // Re-register service worker after clearing
   setTimeout(() => {
     navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('✅ Service worker registered'))
-      .catch(err => console.error('❌ SW registration failed:', err));
+      .then(reg => {
+        console.log('✅ Service worker registered');
+        // Force update check
+        reg.update().catch(err => console.warn('SW update check failed:', err));
+      })
+      .catch(err => {
+        console.error('❌ SW registration failed:', err);
+        // Don't block app if SW fails
+      });
   }, 1000);
 }
 

@@ -1,8 +1,8 @@
-// ZeniPOS Service Worker v1.0.2 - Advanced Caching & Offline Support
-const SW_VERSION = '1.0.2';
+// ZeniPOS Service Worker v1.0.3 - Advanced Caching & Offline Support
+const SW_VERSION = '1.0.3';
 const CACHE_NAME = `zenipos-v${SW_VERSION}`;
-const IMAGE_CACHE = 'zenipos-images-v4';
-const API_CACHE = 'zenipos-api-v4';
+const IMAGE_CACHE = 'zenipos-images-v5';
+const API_CACHE = 'zenipos-api-v5';
 
 const STATIC_ASSETS = [
   '/',
@@ -68,6 +68,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Manifest: Cache-first, no CORS issues
+  if (request.destination === 'manifest' || url.pathname.endsWith('manifest.json')) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        return cachedResponse || fetch(request).then((response) => {
+          if (response.ok) {
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, response.clone());
+              return response;
+            });
+          }
+          return response;
+        }).catch(() => cachedResponse || new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      })
+    );
+    return;
+  }
 
   // Intelligent API caching for Supabase
   if (url.hostname.includes('supabase') && url.pathname.includes('/rest/v1/')) {
