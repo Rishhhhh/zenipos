@@ -22,6 +22,7 @@ import { ModifierSelectionModal } from "@/components/pos/ModifierSelectionModal"
 import { SplitBillModal } from "@/components/pos/SplitBillModal";
 import { LinkDisplayModal } from "@/components/pos/LinkDisplayModal";
 import { PrintPreviewModal } from "@/components/pos/PrintPreviewModal";
+import { OrderConfirmationModal } from "@/components/pos/OrderConfirmationModal";
 
 export default function POS() {
   // Track performance for this page
@@ -39,6 +40,7 @@ export default function POS() {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [pendingItem, setPendingItem] = useState<any>(null);
   const [previewOrderData, setPreviewOrderData] = useState<any>(null);
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
   
   // Customer display linking
   const [customerDisplayId, setCustomerDisplayId] = useState<string | null>(
@@ -51,6 +53,18 @@ export default function POS() {
   
   // Auto-evaluate promotions
   usePromotions();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🟢 POS Component State:', {
+      itemsCount: items.length,
+      table_id,
+      order_type,
+      tableLabelShort,
+      nfc_card_id,
+      sessionId,
+    });
+  }, [items.length, table_id, order_type, tableLabelShort, nfc_card_id]);
 
   // Broadcast cart updates to customer display
   useEffect(() => {
@@ -111,9 +125,15 @@ export default function POS() {
     enabled: !!table_id,
   });
 
-  // Send to KDS mutation
-  const sendToKDS = useMutation({
-    mutationFn: async () => {
+  // Confirm and send order to KDS
+  const confirmAndSendOrder = useMutation({
+    mutationFn: async (orderNotes?: string) => {
+      console.log('🔵 Starting order creation...', {
+        items: items.length,
+        table_id: useCartStore.getState().table_id,
+        order_type: useCartStore.getState().order_type,
+      });
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -122,30 +142,41 @@ export default function POS() {
       const discount = getDiscount();
       const total = getTotal();
 
-      // Create order with NFC card tracking
+      // Create order with explicit status
       const cartState = useCartStore.getState();
+      const orderData = {
+        session_id: sessionId,
+        table_id: cartState.table_id,
+        order_type: cartState.order_type,
+        nfc_card_id: cartState.nfc_card_id,
+        status: 'pending' as const, // ✅ EXPLICIT STATUS
+        subtotal,
+        tax,
+        discount,
+        total,
+        applied_promotions: appliedPromotions.map(p => ({
+          id: p.promotion.id,
+          name: p.promotion.name,
+          discount: p.discount,
+        })),
+        created_by: user.id,
+        metadata: orderNotes ? { notes: orderNotes } : undefined,
+      };
+
+      console.log('📤 Inserting order:', orderData);
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          session_id: sessionId,
-          table_id: cartState.table_id,
-          order_type: cartState.order_type,
-          nfc_card_id: cartState.nfc_card_id,
-          subtotal,
-          tax,
-          discount,
-          total,
-          applied_promotions: appliedPromotions.map(p => ({
-            id: p.promotion.id,
-            name: p.promotion.name,
-            discount: p.discount,
-          })),
-          created_by: user.id,
-        })
+        .insert(orderData)
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('❌ Order creation failed:', orderError);
+        throw orderError;
+      }
+
+      console.log('✅ Order created:', order);
 
       // Create order items
       const { error: itemsError } = await supabase
@@ -161,7 +192,12 @@ export default function POS() {
           }))
         );
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('❌ Order items creation failed:', itemsError);
+        throw itemsError;
+      }
+
+      console.log('✅ Order items created');
 
       // Log to audit
       await supabase.from('audit_log').insert({
@@ -174,11 +210,8 @@ export default function POS() {
 
       return order;
     },
-    onSuccess: (order) => {
-      toast({
-        title: "Order sent to KDS",
-        description: `${items.length} items sent to kitchen`,
-      });
+    onSuccess: async (order) => {
+      console.log('✅ Order submitted successfully:', order.id);
       
       // Show print preview
       setPreviewOrderData({
@@ -191,19 +224,31 @@ export default function POS() {
         timestamp: new Date(),
       });
       setShowPrintPreview(true);
-      
+
+      // Update order status to 'preparing' after confirming print
+      await supabase
+        .from('orders')
+        .update({ status: 'preparing' })
+        .eq('id', order.id);
+
+      console.log('✅ Order status updated to preparing');
+
       // Broadcast to customer display
       if (customerDisplayId) {
         broadcastPayment(customerDisplayId, undefined);
       }
-      
-      // Open payment modal using modal manager (after print preview)
+
+      toast({
+        title: "Order sent to Kitchen",
+        description: `Order #${order.id.substring(0, 8)} - ${items.length} items`,
+      });
+
+      // Open payment modal
       openModal('payment', {
         orderId: order.id,
         orderNumber: order.id.substring(0, 8),
         total: getTotal(),
         onPaymentSuccess: () => {
-          // Broadcast completion
           if (customerDisplayId) {
             broadcastComplete(customerDisplayId, undefined);
           }
@@ -212,11 +257,12 @@ export default function POS() {
         },
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('❌ Order creation error:', error);
       toast({
         variant: "destructive",
         title: "Failed to send order",
-        description: error.message,
+        description: error.message || 'Please try again',
       });
     },
   });
@@ -324,6 +370,24 @@ export default function POS() {
         }}
       />
 
+      <OrderConfirmationModal
+        open={showOrderConfirmation}
+        onOpenChange={setShowOrderConfirmation}
+        items={items}
+        subtotal={getSubtotal()}
+        tax={getTax()}
+        total={getTotal()}
+        discount={getDiscount()}
+        appliedPromotions={appliedPromotions}
+        tableName={tableLabelShort || selectedTable?.label}
+        orderType={order_type || 'dine_in'}
+        onConfirm={(notes) => {
+          setShowOrderConfirmation(false);
+          confirmAndSendOrder.mutate(notes);
+        }}
+        onEdit={() => setShowOrderConfirmation(false)}
+      />
+
       {previewOrderData && (
         <PrintPreviewModal
           open={showPrintPreview}
@@ -384,9 +448,9 @@ export default function POS() {
             appliedPromotions={appliedPromotions}
             onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
             onVoidItem={(id) => voidItem(id)}
-            onSendToKDS={() => sendToKDS.mutate()}
+            onSendToKDS={() => setShowOrderConfirmation(true)}
             onSplitBill={() => setShowSplitBill(true)}
-            isSending={sendToKDS.isPending}
+            isSending={confirmAndSendOrder.isPending}
           />
         </div>
       </div>

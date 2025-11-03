@@ -170,8 +170,8 @@ export function CartSummary({
             onClick={onSendToKDS}
             disabled={items.length === 0 || isSending}
           >
-            <CreditCard className="h-4 w-4 mr-2" />
-            {isSending ? 'Processing...' : 'Process Payment'}
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            {isSending ? 'Confirming...' : 'Review Order'}
           </Button>
         </div>
       </div>
