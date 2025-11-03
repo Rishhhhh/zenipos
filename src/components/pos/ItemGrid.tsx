@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 import { memo, useCallback, useState, useEffect, useRef } from "react";
+// @ts-ignore - react-window types issue
+import * as ReactWindow from "react-window";
+
+const { FixedSizeGrid } = ReactWindow as any;
 
 // Custom hook for container dimensions using ResizeObserver
 function useContainerDimensions() {
@@ -48,9 +52,6 @@ interface ItemGridProps {
 }
 
 export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridProps) {
-  // All hooks must be called at the top, before any conditional returns
-  const { ref, width } = useContainerDimensions();
-  
   // Fetch active promotions
   const { data: promotions } = useQuery({
     queryKey: ['promotions', 'active'],
@@ -73,7 +74,6 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
   ) || [];
   
   const hasActivePromos = promotions && promotions.length > 0;
-  const columnCount = Math.max(2, Math.floor(width / 220));
   
   const handleItemClick = useCallback((item: MenuItem) => {
     onAddItem({
@@ -83,75 +83,90 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
     });
   }, [onAddItem]);
   
-  const ItemCard = memo(({ item }: { item: MenuItem }) => {
+  const ItemCell = memo(({ columnIndex, rowIndex, style, data }: any) => {
+    const { items, columnCount, onAddItem, isEightySixed, getEightySixInfo, hasActivePromos } = data;
+    const index = rowIndex * columnCount + columnIndex;
+    const item = items[index];
+    
+    if (!item) return null;
+
     const is86d = isEightySixed(item.id);
     const eightySixInfo = is86d ? getEightySixInfo(item.id) : null;
     const isAvailable = item.in_stock && !is86d;
 
     return (
-      <Card
-        className={`cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col overflow-hidden relative ${
-          !isAvailable ? 'opacity-60 cursor-not-allowed' : ''
-        }`}
-        onClick={() => isAvailable && handleItemClick(item)}
-        title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
-      >
-        {item.image_url ? (
-          <picture>
-            <source
-              type="image/webp"
-              srcSet={(item as any).image_srcset_webp || undefined}
-              sizes="(max-width: 768px) 50vw, 200px"
-            />
-            <source
-              type="image/jpeg"
-              srcSet={(item as any).image_srcset_jpeg || undefined}
-              sizes="(max-width: 768px) 50vw, 200px"
-            />
-            <img
-              src={item.image_url}
-              alt={item.name}
-              className="w-full h-24 object-cover"
-              loading="lazy"
-              decoding="async"
-              width="200"
-              height="96"
-            />
-          </picture>
-        ) : (
-          <div className="w-full h-24 bg-muted flex items-center justify-center">
-            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-          </div>
-        )}
-        <div className="p-3 flex flex-col flex-1">
-          <h3 className="font-medium text-foreground text-sm line-clamp-1">{item.name}</h3>
-          {item.description && (
-            <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-              {item.description}
-            </p>
+      <div style={style} className="p-2">
+        <Card
+          className={`h-full cursor-pointer hover:bg-accent transition-colors touch-target flex flex-col overflow-hidden relative ${
+            !isAvailable ? 'opacity-60 cursor-not-allowed' : ''
+          }`}
+          onClick={() => isAvailable && handleItemClick(item)}
+          title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
+        >
+          {item.image_url ? (
+            <picture>
+              <source
+                type="image/webp"
+                srcSet={(item as any).image_srcset_webp || undefined}
+                sizes="(max-width: 768px) 50vw, 200px"
+              />
+              <source
+                type="image/jpeg"
+                srcSet={(item as any).image_srcset_jpeg || undefined}
+                sizes="(max-width: 768px) 50vw, 200px"
+              />
+              <img
+                src={item.image_url}
+                alt={item.name}
+                className="w-full h-24 object-cover"
+                loading="lazy"
+                decoding="async"
+                width="200"
+                height="96"
+              />
+            </picture>
+          ) : (
+            <div className="w-full h-24 bg-muted flex items-center justify-center">
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
           )}
-          <p className="text-lg font-semibold text-primary mt-auto">
-            RM {Number(item.price).toFixed(2)}
-          </p>
-        </div>
-        {is86d && (
-          <div className="absolute top-2 right-2">
-            <EightySixBadge size="sm" />
+          <div className="p-3 flex flex-col flex-1">
+            <h3 className="font-medium text-foreground text-sm line-clamp-1">{item.name}</h3>
+            {item.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                {item.description}
+              </p>
+            )}
+            <p className="text-lg font-semibold text-primary mt-auto">
+              RM {Number(item.price).toFixed(2)}
+            </p>
           </div>
-        )}
-        {!item.in_stock && !is86d && (
-          <Badge variant="destructive" className="absolute top-2 right-2">
-            Unavailable
-          </Badge>
-        )}
-        {isAvailable && hasActivePromos && (
-          <Badge variant="default" className="absolute top-2 left-2 bg-success text-white">
-            <Tag className="h-3 w-3 mr-1" />
-            Promo
-          </Badge>
-        )}
-      </Card>
+          {is86d && (
+            <div className="absolute top-2 right-2">
+              <EightySixBadge size="sm" />
+            </div>
+          )}
+          {!item.in_stock && !is86d && (
+            <Badge variant="destructive" className="absolute top-2 right-2">
+              Unavailable
+            </Badge>
+          )}
+          {isAvailable && hasActivePromos && (
+            <Badge variant="default" className="absolute top-2 left-2 bg-success text-white">
+              <Tag className="h-3 w-3 mr-1" />
+              Promo
+            </Badge>
+          )}
+        </Card>
+      </div>
     );
+  }, (prev, next) => {
+    const prevItem = prev.data.items[prev.rowIndex * prev.data.columnCount + prev.columnIndex];
+    const nextItem = next.data.items[next.rowIndex * next.data.columnCount + next.columnIndex];
+    if (!prevItem && !nextItem) return true;
+    if (!prevItem || !nextItem) return false;
+    return prevItem.id === nextItem.id && prevItem.price === nextItem.price && 
+           prevItem.in_stock === nextItem.in_stock && prevItem.image_url === nextItem.image_url;
   });
 
   if (isLoading) {
@@ -173,27 +188,37 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
     );
   }
 
+  const { ref, width, height } = useContainerDimensions();
+  const columnCount = Math.max(2, Math.floor(width / 220));
+  const rowCount = Math.ceil(filteredItems.length / columnCount);
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4">
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
-      <div 
-        ref={ref} 
-        className="flex-1 overflow-y-auto p-4"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-          gap: '1rem',
-          alignContent: 'start'
-        }}
-      >
-        {filteredItems.map(item => (
-          <ItemCard
-            key={item.id}
-            item={item}
-          />
-        ))}
+      <div ref={ref} className="flex-1">
+        {width > 0 && height > 0 && (
+          <FixedSizeGrid
+            columnCount={columnCount}
+            columnWidth={width / columnCount}
+            height={height}
+            rowCount={rowCount}
+            rowHeight={180}
+            width={width}
+            itemData={{
+              items: filteredItems,
+              columnCount,
+              onAddItem,
+              isEightySixed,
+              getEightySixInfo,
+              hasActivePromos,
+            }}
+            overscanRowCount={1}
+          >
+            {ItemCell}
+          </FixedSizeGrid>
+        )}
       </div>
     </div>
   );
