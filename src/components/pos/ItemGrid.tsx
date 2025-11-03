@@ -7,12 +7,31 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState, useEffect, useRef } from "react";
 // @ts-ignore - react-window types issue
 import * as ReactWindow from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
 
 const { FixedSizeGrid } = ReactWindow as any;
+
+// Custom hook for container dimensions using ResizeObserver
+function useContainerDimensions() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!ref.current) return;
+    
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      setDimensions({ width, height });
+    });
+    
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, ...dimensions };
+}
 
 interface MenuItem {
   id: string;
@@ -169,40 +188,37 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
     );
   }
 
+  const { ref, width, height } = useContainerDimensions();
+  const columnCount = Math.max(2, Math.floor(width / 220));
+  const rowCount = Math.ceil(filteredItems.length / columnCount);
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4">
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
-      <div className="flex-1">
-        <AutoSizer>
-          {({ height, width }) => {
-            const columnCount = Math.max(2, Math.floor(width / 220));
-            const rowCount = Math.ceil(filteredItems.length / columnCount);
-            
-            return (
-              <FixedSizeGrid
-                columnCount={columnCount}
-                columnWidth={width / columnCount}
-                height={height}
-                rowCount={rowCount}
-                rowHeight={180}
-                width={width}
-                itemData={{
-                  items: filteredItems,
-                  columnCount,
-                  onAddItem,
-                  isEightySixed,
-                  getEightySixInfo,
-                  hasActivePromos,
-                }}
-                overscanRowCount={1}
-              >
-                {ItemCell}
-              </FixedSizeGrid>
-            );
-          }}
-        </AutoSizer>
+      <div ref={ref} className="flex-1">
+        {width > 0 && height > 0 && (
+          <FixedSizeGrid
+            columnCount={columnCount}
+            columnWidth={width / columnCount}
+            height={height}
+            rowCount={rowCount}
+            rowHeight={180}
+            width={width}
+            itemData={{
+              items: filteredItems,
+              columnCount,
+              onAddItem,
+              isEightySixed,
+              getEightySixInfo,
+              hasActivePromos,
+            }}
+            overscanRowCount={1}
+          >
+            {ItemCell}
+          </FixedSizeGrid>
+        )}
       </div>
     </div>
   );
