@@ -18,24 +18,54 @@ function useContainerDimensions() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current) {
+      console.log('🔴 ItemGrid: ref.current is null');
+      return;
+    }
     
     const updateDimensions = () => {
       if (!ref.current) return;
       const rect = ref.current.getBoundingClientRect();
+      
+      console.log('📐 ItemGrid dimensions detected:', {
+        width: rect.width,
+        height: rect.height,
+        top: rect.top,
+        left: rect.left,
+        element: ref.current,
+        parentElement: ref.current.parentElement,
+        parentRect: ref.current.parentElement?.getBoundingClientRect()
+      });
+      
       if (rect.width > 0 && rect.height > 0) {
+        console.log('✅ Setting valid dimensions:', { width: rect.width, height: rect.height });
         setDimensions({ width: rect.width, height: rect.height });
+      } else {
+        console.log('⚠️ Invalid dimensions (0x0), will retry on next resize...');
       }
     };
     
     // Immediate measurement
+    console.log('🔵 ItemGrid: Initial dimension check');
     updateDimensions();
     
+    // Retry after a short delay in case layout hasn't settled
+    const timeoutId = setTimeout(() => {
+      console.log('🔵 ItemGrid: Retry dimension check after 100ms');
+      updateDimensions();
+    }, 100);
+    
     // ResizeObserver for dynamic updates
-    const observer = new ResizeObserver(updateDimensions);
+    const observer = new ResizeObserver((entries) => {
+      console.log('🔄 ResizeObserver triggered:', entries[0]?.contentRect);
+      updateDimensions();
+    });
     observer.observe(ref.current);
     
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
   }, []);
 
   return { ref, ...dimensions };
@@ -215,6 +245,17 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
       <div ref={ref} className="flex-1 overflow-hidden min-h-0">
+        {(() => {
+          console.log('🎨 ItemGrid render:', { 
+            width, 
+            height, 
+            hasFixedSizeGrid: !!FixedSizeGrid,
+            filteredItemsCount: filteredItems.length,
+            columnCount,
+            rowCount
+          });
+          return null;
+        })()}
         {width > 0 && height > 0 && FixedSizeGrid ? (
           <FixedSizeGrid
             columnCount={columnCount}
@@ -236,13 +277,58 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
             {ItemCell}
           </FixedSizeGrid>
         ) : (
-          <div className="p-4 flex items-center justify-center min-h-[200px]">
-            <div className="text-center">
+          <div className="p-4 overflow-y-auto">
+            <div className="text-center mb-4">
               <p className="text-muted-foreground">Preparing menu...</p>
               <p className="text-xs text-muted-foreground mt-2">
                 {filteredItems.length} items available
               </p>
+              <p className="text-xs text-destructive mt-1">
+                Debug: Container {width}×{height}px
+              </p>
             </div>
+            {/* Emergency fallback: show items in static grid */}
+            {filteredItems.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {filteredItems.slice(0, 20).map(item => {
+                  const is86d = isEightySixed(item.id);
+                  const isAvailable = item.in_stock && !is86d;
+                  return (
+                    <Card
+                      key={item.id}
+                      className={`cursor-pointer hover:bg-accent transition-colors ${
+                        !isAvailable ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                      onClick={() => isAvailable && handleItemClick(item)}
+                    >
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-full h-24 object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-24 bg-muted flex items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <h3 className="font-medium text-sm">{item.name}</h3>
+                        <p className="text-lg font-semibold text-primary mt-2">
+                          RM {Number(item.price).toFixed(2)}
+                        </p>
+                      </div>
+                      {is86d && (
+                        <div className="absolute top-2 right-2">
+                          <EightySixBadge size="sm" />
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

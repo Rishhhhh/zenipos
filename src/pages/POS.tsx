@@ -348,8 +348,8 @@ export default function POS() {
           />
         </div>
 
-        {/* MIDDLE: Items (flex-grow, main scrollable) */}
-        <div className="flex-1 overflow-y-auto bg-background">
+        {/* MIDDLE: Items (flex-grow, no scroll - ItemGrid handles it) */}
+        <div className="flex-1 bg-background overflow-hidden">
           <ItemGrid
             items={menuItems}
             isLoading={itemsLoading}
