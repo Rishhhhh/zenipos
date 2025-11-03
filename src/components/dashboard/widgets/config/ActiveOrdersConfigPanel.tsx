@@ -13,7 +13,7 @@ interface ActiveOrdersConfigPanelProps {
 
 export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrdersConfigPanelProps) {
   // Provide defaults for nested properties
-  const statusFilters = config.statusFilters || ['pending', 'preparing'];
+  const statusFilters = config.statusFilters || ['pending', 'preparing', 'ready'];
   const sortBy = config.sortBy || 'orderTime';
   const showTimer = config.showTimer ?? true;
   const alertThresholdMinutes = config.alertThresholdMinutes || 15;
@@ -21,7 +21,7 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
   const refreshInterval = config.refreshInterval || 30;
   const compactMode = config.compactMode ?? false;
 
-  const handleStatusFilterChange = (status: 'pending' | 'preparing', checked: boolean) => {
+  const handleStatusFilterChange = (status: 'pending' | 'preparing' | 'ready', checked: boolean) => {
     const newFilters = checked
       ? [...statusFilters, status]
       : statusFilters.filter(s => s !== status);
@@ -49,6 +49,14 @@ export function ActiveOrdersConfigPanel({ config, onConfigChange }: ActiveOrders
                 onCheckedChange={(checked) => handleStatusFilterChange('preparing', checked as boolean)}
               />
               <Label htmlFor="preparing" className="font-normal">Preparing</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="ready"
+                checked={statusFilters.includes('ready')}
+                onCheckedChange={(checked) => handleStatusFilterChange('ready', checked as boolean)}
+              />
+              <Label htmlFor="ready" className="font-normal">Ready</Label>
             </div>
           </div>
         </div>

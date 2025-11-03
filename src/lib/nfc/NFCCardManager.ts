@@ -57,7 +57,7 @@ export class NFCCardManager {
   /**
    * Scan and verify an NFC card
    */
-  async scanAndVerify(): Promise<{ tableId: string; isValid: boolean; cardId?: string }> {
+  async scanAndVerify(): Promise<{ tableId: string; isValid: boolean }> {
     try {
       const card = await nfcReader.scanCard();
       
@@ -69,28 +69,17 @@ export class NFCCardManager {
         return { tableId: card.data.table_id, isValid: false };
       }
 
-      // Fetch card from database to get cardId and log scan
-      const { data: nfcCard, error: fetchError } = await supabase
-        .from('nfc_cards')
-        .select('id, table_id, status')
-        .eq('card_uid', card.serialNumber)
-        .eq('status', 'active')
-        .single();
+      // Log scan in database
+      const { data: tableId, error } = await supabase
+        .rpc('log_nfc_scan', { card_uid_param: card.serialNumber });
 
-      if (fetchError || !nfcCard) {
+      if (error) {
         toast.error("Card not found or inactive");
-        throw new Error("Card not found or inactive");
+        throw error;
       }
 
-      // Log scan
-      await supabase.rpc('log_nfc_scan', { card_uid_param: card.serialNumber });
-
       toast.success("Card scanned successfully");
-      return { 
-        tableId: nfcCard.table_id || card.data.table_id, 
-        isValid: true,
-        cardId: nfcCard.id
-      };
+      return { tableId: tableId || card.data.table_id, isValid: true };
     } catch (error: any) {
       console.error("Card scan error:", error);
       toast.error(error.message || "Failed to scan NFC card");

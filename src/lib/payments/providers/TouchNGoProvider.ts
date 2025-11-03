@@ -52,27 +52,4 @@ export class TouchNGoProvider implements PaymentProvider {
     console.log('💸 [TNG] Refund', transactionId, amount);
     return true;
   }
-
-  async preAuthorize(request: { amount: number; orderId: string }): Promise<any> {
-    console.log('🔒 [TNG] Pre-authorize', request);
-    
-    return {
-      success: true,
-      preAuthRef: `preauth_tng_${Date.now()}`,
-      cardBrand: 'TNG eWallet',
-      cardLast4: '****',
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    };
-  }
-
-  async capturePreAuth(preAuthRef: string, finalAmount: number): Promise<boolean> {
-    console.log('💰 [TNG] Capture pre-auth', preAuthRef, finalAmount);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return true;
-  }
-
-  async releasePreAuth(preAuthRef: string): Promise<boolean> {
-    console.log('🔓 [TNG] Release pre-auth', preAuthRef);
-    return true;
-  }
 }

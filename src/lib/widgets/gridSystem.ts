@@ -10,6 +10,7 @@ export function getViewportDimensions() {
   const availableHeight = height - 296;
   
   // Account for horizontal padding only (24px × 2 on mobile, 48px × 2 on desktop)
+  // No max-width constraint - allow full viewport width
   const horizontalPadding = width < 768 ? 48 : 96;
   const availableWidth = width - horizontalPadding;
   
@@ -19,53 +20,9 @@ export function getViewportDimensions() {
   };
 }
 
-// Expanded widget size presets (12 aspect ratios for variety)
-export const WIDGET_SIZE_PRESETS = {
-  // Compact Sizes (Square/Portrait)
-  XS: { width: 200, height: 200, cols: 5, rows: 5 },      // Tiny KPI
-  S: { width: 240, height: 240, cols: 6, rows: 6 },       // Small Square
-  S_TALL: { width: 200, height: 320, cols: 5, rows: 8 },  // Narrow List
-  
-  // Medium Sizes (Balanced)
-  M: { width: 320, height: 280, cols: 8, rows: 7 },       // Standard
-  M_WIDE: { width: 400, height: 240, cols: 10, rows: 6 }, // Wide Chart
-  M_TALL: { width: 280, height: 360, cols: 7, rows: 9 },  // Tall List
-  
-  // Large Sizes (Featured)
-  L: { width: 440, height: 320, cols: 11, rows: 8 },      // Large Chart
-  L_WIDE: { width: 560, height: 280, cols: 14, rows: 7 }, // Wide Dashboard
-  L_TALL: { width: 360, height: 480, cols: 9, rows: 12 }, // Tall Feature
-  
-  // Extra Large (Hero Widgets)
-  XL: { width: 560, height: 440, cols: 14, rows: 11 },    // Hero Interactive
-  XL_WIDE: { width: 680, height: 360, cols: 17, rows: 9 },// Ultra Wide
-  XXL: { width: 680, height: 560, cols: 17, rows: 14 },   // Mega Widget
-} as const;
-
-export type WidgetSize = keyof typeof WIDGET_SIZE_PRESETS;
-
-export function getWidgetDimensions(preset: WidgetSize) {
-  return WIDGET_SIZE_PRESETS[preset];
-}
-
 export const GRID_CONFIG = {
-  // Grid cell size (pixels) - smaller for more flexibility
-  CELL_SIZE: 40,
-  
-  // Gap between widgets (breathing room)
-  GAP_SIZE: 16,
-  
-  // Minimum widget size
-  MIN_WIDGET_SIZE: 2,
-  
-  // Responsive breakpoint detection
-  get BREAKPOINT() {
-    const width = typeof window !== 'undefined' ? window.innerWidth : 1280;
-    if (width < 768) return 'mobile';
-    if (width < 1024) return 'tablet';
-    if (width < 1440) return 'laptop';
-    return 'desktop';
-  },
+  // Grid cell size (pixels) - 75% of original 80px
+  CELL_SIZE: 60,
   
   // Dynamic canvas constraints based on viewport
   get CANVAS_WIDTH() {
@@ -75,20 +32,16 @@ export const GRID_CONFIG = {
     return getViewportDimensions().height;
   },
   
-  // Calculated grid dimensions (dynamic, responsive)
+  // Calculated grid dimensions (dynamic)
   get COLS() {
-    const width = this.CANVAS_WIDTH;
-    if (width < 768) return 12;   // Mobile: 12 cols
-    if (width < 1024) return 18;  // Tablet: 18 cols
-    if (width < 1440) return 24;  // Laptop: 24 cols
-    return 30;                     // Desktop: 30 cols
+    return Math.floor(this.CANVAS_WIDTH / this.CELL_SIZE);
   },
   get ROWS() {
-    return Math.floor(this.CANVAS_HEIGHT / (this.CELL_SIZE + this.GAP_SIZE));
+    return Math.floor(this.CANVAS_HEIGHT / this.CELL_SIZE);
   },
   
   // Snap threshold (pixels) - half of cell size for "soft" magnetic feel
-  SNAP_THRESHOLD: 20, // Half of 40px
+  SNAP_THRESHOLD: 30, // Half of 60px
 };
 
 /**
@@ -153,6 +106,30 @@ export function constrainToCanvas(
 }
 
 /**
+ * Snap widget size to grid cell multiples (for cleaner layouts)
+ */
+export function snapSizeToGrid(width: number, height: number) {
+  return {
+    width: snapToGrid(width),
+    height: snapToGrid(height),
+  };
+}
+
+/**
+ * Snap size to grid in real-time (for live resize preview)
+ */
+export function snapSizeToGridRealtime(width: number, height: number) {
+  return snapSizeToGrid(width, height);
+}
+
+/**
+ * Check if widget is at maximum size
+ */
+export function isAtMaxSize(width: number, height: number, maxWidth: number, maxHeight: number): boolean {
+  return width >= maxWidth || height >= maxHeight;
+}
+
+/**
  * Calculate grid cells from pixel dimensions
  */
 export function calculateGridCells(width: number, height: number) {
@@ -160,18 +137,4 @@ export function calculateGridCells(width: number, height: number) {
     cols: Math.round(width / GRID_CONFIG.CELL_SIZE),
     rows: Math.round(height / GRID_CONFIG.CELL_SIZE),
   };
-}
-
-/**
- * Validates widget dimensions to prevent crashes
- */
-export function validateDimensions(width: number, height: number): boolean {
-  return (
-    !isNaN(width) && 
-    !isNaN(height) && 
-    width > 0 && 
-    height > 0 &&
-    isFinite(width) &&
-    isFinite(height)
-  );
 }

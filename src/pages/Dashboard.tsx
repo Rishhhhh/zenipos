@@ -1,22 +1,88 @@
-import { useState, Suspense, lazy } from "react";
+import { useState, Suspense, useEffect } from "react";
+import { DndContext, DragEndEvent, DragStartEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useAuth } from "@/contexts/AuthContext";
+import { DraggableWidget } from "@/components/dashboard/DraggableWidget";
 import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
+import { WidgetMenu } from "@/components/dashboard/WidgetMenu";
 import { WidgetConfigModal } from "@/components/dashboard/WidgetConfigModal";
-import { GestureHints } from "@/components/dashboard/GestureHints";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
 import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
+import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const DraggableDashboard = lazy(() => import("@/components/dashboard/DraggableDashboard"));
+import { haptics } from "@/lib/haptics";
+import { softSnapPosition, constrainToCanvas, GRID_CONFIG } from "@/lib/widgets/gridSystem";
+import { GridOverlay } from "@/components/dashboard/GridOverlay";
 
 export default function Dashboard() {
   const { employee } = useAuth();
   const userRole = employee?.role || "cashier";
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [viewportKey, setViewportKey] = useState(0);
   
-  const { layout, addWidget, resetLayout } = useWidgetLayout();
+  const { layout, updateOrder, updatePosition, bringToFront, addWidget, removeWidget, resetLayout, toggleMinimize, toggleMaximize } = useWidgetLayout();
+  
+  // Track maximized widget for backdrop overlay
+  const maximizedWidget = layout.widgetOrder.find(id => 
+    layout.widgetPositions[id]?.isMaximized
+  );
+
+  // Listen for viewport resize to recalculate grid
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Configure sensors for press-and-hold dragging (350ms)
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: { delay: 350, tolerance: 5 }
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 350, tolerance: 5 }
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const widgetId = event.active.id as string;
+    setActiveDragId(widgetId);
+    bringToFront(widgetId);
+    haptics.medium();
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, delta } = event;
+    const widgetId = active.id as string;
+    const currentPos = layout.widgetPositions[widgetId];
+    
+    setActiveDragId(null);
+    
+    if (currentPos) {
+      const rawX = currentPos.x + delta.x;
+      const rawY = currentPos.y + delta.y;
+      
+      // Apply soft magnetic snapping
+      const snapped = softSnapPosition(rawX, rawY);
+      
+      // Constrain to canvas bounds
+      const constrained = constrainToCanvas(
+        snapped.x, 
+        snapped.y, 
+        currentPos.width || 400, 
+        currentPos.height || 400
+      );
+      
+      updatePosition(widgetId, {
+        x: constrained.x,
+        y: constrained.y,
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-secondary/5 pb-24">
@@ -41,12 +107,11 @@ export default function Dashboard() {
               Add Widget
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={resetLayout}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Reset Layout
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -54,14 +119,71 @@ export default function Dashboard() {
 
       {/* Canvas spans full viewport width */}
       <div className="px-4 md:px-6">
-        <Suspense fallback={<Skeleton className="w-full h-[600px] rounded-lg" />}>
-          <DraggableDashboard onConfigure={setConfigModalWidget} />
-        </Suspense>
+        {/* Free-Form Canvas with Drag and Drop */}
+        <DndContext
+          key={viewportKey}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          sensors={sensors}
+        >
+        <div 
+          className="relative w-full mx-auto bg-card/20 rounded-lg" 
+          style={{ 
+            height: `${GRID_CONFIG.CANVAS_HEIGHT}px`,
+            minHeight: '600px',
+            overflow: 'visible', // Allow widgets to overflow at bottom but stay behind dock
+          }}
+        >
+            {/* Backdrop for Maximized Widget */}
+            {maximizedWidget && (
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[44] animate-in fade-in duration-300"
+                onClick={() => toggleMaximize(maximizedWidget)}
+                aria-label="Click to restore widget"
+              />
+            )}
+            
+            <GridOverlay />
+            {layout.widgetOrder.map((widgetId) => {
+              const widgetDef = getWidgetById(widgetId);
+              if (!widgetDef) return null;
+
+              const position = layout.widgetPositions[widgetId];
+              if (!position) return null;
+
+              const WidgetComponent = widgetDef.component;
+
+              return (
+                <DraggableWidget
+                  key={widgetId}
+                  id={widgetId}
+                  position={position}
+                  isAnyDragging={activeDragId !== null}
+                  isDraggingThis={activeDragId === widgetId}
+                  onPositionChange={(newPos) => updatePosition(widgetId, newPos)}
+                  onBringToFront={() => bringToFront(widgetId)}
+                  onMinimize={() => toggleMinimize(widgetId)}
+                  onMaximize={() => toggleMaximize(widgetId)}
+                  onConfigure={() => setConfigModalWidget(widgetId)}
+                  onClose={() => removeWidget(widgetId)}
+                  widgetName={widgetDef.name}
+                >
+                  <Suspense fallback={<Skeleton className="h-full w-full" />}>
+                    <div className="h-full w-full relative">
+                      <WidgetComponent />
+                    </div>
+                  </Suspense>
+                </DraggableWidget>
+              );
+            })}
+          </div>
+        </DndContext>
 
         {/* Help Text */}
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Press and hold (0.35s) to drag widgets • Auto-snaps to grid</p>
-          <p>Click maximize for full-screen • Press Escape to restore</p>
+          <p>Press and hold (0.35s) any widget to drag • Magnetically snaps to grid</p>
+          <p>Drag bottom-right corner to resize • All widgets fit in viewport</p>
+          <p>Click maximize for full-screen • Press Escape or click backdrop to restore</p>
         </div>
       </div>
 
@@ -80,9 +202,6 @@ export default function Dashboard() {
         open={!!configModalWidget}
         onOpenChange={(open) => !open && setConfigModalWidget(null)}
       />
-
-      {/* Touch Gesture Hints */}
-      <GestureHints />
     </div>
   );
 }

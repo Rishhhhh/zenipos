@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { QuickPOSConfig } from "@/types/widgetConfigs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,42 +27,16 @@ export function QuickPOSConfigPanel({ config, onConfigChange }: QuickPOSConfigPa
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Display Density</Label>
-          <Select
-            value={config.displayDensity}
-            onValueChange={(value) => {
-              const density = value as 'compact' | 'full';
-              onConfigChange({ 
-                ...config, 
-                displayDensity: density,
-                itemsPerRow: density === 'compact' ? 2 : 3 
-              });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="compact">Compact (2 columns)</SelectItem>
-              <SelectItem value="full">Full (3 columns)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Cart Position</Label>
-          <Select
-            value={config.cartPosition}
-            onValueChange={(value) => onConfigChange({ ...config, cartPosition: value as 'bottom' | 'side' })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="side">Side Panel</SelectItem>
-              <SelectItem value="bottom">Bottom Dock</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>Items Per Row</Label>
+          <Slider
+            value={[config.itemsPerRow]}
+            onValueChange={([value]) => onConfigChange({ ...config, itemsPerRow: value as 2 | 3 | 4 })}
+            min={2}
+            max={4}
+            step={1}
+            className="w-full"
+          />
+          <p className="text-sm text-muted-foreground">{config.itemsPerRow} columns</p>
         </div>
 
         <div className="flex items-center justify-between">

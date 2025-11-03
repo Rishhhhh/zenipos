@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { VirtualList } from '@/components/modals/VirtualList';
 
 interface MenuItem {
   id: string;
@@ -180,16 +180,13 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
         <div className="w-24 text-right flex-shrink-0">Actions</div>
       </div>
 
-      {/* Scrollable list */}
-      <ScrollArea className="h-[600px]">
-        <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.id}>
-              {renderRow(item)}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+      {/* Virtual scrolling list */}
+      <VirtualList
+        items={items}
+        rowHeight={80}
+        maxHeight={600}
+        renderRow={renderRow}
+      />
     </div>
   );
 }

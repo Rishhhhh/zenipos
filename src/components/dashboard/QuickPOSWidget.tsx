@@ -25,10 +25,6 @@ export function QuickPOSWidget() {
   const { items, addItem } = useCartStore();
   const { config } = useWidgetConfig<QuickPOSConfig>('quick-pos');
   const [selectedCategory, setSelectedCategory] = useState<string>(config.defaultCategoryId || "all");
-  
-  // Derive itemsPerRow from displayDensity
-  const itemsPerRow = config.displayDensity === 'compact' ? 2 : 3;
-  const imageHeight = config.displayDensity === 'compact' ? 'h-12' : 'h-16';
 
   // Fetch categories
   const { data: categories } = useQuery({
@@ -112,13 +108,13 @@ export function QuickPOSWidget() {
       {/* Menu Items Grid */}
       <div className="flex-1 overflow-y-auto mb-3 min-h-0 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
         {isLoading ? (
-          <div className={cn("grid gap-2", GRID_COLS_MAP[itemsPerRow])}>
+          <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-24 bg-accent/50 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : menuItems && menuItems.length > 0 ? (
-          <div className={cn("grid gap-2", GRID_COLS_MAP[itemsPerRow])}>
+          <div className={cn("grid gap-2", GRID_COLS_MAP[config.itemsPerRow])}>
             {menuItems.map((item) => {
               const quantity = getCartQuantity(item.id);
               const inStock = item.in_stock;
@@ -138,7 +134,7 @@ export function QuickPOSWidget() {
                     disabled={!inStock}
                   >
                     {config.showImages && item.image_url && (
-                      <img src={item.image_url} alt={item.name} className={cn("w-full object-cover rounded mb-2", imageHeight)} />
+                      <img src={item.image_url} alt={item.name} className="w-full h-16 object-cover rounded mb-2" />
                     )}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="text-sm font-medium line-clamp-2 flex-1">

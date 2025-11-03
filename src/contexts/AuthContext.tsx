@@ -74,56 +74,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Timeout fallback to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      console.warn('⚠️ Auth initialization timeout - forcing load');
-      setIsLoading(false);
-    }, 5000);
-
     // Check for existing Supabase session on mount
-    supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
-        clearTimeout(timeoutId);
-        
-        if (error) {
-          console.error('❌ Supabase auth error:', error);
-          localStorage.removeItem('supabase.auth.token');
-          localStorage.removeItem(STORAGE_KEY);
-          return;
-        }
-        
-        if (session) {
-          const stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            try {
-              const localSession: POSSession = JSON.parse(stored);
-              if (Date.now() <= localSession.expiresAt) {
-                setEmployee({
-                  id: localSession.employeeId,
-                  name: localSession.employeeName,
-                  role: localSession.role,
-                });
-                setShiftId(localSession.shiftId || null);
-              } else {
-                localStorage.removeItem(STORAGE_KEY);
-              }
-            } catch (error) {
-              console.error('Failed to restore session:', error);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // Restore employee data from localStorage
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            const localSession: POSSession = JSON.parse(stored);
+            if (Date.now() <= localSession.expiresAt) {
+              setEmployee({
+                id: localSession.employeeId,
+                name: localSession.employeeName,
+                role: localSession.role,
+              });
+              setShiftId(localSession.shiftId || null);
+            } else {
               localStorage.removeItem(STORAGE_KEY);
             }
+          } catch (error) {
+            console.error('Failed to restore session:', error);
+            localStorage.removeItem(STORAGE_KEY);
           }
         }
-      })
-      .catch((error) => {
-        clearTimeout(timeoutId);
-        console.error('❌ Fatal auth error:', error);
-        localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem(STORAGE_KEY);
-      })
-      .finally(() => {
-        clearTimeout(timeoutId);
-        setIsLoading(false);
-      });
+      }
+      setIsLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);

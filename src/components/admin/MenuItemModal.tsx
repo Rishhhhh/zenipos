@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -71,10 +71,6 @@ export function MenuItemModal({
 }: MenuItemModalProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [imageSrcsets, setImageSrcsets] = useState<{
-    srcset_webp?: string;
-    srcset_jpeg?: string;
-  }>({});
 
   const form = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
@@ -134,8 +130,6 @@ export function MenuItemModal({
             tax_rate: values.tax_rate || null,
             description: values.description || null,
             image_url: values.image_url || null,
-            image_srcset_webp: imageSrcsets.srcset_webp || null,
-            image_srcset_jpeg: imageSrcsets.srcset_jpeg || null,
             in_stock: values.in_stock,
           })
           .eq('id', item.id);
@@ -157,8 +151,6 @@ export function MenuItemModal({
           tax_rate: values.tax_rate || null,
           description: values.description || null,
           image_url: values.image_url || null,
-          image_srcset_webp: imageSrcsets.srcset_webp || null,
-          image_srcset_jpeg: imageSrcsets.srcset_jpeg || null,
           in_stock: values.in_stock,
         });
 
@@ -201,17 +193,8 @@ export function MenuItemModal({
                 <FormControl>
                   <ImageUpload
                     value={field.value}
-                    onUpload={(result) => {
-                      field.onChange(result.url);
-                      setImageSrcsets({
-                        srcset_webp: result.srcset_webp,
-                        srcset_jpeg: result.srcset_jpeg,
-                      });
-                    }}
-                    onDelete={() => {
-                      field.onChange('');
-                      setImageSrcsets({});
-                    }}
+                    onUpload={field.onChange}
+                    onDelete={() => field.onChange('')}
                   />
                 </FormControl>
                 <FormMessage />

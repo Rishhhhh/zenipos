@@ -20,33 +20,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('theme-id', themeId);
 
-    // Apply CSS variables with transition optimization
+    // Apply CSS variables
     const root = document.documentElement;
-    
-    // Remove theme-stable class before transition
-    root.classList.remove('theme-stable');
-    
-    // OPTIMIZATION: Batch DOM updates in single frame
-    requestAnimationFrame(() => {
-      // Temporarily disable transitions for non-color properties
-      root.style.setProperty('--transition-override', 'none');
-      
-      Object.entries(config.cssVars).forEach(([key, value]) => {
-        root.style.setProperty(key, value);
-      });
-      
-      // Re-enable transitions after paint
-      requestAnimationFrame(() => {
-        root.style.removeProperty('--transition-override');
-        
-        // Add theme-stable class after 300ms to remove will-change
-        setTimeout(() => {
-          root.classList.add('theme-stable');
-        }, 300);
-      });
+    Object.entries(config.cssVars).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
     });
 
-    // Apply theme classes (no transition needed for boolean flags)
+    // Apply theme classes
     root.classList.remove('animations-disabled', 'glass-disabled', 'gradients-disabled');
     if (!config.animations) root.classList.add('animations-disabled');
     if (!config.glassEffects) root.classList.add('glass-disabled');

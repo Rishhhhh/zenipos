@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, DollarSign, UserCircle, Award, RefreshCw } from "lucide-react";
+import { Clock, DollarSign, UserCircle, Award } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveShiftsConfig } from "@/types/widgetConfigs";
@@ -13,11 +13,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export function ActiveShiftsWidget() {
   const { config } = useWidgetConfig<ActiveShiftsConfig>('active-shifts');
   
-  const isGridMode = config.viewMode === 'grid';
-  const isCompact = isGridMode;
-  
-  const { data: activeShifts, isLoading, refetch } = useQuery({
-    queryKey: ["active-shifts", isGridMode],
+  const { data: activeShifts, isLoading } = useQuery({
+    queryKey: ["active-shifts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shifts")
@@ -26,8 +23,7 @@ export function ActiveShiftsWidget() {
           employees (name, pay_rate)
         `)
         .eq("status", "active")
-        .order("clock_in_at", { ascending: false })
-        .limit(isGridMode ? 6 : 50);
+        .order("clock_in_at", { ascending: false });
 
       if (error) throw error;
 
@@ -43,13 +39,11 @@ export function ActiveShiftsWidget() {
         };
       });
     },
-    refetchInterval: config.refreshInterval * 1000,
+    refetchInterval: 60 * 1000, // Refresh every minute
   });
 
   const totalLaborCost = activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0;
-  const longestShift = activeShifts?.reduce((max, s) => 
-    s.hoursWorked > max.hoursWorked ? s : max, activeShifts[0]
-  );
+  const longestShift = activeShifts?.reduce((max, s) => s.hoursWorked > max.hoursWorked ? s : max, activeShifts[0]);
   
   const getShiftColor = (hours: number) => {
     if (hours >= 8) return { bg: "bg-destructive/10", text: "text-destructive", border: "border-destructive/30" };
@@ -57,133 +51,36 @@ export function ActiveShiftsWidget() {
     return { bg: "bg-success/10", text: "text-success", border: "border-success/30" };
   };
 
-  // GRID MODE - Ultra compact avatar grid (240×240px)
-  if (isGridMode) {
-    return (
-      <Card className="glass-card p-3 w-[240px] h-[240px] flex flex-col">
-        {/* Compact Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-base">Active</h3>
-            {activeShifts && activeShifts.length > 0 && (
-              <Badge variant="secondary" className="h-5 text-xs px-1.5">
-                {activeShifts.length}
-              </Badge>
-            )}
-          </div>
-          <Button
-            onClick={() => refetch()}
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-
-        {/* Avatar Grid (3×2) */}
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="grid grid-cols-3 gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-[64px] rounded-lg" />
-              ))}
-            </div>
-          ) : activeShifts && activeShifts.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2 h-full">
-              {activeShifts.slice(0, 6).map((shift) => {
-                const initials = shift.employees?.name
-                  ?.split(' ')
-                  .map(n => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2) || "?";
-                const firstName = shift.employees?.name?.split(' ')[0] || "Unknown";
-                const shiftColor = getShiftColor(shift.hoursWorked);
-                
-                return (
-                  <div
-                    key={shift.id}
-                    className="flex flex-col items-center justify-center rounded-lg border bg-card/50 p-2 transition-all hover:bg-card h-[64px]"
-                  >
-                    <div className="relative mb-1.5">
-                      <Avatar className={cn(
-                        "h-10 w-10 border-2",
-                        shiftColor.border
-                      )}>
-                        <AvatarFallback className={cn(
-                          "text-xs font-semibold",
-                          shiftColor.bg,
-                          shiftColor.text
-                        )}>
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-success rounded-full border border-background" />
-                    </div>
-                    <p className="text-xs font-medium line-clamp-1 text-center w-full">
-                      {firstName}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <UserCircle className="h-10 w-10 mb-1.5 opacity-50" />
-              <p className="text-xs">No shifts</p>
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  }
-
-  // LIST MODE - Detailed view (for M/L sizes: 360×300px+)
   return (
-    <Card className="glass-card p-5 w-[360px] min-h-[300px] flex flex-col">
-      {/* Header */}
+    <Card className="glass-card p-5 min-h-[300px] min-w-[350px] flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-lg">Active Shifts</h3>
         </div>
-        <div className="flex items-center gap-2">
-          {activeShifts && activeShifts.length > 0 && (
-            <Badge variant="default" className="bg-success/20 text-success">
-              {activeShifts.length} active
-            </Badge>
-          )}
-          <Button
-            onClick={() => refetch()}
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+        {activeShifts && activeShifts.length > 0 && (
+          <Badge variant="default" className="bg-success/20 text-success">
+            {activeShifts.length} active
+          </Badge>
+        )}
       </div>
 
-      {/* Total Labor Cost - Only show if enabled */}
-      {config.showLaborCost && (
-        <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent rounded-lg mb-3 border border-primary/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <p className="text-xs text-muted-foreground">Labor Cost</p>
-            </div>
-            <p className="text-xl font-bold text-primary">RM {totalLaborCost.toFixed(2)}</p>
+      {/* Total Labor Cost */}
+      <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent rounded-lg mb-3 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-primary" />
+            <p className="text-xs text-muted-foreground">Labor Cost</p>
           </div>
+          <p className="text-xl font-bold text-primary">RM {totalLaborCost.toFixed(2)}</p>
         </div>
-      )}
+      </div>
 
       {/* Active Shifts List */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-[60px] w-full rounded-lg" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))
         ) : activeShifts && activeShifts.length > 0 ? (
           activeShifts.map((shift) => {
@@ -194,47 +91,56 @@ export function ActiveShiftsWidget() {
               <div 
                 key={shift.id} 
                 className={cn(
-                  "p-3 rounded-lg border transition-all hover:shadow-md h-[60px] flex items-center gap-3",
+                  "p-3 rounded-lg border transition-all hover:shadow-md",
                   shiftColor.bg,
                   shiftColor.border
                 )}
               >
-                <div className="relative flex-shrink-0">
-                  <Avatar className="h-10 w-10 border-2 border-success">
-                    <AvatarFallback className="bg-success/20 text-success font-semibold text-sm">
-                      {shift.employees?.name?.charAt(0) || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-semibold text-sm line-clamp-1">
-                        {shift.employees?.name || "Unknown"}
-                      </h4>
-                      {isLongest && (
-                        <Award className="h-3.5 w-3.5 text-warning fill-warning flex-shrink-0" />
-                      )}
-                    </div>
+                <div className="flex items-start gap-3">
+                  <div className="relative">
+                    <Avatar className="h-10 w-10 border-2 border-success">
+                      <AvatarFallback className="bg-success/20 text-success font-semibold">
+                        {shift.employees?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background animate-pulse" />
                   </div>
                   
-                  <div className="flex items-center gap-3 text-xs mt-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {shift.hoursWorked.toFixed(1)}h
-                      </span>
-                    </div>
-                    {config.showLaborCost && (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5">
-                        <DollarSign className="h-3 w-3 text-primary" />
-                        <span className="font-semibold text-primary">
-                          RM {shift.laborCost.toFixed(2)}
+                        <h4 className="font-semibold text-sm line-clamp-1">
+                          {shift.employees?.name || "Unknown"}
+                        </h4>
+                        {isLongest && (
+                          <Award className="h-3.5 w-3.5 text-warning fill-warning" />
+                        )}
+                      </div>
+                      <Badge variant="outline" className="bg-success/20 text-success text-xs h-5 border-success/30">
+                        Active
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          {shift.hoursWorked.toFixed(1)}h worked
                         </span>
                       </div>
-                    )}
+                      {config.showLaborCost && (
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="h-3.5 w-3.5 text-primary" />
+                          <span className="font-semibold text-primary">
+                            RM {shift.laborCost.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Started {formatDistanceToNow(new Date(shift.clock_in_at), { addSuffix: true })}
+                    </p>
                   </div>
                 </div>
               </div>

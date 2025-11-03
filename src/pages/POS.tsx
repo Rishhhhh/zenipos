@@ -4,14 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
-import { useState, useEffect, startTransition } from "react";
+import { useState, useEffect } from "react";
 import { useModalManager } from "@/hooks/useModalManager";
 import { usePromotions } from "@/lib/hooks/usePromotions";
-import { useBroadcastToCustomerDisplay } from "@/hooks/useCustomerDisplaySync";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Monitor } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
@@ -20,14 +19,12 @@ import { CartSummary } from "@/components/pos/CartSummary";
 import { TableSelectionModal } from "@/components/pos/TableSelectionModal";
 import { ModifierSelectionModal } from "@/components/pos/ModifierSelectionModal";
 import { SplitBillModal } from "@/components/pos/SplitBillModal";
-import { LinkDisplayModal } from "@/components/pos/LinkDisplayModal";
-import { PrintPreviewModal } from "@/components/pos/PrintPreviewModal";
 
 export default function POS() {
   // Track performance for this page
   usePerformanceMonitor('POS');
   
-  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, setTableId, setOrderType } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, setTableId, setOrderType } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
@@ -35,39 +32,19 @@ export default function POS() {
   const [showTableSelect, setShowTableSelect] = useState(false);
   const [showModifierSelect, setShowModifierSelect] = useState(false);
   const [showSplitBill, setShowSplitBill] = useState(false);
-  const [showLinkDisplay, setShowLinkDisplay] = useState(false);
-  const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [pendingItem, setPendingItem] = useState<any>(null);
-  const [previewOrderData, setPreviewOrderData] = useState<any>(null);
-  
-  // Customer display linking
-  const [customerDisplayId, setCustomerDisplayId] = useState<string | null>(
-    () => localStorage.getItem('linked-customer-display')
-  );
-  
-  // Initialize broadcast hook
-  const { broadcastOrderUpdate, broadcastPayment, broadcastComplete, broadcastIdle } = 
-    useBroadcastToCustomerDisplay();
   
   // Auto-evaluate promotions
   usePromotions();
 
-  // Broadcast cart updates to customer display
+  // Show table selection on first load
   useEffect(() => {
-    if (customerDisplayId && items.length > 0) {
-      broadcastOrderUpdate(customerDisplayId);
-    } else if (customerDisplayId && items.length === 0) {
-      broadcastIdle(customerDisplayId);
-    }
-  }, [items, customerDisplayId, broadcastOrderUpdate, broadcastIdle]);
-
-  // Enforce table selection on first load
-  useEffect(() => {
-    // If no table and no order type set, force selection
-    if (!table_id && !order_type) {
+    if (!table_id && order_type === 'takeaway') {
+      // Auto-set takeaway
+    } else if (!table_id && order_type === 'dine_in') {
       setShowTableSelect(true);
     }
-  }, [table_id, order_type]);
+  }, []);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -106,15 +83,13 @@ export default function POS() {
       const discount = getDiscount();
       const total = getTotal();
 
-      // Create order with NFC card tracking
-      const cartState = useCartStore.getState();
+      // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           session_id: sessionId,
-          table_id: cartState.table_id,
-          order_type: cartState.order_type,
-          nfc_card_id: cartState.nfc_card_id,
+          table_id: useCartStore.getState().table_id,
+          order_type: useCartStore.getState().order_type,
           subtotal,
           tax,
           discount,
@@ -164,33 +139,30 @@ export default function POS() {
         description: `${items.length} items sent to kitchen`,
       });
       
-      // Show print preview
-      setPreviewOrderData({
-        orderId: order.id,
-        orderNumber: order.id.substring(0, 8),
-        items: items,
+      // Auto-print kitchen ticket
+      const kitchenTicket = generate80mmKitchenTicket({
+        order_id: order.id,
+        order_number: order.id.substring(0, 8),
+        station: 'MAIN KITCHEN',
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity,
+        })),
         subtotal: getSubtotal(),
         tax: getTax(),
         total: getTotal(),
         timestamp: new Date(),
       });
-      setShowPrintPreview(true);
+      console.log('🍳 Auto-printing kitchen ticket:', kitchenTicket);
       
-      // Broadcast to customer display
-      if (customerDisplayId) {
-        broadcastPayment(customerDisplayId, undefined);
-      }
-      
-      // Open payment modal using modal manager (after print preview)
+      // Open payment modal using modal manager
       openModal('payment', {
         orderId: order.id,
         orderNumber: order.id.substring(0, 8),
         total: getTotal(),
         onPaymentSuccess: () => {
-          // Broadcast completion
-          if (customerDisplayId) {
-            broadcastComplete(customerDisplayId, undefined);
-          }
           clearCart();
           queryClient.invalidateQueries({ queryKey: ['orders'] });
         },
@@ -207,8 +179,8 @@ export default function POS() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header: Table Badge + Display Link (56px fixed) */}
-      <div className="h-14 border-b flex items-center px-4 gap-2 flex-shrink-0">
+      {/* Header: Table Badge (56px fixed) */}
+      <div className="h-14 border-b flex items-center px-4 flex-shrink-0">
         {(table_id || order_type === 'takeaway') && (
           <Badge
             variant="secondary"
@@ -219,41 +191,14 @@ export default function POS() {
             {order_type === 'takeaway' ? 'Takeaway' : `Table ${table_id}`}
           </Badge>
         )}
-        
-        {/* Display Link Badge/Button */}
-        {customerDisplayId ? (
-          <Badge
-            variant="outline"
-            className="text-sm cursor-pointer hover:bg-accent"
-            onClick={() => setShowLinkDisplay(true)}
-          >
-            <Monitor className="h-3 w-3 mr-1" />
-            Display Linked
-          </Badge>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowLinkDisplay(true)}
-          >
-            <Monitor className="h-4 w-4 mr-2" />
-            Link Display
-          </Button>
-        )}
       </div>
 
       <TableSelectionModal
         open={showTableSelect}
         onOpenChange={setShowTableSelect}
-        onSelect={(tableId, orderType, nfcCardId) => {
-          if (nfcCardId) {
-            // NFC scan: use setTableWithNFC to store card ID
-            useCartStore.getState().setTableWithNFC(tableId, nfcCardId);
-          } else {
-            // Manual selection
-            setTableId(tableId);
-            setOrderType(orderType);
-          }
+        onSelect={(tableId, orderType) => {
+          setTableId(tableId);
+          setOrderType(orderType);
         }}
       />
 
@@ -264,7 +209,7 @@ export default function POS() {
         menuItemName={pendingItem?.name || ''}
         onConfirm={(modifiers) => {
           if (pendingItem) {
-            startTransition(() => addItem({ ...pendingItem, modifiers }));
+            addItem({ ...pendingItem, modifiers });
             setPendingItem(null);
           }
         }}
@@ -286,35 +231,6 @@ export default function POS() {
         }}
       />
 
-      <LinkDisplayModal
-        open={showLinkDisplay}
-        onOpenChange={setShowLinkDisplay}
-        currentDisplayId={customerDisplayId}
-        onLink={(displayId) => {
-          setCustomerDisplayId(displayId);
-          localStorage.setItem('linked-customer-display', displayId);
-        }}
-        onUnlink={() => {
-          setCustomerDisplayId(null);
-          localStorage.removeItem('linked-customer-display');
-          if (customerDisplayId) {
-            broadcastIdle(customerDisplayId);
-          }
-        }}
-      />
-
-      {previewOrderData && (
-        <PrintPreviewModal
-          open={showPrintPreview}
-          onOpenChange={setShowPrintPreview}
-          orderData={previewOrderData}
-          onSendToPrinter={() => {
-            // Console logging happens inside the modal
-            setShowPrintPreview(false);
-          }}
-        />
-      )}
-
       {/* Main Content: Fixed Heights */}
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT: Categories (240px fixed, internal scroll) */}
@@ -333,13 +249,8 @@ export default function POS() {
             items={menuItems}
             isLoading={itemsLoading}
             onAddItem={(item) => {
-              // CRITICAL: Enforce table selection before adding any items
-              if (!table_id && order_type !== 'takeaway') {
-                toast({
-                  variant: 'destructive',
-                  title: 'Select Table First',
-                  description: 'Please select a table or choose takeaway before adding items',
-                });
+              // First check if table is selected for dine-in
+              if (!table_id && !order_type) {
                 setShowTableSelect(true);
                 return;
               }
@@ -361,8 +272,8 @@ export default function POS() {
             total={getTotal()}
             discount={getDiscount()}
             appliedPromotions={appliedPromotions}
-            onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
-            onVoidItem={(id) => voidItem(id)}
+            onUpdateQuantity={updateQuantity}
+            onVoidItem={voidItem}
             onSendToKDS={() => sendToKDS.mutate()}
             onSplitBill={() => setShowSplitBill(true)}
             isSending={sendToKDS.isPending}

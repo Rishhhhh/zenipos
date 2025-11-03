@@ -26,14 +26,12 @@ interface CartState {
   table_id: string | null;
   tableId: string | null; // Alias for convenience
   tableName: string | null;
-  nfc_card_id: string | null;
   order_type: 'dine_in' | 'takeaway';
   
   // Actions
   setSessionId: (id: string) => void;
   setTableId: (id: string | null) => void;
   setTable: (id: string | null, label?: string | null) => void;
-  setTableWithNFC: (tableId: string | null, nfcCardId: string | null, label?: string | null) => void;
   setOrderType: (type: 'dine_in' | 'takeaway') => void;
   addItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
   removeItem: (id: string) => void;
@@ -60,19 +58,11 @@ export const useCartStore = create<CartState>((set, get) => ({
   table_id: null,
   tableId: null,
   tableName: null,
-  nfc_card_id: null,
   order_type: 'takeaway',
   
   setSessionId: (id) => set({ sessionId: id }),
   setTableId: (id) => set({ table_id: id, tableId: id }),
   setTable: (id, label = null) => set({ table_id: id, tableId: id, tableName: label }),
-  setTableWithNFC: (tableId, nfcCardId, label = null) => set({ 
-    table_id: tableId, 
-    tableId: tableId, 
-    nfc_card_id: nfcCardId,
-    tableName: label,
-    order_type: 'dine_in' 
-  }),
   setOrderType: (type) => set({ order_type: type }),
   
   addItem: (item) => set((state) => {
@@ -132,7 +122,6 @@ export const useCartStore = create<CartState>((set, get) => ({
     table_id: null, 
     tableId: null,
     tableName: null,
-    nfc_card_id: null,
     order_type: 'takeaway' 
   }),
   

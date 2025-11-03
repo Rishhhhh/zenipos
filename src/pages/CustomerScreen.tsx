@@ -6,22 +6,10 @@ import { PaymentDisplay } from '@/components/customer/PaymentDisplay';
 import { Loader2 } from 'lucide-react';
 
 export default function CustomerScreen() {
-  // Generate or retrieve display session ID (check URL params first)
+  // Generate or retrieve display session ID
   const [displaySessionId] = useState(() => {
-    // Check URL parameter first
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlDisplayId = urlParams.get('displayId');
-    
-    if (urlDisplayId) {
-      sessionStorage.setItem('customer-display-id', urlDisplayId);
-      return urlDisplayId;
-    }
-    
-    // Check storage
     const stored = sessionStorage.getItem('customer-display-id');
     if (stored) return stored;
-    
-    // Generate new
     const newId = `display-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     sessionStorage.setItem('customer-display-id', newId);
     return newId;

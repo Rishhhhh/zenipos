@@ -10,11 +10,7 @@ import {
   LowStockConfig,
   ActiveShiftsConfig,
   LoyaltyStatsConfig,
-  ActiveOrdersConfig,
-  LaborCostConfig,
-  EightySixConfig,
-  PendingModsConfig,
-  WebVitalsConfig,
+  ActiveOrdersConfig
 } from "@/types/widgetConfigs";
 
 export interface WidgetConfig extends BaseWidgetConfig {}
@@ -48,12 +44,11 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
     case 'quick-pos':
       return {
         ...baseConfig,
-        displayDensity: 'full',
         itemsPerRow: 3,
         showImages: true,
         quickAddMode: true,
         defaultCategoryId: undefined,
-        cartPosition: 'side',
+        cartPosition: 'bottom',
       } as QuickPOSConfig;
 
     case 'sales':
@@ -63,7 +58,6 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         goalTracking: { enabled: false, dailyTarget: 0 },
         showSparklines: true,
         showTrends: true,
-        showTrendFooter: true,
       } as SalesWidgetConfig;
 
     case 'revenue-chart':
@@ -91,60 +85,25 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
         ...baseConfig,
         alertThreshold: { critical: 10, low: 30 },
         sortBy: 'stockLevel',
-        maxItems: 3,
+        showSupplier: true,
+        autoReorder: false,
       } as LowStockConfig;
 
-      case 'active-shifts':
-        return {
-          ...baseConfig,
-          showPhotos: true,
-          showRoles: true,
-          showLaborCost: false,
-          timeFormat: '12hr',
-          groupBy: 'shiftTime',
-          viewMode: 'list',
-        } as ActiveShiftsConfig;
-
-      case 'labor-cost':
-        return {
-          ...baseConfig,
-          targetPercentage: 25,
-          showSparkline: true,
-          showOvertimeAlert: false,
-        } as LaborCostConfig;
-
-      case 'eighty-six':
-        return {
-          ...baseConfig,
-          maxItems: 3,
-          showLastUpdated: true,
-        } as EightySixConfig;
-
-      case 'pending-mods':
-        return {
-          ...baseConfig,
-          maxItems: 5,
-          showWastageCost: true,
-          sortBy: 'time',
-        } as PendingModsConfig;
-
-      case 'web-vitals':
-        return {
-          ...baseConfig,
-          showAlertCount: false,
-          thresholds: {
-            lcp: 2500,
-            fid: 100,
-            cls: 0.1,
-            tti: 2000,
-          },
-        } as WebVitalsConfig;
+    case 'active-shifts':
+      return {
+        ...baseConfig,
+        showPhotos: true,
+        showRoles: true,
+        showLaborCost: false,
+        timeFormat: '12hr',
+        groupBy: 'shiftTime',
+      } as ActiveShiftsConfig;
 
     case 'loyalty-stats':
       return {
         ...baseConfig,
         showTierProgress: true,
-        topNCustomers: 3,
+        topNCustomers: 5,
         showCustomerPhotos: true,
         showPointsConversion: true,
         showRedemptionRate: true,
@@ -153,12 +112,11 @@ export function getDefaultConfig(widgetType: string): BaseWidgetConfig {
     case 'active-orders':
       return {
         ...baseConfig,
-        statusFilters: ['pending', 'preparing'],
+        statusFilters: ['pending', 'preparing', 'ready'],
         sortBy: 'orderTime',
         showTimer: true,
         alertThresholdMinutes: 15,
         viewMode: 'list',
-        compactMode: false,
       } as ActiveOrdersConfig;
 
     default:

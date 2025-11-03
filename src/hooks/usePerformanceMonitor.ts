@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { trackPerformance } from '@/lib/monitoring/sentry';
-import { getDeviceType } from '@/lib/utils/deviceDetection';
 
 /**
  * Track FPS for a component
@@ -113,4 +112,11 @@ export function usePerformanceMonitor(pageName: string) {
       }
     };
   }, [pageName, location.pathname]);
+}
+
+function getDeviceType(): string {
+  const width = window.innerWidth;
+  if (width < 768) return 'mobile';
+  if (width < 1024) return 'tablet';
+  return 'desktop';
 }

@@ -14,12 +14,10 @@ export interface SalesWidgetConfig extends BaseWidgetConfig {
   goalTracking: { enabled: boolean; dailyTarget: number };
   showSparklines: boolean;
   showTrends: boolean;
-  showTrendFooter: boolean;
 }
 
 export interface QuickPOSConfig extends BaseWidgetConfig {
-  displayDensity: 'compact' | 'full';
-  itemsPerRow: 2 | 3;
+  itemsPerRow: 2 | 3 | 4;
   showImages: boolean;
   quickAddMode: boolean;
   defaultCategoryId?: string;
@@ -45,7 +43,8 @@ export interface TopItemsConfig extends BaseWidgetConfig {
 export interface LowStockConfig extends BaseWidgetConfig {
   alertThreshold: { critical: number; low: number };
   sortBy: 'stockLevel' | 'alphabetical' | 'lastUpdated';
-  maxItems: 3 | 5 | 10;
+  showSupplier: boolean;
+  autoReorder: boolean;
 }
 
 export interface ActiveShiftsConfig extends BaseWidgetConfig {
@@ -54,7 +53,6 @@ export interface ActiveShiftsConfig extends BaseWidgetConfig {
   showLaborCost: boolean;
   timeFormat: '12hr' | '24hr';
   groupBy: 'role' | 'shiftTime' | 'alphabetical';
-  viewMode: 'grid' | 'list';
 }
 
 export interface LoyaltyStatsConfig extends BaseWidgetConfig {
@@ -66,37 +64,9 @@ export interface LoyaltyStatsConfig extends BaseWidgetConfig {
 }
 
 export interface ActiveOrdersConfig extends BaseWidgetConfig {
-  statusFilters: ('pending' | 'preparing')[];
+  statusFilters: ('pending' | 'preparing' | 'ready')[];
   sortBy: 'orderTime' | 'tableNumber' | 'priority';
   showTimer: boolean;
   alertThresholdMinutes: number;
   viewMode: 'list' | 'kanban';
-  compactMode: boolean;
-}
-
-export interface LaborCostConfig extends BaseWidgetConfig {
-  targetPercentage: number;
-  showSparkline: boolean;
-  showOvertimeAlert: boolean;
-}
-
-export interface EightySixConfig extends BaseWidgetConfig {
-  maxItems: 3 | 5 | 10;
-  showLastUpdated: boolean;
-}
-
-export interface PendingModsConfig extends BaseWidgetConfig {
-  maxItems: 3 | 5 | 7 | 10;
-  showWastageCost: boolean;
-  sortBy: 'time' | 'wastage';
-}
-
-export interface WebVitalsConfig extends BaseWidgetConfig {
-  showAlertCount: boolean;
-  thresholds: {
-    lcp: number;
-    fid: number;
-    cls: number;
-    tti: number;
-  };
 }

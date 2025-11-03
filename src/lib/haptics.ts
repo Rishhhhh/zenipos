@@ -10,7 +10,6 @@ export const HapticPattern = {
   SUCCESS: [10, 50, 10], // Success pattern
   ERROR: [20, 50, 20, 50, 20], // Error shake
   SELECTION: [5],        // Quick tap for selections
-  WARNING: [15, 30, 15], // Warning pattern
 } as const;
 
 export function triggerHaptic(pattern: readonly number[] = HapticPattern.LIGHT) {
@@ -28,12 +27,4 @@ export const haptics = {
   success: () => triggerHaptic(HapticPattern.SUCCESS),
   error: () => triggerHaptic(HapticPattern.ERROR),
   selection: () => triggerHaptic(HapticPattern.SELECTION),
-  warning: () => triggerHaptic(HapticPattern.WARNING),
-  
-  // Context-specific helpers
-  addToCart: () => triggerHaptic(HapticPattern.LIGHT),
-  paymentComplete: () => triggerHaptic(HapticPattern.SUCCESS),
-  voidItem: () => triggerHaptic(HapticPattern.WARNING),
-  approvalGranted: () => triggerHaptic(HapticPattern.SUCCESS),
-  approvalDenied: () => triggerHaptic(HapticPattern.ERROR),
 };

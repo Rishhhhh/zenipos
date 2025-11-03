@@ -92,28 +92,4 @@ export class DuitNowProvider implements PaymentProvider {
     // Stub: Always succeed
     return true;
   }
-
-  async preAuthorize(request: { amount: number; orderId: string }): Promise<any> {
-    console.log('🔒 [DuitNow] Pre-authorize', request);
-    
-    // Stub: Return fake pre-auth
-    return {
-      success: true,
-      preAuthRef: `preauth_duitnow_${Date.now()}`,
-      cardBrand: 'DuitNow',
-      cardLast4: '****',
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    };
-  }
-
-  async capturePreAuth(preAuthRef: string, finalAmount: number): Promise<boolean> {
-    console.log('💰 [DuitNow] Capture pre-auth', preAuthRef, finalAmount);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return true;
-  }
-
-  async releasePreAuth(preAuthRef: string): Promise<boolean> {
-    console.log('🔓 [DuitNow] Release pre-auth', preAuthRef);
-    return true;
-  }
 }

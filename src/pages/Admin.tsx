@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkline } from "@/components/ui/sparkline";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { batchQuery } from "@/lib/api/batcher";
 import { ShoppingCart, TrendingUp, UtensilsCrossed, LayoutDashboard, Search } from "lucide-react";
 import { CompactModuleCard } from "@/components/admin/CompactModuleCard";
 import { ModuleDetailModal } from "@/components/admin/ModuleDetailModal";
@@ -21,20 +20,19 @@ export default function Admin() {
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['admin-stats-enhanced'],
     queryFn: async () => {
-      // Use batched queries to reduce API calls
       const [categoriesRes, itemsRes, ordersRes] = await Promise.all([
-        batchQuery('menu_categories', '*'),
-        batchQuery('menu_items', '*'),
-        batchQuery('orders', 'total'),
+        supabase.from('menu_categories').select('*', { count: 'exact', head: true }),
+        supabase.from('menu_items').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('total', { count: 'exact' }),
       ]);
 
-      const totalRevenue = ordersRes?.reduce((sum: number, o: any) => sum + Number(o.total), 0) || 0;
+      const totalRevenue = ordersRes.data?.reduce((sum, o) => sum + Number(o.total), 0) || 0;
       const sparklineData = [20, 25, 30, 28, 35, 40, 45];
 
       return {
-        categories: categoriesRes?.length || 0,
-        items: itemsRes?.length || 0,
-        orders: ordersRes?.length || 0,
+        categories: categoriesRes.count || 0,
+        items: itemsRes.count || 0,
+        orders: ordersRes.count || 0,
         revenue: totalRevenue,
         sparklineData,
       };

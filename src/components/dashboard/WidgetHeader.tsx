@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Minimize2, Maximize2, X, Settings, LayoutDashboard, MoreVertical, ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Minimize2, Maximize2, X, Settings, LayoutDashboard, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getWidgetById } from "@/lib/widgets/widgetCatalog";
 
@@ -8,8 +8,9 @@ interface WidgetHeaderProps {
   widgetId: string;
   widgetName: string;
   isMinimized: boolean;
+  isMaximized: boolean;
   onMinimize: () => void;
-  onNavigateToModule: () => void;
+  onMaximize: () => void;
   onClose: () => void;
   onConfigure: () => void;
 }
@@ -18,8 +19,9 @@ export function WidgetHeader({
   widgetId,
   widgetName,
   isMinimized,
+  isMaximized,
   onMinimize,
-  onNavigateToModule,
+  onMaximize,
   onClose,
   onConfigure,
 }: WidgetHeaderProps) {
@@ -28,7 +30,8 @@ export function WidgetHeader({
   const WidgetIcon = widgetDefinition?.icon || LayoutDashboard;
 
   return (
-    <div className={cn(
+    <TooltipProvider>
+      <div className={cn(
       "absolute top-0 left-0 right-0 h-10 z-50",
       "bg-background/95 backdrop-blur-sm border-b border-border",
       "flex items-center justify-between px-3",
@@ -46,53 +49,87 @@ export function WidgetHeader({
         )}>{widgetName}</h3>
       </div>
       
-      {/* Action Menu */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 min-h-[44px] min-w-[44px] touch-none"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation();
-            onConfigure();
-          }}>
-            <Settings className="mr-2 h-4 w-4" />
-            Configure Widget
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation();
-            onMinimize();
-          }}>
-            {isMinimized ? <Maximize2 className="mr-2 h-4 w-4" /> : <Minimize2 className="mr-2 h-4 w-4" />}
-            {isMinimized ? "Restore" : "Minimize"}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => {
-            e.stopPropagation();
-            onNavigateToModule();
-          }}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Open in Full View
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="text-destructive focus:text-destructive"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Remove Widget
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Action Buttons */}
+      <div className="flex items-center gap-1">
+        {!isMaximized && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onConfigure();
+                }}
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Configure</TooltipContent>
+          </Tooltip>
+        )}
+
+        {!isMaximized && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMinimize();
+                }}
+              >
+                {isMinimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isMinimized ? "Restore" : "Minimize"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMaximize();
+              }}
+            >
+              {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isMaximized ? "Restore" : "Maximize"}
+          </TooltipContent>
+        </Tooltip>
+
+        {!isMaximized && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Close</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
     </div>
+    </TooltipProvider>
   );
 }

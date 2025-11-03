@@ -304,7 +304,7 @@ export default function MarketingContent() {
             {formData.media_type === 'image' ? (
               <ImageUpload
                 value={formData.media_url}
-                onUpload={(result) => setFormData({ ...formData, media_url: result.url })}
+                onUpload={(url) => setFormData({ ...formData, media_url: url })}
                 onDelete={() => setFormData({ ...formData, media_url: '' })}
               />
             ) : (

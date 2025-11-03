@@ -4,10 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
 import { createPaymentProvider } from '@/lib/payments/PaymentProvider';
-import { QrCode, Banknote, Loader2, FileText } from 'lucide-react';
+import { QrCode, Banknote, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generate58mmReceipt } from '@/lib/print/receiptGenerator';
@@ -38,7 +37,6 @@ export function PaymentModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [enableEInvoice, setEnableEInvoice] = useState(false);
 
   const change = cashReceived ? Math.max(0, parseFloat(cashReceived) - total) : 0;
 
@@ -135,13 +133,10 @@ export function PaymentModal({
 
       if (error) throw error;
 
-      // Update order status and e-invoice flag
+      // Update order status
       await supabase
         .from('orders')
-        .update({ 
-          status: 'done',
-          einvoice_enabled: enableEInvoice 
-        })
+        .update({ status: 'done' })
         .eq('id', orderId);
 
       // Get order details to check for customer
@@ -188,7 +183,6 @@ export function PaymentModal({
         total,
         payment_method: method.toUpperCase(),
         timestamp: new Date(),
-        einvoice_enabled: enableEInvoice,
       });
       
       console.log('📄 Printing receipt:', receiptHtml);
@@ -219,22 +213,6 @@ export function PaymentModal({
       size="lg"
       variant="default"
     >
-      {/* E-Invoice Toggle */}
-      <div className="flex items-center space-x-2 mb-4 p-3 bg-muted/30 rounded-lg">
-        <Checkbox 
-          id="einvoice" 
-          checked={enableEInvoice}
-          onCheckedChange={(checked) => setEnableEInvoice(checked as boolean)}
-        />
-        <Label 
-          htmlFor="einvoice" 
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
-        >
-          <FileText className="h-4 w-4" />
-          Generate e-Invoice (MyInvois)
-        </Label>
-      </div>
-
       <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="qr">
