@@ -142,68 +142,59 @@ export default function POS() {
       const discount = getDiscount();
       const total = getTotal();
 
-      // Create order with explicit status
+      // Create order via RPC function (bypasses client library status issue)
       const cartState = useCartStore.getState();
-      const orderData = {
-        session_id: sessionId,
-        table_id: cartState.table_id,
-        order_type: cartState.order_type,
-        nfc_card_id: cartState.nfc_card_id,
-        status: 'pending' as const, // ✅ EXPLICIT STATUS
-        subtotal,
-        tax,
-        discount,
-        total,
-        applied_promotions: appliedPromotions.map(p => ({
+      
+      const orderItems = items.map((item) => ({
+        menu_item_id: item.menu_item_id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        notes: item.notes || null,
+        modifiers: item.modifiers || [],
+      }));
+
+      console.log('📤 Creating order via RPC function...');
+
+      const { data: result, error: orderError } = await supabase.rpc('create_order_with_items', {
+        p_session_id: sessionId,
+        p_table_id: cartState.table_id,
+        p_order_type: cartState.order_type,
+        p_nfc_card_id: cartState.nfc_card_id,
+        p_subtotal: subtotal,
+        p_tax: tax,
+        p_discount: discount,
+        p_total: total,
+        p_applied_promotions: appliedPromotions.map((p) => ({
           id: p.promotion.id,
           name: p.promotion.name,
           discount: p.discount,
-        })),
-        created_by: user.id,
-        metadata: orderNotes ? { notes: orderNotes } : {},
-      };
-
-      // Validate status before insert
-      if (orderData.status !== 'pending') {
-        console.error('🚨 INVALID STATUS DETECTED:', orderData.status);
-        throw new Error(`Invalid order status: ${orderData.status}`);
-      }
-
-      console.log('📤 Inserting order:', JSON.stringify(orderData, null, 2));
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select()
-        .single();
+        })) as any,
+        p_created_by: user.id,
+        p_metadata: (orderNotes ? { notes: orderNotes } : {}) as any,
+        p_items: orderItems as any,
+      });
 
       if (orderError) {
         console.error('❌ Order creation failed:', orderError);
         throw orderError;
       }
 
-      console.log('✅ Order created:', order);
+      console.log('✅ Order created via RPC:', result);
 
-      // Create order items
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(
-          items.map(item => ({
-            order_id: order.id,
-            menu_item_id: item.menu_item_id,
-            quantity: item.quantity,
-            unit_price: item.price,
-            notes: item.notes,
-            modifiers: (item.modifiers || []) as any,
-          }))
-        );
+      // Fetch the created order for the rest of the flow
+      const resultData = result as { order_id: string; status: string };
+      const { data: order, error: fetchError } = await supabase
+        .from('orders')
+        .select()
+        .eq('id', resultData.order_id)
+        .single();
 
-      if (itemsError) {
-        console.error('❌ Order items creation failed:', itemsError);
-        throw itemsError;
+      if (fetchError || !order) {
+        console.error('❌ Failed to fetch created order:', fetchError);
+        throw fetchError || new Error('Order not found after creation');
       }
 
-      console.log('✅ Order items created');
+      console.log('✅ Order fetched:', order);
 
       // Log to audit
       await supabase.from('audit_log').insert({

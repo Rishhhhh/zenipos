@@ -3845,6 +3845,23 @@ export type Database = {
       }
       close_expired_tabs: { Args: never; Returns: number }
       close_shift: { Args: { shift_id_param: string }; Returns: undefined }
+      create_order_with_items: {
+        Args: {
+          p_applied_promotions: Json
+          p_created_by: string
+          p_discount: number
+          p_items: Json
+          p_metadata: Json
+          p_nfc_card_id: string
+          p_order_type: Database["public"]["Enums"]["order_type"]
+          p_session_id: string
+          p_subtotal: number
+          p_table_id: string
+          p_tax: number
+          p_total: number
+        }
+        Returns: Json
+      }
       credit_loyalty_points: {
         Args: {
           customer_id_param: string
