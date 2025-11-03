@@ -160,10 +160,16 @@ export default function POS() {
           discount: p.discount,
         })),
         created_by: user.id,
-        metadata: orderNotes ? { notes: orderNotes } : undefined,
+        metadata: orderNotes ? { notes: orderNotes } : {},
       };
 
-      console.log('📤 Inserting order:', orderData);
+      // Validate status before insert
+      if (orderData.status !== 'pending') {
+        console.error('🚨 INVALID STATUS DETECTED:', orderData.status);
+        throw new Error(`Invalid order status: ${orderData.status}`);
+      }
+
+      console.log('📤 Inserting order:', JSON.stringify(orderData, null, 2));
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
