@@ -27,7 +27,7 @@ interface CartState {
   tableId: string | null; // Alias for convenience
   tableName: string | null;
   nfc_card_id: string | null;
-  order_type: 'dine_in' | 'takeaway';
+  order_type: 'dine_in' | 'takeaway' | null;
   
   // Actions
   setSessionId: (id: string) => void;
@@ -61,7 +61,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   tableId: null,
   tableName: null,
   nfc_card_id: null,
-  order_type: 'takeaway',
+  order_type: null,
   
   setSessionId: (id) => set({ sessionId: id }),
   setTableId: (id) => set({ table_id: id, tableId: id }),
@@ -133,7 +133,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     tableId: null,
     tableName: null,
     nfc_card_id: null,
-    order_type: 'takeaway' 
+    order_type: null 
   }),
   
   applyPromotions: (results) => set({ appliedPromotions: results }),

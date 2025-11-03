@@ -20,19 +20,31 @@ function useContainerDimensions() {
   useEffect(() => {
     if (!ref.current) return;
     
-    // Immediate initial measurement
-    const rect = ref.current.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      setDimensions({ width: rect.width, height: rect.height });
-    }
+    // Immediate initial measurement with fallback
+    const updateDimensions = () => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+    
+    // Try immediately
+    updateDimensions();
+    
+    // Try again after a brief delay if still 0
+    const timeoutId = setTimeout(updateDimensions, 50);
     
     const observer = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
-      setDimensions({ width, height });
+      if (width > 0 && height > 0) {
+        setDimensions({ width, height });
+      }
     });
     
     observer.observe(ref.current);
     return () => {
+      clearTimeout(timeoutId);
       observer.disconnect();
     };
   }, []);
@@ -213,7 +225,7 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
       <div className="p-4">
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
-      <div ref={ref} className="flex-1">
+      <div ref={ref} className="flex-1 overflow-hidden">
         {width > 0 && height > 0 && FixedSizeGrid ? (
           <FixedSizeGrid
             columnCount={columnCount}
@@ -235,8 +247,13 @@ export function ItemGrid({ items, isLoading, onAddItem, categoryId }: ItemGridPr
             {ItemCell}
           </FixedSizeGrid>
         ) : (
-          <div className="p-4">
-            <p className="text-muted-foreground">Loading menu items...</p>
+          <div className="p-4 flex items-center justify-center min-h-[200px]">
+            <div className="text-center">
+              <p className="text-muted-foreground">Preparing menu...</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {filteredItems.length} items available
+              </p>
+            </div>
           </div>
         )}
       </div>
