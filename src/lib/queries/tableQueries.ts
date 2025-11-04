@@ -1,14 +1,28 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export async function getTablesWithOrders() {
+  console.log('🔍 [getTablesWithOrders] Starting...');
+  
   // Step 1: Fetch all tables
   const { data: tables, error: tablesError } = await supabase
     .from('tables')
     .select('*')
     .order('label', { ascending: true });
 
-  if (tablesError) throw tablesError;
-  if (!tables || tables.length === 0) return [];
+  console.log('🔍 [getTablesWithOrders] Step 1 - Tables:', { 
+    count: tables?.length, 
+    error: tablesError,
+    tables: tables?.map(t => ({ label: t.label, current_order_id: t.current_order_id }))
+  });
+
+  if (tablesError) {
+    console.error('❌ [getTablesWithOrders] Tables error:', tablesError);
+    throw tablesError;
+  }
+  if (!tables || tables.length === 0) {
+    console.warn('⚠️ [getTablesWithOrders] No tables found');
+    return [];
+  }
 
   // Step 2: Extract current order IDs from tables
   const currentOrderIds = tables
@@ -24,6 +38,8 @@ export async function getTablesWithOrders() {
   }
 
   // Step 3: Fetch orders for these IDs (including all pending payment statuses)
+  console.log('🔍 [getTablesWithOrders] Step 3 - Fetching orders for IDs:', currentOrderIds);
+  
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select(`
@@ -45,13 +61,29 @@ export async function getTablesWithOrders() {
     .in('id', currentOrderIds)
     .in('status', ['pending', 'preparing', 'delivered']);
 
-  if (ordersError) throw ordersError;
+  console.log('🔍 [getTablesWithOrders] Step 3 - Orders result:', { 
+    count: orders?.length, 
+    error: ordersError,
+    orders: orders?.map(o => ({ id: o.id, status: o.status, nfc_card_id: o.nfc_card_id }))
+  });
+
+  if (ordersError) {
+    console.error('❌ [getTablesWithOrders] Orders error:', ordersError);
+    throw ordersError;
+  }
 
   // Step 4: Join orders to tables client-side
-  return tables.map(table => ({
+  const result = tables.map(table => ({
     ...table,
     current_order: orders?.find(order => order.id === table.current_order_id) || null
   }));
+  
+  console.log('✅ [getTablesWithOrders] Final result:', { 
+    totalTables: result.length,
+    tablesWithOrders: result.filter(t => t.current_order).length
+  });
+  
+  return result;
 }
 
 export async function getRecentCompletedOrders(limit = 10) {
