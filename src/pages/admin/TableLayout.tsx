@@ -9,29 +9,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Users, NfcIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { getTablesWithOrders } from '@/lib/queries/tableQueries';
+import { getTableStatus } from '@/lib/utils/tableStatus';
+import { TablePaymentModal } from '@/components/tables/TablePaymentModal';
 
 export default function TableLayout() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [paymentTable, setPaymentTable] = useState<any>(null);
 
   const { data: tables, isLoading } = useQuery({
-    queryKey: ['tables'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tables')
-        .select(`
-          *,
-          nfc_cards (
-            id,
-            card_uid,
-            status
-          )
-        `)
-        .order('label');
-      if (error) throw error;
-      return data || [];
-    },
+    queryKey: ['tables-with-orders'],
+    queryFn: getTablesWithOrders,
   });
 
   const saveMutation = useMutation({
@@ -78,19 +68,6 @@ export default function TableLayout() {
       seats: parseInt(formData.get('seats') as string),
       status: 'available',
     });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-success/20 text-success border-success/30';
-      case 'occupied':
-        return 'bg-danger/20 text-danger border-danger/30';
-      case 'reserved':
-        return 'bg-warning/20 text-warning border-warning/30';
-      default:
-        return 'bg-muted';
-    }
   };
 
   return (
@@ -155,57 +132,97 @@ export default function TableLayout() {
           </Card>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {tables?.map((table) => (
-              <Card
-                key={table.id}
-                className={`p-6 cursor-pointer transition-all hover:scale-105 ${getStatusColor(table.status)}`}
-              >
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="text-2xl font-bold">{table.label}</div>
-                    {table.nfc_cards && (
-                      <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                        <NfcIcon className="h-3 w-3" />
+            {tables?.map((table) => {
+              const tableStatus = getTableStatus(table);
+              return (
+                <Card
+                  key={table.id}
+                  className={`p-6 transition-all ${tableStatus.bgColor} ${tableStatus.textColor} ${tableStatus.borderColor}`}
+                >
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="text-2xl font-bold">{table.label}</div>
+                    </div>
+                    <div className="flex items-center justify-center gap-1 text-sm mb-3">
+                      <Users className="h-4 w-4" />
+                      <span>{table.seats} seats</span>
+                    </div>
+                    
+                    {/* NFC Card Display */}
+                    {table.current_order?.nfc_cards?.[0] && (
+                      <Badge variant="outline" className="bg-success/10 border-success/30 text-success mb-2">
+                        <NfcIcon className="h-3 w-3 mr-1" />
+                        {table.current_order.nfc_cards[0].card_uid}
                       </Badge>
                     )}
+                    
+                    <Badge className="capitalize mb-3">{tableStatus.label}</Badge>
+                    
+                    {/* Context-Aware Actions */}
+                    {table.current_order ? (
+                      // Table has active order
+                      <div className="space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground">
+                          Order #{table.current_order.id.slice(0, 8)}
+                        </div>
+                        <div className="text-lg font-bold">RM {table.current_order.total.toFixed(2)}</div>
+                        <Button
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setPaymentTable(table)}
+                        >
+                          Process Payment
+                        </Button>
+                      </div>
+                    ) : (
+                      // Table is empty
+                      <div className="space-y-1">
+                        {table.status === 'reserved' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-xs"
+                            onClick={() => updateStatusMutation.mutate({ id: table.id, status: 'available' })}
+                          >
+                            Make Available
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-xs"
+                            onClick={() => updateStatusMutation.mutate({ id: table.id, status: 'reserved' })}
+                          >
+                            Reserve Table
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center justify-center gap-1 text-sm mb-3">
-                    <Users className="h-4 w-4" />
-                    <span>{table.seats} seats</span>
-                  </div>
-                  <Badge className="capitalize mb-3">{table.status}</Badge>
-                  <div className="space-y-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={() => updateStatusMutation.mutate({ id: table.id, status: 'available' })}
-                    >
-                      Available
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={() => updateStatusMutation.mutate({ id: table.id, status: 'occupied' })}
-                    >
-                      Occupied
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={() => updateStatusMutation.mutate({ id: table.id, status: 'reserved' })}
-                    >
-                      Reserved
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
+      
+      {/* Payment Modal */}
+      {paymentTable?.current_order && (
+        <TablePaymentModal
+          open={!!paymentTable}
+          onOpenChange={(open) => !open && setPaymentTable(null)}
+          order={paymentTable.current_order}
+          table={paymentTable}
+          onSuccess={() => {
+            setPaymentTable(null);
+            queryClient.invalidateQueries({ queryKey: ['tables-with-orders'] });
+            toast({
+              title: 'Payment Complete',
+              description: `Table ${paymentTable.label} is now available`,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -85,7 +85,12 @@ export default function TableManagement() {
   };
 
   const totalTables = tables?.length || 0;
-  const occupiedTables = tables?.filter((t: any) => t.current_order)?.length || 0;
+  const occupiedTables = tables?.filter((t: any) => {
+    // Only count tables with active orders (not paid/cancelled)
+    return t.current_order && 
+           t.current_order.id && 
+           ['pending', 'preparing', 'delivered'].includes(t.current_order.status);
+  })?.length || 0;
   const occupancyRate = totalTables > 0 ? (occupiedTables / totalTables * 100).toFixed(0) : 0;
 
   return (

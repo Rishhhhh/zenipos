@@ -77,15 +77,31 @@ export async function getTodayMetrics() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const { data: orders, error } = await supabase
+  // Get today's orders
+  const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('status, total, created_at, delivered_at, paid_at')
+    .select('id, status, total, created_at, delivered_at, paid_at, table_id')
     .gte('created_at', today.toISOString());
 
-  if (error) throw error;
+  if (ordersError) throw ordersError;
+
+  // Get current table assignments to validate awaiting payment
+  const { data: tables, error: tablesError } = await supabase
+    .from('tables')
+    .select('current_order_id')
+    .not('current_order_id', 'is', null);
+
+  if (tablesError) throw tablesError;
+
+  const currentOrderIds = new Set(tables?.map(t => t.current_order_id) || []);
 
   const paidOrders = orders?.filter(o => o.status === 'paid') || [];
   const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  
+  // Only count delivered orders that are currently on tables
+  const awaitingPayment = orders?.filter(o => 
+    o.status === 'delivered' && currentOrderIds.has(o.id)
+  ).length || 0;
   
   const turnovers = paidOrders
     .filter(o => o.created_at && o.paid_at)
@@ -101,8 +117,8 @@ export async function getTodayMetrics() {
 
   return {
     totalRevenue,
-    ordersDelivered: orders?.filter(o => o.status === 'delivered' || o.status === 'paid').length || 0,
-    awaitingPayment: orders?.filter(o => o.status === 'delivered').length || 0,
+    ordersDelivered: orders?.filter(o => ['delivered', 'paid'].includes(o.status)).length || 0,
+    awaitingPayment,
     avgTurnoverMinutes: Math.round(avgTurnover),
   };
 }

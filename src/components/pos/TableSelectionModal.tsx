@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +8,8 @@ import { Users, ShoppingBag, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCartStore } from '@/lib/store/cart';
+import { getTablesWithOrders } from '@/lib/queries/tableQueries';
+import { getTableStatus } from '@/lib/utils/tableStatus';
 
 interface TableSelectionModalProps {
   open: boolean;
@@ -25,48 +26,32 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
   const isChangingTable = currentTableId && hasCartItems;
   
   const { data: tables, isLoading } = useQuery({
-    queryKey: ['tables'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tables')
-        .select('*')
-        .order('label');
-      if (error) throw error;
-      return data;
-    },
+    queryKey: ['tables-with-orders'],
+    queryFn: getTablesWithOrders,
     enabled: open,
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-success/20 text-success border-success/30';
-      case 'occupied':
-        return 'bg-danger/20 text-danger border-danger/30';
-      case 'reserved':
-        return 'bg-warning/20 text-warning border-warning/30';
-      default:
-        return 'bg-muted';
-    }
-  };
-
-  const handleTableSelect = (tableId: string, status: string, label: string) => {
-    if (status !== 'available') {
+  const handleTableSelect = (table: any, label: string) => {
+    const tableStatus = getTableStatus(table);
+    
+    if (!tableStatus.canAssignOrder) {
       toast({
         variant: 'destructive',
         title: 'Table Unavailable',
-        description: 'This table is currently occupied or reserved',
+        description: tableStatus.label === 'Reserved' 
+          ? 'This table is reserved'
+          : `This table has an active order (${tableStatus.label})`,
       });
       return;
     }
     
     // Check if cart needs to be cleared
     if (isChangingTable) {
-      setPendingSelection({ tableId, orderType: 'dine_in', label });
+      setPendingSelection({ tableId: table.id, orderType: 'dine_in', label });
       return;
     }
     
-    onSelect(tableId, 'dine_in', label);
+    onSelect(table.id, 'dine_in', label);
     onOpenChange(false);
   };
 
@@ -171,26 +156,35 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
               </Card>
             ) : (
               <div className="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-[400px] overflow-y-auto">
-                {tables?.map((table) => (
-                  <Card
-                    key={table.id}
-                    className={`p-4 cursor-pointer transition-all hover:scale-105 ${getStatusColor(table.status)} ${
-                      table.status === 'available' ? 'hover:border-primary' : 'cursor-not-allowed opacity-60'
-                    }`}
-                    onClick={() => handleTableSelect(table.id, table.status, table.label)}
-                  >
-                    <div className="text-center">
-                      <div className="text-xl font-bold mb-2">{table.label}</div>
-                      <div className="flex items-center justify-center gap-1 text-xs mb-2">
-                        <Users className="h-3 w-3" />
-                        <span>{table.seats}</span>
+                {tables?.map((table) => {
+                  const tableStatus = getTableStatus(table);
+                  return (
+                    <Card
+                      key={table.id}
+                      className={`p-4 cursor-pointer transition-all hover:scale-105 
+                        ${tableStatus.bgColor} ${tableStatus.textColor} ${tableStatus.borderColor} ${
+                        tableStatus.canAssignOrder ? 'hover:border-primary' : 'cursor-not-allowed opacity-60'
+                      }`}
+                      onClick={() => handleTableSelect(table, table.label)}
+                    >
+                      <div className="text-center">
+                        <div className="text-xl font-bold mb-2">{table.label}</div>
+                        <div className="flex items-center justify-center gap-1 text-xs mb-2">
+                          <Users className="h-3 w-3" />
+                          <span>{table.seats}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {tableStatus.label}
+                        </Badge>
+                        {tableStatus.order && (
+                          <div className="text-xs mt-2 font-medium">
+                            RM {tableStatus.order.total.toFixed(2)}
+                          </div>
+                        )}
                       </div>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {table.status}
-                      </Badge>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
