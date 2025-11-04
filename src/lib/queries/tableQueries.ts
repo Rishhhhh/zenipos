@@ -1,33 +1,57 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export async function getTablesWithOrders() {
-  const { data, error } = await supabase
+  // Step 1: Fetch all tables
+  const { data: tables, error: tablesError } = await supabase
     .from('tables')
-    .select(`
-      *,
-      current_order:orders!current_order_id (
-        id,
-        status,
-        total,
-        created_at,
-        delivered_at,
-        paid_at,
-        nfc_card_id,
-        nfc_cards!orders_nfc_card_id_fkey (card_uid),
-        order_items (
-          id,
-          quantity,
-          unit_price,
-          menu_items (
-            name
-          )
-        )
-      )
-    `)
+    .select('*')
     .order('label', { ascending: true });
 
-  if (error) throw error;
-  return data;
+  if (tablesError) throw tablesError;
+  if (!tables || tables.length === 0) return [];
+
+  // Step 2: Extract current order IDs from tables
+  const currentOrderIds = tables
+    .map(t => t.current_order_id)
+    .filter((id): id is string => id !== null && id !== undefined);
+
+  // If no tables have current orders, return tables with null orders
+  if (currentOrderIds.length === 0) {
+    return tables.map(table => ({
+      ...table,
+      current_order: null
+    }));
+  }
+
+  // Step 3: Fetch orders for these IDs (including all pending payment statuses)
+  const { data: orders, error: ordersError } = await supabase
+    .from('orders')
+    .select(`
+      id,
+      status,
+      total,
+      created_at,
+      delivered_at,
+      paid_at,
+      nfc_card_id,
+      nfc_cards!orders_nfc_card_id_fkey (card_uid),
+      order_items (
+        id,
+        quantity,
+        unit_price,
+        menu_items (name)
+      )
+    `)
+    .in('id', currentOrderIds)
+    .in('status', ['pending', 'preparing', 'delivered']);
+
+  if (ordersError) throw ordersError;
+
+  // Step 4: Join orders to tables client-side
+  return tables.map(table => ({
+    ...table,
+    current_order: orders?.find(order => order.id === table.current_order_id) || null
+  }));
 }
 
 export async function getRecentCompletedOrders(limit = 10) {
