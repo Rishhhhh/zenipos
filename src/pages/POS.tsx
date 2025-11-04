@@ -26,6 +26,8 @@ import { PrintPreviewModal } from "@/components/pos/PrintPreviewModal";
 import { OrderConfirmationModal } from "@/components/pos/OrderConfirmationModal";
 import { NFCCardSelectionModal } from "@/components/pos/NFCCardSelectionModal";
 import { OrderTypeSelectionModal } from "@/components/pos/OrderTypeSelectionModal";
+import { PaymentNFCScannerModal } from "@/components/pos/PaymentNFCScannerModal";
+import { PaymentModal } from "@/components/pos/PaymentModal";
 
 // Cache-bust verification and build tracking
 const BUILD_TIMESTAMP = '2025-11-04T01:50:00Z';
@@ -56,6 +58,9 @@ export default function POS() {
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
   const [showNFCCardSelect, setShowNFCCardSelect] = useState(false);
   const [showOrderTypeSelect, setShowOrderTypeSelect] = useState(false);
+  const [showPaymentNFCScanner, setShowPaymentNFCScanner] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
   
   // Customer display linking
   const [customerDisplayId, setCustomerDisplayId] = useState<string | null>(
@@ -350,6 +355,17 @@ export default function POS() {
             Link Display
           </Button>
         )}
+
+        {/* Scan Card to Pay Button */}
+        <Button
+          variant="default"
+          size="lg"
+          className="h-10 px-6 ml-auto"
+          onClick={() => setShowPaymentNFCScanner(true)}
+        >
+          <NfcIcon className="h-5 w-5 mr-2" />
+          Scan Card to Pay
+        </Button>
       </div>
 
       <NFCCardSelectionModal
@@ -381,6 +397,35 @@ export default function POS() {
           // User can now proceed to menu selection
         }}
       />
+
+      <PaymentNFCScannerModal
+        open={showPaymentNFCScanner}
+        onOpenChange={setShowPaymentNFCScanner}
+        onOrderFound={(order) => {
+          setPendingPaymentOrder(order);
+          setShowPaymentNFCScanner(false);
+          setShowPaymentModal(true);
+        }}
+      />
+
+      {pendingPaymentOrder && (
+        <PaymentModal
+          open={showPaymentModal}
+          onOpenChange={setShowPaymentModal}
+          orderId={pendingPaymentOrder.id}
+          orderNumber={pendingPaymentOrder.id.slice(0, 8)}
+          total={pendingPaymentOrder.total}
+          onPaymentSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            queryClient.invalidateQueries({ queryKey: ['pending-orders-nfc'] });
+            setPendingPaymentOrder(null);
+            toast({
+              title: 'Payment Complete',
+              description: 'Order paid successfully',
+            });
+          }}
+        />
+      )}
 
       <TableSelectionModal
         open={showTableSelect}
