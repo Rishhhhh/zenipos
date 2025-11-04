@@ -2302,6 +2302,8 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           customer_id: string | null
+          delivered_at: string | null
+          delivered_by: string | null
           discount: number | null
           einvoice_enabled: boolean | null
           id: string
@@ -2309,6 +2311,7 @@ export type Database = {
           nfc_card_id: string | null
           open_tab_id: string | null
           order_type: Database["public"]["Enums"]["order_type"] | null
+          paid_at: string | null
           recall_approved: boolean | null
           recall_requested: boolean | null
           recall_requested_at: string | null
@@ -2327,6 +2330,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           customer_id?: string | null
+          delivered_at?: string | null
+          delivered_by?: string | null
           discount?: number | null
           einvoice_enabled?: boolean | null
           id?: string
@@ -2334,6 +2339,7 @@ export type Database = {
           nfc_card_id?: string | null
           open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
+          paid_at?: string | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
           recall_requested_at?: string | null
@@ -2352,6 +2358,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           customer_id?: string | null
+          delivered_at?: string | null
+          delivered_by?: string | null
           discount?: number | null
           einvoice_enabled?: boolean | null
           id?: string
@@ -2359,6 +2367,7 @@ export type Database = {
           nfc_card_id?: string | null
           open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
+          paid_at?: string | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
           recall_requested_at?: string | null
@@ -2384,6 +2393,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivered_by_fkey"
+            columns: ["delivered_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -3503,27 +3519,36 @@ export type Database = {
         Row: {
           branch_id: string | null
           created_at: string | null
+          current_order_id: string | null
           id: string
           label: string
+          last_order_at: string | null
           nfc_card_id: string | null
+          seated_at: string | null
           seats: number
           status: string
         }
         Insert: {
           branch_id?: string | null
           created_at?: string | null
+          current_order_id?: string | null
           id?: string
           label: string
+          last_order_at?: string | null
           nfc_card_id?: string | null
+          seated_at?: string | null
           seats?: number
           status?: string
         }
         Update: {
           branch_id?: string | null
           created_at?: string | null
+          current_order_id?: string | null
           id?: string
           label?: string
+          last_order_at?: string | null
           nfc_card_id?: string | null
+          seated_at?: string | null
           seats?: number
           status?: string
         }
@@ -3533,6 +3558,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_current_order_id_fkey"
+            columns: ["current_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
           {
@@ -4133,6 +4165,7 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "paid"
+        | "delivered"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
@@ -4289,6 +4322,7 @@ export const Constants = {
         "cancelled",
         "completed",
         "paid",
+        "delivered",
       ],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],
