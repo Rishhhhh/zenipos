@@ -14,9 +14,9 @@ export function TableCard({ table, onClick }: TableCardProps) {
     if (!table.current_order) {
       return {
         label: 'Available',
-        color: 'bg-success/10 border-success/30 text-success',
+        color: 'bg-green-500/10 border-green-500 text-green-700 dark:text-green-400',
         pulse: false,
-        icon: <CheckCircle className="h-5 w-5 text-success" />,
+        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
       };
     }
 
@@ -27,8 +27,8 @@ export function TableCard({ table, onClick }: TableCardProps) {
       return {
         label: 'Ready to Pay',
         color: hasNFC 
-          ? 'bg-primary/15 border-primary/40 text-primary ring-2 ring-primary/20' 
-          : 'bg-primary/10 border-primary/30 text-primary',
+          ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30' 
+          : 'bg-primary/10 border-primary text-primary',
         pulse: true,
         icon: <CreditCard className="h-5 w-5 text-primary" />,
       };
@@ -38,20 +38,20 @@ export function TableCard({ table, onClick }: TableCardProps) {
       return {
         label: 'Preparing',
         color: hasNFC
-          ? 'bg-warning/15 border-warning/40 text-warning ring-2 ring-warning/20'
-          : 'bg-warning/10 border-warning/30 text-warning',
+          ? 'bg-orange-500/20 border-orange-500 text-orange-700 dark:text-orange-400 ring-2 ring-orange-500/30'
+          : 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
         pulse: false,
-        icon: <Clock className="h-5 w-5 text-warning" />,
+        icon: <Clock className="h-5 w-5 text-orange-500" />,
       };
     }
 
     return {
       label: 'Occupied',
       color: hasNFC
-        ? 'bg-warning/15 border-warning/40 text-warning ring-2 ring-warning/20'
-        : 'bg-warning/10 border-warning/30 text-warning',
+        ? 'bg-orange-500/20 border-orange-500 text-orange-700 dark:text-orange-400 ring-2 ring-orange-500/30'
+        : 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
       pulse: false,
-      icon: <Clock className="h-5 w-5 text-warning" />,
+      icon: <Clock className="h-5 w-5 text-orange-500" />,
     };
   };
 
@@ -81,8 +81,8 @@ export function TableCard({ table, onClick }: TableCardProps) {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-success/10 border border-success/30 dark:bg-success/15 dark:border-success/40">
-                      <NfcIcon className="h-4 w-4 text-success" />
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/30">
+                      <NfcIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>

@@ -40,11 +40,11 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'available':
-        return 'bg-success/10 text-success border-success/20 hover:bg-success/15 hover:border-success/30';
+        return 'bg-success/20 text-success border-success/30';
       case 'occupied':
-        return 'bg-warning/10 text-warning border-warning/20 opacity-60';
+        return 'bg-danger/20 text-danger border-danger/30';
       case 'reserved':
-        return 'bg-primary/10 text-primary border-primary/20 opacity-60';
+        return 'bg-warning/20 text-warning border-warning/30';
       default:
         return 'bg-muted';
     }
@@ -105,12 +105,12 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Select Table or Order Type</DialogTitle>
+          <DialogTitle>Select Table or Order Type</DialogTitle>
           {isChangingTable && !pendingSelection && (
             <DialogDescription>
-              <Alert variant="destructive" className="mt-4">
+              <Alert variant="destructive" className="mt-2">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   Warning: Changing table will clear your current cart ({items.length} items)
@@ -137,31 +137,32 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
           </Alert>
         )}
 
-        <div className="space-y-6 mt-6">
+        <div className="space-y-6 mt-4">
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             <Button
               size="lg"
               variant="outline"
-              className="h-32 flex-col gap-3 text-xl border-2 hover:bg-accent/50 dark:hover:bg-accent/20 transition-all"
+              className="h-24"
               onClick={handleTakeaway}
             >
-              <ShoppingBag className="h-10 w-10" />
-              <span className="font-bold">Takeaway</span>
+              <div className="flex flex-col items-center gap-2">
+                <ShoppingBag className="h-8 w-8" />
+                <span className="font-semibold">Takeaway</span>
+              </div>
             </Button>
             
-            <Card className="p-6 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+            <Card className="p-4 flex items-center justify-center bg-muted/30">
               <div className="text-center">
-                <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="font-semibold text-foreground">Dine-In</p>
-                <p className="text-sm text-muted-foreground mt-1">Select a table below</p>
+                <p className="text-sm text-muted-foreground">Dine-In</p>
+                <p className="text-xs text-muted-foreground mt-1">Select a table below</p>
               </div>
             </Card>
           </div>
 
           {/* Tables Grid */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Available Tables</h3>
+            <h3 className="font-semibold mb-3">Available Tables</h3>
             {isLoading ? (
               <p className="text-muted-foreground text-center py-8">Loading tables...</p>
             ) : tables?.length === 0 ? (
@@ -169,22 +170,22 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
                 <p className="text-muted-foreground">No tables configured. Contact your manager.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-5 md:grid-cols-8 gap-3 max-h-[420px] overflow-y-auto p-1">
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-[400px] overflow-y-auto">
                 {tables?.map((table) => (
                   <Card
                     key={table.id}
-                    className={`p-4 cursor-pointer transition-all duration-200 hover:scale-105 border ${getStatusColor(table.status)} ${
-                      table.status === 'available' ? 'hover:shadow-lg' : 'cursor-not-allowed'
+                    className={`p-4 cursor-pointer transition-all hover:scale-105 ${getStatusColor(table.status)} ${
+                      table.status === 'available' ? 'hover:border-primary' : 'cursor-not-allowed opacity-60'
                     }`}
                     onClick={() => handleTableSelect(table.id, table.status, table.label)}
                   >
-                    <div className="text-center space-y-2">
-                      <div className="text-2xl font-bold">{table.label}</div>
-                      <div className="flex items-center justify-center gap-1 text-xs opacity-70">
+                    <div className="text-center">
+                      <div className="text-xl font-bold mb-2">{table.label}</div>
+                      <div className="flex items-center justify-center gap-1 text-xs mb-2">
                         <Users className="h-3 w-3" />
                         <span>{table.seats}</span>
                       </div>
-                      <Badge variant="outline" className="text-[10px] capitalize">
+                      <Badge variant="outline" className="text-xs capitalize">
                         {table.status}
                       </Badge>
                     </div>

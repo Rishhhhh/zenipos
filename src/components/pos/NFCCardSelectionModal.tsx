@@ -94,13 +94,13 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
   const getCardStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-success/5 border-success/20 hover:bg-success/10 dark:bg-success/10 dark:border-success/30 dark:hover:bg-success/15';
+        return 'bg-green-500/10 border-green-500 hover:bg-green-500/20';
       case 'lost':
-        return 'bg-destructive/5 border-destructive/20 hover:bg-destructive/10 cursor-not-allowed opacity-60';
+        return 'bg-red-500/10 border-red-500 hover:bg-red-500/20 cursor-not-allowed opacity-60';
       case 'damaged':
-        return 'bg-warning/5 border-warning/20 hover:bg-warning/10 cursor-not-allowed opacity-60';
+        return 'bg-yellow-500/10 border-yellow-500 hover:bg-yellow-500/20 cursor-not-allowed opacity-60';
       case 'retired':
-        return 'bg-muted/50 border-muted hover:bg-muted/70 cursor-not-allowed opacity-60';
+        return 'bg-gray-500/10 border-gray-500 hover:bg-gray-500/20 cursor-not-allowed opacity-60';
       default:
         return 'bg-muted border-muted';
     }
@@ -109,13 +109,13 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-success/10 text-success border-success/20';
+        return 'bg-green-500/20 text-green-700 dark:text-green-400';
       case 'lost':
-        return 'bg-destructive/10 text-destructive border-destructive/20';
+        return 'bg-red-500/20 text-red-700 dark:text-red-400';
       case 'damaged':
-        return 'bg-warning/10 text-warning border-warning/20';
+        return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400';
       case 'retired':
-        return 'bg-muted text-muted-foreground border-muted';
+        return 'bg-gray-500/20 text-gray-700 dark:text-gray-400';
       default:
         return '';
     }
@@ -160,33 +160,33 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
             )}
 
             {!isLoading && nfcCards && nfcCards.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {nfcCards.map((card) => (
                   <Card
                     key={card.id}
                     onClick={() => card.status === 'active' && handleCardSelect(card.id, card.card_uid)}
                     className={`
-                      relative cursor-pointer transition-all duration-200
-                      hover:scale-[1.02] hover:shadow-lg
+                      relative cursor-pointer transition-all 
+                      hover:scale-105 hover:shadow-xl
                       ${getCardStatusColor(card.status)}
-                      border p-5 min-h-[160px]
-                      ${selectedCard === card.id ? 'ring-2 ring-primary ring-offset-2' : ''}
+                      border-2 p-4 min-h-[140px]
+                      ${selectedCard === card.id ? 'ring-2 ring-primary' : ''}
                       ${card.status !== 'active' ? 'pointer-events-none' : ''}
                     `}
                   >
                     <div className="flex flex-col gap-3 h-full">
                       {/* Header with Status Badge */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 text-success">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
                           <NfcIcon className="h-5 w-5" />
                         </div>
-                        <Badge variant="outline" className={`${getStatusBadgeColor(card.status)} text-xs`}>
+                        <Badge variant="secondary" className={getStatusBadgeColor(card.status)}>
                           {card.status}
                         </Badge>
                       </div>
 
                       {/* Card UID - Large and Prominent */}
-                      <h3 className="text-lg font-bold tracking-tight break-all text-foreground">
+                      <h3 className="text-xl font-bold tracking-tight break-all">
                         {card.card_uid}
                       </h3>
 

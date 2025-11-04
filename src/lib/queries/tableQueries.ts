@@ -1,50 +1,33 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export async function getTablesWithOrders() {
-  // Fetch all tables first
-  const { data: tables, error: tablesError } = await supabase
+  const { data, error } = await supabase
     .from('tables')
-    .select('*')
-    .order('label', { ascending: true });
-
-  if (tablesError) throw tablesError;
-
-  // Get table IDs that have current orders
-  const tableIds = tables?.map(t => t.current_order_id).filter(Boolean) || [];
-  
-  if (tableIds.length === 0) {
-    return tables?.map(t => ({ ...t, current_order: null })) || [];
-  }
-
-  // Fetch current orders separately
-  const { data: orders, error: ordersError } = await supabase
-    .from('orders')
     .select(`
-      id,
-      status,
-      total,
-      created_at,
-      delivered_at,
-      paid_at,
-      nfc_card_id,
-      nfc_cards!orders_nfc_card_id_fkey (card_uid),
-      order_items (
+      *,
+      current_order:orders!current_order_id (
         id,
-        quantity,
-        unit_price,
-        menu_items (name)
+        status,
+        total,
+        created_at,
+        delivered_at,
+        paid_at,
+        nfc_card_id,
+        nfc_cards!orders_nfc_card_id_fkey (card_uid),
+        order_items (
+          id,
+          quantity,
+          unit_price,
+          menu_items (
+            name
+          )
+        )
       )
     `)
-    .in('id', tableIds)
-    .in('status', ['pending', 'preparing', 'delivered']);
+    .order('label', { ascending: true });
 
-  if (ordersError) throw ordersError;
-
-  // Match orders to tables
-  return tables?.map(table => ({
-    ...table,
-    current_order: orders?.find(o => o.id === table.current_order_id) || null
-  })) || [];
+  if (error) throw error;
+  return data;
 }
 
 export async function getRecentCompletedOrders(limit = 10) {
