@@ -2304,6 +2304,7 @@ export type Database = {
           id: string
           metadata: Json | null
           nfc_card_id: string | null
+          open_tab_id: string | null
           order_type: Database["public"]["Enums"]["order_type"] | null
           recall_approved: boolean | null
           recall_requested: boolean | null
@@ -2328,6 +2329,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           nfc_card_id?: string | null
+          open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
@@ -2352,6 +2354,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           nfc_card_id?: string | null
+          open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
@@ -2378,6 +2381,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_open_tab_id_fkey"
+            columns: ["open_tab_id"]
+            isOneToOne: false
+            referencedRelation: "open_tabs"
             referencedColumns: ["id"]
           },
           {
@@ -3845,23 +3855,42 @@ export type Database = {
       }
       close_expired_tabs: { Args: never; Returns: number }
       close_shift: { Args: { shift_id_param: string }; Returns: undefined }
-      create_order_with_items: {
-        Args: {
-          p_applied_promotions: Json
-          p_created_by: string
-          p_discount: number
-          p_items: Json
-          p_metadata: Json
-          p_nfc_card_id: string
-          p_order_type: Database["public"]["Enums"]["order_type"]
-          p_session_id: string
-          p_subtotal: number
-          p_table_id: string
-          p_tax: number
-          p_total: number
-        }
-        Returns: Json
-      }
+      create_order_with_items:
+        | {
+            Args: {
+              p_applied_promotions: Json
+              p_created_by: string
+              p_discount: number
+              p_items: Json
+              p_metadata: Json
+              p_nfc_card_id: string
+              p_open_tab_id: string
+              p_order_type: Database["public"]["Enums"]["order_type"]
+              p_session_id: string
+              p_subtotal: number
+              p_table_id: string
+              p_tax: number
+              p_total: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_applied_promotions: Json
+              p_created_by: string
+              p_discount: number
+              p_items: Json
+              p_metadata: Json
+              p_nfc_card_id: string
+              p_order_type: Database["public"]["Enums"]["order_type"]
+              p_session_id: string
+              p_subtotal: number
+              p_table_id: string
+              p_tax: number
+              p_total: number
+            }
+            Returns: Json
+          }
       credit_loyalty_points: {
         Args: {
           customer_id_param: string

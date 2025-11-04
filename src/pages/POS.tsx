@@ -166,6 +166,7 @@ export default function POS() {
         p_table_id: cartState.table_id,
         p_order_type: cartState.order_type,
         p_nfc_card_id: cartState.nfc_card_id,
+        p_open_tab_id: null,
         p_subtotal: subtotal,
         p_tax: tax,
         p_discount: discount,
