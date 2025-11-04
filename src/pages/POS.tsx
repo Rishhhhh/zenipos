@@ -12,7 +12,7 @@ import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Monitor } from "lucide-react";
+import { MapPin, Monitor, NfcIcon } from "lucide-react";
 
 // Import extracted components
 import { CategoryList } from "@/components/pos/CategoryList";
@@ -24,6 +24,8 @@ import { SplitBillModal } from "@/components/pos/SplitBillModal";
 import { LinkDisplayModal } from "@/components/pos/LinkDisplayModal";
 import { PrintPreviewModal } from "@/components/pos/PrintPreviewModal";
 import { OrderConfirmationModal } from "@/components/pos/OrderConfirmationModal";
+import { NFCCardSelectionModal } from "@/components/pos/NFCCardSelectionModal";
+import { OrderTypeSelectionModal } from "@/components/pos/OrderTypeSelectionModal";
 
 // Cache-bust verification and build tracking
 const BUILD_TIMESTAMP = '2025-11-04T01:50:00Z';
@@ -39,7 +41,7 @@ export default function POS() {
   // Enable system-wide real-time order sync
   useOrderRealtime();
   
-  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, tableLabelShort, setTableId, setOrderType, setTableLabel } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, nfcCardUid, tableLabelShort, setTableId, setOrderType, setTableLabel, setNFCCardId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
@@ -52,6 +54,8 @@ export default function POS() {
   const [pendingItem, setPendingItem] = useState<any>(null);
   const [previewOrderData, setPreviewOrderData] = useState<any>(null);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [showNFCCardSelect, setShowNFCCardSelect] = useState(false);
+  const [showOrderTypeSelect, setShowOrderTypeSelect] = useState(false);
   
   // Customer display linking
   const [customerDisplayId, setCustomerDisplayId] = useState<string | null>(
@@ -86,13 +90,26 @@ export default function POS() {
     }
   }, [items, customerDisplayId, broadcastOrderUpdate, broadcastIdle]);
 
-  // Enforce table selection on first load
+  // NFC-first flow: enforce card -> order type -> table selection
   useEffect(() => {
-    // If no table and no order type set, force selection
-    if (!table_id && !order_type) {
-      setShowTableSelect(true);
+    // Step 1: If no NFC card, show card selection FIRST
+    if (!nfc_card_id) {
+      setShowNFCCardSelect(true);
+      return;
     }
-  }, [table_id, order_type]);
+    
+    // Step 2: If have NFC but no order type, show order type selection
+    if (nfc_card_id && !order_type) {
+      setShowOrderTypeSelect(true);
+      return;
+    }
+    
+    // Step 3: If dine-in but no table, show table selection
+    if (order_type === 'dine_in' && !table_id) {
+      setShowTableSelect(true);
+      return;
+    }
+  }, [nfc_card_id, order_type, table_id]);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -300,6 +317,17 @@ export default function POS() {
             {order_type === 'takeaway' ? 'Takeaway' : `Table ${tableLabelShort || selectedTable?.label || '...'}`}
           </Badge>
         )}
+
+        {/* Show selected NFC card in header */}
+        {nfc_card_id && (
+          <Badge
+            variant="outline"
+            className="text-base px-4 py-2 bg-green-500/10 border-green-500"
+          >
+            <NfcIcon className="h-4 w-4 mr-2" />
+            Card: {nfcCardUid || nfc_card_id.slice(0, 8)}
+          </Badge>
+        )}
         
         {/* Display Link Badge/Button */}
         {customerDisplayId ? (
@@ -323,6 +351,36 @@ export default function POS() {
           </Button>
         )}
       </div>
+
+      <NFCCardSelectionModal
+        open={showNFCCardSelect}
+        onOpenChange={setShowNFCCardSelect}
+        onSelect={(cardId, cardUid) => {
+          // Store NFC card in cart
+          setNFCCardId(cardId, cardUid);
+          setShowNFCCardSelect(false);
+          // Proceed to order type selection
+          setShowOrderTypeSelect(true);
+        }}
+      />
+
+      <OrderTypeSelectionModal
+        open={showOrderTypeSelect}
+        onOpenChange={setShowOrderTypeSelect}
+        nfcCardUid={nfcCardUid || 'Unknown'}
+        onSelectDineIn={() => {
+          setOrderType('dine_in');
+          setShowOrderTypeSelect(false);
+          // Open table selection for dine-in
+          setShowTableSelect(true);
+        }}
+        onSelectTakeaway={() => {
+          setOrderType('takeaway');
+          setShowOrderTypeSelect(false);
+          // No table selection needed for takeaway
+          // User can now proceed to menu selection
+        }}
+      />
 
       <TableSelectionModal
         open={showTableSelect}
@@ -437,17 +495,40 @@ export default function POS() {
             items={menuItems}
             isLoading={itemsLoading}
             onAddItem={(item) => {
-              // CRITICAL: Enforce table selection before adding any items
-              if (!table_id && order_type !== 'takeaway') {
+              // CRITICAL: Enforce NFC card first
+              if (!nfc_card_id) {
+                toast({
+                  variant: 'destructive',
+                  title: 'Scan Card First',
+                  description: 'Please scan your NFC card before ordering',
+                });
+                setShowNFCCardSelect(true);
+                return;
+              }
+
+              // CRITICAL: Enforce order type selection
+              if (!order_type) {
+                toast({
+                  variant: 'destructive',
+                  title: 'Select Order Type',
+                  description: 'Please choose Dine In or Takeaway',
+                });
+                setShowOrderTypeSelect(true);
+                return;
+              }
+              
+              // CRITICAL: Enforce table selection for dine-in orders
+              if (order_type === 'dine_in' && !table_id) {
                 toast({
                   variant: 'destructive',
                   title: 'Select Table First',
-                  description: 'Please select a table or choose takeaway before adding items',
+                  description: 'Please select a table before adding items',
                 });
                 setShowTableSelect(true);
                 return;
               }
               
+              // Takeaway orders can proceed without table
               // Check for modifiers, if yes show modifier modal
               setPendingItem(item);
               setShowModifierSelect(true);
