@@ -21,6 +21,7 @@ interface MenuItem {
   name: string;
   sku: string | null;
   category_id: string | null;
+  station_id: string | null;
   price: number;
   cost: number | null;
   tax_rate: number | null;
@@ -50,7 +51,7 @@ export default function MenuManagement() {
     },
   });
 
-  // Fetch menu items
+  // Fetch menu items with station info
   const { data: menuItems = [], isLoading: itemsLoading } = useQuery({
     queryKey: ['menuItems', selectedCategoryId, debouncedSearch],
     queryFn: async () => {

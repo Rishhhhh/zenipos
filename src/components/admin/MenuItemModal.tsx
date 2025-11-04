@@ -24,13 +24,15 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ImageUpload } from './ImageUpload';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 const menuItemSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(100),
   sku: z.string().optional(),
   category_id: z.string().min(1, 'Category is required'),
+  station_id: z.string().optional(),
+  prep_time_minutes: z.coerce.number().min(0).optional(),
   price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
   cost: z.coerce.number().min(0).optional(),
   tax_rate: z.coerce.number().min(0).max(100).optional(),
@@ -46,6 +48,8 @@ interface MenuItem {
   name: string;
   sku: string | null;
   category_id: string | null;
+  station_id: string | null;
+  prep_time_minutes: number | null;
   price: number;
   cost: number | null;
   tax_rate: number | null;
@@ -76,12 +80,27 @@ export function MenuItemModal({
     srcset_jpeg?: string;
   }>({});
 
+  // Fetch stations
+  const { data: stations = [] } = useQuery({
+    queryKey: ['stations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stations')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
     defaultValues: {
       name: '',
       sku: '',
       category_id: categoryId || '',
+      station_id: '',
+      prep_time_minutes: 10,
       price: 0,
       cost: 0,
       tax_rate: 0,
@@ -97,6 +116,8 @@ export function MenuItemModal({
         name: item.name,
         sku: item.sku || '',
         category_id: item.category_id || '',
+        station_id: item.station_id || '',
+        prep_time_minutes: item.prep_time_minutes || 10,
         price: Number(item.price),
         cost: item.cost ? Number(item.cost) : 0,
         tax_rate: item.tax_rate ? Number(item.tax_rate) : 0,
@@ -109,6 +130,8 @@ export function MenuItemModal({
         name: '',
         sku: '',
         category_id: categoryId || '',
+        station_id: '',
+        prep_time_minutes: 10,
         price: 0,
         cost: 0,
         tax_rate: 0,
@@ -129,6 +152,8 @@ export function MenuItemModal({
             name: values.name,
             sku: values.sku || null,
             category_id: values.category_id,
+            station_id: values.station_id || null,
+            prep_time_minutes: values.prep_time_minutes || null,
             price: values.price,
             cost: values.cost || null,
             tax_rate: values.tax_rate || null,
@@ -152,6 +177,8 @@ export function MenuItemModal({
           name: values.name,
           sku: values.sku || null,
           category_id: values.category_id,
+          station_id: values.station_id || null,
+          prep_time_minutes: values.prep_time_minutes || null,
           price: values.price,
           cost: values.cost || null,
           tax_rate: values.tax_rate || null,
@@ -249,33 +276,64 @@ export function MenuItemModal({
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="category_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category *</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="station_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Station (for KDS routing)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || undefined}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select station" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">No Station</SelectItem>
+                      {stations.map((station) => (
+                        <SelectItem key={station.id} value={station.id}>
+                          {station.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}
@@ -294,7 +352,7 @@ export function MenuItemModal({
             )}
           />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <FormField
               control={form.control}
               name="price"
@@ -344,6 +402,24 @@ export function MenuItemModal({
                       type="number"
                       step="0.01"
                       placeholder="6"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="prep_time_minutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prep Time (min)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="10"
                       {...field}
                     />
                   </FormControl>

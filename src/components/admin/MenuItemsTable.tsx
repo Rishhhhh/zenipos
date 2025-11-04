@@ -1,18 +1,37 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Archive, ImageIcon } from 'lucide-react';
+import { Edit, Archive, ImageIcon, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface MenuItem {
   id: string;
   name: string;
   sku: string | null;
   category_id: string | null;
+  station_id: string | null;
   price: number;
   cost: number | null;
   image_url: string | null;
@@ -29,6 +48,21 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
+
+  // Fetch stations for bulk assignment
+  const { data: stations = [] } = useQuery({
+    queryKey: ['stations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stations')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleToggleStock = async (item: MenuItem) => {
     setUpdatingId(item.id);
@@ -81,6 +115,79 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deletingItem) return;
+
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', deletingItem.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      toast({
+        title: 'Item deleted',
+        description: `${deletingItem.name} has been permanently deleted`,
+      });
+      setDeletingItem(null);
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: 'Delete failed',
+        description: 'Failed to delete item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleBulkStationAssign = async (stationId: string) => {
+    if (selectedItems.size === 0) return;
+
+    try {
+      const itemIds = Array.from(selectedItems);
+      const { error } = await supabase
+        .from('menu_items')
+        .update({ station_id: stationId })
+        .in('id', itemIds);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      toast({
+        title: 'Station assigned',
+        description: `Assigned ${itemIds.length} item(s) to station`,
+      });
+      setSelectedItems(new Set());
+    } catch (error) {
+      console.error('Bulk assign error:', error);
+      toast({
+        title: 'Assignment failed',
+        description: 'Failed to assign station',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map((item) => item.id)));
+    }
+  };
+
+  const toggleItemSelection = (itemId: string) => {
+    const newSelection = new Set(selectedItems);
+    if (newSelection.has(itemId)) {
+      newSelection.delete(itemId);
+    } else {
+      newSelection.add(itemId);
+    }
+    setSelectedItems(newSelection);
+  };
+
   if (items.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -89,8 +196,23 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
     );
   }
 
+  const getStationName = (stationId: string | null) => {
+    if (!stationId) return <Badge variant="destructive">No Station</Badge>;
+    const station = stations.find((s) => s.id === stationId);
+    return station ? <Badge variant="outline">{station.name}</Badge> : <Badge variant="secondary">Unknown</Badge>;
+  };
+
   const renderRow = (item: MenuItem) => (
     <div className="flex items-center gap-4 p-4 border-b hover:bg-accent/50 transition-colors">
+      {/* Checkbox */}
+      <div className="flex-shrink-0">
+        <Checkbox
+          checked={selectedItems.has(item.id)}
+          onCheckedChange={() => toggleItemSelection(item.id)}
+          disabled={item.archived}
+        />
+      </div>
+
       {/* Image */}
       <div className="w-12 flex-shrink-0">
         {item.image_url ? (
@@ -125,6 +247,11 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
       {/* Cost */}
       <div className="flex-1 min-w-[100px] text-muted-foreground">
         {item.cost ? `RM ${Number(item.cost).toFixed(2)}` : '-'}
+      </div>
+
+      {/* Station */}
+      <div className="flex-1 min-w-[120px]">
+        {getStationName(item.station_id)}
       </div>
 
       {/* Status */}
@@ -163,33 +290,97 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
         >
           <Archive className="h-4 w-4" />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setDeletingItem(item)}
+          disabled={item.archived}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="rounded-md border">
-      {/* Header */}
-      <div className="flex items-center gap-4 p-4 border-b bg-muted/50 font-medium text-sm">
-        <div className="w-12 flex-shrink-0">Image</div>
-        <div className="flex-1 min-w-[150px]">Name</div>
-        <div className="flex-1 min-w-[100px]">SKU</div>
-        <div className="flex-1 min-w-[100px]">Price</div>
-        <div className="flex-1 min-w-[100px]">Cost</div>
-        <div className="flex-1 min-w-[180px]">Status</div>
-        <div className="w-24 text-right flex-shrink-0">Actions</div>
+    <div className="space-y-4">
+      {/* Bulk Actions Toolbar */}
+      {selectedItems.size > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-accent rounded-lg">
+          <span className="text-sm font-medium">
+            {selectedItems.size} item(s) selected
+          </span>
+          <Select onValueChange={handleBulkStationAssign}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Assign to station" />
+            </SelectTrigger>
+            <SelectContent>
+              {stations.map((station) => (
+                <SelectItem key={station.id} value={station.id}>
+                  {station.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedItems(new Set())}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      )}
+
+      <div className="rounded-md border">
+        {/* Header */}
+        <div className="flex items-center gap-4 p-4 border-b bg-muted/50 font-medium text-sm">
+          <div className="flex-shrink-0">
+            <Checkbox
+              checked={selectedItems.size === items.length && items.length > 0}
+              onCheckedChange={handleSelectAll}
+            />
+          </div>
+          <div className="w-12 flex-shrink-0">Image</div>
+          <div className="flex-1 min-w-[150px]">Name</div>
+          <div className="flex-1 min-w-[100px]">SKU</div>
+          <div className="flex-1 min-w-[100px]">Price</div>
+          <div className="flex-1 min-w-[100px]">Cost</div>
+          <div className="flex-1 min-w-[120px]">Station</div>
+          <div className="flex-1 min-w-[180px]">Status</div>
+          <div className="w-32 text-right flex-shrink-0">Actions</div>
+        </div>
+
+        {/* Scrollable list */}
+        <ScrollArea className="h-[600px]">
+          <div>
+            {items.map((item) => (
+              <div key={item.id}>
+                {renderRow(item)}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Scrollable list */}
-      <ScrollArea className="h-[600px]">
-        <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.id}>
-              {renderRow(item)}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Menu Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete "{deletingItem?.name}"? This action cannot be undone.
+              Consider archiving instead if you want to keep the item's history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
