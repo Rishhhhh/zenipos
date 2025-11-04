@@ -20,6 +20,10 @@ interface Order {
   total: number;
   created_at: string;
   recall_requested?: boolean;
+  table_id?: string;
+  tables?: Array<{
+    label: string;
+  }>;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -64,6 +68,7 @@ export default function KDS() {
         .from('orders')
         .select(`
           *,
+          tables(label),
           order_items (
             *,
             menu_items (name, sku)
@@ -106,10 +111,22 @@ export default function KDS() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Update order status
+      // Get employee ID from user
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      // Update order status to 'delivered'
       const { error: updateError } = await supabase
         .from('orders')
-        .update({ status: 'done', updated_at: new Date().toISOString() })
+        .update({ 
+          status: 'delivered',
+          delivered_at: new Date().toISOString(),
+          delivered_by: employee?.id || null,
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', orderId);
 
       if (updateError) throw updateError;
@@ -125,33 +142,38 @@ export default function KDS() {
         toast({
           variant: 'destructive',
           title: 'Inventory Warning',
-          description: 'Order completed but inventory may not be updated. Check manually.',
+          description: 'Order delivered but inventory may not be updated.',
         });
       }
 
       // Log to audit
       await supabase.from('audit_log').insert({
         actor: user.id,
-        action: 'bump_order',
+        action: 'order_delivered',
         entity: 'orders',
         entity_id: orderId,
-        diff: { status: 'done', inventory_decremented: !inventoryError },
+        diff: { 
+          status: 'delivered',
+          delivered_at: new Date().toISOString(),
+          inventory_decremented: !inventoryError 
+        },
       });
 
       return orderId;
     },
     onSuccess: () => {
       toast({
-        title: "Order completed",
-        description: "Order moved to done, inventory updated",
+        title: "Order delivered!",
+        description: "Food delivered to customer. Ready for payment.",
       });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
     },
     onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Failed to bump order",
+        title: "Failed to deliver order",
         description: error.message,
       });
     },
@@ -199,10 +221,13 @@ export default function KDS() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-bold text-foreground">
-                      {order.order_type.replace('_', ' ').toUpperCase()}
+                      {order.order_type === 'dine_in' && order.tables?.[0]?.label
+                        ? `Table ${order.tables[0].label}`
+                        : order.order_type.replace('_', ' ').toUpperCase()}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       Order #{order.id.slice(0, 8)}
+                      {order.tables?.[0]?.label && ` • Table ${order.tables[0].label}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-warning">

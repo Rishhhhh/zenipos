@@ -32,7 +32,11 @@ export function OrderCard({ order, onBump, onRecall, showRecallButton = false }:
           <div>
             <h3 className="text-lg font-bold">Order #{order.id.substring(0, 8)}</h3>
             <p className="text-sm text-muted-foreground">
-              Table {order.table_id || 'Takeaway'}
+              {order.tables?.label 
+                ? `Table ${order.tables.label}` 
+                : order.order_type === 'takeaway' 
+                  ? 'Takeaway' 
+                  : 'Counter'}
             </p>
           </div>
           <div className="flex items-center gap-2">

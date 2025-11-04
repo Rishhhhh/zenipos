@@ -51,7 +51,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Inventory',
     icon: Package,
     route: '/admin/inventory',
-    shortcut: '⌘5',
+    shortcut: '⌘4',
     roles: ['manager', 'admin'],
   },
   {
@@ -59,7 +59,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Reports',
     icon: BarChart3,
     route: '/admin/reports',
-    shortcut: '⌘6',
+    shortcut: '⌘5',
     roles: ['manager', 'admin'],
   },
   {
@@ -67,7 +67,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Admin',
     icon: Settings,
     route: '/admin',
-    shortcut: '⌘7',
+    shortcut: '⌘6',
     roles: ['admin'],
   },
   {
@@ -85,6 +85,14 @@ export const DOCK_APPS: DockApp[] = [
     route: '/documentation',
     shortcut: '⌘9',
     roles: ['manager', 'admin'],
+  },
+  {
+    id: 'expo',
+    label: 'Expo Station',
+    icon: Flame,
+    route: '/expo-station',
+    shortcut: '⌘E',
+    roles: ['admin'],
   },
 ];
 
