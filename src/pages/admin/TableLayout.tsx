@@ -60,6 +60,14 @@ export default function TableLayout() {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast({ title: 'Table status updated' });
     },
+    onError: (error: any) => {
+      console.error('Table status update failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error.message || 'You may not have permission to update table status',
+      });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
