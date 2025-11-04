@@ -38,6 +38,7 @@ interface CartState {
   setTable: (id: string | null, label?: string | null) => void;
   setTableWithNFC: (tableId: string | null, nfcCardId: string | null, label?: string | null) => void;
   setOrderType: (type: 'dine_in' | 'takeaway') => void;
+  confirmTableChange: (newTableId: string | null, newOrderType?: 'dine_in' | 'takeaway', label?: string | null) => void;
   addItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
   removeItem: (id: string) => void;
   voidItem: (id: string, managerId?: string) => Promise<void>;
@@ -81,6 +82,19 @@ export const useCartStore = create<CartState>((set, get) => ({
     order_type: 'dine_in' 
   }),
   setOrderType: (type) => set({ order_type: type }),
+  
+  // Confirm table change and clear cart
+  confirmTableChange: (newTableId, newOrderType = 'dine_in', label = null) => set({
+    items: [],
+    sessionId: crypto.randomUUID(),
+    appliedPromotions: [],
+    table_id: newTableId,
+    tableId: newTableId,
+    tableName: label,
+    tableLabelShort: label,
+    order_type: newOrderType,
+    nfc_card_id: null,
+  }),
   
   addItem: (item) => set((state) => {
     // Always add as new item (don't auto-merge, modifiers may differ)

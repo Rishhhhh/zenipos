@@ -245,29 +245,32 @@ export default function POS() {
 
       console.log('✅ Order status updated to preparing');
 
+      // Update table status: mark as occupied with current order
+      if (table_id) {
+        await supabase
+          .from('tables')
+          .update({
+            status: 'occupied',
+            current_order_id: order.id,
+            seated_at: new Date().toISOString(),
+            last_order_at: new Date().toISOString(),
+          })
+          .eq('id', table_id);
+      }
+
       // Broadcast to customer display
       if (customerDisplayId) {
-        broadcastPayment(customerDisplayId, undefined);
+        broadcastOrderUpdate(customerDisplayId);
       }
 
       toast({
         title: "Order sent to Kitchen",
-        description: `Order #${order.id.substring(0, 8)} - ${items.length} items`,
+        description: `Order #${order.id.substring(0, 8)} - ${items.length} items. Customer can pay after meal.`,
       });
 
-      // Open payment modal
-      openModal('payment', {
-        orderId: order.id,
-        orderNumber: order.id.substring(0, 8),
-        total: getTotal(),
-        onPaymentSuccess: () => {
-          if (customerDisplayId) {
-            broadcastComplete(customerDisplayId, undefined);
-          }
-          clearCart();
-          queryClient.invalidateQueries({ queryKey: ['orders'] });
-        },
-      });
+      // Clear cart (payment happens later at table module)
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error: any) => {
       console.error('❌ Order creation error:', error);

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, ShoppingBag, NfcIcon } from 'lucide-react';
+import { Users, ShoppingBag, NfcIcon, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NFCCardScanner } from '@/components/nfc/NFCCardScanner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCartStore } from '@/lib/store/cart';
 
 interface TableSelectionModalProps {
   open: boolean;
@@ -18,6 +20,11 @@ interface TableSelectionModalProps {
 
 export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelectionModalProps) {
   const { toast } = useToast();
+  const { items, table_id: currentTableId, confirmTableChange } = useCartStore();
+  const [pendingSelection, setPendingSelection] = useState<{ tableId: string | null; orderType: 'dine_in' | 'takeaway'; label?: string | null; nfcCardId?: string | null } | null>(null);
+  
+  const hasCartItems = items.length > 0;
+  const isChangingTable = currentTableId && hasCartItems;
   
   const { data: tables, isLoading } = useQuery({
     queryKey: ['tables'],
@@ -55,13 +62,47 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
       return;
     }
     
+    // Check if cart needs to be cleared
+    if (isChangingTable) {
+      setPendingSelection({ tableId, orderType: 'dine_in', label });
+      return;
+    }
+    
     onSelect(tableId, 'dine_in', label);
     onOpenChange(false);
   };
 
   const handleTakeaway = () => {
+    // Check if cart needs to be cleared
+    if (isChangingTable) {
+      setPendingSelection({ tableId: null, orderType: 'takeaway', label: null });
+      return;
+    }
+    
     onSelect(null, 'takeaway', null);
     onOpenChange(false);
+  };
+
+  const handleConfirmChange = () => {
+    if (!pendingSelection) return;
+    
+    // Clear cart and apply new table
+    confirmTableChange(pendingSelection.tableId, pendingSelection.orderType, pendingSelection.label);
+    
+    // Notify parent
+    onSelect(pendingSelection.tableId, pendingSelection.orderType, pendingSelection.label, pendingSelection.nfcCardId);
+    
+    setPendingSelection(null);
+    onOpenChange(false);
+    
+    toast({
+      title: 'Cart Cleared',
+      description: 'Previous items removed. Starting new order.',
+    });
+  };
+
+  const handleCancelChange = () => {
+    setPendingSelection(null);
   };
 
   return (
@@ -69,7 +110,34 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Select Table or Order Type</DialogTitle>
+          {isChangingTable && !pendingSelection && (
+            <DialogDescription>
+              <Alert variant="destructive" className="mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Warning: Changing table will clear your current cart ({items.length} items)
+                </AlertDescription>
+              </Alert>
+            </DialogDescription>
+          )}
         </DialogHeader>
+        
+        {pendingSelection && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Clear cart and switch to {pendingSelection.orderType === 'takeaway' ? 'Takeaway' : `Table ${pendingSelection.label}`}?</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleCancelChange}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleConfirmChange}>
+                  Clear Cart & Switch
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="manual" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
