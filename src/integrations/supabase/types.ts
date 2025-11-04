@@ -2006,6 +2006,7 @@ export type Database = {
           status: string | null
           table_id: string | null
           transfer_notes: string | null
+          updated_at: string | null
         }
         Insert: {
           card_brand?: string | null
@@ -2023,6 +2024,7 @@ export type Database = {
           status?: string | null
           table_id?: string | null
           transfer_notes?: string | null
+          updated_at?: string | null
         }
         Update: {
           card_brand?: string | null
@@ -2040,6 +2042,7 @@ export type Database = {
           status?: string | null
           table_id?: string | null
           transfer_notes?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
