@@ -2409,6 +2409,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_nfc_card_id_fkey"
+            columns: ["nfc_card_id"]
+            isOneToOne: false
+            referencedRelation: "nfc_cards"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_open_tab_id_fkey"
             columns: ["open_tab_id"]
             isOneToOne: false

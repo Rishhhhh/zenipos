@@ -34,7 +34,7 @@ export async function getTablesWithOrders() {
       delivered_at,
       paid_at,
       nfc_card_id,
-      nfc_cards!orders_nfc_card_id_fkey (card_uid),
+      nfc_cards (card_uid),
       order_items (
         id,
         quantity,
