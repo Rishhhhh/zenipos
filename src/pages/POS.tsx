@@ -24,6 +24,13 @@ import { LinkDisplayModal } from "@/components/pos/LinkDisplayModal";
 import { PrintPreviewModal } from "@/components/pos/PrintPreviewModal";
 import { OrderConfirmationModal } from "@/components/pos/OrderConfirmationModal";
 
+// Cache-bust verification and build tracking
+const BUILD_TIMESTAMP = '2025-11-04T01:50:00Z';
+console.log('🔵 POS.tsx loaded at:', new Date().toISOString());
+console.log('🔵 Build timestamp:', BUILD_TIMESTAMP);
+console.log('🔵 Using RPC function: create_order_with_items');
+console.log('🔵 Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+
 export default function POS() {
   // Track performance for this page
   usePerformanceMonitor('POS');
@@ -153,9 +160,8 @@ export default function POS() {
         modifiers: item.modifiers || [],
       }));
 
-      console.log('📤 Creating order via RPC function...');
-
-      const { data: result, error: orderError } = await supabase.rpc('create_order_with_items', {
+      // Build RPC parameters object for detailed logging
+      const rpcParams = {
         p_session_id: sessionId,
         p_table_id: cartState.table_id,
         p_order_type: cartState.order_type,
@@ -168,11 +174,19 @@ export default function POS() {
           id: p.promotion.id,
           name: p.promotion.name,
           discount: p.discount,
-        })) as any,
+        })),
         p_created_by: user.id,
-        p_metadata: (orderNotes ? { notes: orderNotes } : {}) as any,
-        p_items: orderItems as any,
-      });
+        p_metadata: (orderNotes ? { notes: orderNotes } : {}),
+        p_items: orderItems,
+      };
+
+      console.log('📤 Creating order via RPC function...');
+      console.log('📤 RPC PARAMS:', JSON.stringify(rpcParams, null, 2));
+      console.log('📤 PARAM KEYS:', Object.keys(rpcParams));
+      console.log('📤 HAS STATUS PARAM?:', 'status' in rpcParams || 'p_status' in rpcParams);
+      console.log('📤 BUILD TIMESTAMP:', BUILD_TIMESTAMP);
+
+      const { data: result, error: orderError } = await supabase.rpc('create_order_with_items', rpcParams as any);
 
       if (orderError) {
         console.error('❌ Order creation failed:', orderError);
