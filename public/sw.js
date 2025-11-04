@@ -1,5 +1,5 @@
-// ZeniPOS Service Worker v1.0.3 - Advanced Caching & Offline Support
-const SW_VERSION = '1.0.3';
+// ZeniPOS Service Worker v1.0.4 - Advanced Caching & Offline Support
+const SW_VERSION = '1.0.4';
 const CACHE_NAME = `zenipos-v${SW_VERSION}`;
 const IMAGE_CACHE = 'zenipos-images-v5';
 const API_CACHE = 'zenipos-api-v5';
@@ -89,6 +89,11 @@ self.addEventListener('fetch', (event) => {
 
   // Intelligent API caching for Supabase
   if (url.hostname.includes('supabase') && url.pathname.includes('/rest/v1/')) {
+    // Never cache mutations - let them pass through to network
+    if (request.method !== 'GET') {
+      return; // Let default fetch handler take over
+    }
+    
     const tableName = extractTableName(url.pathname);
     const strategy = CACHE_STRATEGIES[tableName];
     

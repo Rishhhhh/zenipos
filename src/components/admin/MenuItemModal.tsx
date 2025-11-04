@@ -99,7 +99,7 @@ export function MenuItemModal({
       name: '',
       sku: '',
       category_id: categoryId || '',
-      station_id: '',
+      station_id: 'none',
       prep_time_minutes: 10,
       price: 0,
       cost: 0,
@@ -116,7 +116,7 @@ export function MenuItemModal({
         name: item.name,
         sku: item.sku || '',
         category_id: item.category_id || '',
-        station_id: item.station_id || '',
+        station_id: item.station_id || 'none',
         prep_time_minutes: item.prep_time_minutes || 10,
         price: Number(item.price),
         cost: item.cost ? Number(item.cost) : 0,
@@ -130,7 +130,7 @@ export function MenuItemModal({
         name: '',
         sku: '',
         category_id: categoryId || '',
-        station_id: '',
+        station_id: 'none',
         prep_time_minutes: 10,
         price: 0,
         cost: 0,
@@ -152,7 +152,7 @@ export function MenuItemModal({
             name: values.name,
             sku: values.sku || null,
             category_id: values.category_id,
-            station_id: values.station_id || null,
+            station_id: values.station_id === 'none' ? null : values.station_id || null,
             prep_time_minutes: values.prep_time_minutes || null,
             price: values.price,
             cost: values.cost || null,
@@ -177,7 +177,7 @@ export function MenuItemModal({
           name: values.name,
           sku: values.sku || null,
           category_id: values.category_id,
-          station_id: values.station_id || null,
+          station_id: values.station_id === 'none' ? null : values.station_id || null,
           prep_time_minutes: values.prep_time_minutes || null,
           price: values.price,
           cost: values.cost || null,
@@ -321,7 +321,7 @@ export function MenuItemModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No Station</SelectItem>
+                      <SelectItem value="none">No Station (POS Only)</SelectItem>
                       {stations.map((station) => (
                         <SelectItem key={station.id} value={station.id}>
                           {station.name}
