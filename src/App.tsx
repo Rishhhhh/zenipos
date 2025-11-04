@@ -23,6 +23,7 @@ import { useSimulationStore } from "./lib/store/simulation";
 // Lazy load routes for code splitting and faster initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const POS = lazy(() => import("./pages/POS"));
+const TableManagement = lazy(() => import("./pages/TableManagement"));
 const KDS = lazy(() => import("./pages/KDS"));
 const ExpoStation = lazy(() => import("./pages/ExpoStation"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -153,6 +154,13 @@ const App = () => (
               <Route path="/pos" element={
                 <ProtectedRoute requiredRole="cashier">
                   <POSWithHeader />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/tables" element={
+                <ProtectedRoute requiredRole="cashier">
+                  <AppHeader />
+                  <TableManagement />
                 </ProtectedRoute>
               } />
               
