@@ -43,7 +43,7 @@ export default function POS() {
   // Enable system-wide real-time order sync
   useOrderRealtime();
   
-  const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, nfcCardUid, tableLabelShort, setTableId, setOrderType, setTableLabel, setNFCCardId } = useCartStore();
+  const { items, addItem, updateQuantity, voidItem, clearCart, clearCartItems, clearNFCCard, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, nfcCardUid, tableLabelShort, setTableId, setOrderType, setTableLabel, setNFCCardId } = useCartStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
@@ -294,8 +294,8 @@ export default function POS() {
         description: `Order #${order.id.substring(0, 8)} - ${items.length} items. Customer can pay after meal.`,
       });
 
-      // Clear cart (payment happens later at table module)
-      clearCart();
+      // Clear cart items but preserve NFC card for payment
+      clearCartItems();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error: any) => {
@@ -323,11 +323,24 @@ export default function POS() {
           </Badge>
         )}
 
-        {/* Show selected NFC card in header */}
+        {/* Show selected NFC card in header - CLICKABLE */}
         {nfc_card_id && (
           <Badge
             variant="outline"
-            className="text-base px-4 py-2 bg-green-500/10 border-green-500"
+            className="text-base px-4 py-2 bg-green-500/10 border-green-500 cursor-pointer hover:bg-green-500/20 transition-colors"
+            onClick={() => {
+              // Confirm before changing card if cart has items
+              if (items.length > 0) {
+                if (confirm('Changing NFC card will clear the current cart. Continue?')) {
+                  clearCart();
+                  setShowNFCCardSelect(true);
+                }
+              } else {
+                // No items, safe to change card
+                clearNFCCard();
+                setShowNFCCardSelect(true);
+              }
+            }}
           >
             <NfcIcon className="h-4 w-4 mr-2" />
             Card: {nfcCardUid || nfc_card_id.slice(0, 8)}
@@ -416,13 +429,31 @@ export default function POS() {
           orderNumber={pendingPaymentOrder.id.slice(0, 8)}
           total={pendingPaymentOrder.total}
           onPaymentSuccess={() => {
+            // Invalidate queries
             queryClient.invalidateQueries({ queryKey: ['orders'] });
             queryClient.invalidateQueries({ queryKey: ['pending-orders-nfc'] });
+            queryClient.invalidateQueries({ queryKey: ['tables'] });
+            
+            // Clear payment modal state
             setPendingPaymentOrder(null);
+            setShowPaymentModal(false);
+            setShowPaymentNFCScanner(false);
+            
+            // CRITICAL: Clear ALL cart data including NFC card
+            clearCart();
+            
+            // Broadcast cart clear to customer display
+            if (customerDisplayId) {
+              broadcastIdle(customerDisplayId);
+            }
+            
+            // Show success toast
             toast({
               title: 'Payment Complete',
-              description: 'Order paid successfully',
+              description: 'Order paid successfully. Ready for next customer.',
             });
+            
+            // The useEffect hook will automatically show NFC card selection modal
           }}
         />
       )}

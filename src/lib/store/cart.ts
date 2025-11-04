@@ -48,6 +48,7 @@ interface CartState {
   updateQuantity: (id: string, quantity: number) => void;
   updateItemModifiers: (id: string, modifiers: CartModifier[]) => void;
   clearCart: () => void;
+  clearCartItems: () => void;
   applyPromotions: (results: EvaluationResult[]) => void;
   clearPromotions: () => void;
   
@@ -171,6 +172,14 @@ export const useCartStore = create<CartState>((set, get) => ({
     nfc_card_id: null,
     nfcCardUid: null,
     order_type: null
+  }),
+  
+  // Clear only cart items, preserve order context (table, NFC, type)
+  clearCartItems: () => set({ 
+    items: [], 
+    sessionId: crypto.randomUUID(), 
+    appliedPromotions: []
+    // Preserve: table_id, nfc_card_id, order_type, table labels
   }),
   
   applyPromotions: (results) => set({ appliedPromotions: results }),

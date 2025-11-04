@@ -139,6 +139,15 @@ export function useBroadcastToCustomerDisplay() {
     broadcastUpdate(displaySessionId, {
       mode: 'idle',
       posSessionId: null,
+      nfcCardUid: undefined,
+      tableLabel: undefined,
+      cartItems: [],
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      discount: 0,
+      paymentQR: undefined,
+      change: undefined,
     });
   }, [broadcastUpdate]);
 
