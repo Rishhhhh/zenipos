@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, CreditCard, ShoppingCart, Tag, Trash2, Split } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import type { EvaluationResult } from "@/lib/promotions/evaluator";
-import { ManagerPinModal } from "@/components/pos/ManagerPinModal";
 
 interface CartSummaryProps {
   items: CartItem[];
@@ -35,20 +33,7 @@ export function CartSummary({
   onSplitBill,
   isSending,
 }: CartSummaryProps) {
-  const [showManagerPin, setShowManagerPin] = useState(false);
-  const [voidingItemId, setVoidingItemId] = useState<string | null>(null);
-
-  const handleVoidClick = (itemId: string) => {
-    setVoidingItemId(itemId);
-    setShowManagerPin(true);
-  };
-
-  const handleManagerAuthorized = async (managerId: string) => {
-    if (voidingItemId) {
-      await onVoidItem(voidingItemId, managerId);
-      setVoidingItemId(null);
-    }
-  };
+  // No PIN required for pre-order edits - only for post-confirmation modifications
 
   return (
     <div className="h-full flex flex-col p-4">
@@ -99,7 +84,7 @@ export function CartSummary({
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 touch-target text-destructive"
-                      onClick={() => handleVoidClick(item.id)}
+                      onClick={() => onVoidItem(item.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -176,12 +161,6 @@ export function CartSummary({
         </div>
       </div>
 
-      <ManagerPinModal
-        open={showManagerPin}
-        onOpenChange={setShowManagerPin}
-        onSuccess={handleManagerAuthorized}
-        action="Void Item"
-      />
     </div>
   );
 }
