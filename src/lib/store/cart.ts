@@ -28,6 +28,7 @@ interface CartState {
   tableName: string | null;
   tableLabelShort: string | null; // Short label like "t1", "t2"
   nfc_card_id: string | null;
+  nfcCardUid: string | null; // For display purposes
   order_type: 'dine_in' | 'takeaway' | null;
   
   // Actions
@@ -37,6 +38,8 @@ interface CartState {
   setTableLabel: (label: string | null) => void;
   setTable: (id: string | null, label?: string | null) => void;
   setTableWithNFC: (tableId: string | null, nfcCardId: string | null, label?: string | null) => void;
+  setNFCCardId: (id: string, uid: string) => void;
+  clearNFCCard: () => void;
   setOrderType: (type: 'dine_in' | 'takeaway') => void;
   confirmTableChange: (newTableId: string | null, newOrderType?: 'dine_in' | 'takeaway', label?: string | null) => void;
   addItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
@@ -66,6 +69,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   tableName: null,
   tableLabelShort: null,
   nfc_card_id: null,
+  nfcCardUid: null,
   order_type: null,
   
   setSessionId: (id) => set({ sessionId: id }),
@@ -81,10 +85,18 @@ export const useCartStore = create<CartState>((set, get) => ({
     tableLabelShort: label,
     order_type: 'dine_in' 
   }),
+  setNFCCardId: (id, uid) => set({ 
+    nfc_card_id: id, 
+    nfcCardUid: uid 
+  }),
+  clearNFCCard: () => set({ 
+    nfc_card_id: null, 
+    nfcCardUid: null 
+  }),
   setOrderType: (type) => set({ order_type: type }),
   
-  // Confirm table change and clear cart
-  confirmTableChange: (newTableId, newOrderType = 'dine_in', label = null) => set({
+  // Confirm table change and clear cart (but preserve NFC card)
+  confirmTableChange: (newTableId, newOrderType = 'dine_in', label = null) => set((state) => ({
     items: [],
     sessionId: crypto.randomUUID(),
     appliedPromotions: [],
@@ -93,8 +105,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     tableName: label,
     tableLabelShort: label,
     order_type: newOrderType,
-    nfc_card_id: null,
-  }),
+    // Preserve NFC card across table changes
+    nfc_card_id: state.nfc_card_id,
+    nfcCardUid: state.nfcCardUid,
+  })),
   
   addItem: (item) => set((state) => {
     // Always add as new item (don't auto-merge, modifiers may differ)
@@ -155,6 +169,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     tableName: null,
     tableLabelShort: null,
     nfc_card_id: null,
+    nfcCardUid: null,
     order_type: null
   }),
   
