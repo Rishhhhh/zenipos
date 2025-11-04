@@ -9,8 +9,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, TrendingUp, DollarSign, Clock, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 
 export default function TableManagement() {
+  useOrderRealtime(); // Enable real-time sync
+  
   const queryClient = useQueryClient();
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);

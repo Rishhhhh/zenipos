@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, CreditCard, Nfc } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -18,19 +18,36 @@ interface OrderDisplayProps {
   tax: number;
   discount: number;
   total: number;
+  nfcCardUid?: string;
+  tableLabel?: string;
 }
 
-export function OrderDisplay({ items, subtotal, tax, discount, total }: OrderDisplayProps) {
+export function OrderDisplay({ items, subtotal, tax, discount, total, nfcCardUid, tableLabel }: OrderDisplayProps) {
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-background via-background/95 to-primary/5 p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
-          <ShoppingCart className="w-10 h-10 text-primary" />
-          Your Order
-        </h1>
-        <p className="text-xl text-muted-foreground mt-2">
-          Please review your items
-        </p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
+            <ShoppingCart className="w-10 h-10 text-primary" />
+            Your Order
+          </h1>
+          {nfcCardUid && (
+            <Badge variant="outline" className="px-4 py-2 text-lg bg-primary/10 border-primary">
+              <Nfc className="w-5 h-5 mr-2" />
+              {nfcCardUid}
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="text-xl text-muted-foreground">
+            Please review your items
+          </p>
+          {tableLabel && (
+            <Badge variant="secondary" className="px-3 py-1 text-lg">
+              {tableLabel}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <Card className="flex-1 p-6 overflow-auto">
@@ -91,9 +108,9 @@ export function OrderDisplay({ items, subtotal, tax, discount, total }: OrderDis
         )}
       </Card>
 
-      <Card className="mt-6 p-6">
-        <div className="space-y-3">
-          <div className="flex justify-between text-xl">
+      <Card className="mt-6 p-8 bg-gradient-to-br from-card to-primary/5">
+        <div className="space-y-4">
+          <div className="flex justify-between text-2xl">
             <span className="text-muted-foreground">Subtotal</span>
             <span className="text-foreground font-semibold">
               ${subtotal.toFixed(2)}
@@ -101,7 +118,7 @@ export function OrderDisplay({ items, subtotal, tax, discount, total }: OrderDis
           </div>
           
           {discount > 0 && (
-            <div className="flex justify-between text-xl">
+            <div className="flex justify-between text-2xl">
               <span className="text-muted-foreground">Discount</span>
               <span className="text-green-600 font-semibold">
                 -${discount.toFixed(2)}
@@ -109,20 +126,28 @@ export function OrderDisplay({ items, subtotal, tax, discount, total }: OrderDis
             </div>
           )}
           
-          <div className="flex justify-between text-xl">
+          <div className="flex justify-between text-2xl">
             <span className="text-muted-foreground">Tax</span>
             <span className="text-foreground font-semibold">
               ${tax.toFixed(2)}
             </span>
           </div>
           
-          <Separator className="my-2" />
+          <Separator className="my-3" />
           
-          <div className="flex justify-between text-3xl font-bold">
+          <div className="flex justify-between text-4xl font-bold pt-2">
             <span className="text-foreground">Total</span>
             <span className="text-primary">
               ${total.toFixed(2)}
             </span>
+          </div>
+
+          {/* Payment reminder */}
+          <div className="mt-6 pt-4 border-t flex items-center justify-center gap-3 text-muted-foreground">
+            <CreditCard className="w-6 h-6" />
+            <p className="text-lg">
+              Complete payment with cashier when ready
+            </p>
           </div>
         </div>
       </Card>

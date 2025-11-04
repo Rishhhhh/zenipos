@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { StationKDSView } from '@/components/kds/StationKDSView';
 import { ExpoStationView } from '@/components/kds/ExpoStationView';
 import { Loader2 } from 'lucide-react';
+import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 
 export default function StationKDS() {
+  useOrderRealtime(); // Enable real-time sync
+  
   const { stationId } = useParams<{ stationId: string }>();
   const navigate = useNavigate();
 

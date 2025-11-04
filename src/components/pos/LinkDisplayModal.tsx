@@ -1,9 +1,11 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Copy, Unlink, QrCode } from "lucide-react";
+import { Monitor, Copy, Unlink, QrCode, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LinkDisplayModalProps {
   open: boolean;
@@ -20,11 +22,15 @@ export function LinkDisplayModal({
   onLink,
   onUnlink,
 }: LinkDisplayModalProps) {
+  const { role } = useAuth();
   const [displayId] = useState(() => {
     return currentDisplayId || `display-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
 
   const displayUrl = `${window.location.origin}/customer-screen?displayId=${displayId}`;
+  
+  // Only managers can link displays (they have dual screens)
+  const canLinkDisplay = role === 'manager' || role === 'admin';
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(displayUrl);
@@ -37,8 +43,12 @@ export function LinkDisplayModal({
   };
 
   const handleLink = () => {
+    if (!canLinkDisplay) {
+      toast.error("Only managers can link customer displays");
+      return;
+    }
     onLink(displayId);
-    toast.success("Customer display linked");
+    toast.success("Customer display linked successfully");
     onOpenChange(false);
   };
 
@@ -62,6 +72,16 @@ export function LinkDisplayModal({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Role Check Warning */}
+          {!canLinkDisplay && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Only managers can link customer displays. This feature requires dual-screen setup.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* QR Code Placeholder */}
           <div className="flex flex-col items-center gap-3 p-6 border rounded-lg bg-muted/30">
             <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2">
@@ -151,6 +171,7 @@ export function LinkDisplayModal({
             <Button
               onClick={handleLink}
               className="flex-1"
+              disabled={!canLinkDisplay}
             >
               <Monitor className="h-4 w-4 mr-2" />
               Link Display

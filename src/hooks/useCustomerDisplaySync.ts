@@ -9,6 +9,8 @@ export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
 interface DisplaySession {
   mode: DisplayMode;
   posSessionId: string | null;
+  nfcCardUid?: string;
+  tableLabel?: string;
   cartItems?: any[];
   subtotal?: number;
   tax?: number;
@@ -71,20 +73,24 @@ export function useBroadcastToCustomerDisplay() {
   // Use throttled broadcast queue for performance
   const broadcastUpdate = useCallback(async (displaySessionId: string, update: Partial<DisplaySession>) => {
     try {
-      // Update DB for persistence
+      // Update DB for persistence with all data
       await supabase
         .from('customer_display_sessions')
         .upsert({
           session_id: displaySessionId,
           pos_session_id: cart.sessionId,
           mode: update.mode || 'ordering',
+          nfc_card_uid: update.nfcCardUid || null,
+          table_label: update.tableLabel || null,
           last_activity: new Date().toISOString(),
         });
 
-      // Use throttled broadcast queue instead of direct channel.send()
+      // Use throttled broadcast queue for real-time updates
       enqueue(`customer-display:${displaySessionId}`, update);
+      
+      console.log('📡 Broadcast to customer display:', { displaySessionId, mode: update.mode });
     } catch (error) {
-      console.error('Broadcast update failed:', error);
+      console.error('❌ Broadcast update failed:', error);
     }
   }, [cart.sessionId]);
 
@@ -100,6 +106,8 @@ export function useBroadcastToCustomerDisplay() {
       broadcastUpdate(displaySessionId, {
         mode: 'ordering',
         posSessionId: cart.sessionId,
+        nfcCardUid: cart.nfcCardUid || undefined,
+        tableLabel: cart.tableLabelShort || undefined,
         cartItems: cart.items,
         subtotal: cart.getSubtotal(),
         tax: cart.getTax(),
@@ -107,7 +115,7 @@ export function useBroadcastToCustomerDisplay() {
         discount: cart.getDiscount(),
       });
     }, 300);
-  }, [cart.sessionId, cart.items, cart.getSubtotal, cart.getTax, cart.getTotal, cart.getDiscount, broadcastUpdate]);
+  }, [cart.sessionId, cart.nfcCardUid, cart.tableLabelShort, cart.items, cart.getSubtotal, cart.getTax, cart.getTotal, cart.getDiscount, broadcastUpdate]);
 
   // Immediate broadcasts (not debounced - one-time actions)
   const broadcastPayment = useCallback((displaySessionId: string, qrCodeUrl?: string) => {

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { QrCode, CreditCard, CheckCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface PaymentDisplayProps {
   total: number;
@@ -75,8 +76,13 @@ export function PaymentDisplay({ total, qrCodeUrl, isComplete, change }: Payment
 
           {qrCodeUrl ? (
             <div className="flex flex-col items-center gap-6">
-              <div className="bg-white p-8 rounded-2xl">
-                <QrCode className="w-64 h-64 text-primary" />
+              <div className="bg-white p-8 rounded-2xl shadow-xl">
+                <QRCodeSVG 
+                  value={qrCodeUrl}
+                  size={256}
+                  level="H"
+                  includeMargin={false}
+                />
               </div>
               <div className="space-y-2">
                 <p className="text-2xl font-semibold text-foreground">

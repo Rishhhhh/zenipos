@@ -11,6 +11,7 @@ import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { RecallOrderModal } from "@/components/pos/RecallOrderModal";
 import { ModifyOrderModal } from "@/components/pos/ModifyOrderModal";
 import { Badge } from "@/components/ui/badge";
+import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 
 interface Order {
   id: string;
@@ -38,6 +39,8 @@ interface Order {
 
 export default function KDS() {
   usePerformanceMonitor('KDS');
+  useOrderRealtime(); // Enable real-time sync
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [ticks, setTicks] = useState(0);

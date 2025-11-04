@@ -62,6 +62,8 @@ export default function CustomerScreen() {
             tax={displaySession.tax || 0}
             discount={displaySession.discount || 0}
             total={displaySession.total || 0}
+            nfcCardUid={displaySession.nfcCardUid}
+            tableLabel={displaySession.tableLabel}
           />
         );
       

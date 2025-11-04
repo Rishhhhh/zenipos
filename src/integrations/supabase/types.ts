@@ -551,24 +551,30 @@ export type Database = {
           id: string
           last_activity: string | null
           mode: string
+          nfc_card_uid: string | null
           pos_session_id: string | null
           session_id: string
+          table_label: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           last_activity?: string | null
           mode?: string
+          nfc_card_uid?: string | null
           pos_session_id?: string | null
           session_id: string
+          table_label?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           last_activity?: string | null
           mode?: string
+          nfc_card_uid?: string | null
           pos_session_id?: string | null
           session_id?: string
+          table_label?: string | null
         }
         Relationships: []
       }

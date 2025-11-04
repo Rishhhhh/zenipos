@@ -8,6 +8,7 @@ import { useState, useEffect, startTransition } from "react";
 import { useModalManager } from "@/hooks/useModalManager";
 import { usePromotions } from "@/lib/hooks/usePromotions";
 import { useBroadcastToCustomerDisplay } from "@/hooks/useCustomerDisplaySync";
+import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 import { generate80mmKitchenTicket } from "@/lib/print/receiptGenerator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,9 @@ console.log('🔵 Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
 export default function POS() {
   // Track performance for this page
   usePerformanceMonitor('POS');
+  
+  // Enable system-wide real-time order sync
+  useOrderRealtime();
   
   const { items, addItem, updateQuantity, voidItem, clearCart, getSubtotal, getTax, getTotal, getDiscount, appliedPromotions, sessionId, table_id, order_type, nfc_card_id, tableLabelShort, setTableId, setOrderType, setTableLabel } = useCartStore();
   const { toast } = useToast();
