@@ -7,16 +7,22 @@ import { TablePaymentModal } from '@/components/tables/TablePaymentModal';
 import { TableHistoryPanel } from '@/components/tables/TableHistoryPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, TrendingUp, DollarSign, Clock, Users } from 'lucide-react';
+import { RefreshCw, TrendingUp, DollarSign, Clock, Users, NfcIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrderRealtime } from '@/hooks/useOrderRealtime';
+import { PaymentNFCScannerModal } from '@/components/pos/PaymentNFCScannerModal';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TableManagement() {
   useOrderRealtime(); // Enable real-time sync
   
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [showPaymentNFCScanner, setShowPaymentNFCScanner] = useState(false);
+  const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Query tables with orders
   const { data: tables, isLoading } = useQuery({
@@ -90,14 +96,25 @@ export default function TableManagement() {
           <h1 className="text-3xl font-bold">Table Management</h1>
           <p className="text-muted-foreground">Monitor table status and process payments</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['tables'] })}
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            size="lg"
+            onClick={() => setShowPaymentNFCScanner(true)}
+            className="gap-2 bg-primary hover:bg-primary/90"
+          >
+            <NfcIcon className="h-5 w-5" />
+            Scan Card to Pay
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['tables'] })}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Metrics Cards */}
@@ -188,10 +205,58 @@ export default function TableManagement() {
               onSuccess={() => {
                 setShowPayment(false);
                 setSelectedTable(null);
+                setPendingPaymentOrder(null);
+                queryClient.invalidateQueries({ queryKey: ['tables'] });
+                queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
               }}
             />
           )}
         </>
+      )}
+
+      {/* Payment NFC Scanner Modal */}
+      <PaymentNFCScannerModal
+        open={showPaymentNFCScanner}
+        onOpenChange={setShowPaymentNFCScanner}
+        onOrderFound={(order) => {
+          setPendingPaymentOrder(order);
+          setShowPaymentNFCScanner(false);
+          
+          const orderTable = tables?.find((t: any) => 
+            t.current_order?.id === order.id
+          );
+          
+          if (orderTable) {
+            setSelectedTable(orderTable);
+            setShowPayment(true);
+          } else {
+            toast({
+              title: 'Order Found',
+              description: `Takeaway order - RM ${order.total.toFixed(2)}`,
+            });
+            setShowPaymentModal(true);
+          }
+        }}
+      />
+
+      {/* Standalone Payment Modal for NFC Scanned Orders */}
+      {pendingPaymentOrder && !selectedTable && (
+        <TablePaymentModal
+          open={showPaymentModal}
+          onOpenChange={setShowPaymentModal}
+          order={pendingPaymentOrder}
+          table={null}
+          onSuccess={() => {
+            setShowPaymentModal(false);
+            setPendingPaymentOrder(null);
+            queryClient.invalidateQueries({ queryKey: ['tables'] });
+            queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
+            toast({
+              title: 'Payment Complete',
+              description: 'Order paid successfully',
+            });
+          }}
+        />
       )}
     </div>
   );

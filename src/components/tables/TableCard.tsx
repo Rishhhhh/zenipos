@@ -1,7 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Clock, CheckCircle, CreditCard, Users } from 'lucide-react';
+import { Clock, CheckCircle, CreditCard, Users, NfcIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TableCardProps {
   table: any;
@@ -20,11 +21,14 @@ export function TableCard({ table, onClick }: TableCardProps) {
     }
 
     const order = table.current_order;
+    const hasNFC = !!order.nfc_card_id;
     
     if (order.status === 'delivered') {
       return {
         label: 'Ready to Pay',
-        color: 'bg-primary/10 border-primary text-primary',
+        color: hasNFC 
+          ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30' 
+          : 'bg-primary/10 border-primary text-primary',
         pulse: true,
         icon: <CreditCard className="h-5 w-5 text-primary" />,
       };
@@ -33,7 +37,9 @@ export function TableCard({ table, onClick }: TableCardProps) {
     if (order.status === 'preparing') {
       return {
         label: 'Preparing',
-        color: 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
+        color: hasNFC
+          ? 'bg-orange-500/20 border-orange-500 text-orange-700 dark:text-orange-400 ring-2 ring-orange-500/30'
+          : 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
         pulse: false,
         icon: <Clock className="h-5 w-5 text-orange-500" />,
       };
@@ -41,7 +47,9 @@ export function TableCard({ table, onClick }: TableCardProps) {
 
     return {
       label: 'Occupied',
-      color: 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
+      color: hasNFC
+        ? 'bg-orange-500/20 border-orange-500 text-orange-700 dark:text-orange-400 ring-2 ring-orange-500/30'
+        : 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
       pulse: false,
       icon: <Clock className="h-5 w-5 text-orange-500" />,
     };
@@ -67,6 +75,24 @@ export function TableCard({ table, onClick }: TableCardProps) {
           <div className="flex items-center gap-2">
             {state.icon}
             <h3 className="text-3xl font-bold">{table.label}</h3>
+            
+            {/* Show NFC card icon if table has linked card */}
+            {order?.nfc_card_id && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/30">
+                      <NfcIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs font-mono">
+                      Card: {order.nfc_cards?.[0]?.card_uid || order.nfc_card_id.slice(0, 8)}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <Badge variant="secondary" className={`${state.color} font-semibold`}>
             {state.label}
