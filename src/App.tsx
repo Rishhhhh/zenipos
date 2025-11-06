@@ -19,6 +19,7 @@ import { AIFloatingButton } from "./components/ai/AIFloatingButton";
 import { useAuth } from "./contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useSimulationStore } from "./lib/store/simulation";
+import { useRealtimeStore } from "./lib/store/realtimeStore";
 
 // Lazy load routes for code splitting and faster initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -97,8 +98,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { employee } = useAuth();
   const location = useLocation();
   const stopSimulation = useSimulationStore(state => state.stopSimulation);
+  const subscribeAll = useRealtimeStore(state => state.subscribeAll);
   const isLoginPage = location.pathname === '/login';
   const isCustomerScreen = location.pathname.startsWith('/customer/');
+
+  // Initialize global realtime subscriptions when user logs in
+  useEffect(() => {
+    if (employee && !isLoginPage && !isCustomerScreen) {
+      console.log('[App] Initializing global realtime subscriptions');
+      const cleanup = subscribeAll();
+      return cleanup;
+    }
+  }, [employee, isLoginPage, isCustomerScreen, subscribeAll]);
 
   // Stop simulation on logout
   useEffect(() => {

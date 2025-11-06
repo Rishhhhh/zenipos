@@ -12,6 +12,7 @@ import { AdminSearchCommand } from "@/components/admin/AdminSearchCommand";
 import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
 import { SimulationPanel } from '@/components/admin/SimulationPanel';
+import { RealtimeMonitor } from '@/components/admin/RealtimeMonitor';
 import { useState, useEffect } from "react";
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
@@ -144,6 +145,8 @@ export default function Admin() {
             </Card>
           </div>
         )}
+
+        <RealtimeMonitor />
 
         {Object.entries(ADMIN_MODULES).map(([category, modules]) => (
           <div key={category} className="mb-8">
