@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
 import { channelManager } from '@/lib/realtime/channelManager';
-import { enqueue } from '@/lib/perf/broadcastQueue';
 
 export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
 
@@ -49,10 +48,14 @@ export function useCustomerDisplaySync(displaySessionId: string) {
     const cleanup = channelManager.subscribe(
       `customer-display:${displaySessionId}`,
       (payload) => {
-        console.log('Display session updated:', payload);
+        console.log('✅ Display session updated:', payload);
         if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
           setDisplaySession(payload.new as DisplaySession);
         }
+      },
+      {
+        table: 'customer_display_sessions',
+        filter: `session_id=eq.${displaySessionId}`
       }
     );
 
@@ -70,11 +73,11 @@ export function useBroadcastToCustomerDisplay() {
   const cart = useCartStore();
   const debounceTimerRef = useRef<NodeJS.Timeout>();
 
-  // Use throttled broadcast queue for performance
+  // Database write triggers postgres_changes subscription on Customer Display
   const broadcastUpdate = useCallback(async (displaySessionId: string, update: Partial<DisplaySession>) => {
     try {
-      // Update DB for persistence with all data
-      await supabase
+      // Update DB - postgres_changes will propagate to Customer Display
+      const { error } = await supabase
         .from('customer_display_sessions')
         .upsert({
           session_id: displaySessionId,
@@ -85,10 +88,11 @@ export function useBroadcastToCustomerDisplay() {
           last_activity: new Date().toISOString(),
         });
 
-      // Use throttled broadcast queue for real-time updates
-      enqueue(`customer-display:${displaySessionId}`, update);
-      
-      console.log('📡 Broadcast to customer display:', { displaySessionId, mode: update.mode });
+      if (error) {
+        console.error('❌ Display update failed:', error);
+      } else {
+        console.log('📡 Display updated via DB:', { displaySessionId, mode: update.mode });
+      }
     } catch (error) {
       console.error('❌ Broadcast update failed:', error);
     }

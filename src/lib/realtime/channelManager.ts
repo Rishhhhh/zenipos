@@ -5,7 +5,14 @@ class ChannelManager {
   private channels: Map<string, RealtimeChannel> = new Map();
   private subscriptionCounts: Map<string, number> = new Map();
 
-  subscribe(channelName: string, callback: (payload: any) => void) {
+  subscribe(
+    channelName: string, 
+    callback: (payload: any) => void,
+    options?: {
+      table?: string;
+      filter?: string;
+    }
+  ) {
     let channel = this.channels.get(channelName);
     
     if (!channel) {
@@ -17,8 +24,22 @@ class ChannelManager {
     const count = this.subscriptionCounts.get(channelName)! + 1;
     this.subscriptionCounts.set(channelName, count);
     
+    // Build postgres_changes config with optional table filtering
+    const config: any = { 
+      event: '*', 
+      schema: 'public'
+    };
+    
+    if (options?.table) {
+      config.table = options.table;
+    }
+    
+    if (options?.filter) {
+      config.filter = options.filter;
+    }
+    
     channel
-      .on('postgres_changes', { event: '*', schema: 'public' }, callback)
+      .on('postgres_changes', config, callback)
       .subscribe();
     
     return () => {
