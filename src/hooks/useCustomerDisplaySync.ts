@@ -34,7 +34,7 @@ export function useCustomerDisplaySync(displaySessionId: string) {
           session_id: displaySessionId,
           mode: 'idle',
           last_activity: new Date().toISOString(),
-        });
+        }, { onConflict: 'session_id' });
       
       if (error) {
         console.error('Failed to init display session:', error);
@@ -106,7 +106,7 @@ export function useBroadcastToCustomerDisplay() {
           payment_qr: update.paymentQR || null,
           change: update.change || null,
           last_activity: new Date().toISOString(),
-        });
+        }, { onConflict: 'session_id' });
 
       if (error) {
         console.error('❌ Display update failed:', error);
