@@ -547,34 +547,55 @@ export type Database = {
       }
       customer_display_sessions: {
         Row: {
+          cart_items: Json | null
+          change: number | null
           created_at: string | null
+          discount: number | null
           id: string
           last_activity: string | null
           mode: string
           nfc_card_uid: string | null
+          payment_qr: string | null
           pos_session_id: string | null
           session_id: string
+          subtotal: number | null
           table_label: string | null
+          tax: number | null
+          total: number | null
         }
         Insert: {
+          cart_items?: Json | null
+          change?: number | null
           created_at?: string | null
+          discount?: number | null
           id?: string
           last_activity?: string | null
           mode?: string
           nfc_card_uid?: string | null
+          payment_qr?: string | null
           pos_session_id?: string | null
           session_id: string
+          subtotal?: number | null
           table_label?: string | null
+          tax?: number | null
+          total?: number | null
         }
         Update: {
+          cart_items?: Json | null
+          change?: number | null
           created_at?: string | null
+          discount?: number | null
           id?: string
           last_activity?: string | null
           mode?: string
           nfc_card_uid?: string | null
+          payment_qr?: string | null
           pos_session_id?: string | null
           session_id?: string
+          subtotal?: number | null
           table_label?: string | null
+          tax?: number | null
+          total?: number | null
         }
         Relationships: []
       }

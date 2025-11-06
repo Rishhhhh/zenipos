@@ -50,7 +50,19 @@ export function useCustomerDisplaySync(displaySessionId: string) {
       (payload) => {
         console.log('✅ Display session updated:', payload);
         if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-          setDisplaySession(payload.new as DisplaySession);
+          setDisplaySession({
+            mode: payload.new.mode,
+            posSessionId: payload.new.pos_session_id,
+            nfcCardUid: payload.new.nfc_card_uid,
+            tableLabel: payload.new.table_label,
+            cartItems: payload.new.cart_items || [],
+            subtotal: payload.new.subtotal || 0,
+            tax: payload.new.tax || 0,
+            total: payload.new.total || 0,
+            discount: payload.new.discount || 0,
+            paymentQR: payload.new.payment_qr,
+            change: payload.new.change,
+          });
         }
       },
       {
@@ -85,13 +97,21 @@ export function useBroadcastToCustomerDisplay() {
           mode: update.mode || 'ordering',
           nfc_card_uid: update.nfcCardUid || null,
           table_label: update.tableLabel || null,
+          // Cart data fields
+          cart_items: update.cartItems || [],
+          subtotal: update.subtotal || 0,
+          tax: update.tax || 0,
+          total: update.total || 0,
+          discount: update.discount || 0,
+          payment_qr: update.paymentQR || null,
+          change: update.change || null,
           last_activity: new Date().toISOString(),
         });
 
       if (error) {
         console.error('❌ Display update failed:', error);
       } else {
-        console.log('📡 Display updated via DB:', { displaySessionId, mode: update.mode });
+        console.log('📡 Display updated via DB:', { displaySessionId, mode: update.mode, total: update.total });
       }
     } catch (error) {
       console.error('❌ Broadcast update failed:', error);
