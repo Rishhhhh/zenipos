@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 export function useEightySixItems(branchId?: string) {
   const queryClient = useQueryClient();
@@ -22,28 +23,11 @@ export function useEightySixItems(branchId?: string) {
     return new Set(eightySixItems.map((item: any) => item.menu_item_id));
   }, [eightySixItems]);
 
-  // Real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel('eighty-six-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'eighty_six_items',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['eighty-six-items'] });
-          queryClient.invalidateQueries({ queryKey: ['menu_items'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  // Real-time subscription using unified service
+  useRealtimeTable('eighty_six_items', () => {
+    queryClient.invalidateQueries({ queryKey: ['eighty-six-items'] });
+    queryClient.invalidateQueries({ queryKey: ['menu_items'] });
+  });
 
   const isEightySixed = (menuItemId: string) => {
     return eightySixedItemIds.has(menuItemId);

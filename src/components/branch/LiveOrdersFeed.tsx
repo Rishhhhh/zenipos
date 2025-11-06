@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,37 +38,10 @@ export function LiveOrdersFeed({ branchId, limit = 20 }: LiveOrdersFeedProps) {
     refetchInterval: 5000,
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('live-orders-feed')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['live-orders'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['live-orders'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  // Real-time subscription using unified service
+  useRealtimeTable('orders', () => {
+    queryClient.invalidateQueries({ queryKey: ['live-orders'] });
+  });
 
   if (isLoading) {
     return <div className="h-96 animate-pulse bg-muted rounded" />;

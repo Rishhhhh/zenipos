@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { Check, Clock, RotateCcw, Edit } from "lucide-react";
@@ -86,27 +87,10 @@ export default function KDS() {
     refetchInterval: 5000, // Fallback polling every 5s
   });
 
-  // Subscribe to realtime updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('kds-orders')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['orders', 'pending'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  // Real-time subscription using unified service
+  useRealtimeTable('orders', () => {
+    queryClient.invalidateQueries({ queryKey: ['orders', 'pending'] });
+  });
 
   // Bump order mutation
   const bumpOrder = useMutation({

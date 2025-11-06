@@ -13,6 +13,7 @@ import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
 import { SimulationPanel } from '@/components/admin/SimulationPanel';
 import { useState, useEffect } from "react";
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
@@ -41,27 +42,8 @@ export default function Admin() {
     },
   });
 
-  // Subscribe to real-time order updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('admin-orders')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders',
-        },
-        () => {
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
+  // Real-time subscription using unified service
+  useRealtimeTable('orders', () => refetch(), { event: 'INSERT' });
 
   const ordersCount = useCountUp(stats?.orders || 0);
   const itemsCount = useCountUp(stats?.items || 0);

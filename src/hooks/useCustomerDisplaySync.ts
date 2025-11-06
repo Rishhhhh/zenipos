@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
-import { channelManager } from '@/lib/realtime/channelManager';
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
 
@@ -44,38 +44,34 @@ export function useCustomerDisplaySync(displaySessionId: string) {
     };
 
     initSession();
-
-    const cleanup = channelManager.subscribe(
-      `customer-display:${displaySessionId}`,
-      (payload) => {
-        console.log('✅ Display session updated:', payload);
-        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-          setDisplaySession({
-            mode: payload.new.mode,
-            posSessionId: payload.new.pos_session_id,
-            nfcCardUid: payload.new.nfc_card_uid,
-            tableLabel: payload.new.table_label,
-            cartItems: payload.new.cart_items || [],
-            subtotal: payload.new.subtotal || 0,
-            tax: payload.new.tax || 0,
-            total: payload.new.total || 0,
-            discount: payload.new.discount || 0,
-            paymentQR: payload.new.payment_qr,
-            change: payload.new.change,
-          });
-        }
-      },
-      {
-        table: 'customer_display_sessions',
-        filter: `session_id=eq.${displaySessionId}`
-      }
-    );
-
-    return () => {
-      cleanup();
-      setIsConnected(false);
-    };
   }, [displaySessionId]);
+
+  // Real-time subscription using unified service
+  useRealtimeTable(
+    'customer_display_sessions',
+    (payload) => {
+      console.log('✅ Display session updated:', payload);
+      if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+        setDisplaySession({
+          mode: payload.new.mode,
+          posSessionId: payload.new.pos_session_id,
+          nfcCardUid: payload.new.nfc_card_uid,
+          tableLabel: payload.new.table_label,
+          cartItems: payload.new.cart_items || [],
+          subtotal: payload.new.subtotal || 0,
+          tax: payload.new.tax || 0,
+          total: payload.new.total || 0,
+          discount: payload.new.discount || 0,
+          paymentQR: payload.new.payment_qr,
+          change: payload.new.change,
+        });
+      }
+    },
+    {
+      filter: `session_id=eq.${displaySessionId}`,
+      enabled: !!displaySessionId,
+    }
+  );
 
   return { displaySession, isConnected };
 }

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,29 +42,14 @@ export function ApprovalRequestModal({ open, onOpenChange }: ApprovalRequestModa
     refetchInterval: 5000, // Refresh every 5 seconds
   });
 
-  // Real-time subscription
-  useEffect(() => {
-    if (!open) return;
-
-    const channel = supabase
-      .channel('approval_requests_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'approval_requests',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['approval-requests'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [open, queryClient]);
+  // Real-time subscription using unified service
+  useRealtimeTable(
+    'approval_requests',
+    () => {
+      queryClient.invalidateQueries({ queryKey: ['approval-requests'] });
+    },
+    { enabled: open }
+  );
 
   const approveMutation = useMutation({
     mutationFn: async ({ requestId, pin }: { requestId: string; pin: string }) => {

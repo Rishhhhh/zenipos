@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -103,26 +104,14 @@ export function ExpoStationView() {
     },
   });
 
-  // Subscribe to realtime updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('expo-updates')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        () => queryClient.invalidateQueries({ queryKey: ['expo-orders'] })
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'course_fires' },
-        () => queryClient.invalidateQueries({ queryKey: ['course-status'] })
-      )
-      .subscribe();
+  // Real-time subscriptions using unified service
+  useRealtimeTable('orders', () => {
+    queryClient.invalidateQueries({ queryKey: ['expo-orders'] });
+  });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
+  useRealtimeTable('course_fires', () => {
+    queryClient.invalidateQueries({ queryKey: ['course-status'] });
+  });
 
   // Auto-select first order
   useEffect(() => {

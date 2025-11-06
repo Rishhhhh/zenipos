@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, ChefHat, ArrowRight, Hash, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { Button } from "@/components/ui/button";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
@@ -29,27 +29,8 @@ export function ActiveOrdersWidget() {
     },
   });
 
-  // Subscribe to realtime updates
-  useEffect(() => {
-    const channel = supabase
-      .channel("active-orders-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-        },
-        () => {
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
+  // Real-time subscription using unified service
+  useRealtimeTable('orders', () => refetch());
 
   const getStatusColor = (status: string) => {
     switch (status) {

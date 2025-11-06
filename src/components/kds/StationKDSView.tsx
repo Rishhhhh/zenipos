@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Clock, ChefHat, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 interface StationKDSViewProps {
   stationId: string;
@@ -50,28 +51,14 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
     refetchInterval: 3000, // Refresh every 3s
   });
 
-  // Real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel(`station:${stationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'order_items',
-          filter: `station_id=eq.${stationId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['station-items', stationId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [stationId, queryClient]);
+  // Real-time subscription using unified service
+  useRealtimeTable(
+    'order_items',
+    () => {
+      queryClient.invalidateQueries({ queryKey: ['station-items', stationId] });
+    },
+    { filter: `station_id=eq.${stationId}` }
+  );
 
   const startItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
