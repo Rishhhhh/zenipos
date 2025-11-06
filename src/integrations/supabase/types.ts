@@ -2722,6 +2722,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_displays: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          display_id: string
+          id: string
+          last_activity: string | null
+          linked_at: string | null
+          linked_by_user_id: string
+          pos_session_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          display_id: string
+          id?: string
+          last_activity?: string | null
+          linked_at?: string | null
+          linked_by_user_id: string
+          pos_session_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          display_id?: string
+          id?: string
+          last_activity?: string | null
+          linked_at?: string | null
+          linked_by_user_id?: string
+          pos_session_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       promotion_usage: {
         Row: {
           applied_at: string | null
@@ -3922,6 +3958,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_inactive_displays: { Args: never; Returns: number }
       close_expired_tabs: { Args: never; Returns: number }
       close_shift: { Args: { shift_id_param: string }; Returns: undefined }
       create_order_with_items:
@@ -4124,6 +4161,10 @@ export type Database = {
           times_ordered: number
           total_revenue: number
         }[]
+      }
+      get_user_active_display: {
+        Args: { user_id_param: string }
+        Returns: string
       }
       get_user_branch_ids: {
         Args: { _user_id: string }

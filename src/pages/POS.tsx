@@ -62,10 +62,25 @@ export default function POS() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
   
-  // Customer display linking
-  const [customerDisplayId, setCustomerDisplayId] = useState<string | null>(
-    () => localStorage.getItem('linked-customer-display')
-  );
+  // Customer display linking - fetch from database instead of localStorage
+  const { data: linkedDisplay } = useQuery({
+    queryKey: ['linked-display'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data } = await supabase
+        .from('pos_displays')
+        .select('display_id')
+        .eq('linked_by_user_id', user.id)
+        .eq('active', true)
+        .single();
+      
+      return data?.display_id || null;
+    },
+  });
+  
+  const customerDisplayId = linkedDisplay || null;
   
   // Initialize broadcast hook
   const { broadcastOrderUpdate, broadcastPayment, broadcastComplete, broadcastIdle } = 
@@ -511,15 +526,15 @@ export default function POS() {
         onOpenChange={setShowLinkDisplay}
         currentDisplayId={customerDisplayId}
         onLink={(displayId) => {
-          setCustomerDisplayId(displayId);
-          localStorage.setItem('linked-customer-display', displayId);
+          // Display linked successfully - query will auto-refetch
+          queryClient.invalidateQueries({ queryKey: ['linked-display'] });
         }}
         onUnlink={() => {
-          setCustomerDisplayId(null);
-          localStorage.removeItem('linked-customer-display');
+          // Display unlinked - broadcast idle and refetch
           if (customerDisplayId) {
             broadcastIdle(customerDisplayId);
           }
+          queryClient.invalidateQueries({ queryKey: ['linked-display'] });
         }}
       />
 

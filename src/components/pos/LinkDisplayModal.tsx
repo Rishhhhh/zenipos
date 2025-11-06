@@ -6,6 +6,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface LinkDisplayModalProps {
   open: boolean;
@@ -23,6 +25,7 @@ export function LinkDisplayModal({
   onUnlink,
 }: LinkDisplayModalProps) {
   const { role } = useAuth();
+  const queryClient = useQueryClient();
   const [displayId] = useState(() => {
     return currentDisplayId || `display-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
@@ -31,6 +34,67 @@ export function LinkDisplayModal({
   
   // Only managers can link displays (they have dual screens)
   const canLinkDisplay = role === 'manager' || role === 'admin';
+
+  // Mutation to link display to database
+  const linkDisplayMutation = useMutation({
+    mutationFn: async (displayId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('pos_displays')
+        .upsert({
+          display_id: displayId,
+          linked_by_user_id: user.id,
+          last_activity: new Date().toISOString(),
+          active: true,
+        }, { onConflict: 'display_id' })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['linked-display'] });
+      toast.success("Customer display linked successfully");
+      onLink(displayId);
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      console.error('Link display error:', error);
+      if (error.code === '23514') {
+        toast.error("Only managers can link customer displays");
+      } else {
+        toast.error("Failed to link display: " + error.message);
+      }
+    },
+  });
+
+  // Mutation to unlink display from database
+  const unlinkDisplayMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('pos_displays')
+        .update({ active: false })
+        .eq('linked_by_user_id', user.id)
+        .eq('display_id', currentDisplayId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['linked-display'] });
+      toast.success("Customer display unlinked");
+      onUnlink();
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      toast.error("Failed to unlink display: " + error.message);
+    },
+  });
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(displayUrl);
@@ -47,15 +111,11 @@ export function LinkDisplayModal({
       toast.error("Only managers can link customer displays");
       return;
     }
-    onLink(displayId);
-    toast.success("Customer display linked successfully");
-    onOpenChange(false);
+    linkDisplayMutation.mutate(displayId);
   };
 
   const handleUnlink = () => {
-    onUnlink();
-    toast.success("Customer display unlinked");
-    onOpenChange(false);
+    unlinkDisplayMutation.mutate();
   };
 
   return (
@@ -163,18 +223,19 @@ export function LinkDisplayModal({
               variant="destructive"
               onClick={handleUnlink}
               className="flex-1"
+              disabled={unlinkDisplayMutation.isPending}
             >
               <Unlink className="h-4 w-4 mr-2" />
-              Unlink Display
+              {unlinkDisplayMutation.isPending ? 'Unlinking...' : 'Unlink Display'}
             </Button>
           ) : (
             <Button
               onClick={handleLink}
               className="flex-1"
-              disabled={!canLinkDisplay}
+              disabled={!canLinkDisplay || linkDisplayMutation.isPending}
             >
               <Monitor className="h-4 w-4 mr-2" />
-              Link Display
+              {linkDisplayMutation.isPending ? 'Linking...' : 'Link Display'}
             </Button>
           )}
           <Button

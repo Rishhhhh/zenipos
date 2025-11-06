@@ -88,7 +88,7 @@ export function useBroadcastToCustomerDisplay() {
   // Database write triggers postgres_changes subscription on Customer Display
   const broadcastUpdate = useCallback(async (displaySessionId: string, update: Partial<DisplaySession>) => {
     try {
-      // Update DB - postgres_changes will propagate to Customer Display
+      // Update customer display session - postgres_changes will propagate to Customer Display
       const { error } = await supabase
         .from('customer_display_sessions')
         .upsert({
@@ -110,9 +110,24 @@ export function useBroadcastToCustomerDisplay() {
 
       if (error) {
         console.error('❌ Display update failed:', error);
-      } else {
-        console.log('📡 Display updated via DB:', { displaySessionId, mode: update.mode, total: update.total });
+        return;
       }
+
+      // Update pos_displays last_activity for cleanup tracking
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('pos_displays')
+          .update({ 
+            last_activity: new Date().toISOString(),
+            pos_session_id: cart.sessionId 
+          })
+          .eq('display_id', displaySessionId)
+          .eq('linked_by_user_id', user.id)
+          .eq('active', true);
+      }
+
+      console.log('📡 Display updated via DB:', { displaySessionId, mode: update.mode, total: update.total });
     } catch (error) {
       console.error('❌ Broadcast update failed:', error);
     }
