@@ -27,7 +27,7 @@ export function OrderTypeSelectionModal({
 
         {/* Display Selected NFC Card */}
         <div className="flex items-center justify-center mb-6">
-          <Badge className="text-lg px-6 py-3 bg-green-500/10 border-green-500">
+          <Badge className="text-base px-6 py-3 bg-primary/20 border-2 border-primary text-primary font-semibold">
             <NfcIcon className="h-5 w-5 mr-2" />
             Card: {nfcCardUid}
           </Badge>
@@ -39,26 +39,26 @@ export function OrderTypeSelectionModal({
           <Button
             variant="default"
             size="lg"
-            className="h-32 flex-col gap-3 text-xl"
+            className="h-40 flex-col gap-4 text-xl bg-primary hover:bg-primary/90 transition-all hover:scale-105"
             onClick={onSelectDineIn}
           >
-            <UtensilsCrossed className="h-12 w-12" />
-            <div className="flex flex-col items-center gap-1">
-              <span>Dine In 🍽️</span>
-              <span className="text-sm font-normal opacity-80">Select table number</span>
+            <UtensilsCrossed className="h-16 w-16" />
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-bold">Dine In 🍽️</span>
+              <span className="text-sm font-normal opacity-90">Select table number</span>
             </div>
           </Button>
 
           {/* Takeaway Button */}
           <Button
-            variant="secondary"
+            variant="outline"
             size="lg"
-            className="h-32 flex-col gap-3 text-xl"
+            className="h-40 flex-col gap-4 text-xl hover:bg-accent transition-all hover:scale-105"
             onClick={onSelectTakeaway}
           >
-            <ShoppingBag className="h-12 w-12" />
-            <div className="flex flex-col items-center gap-1">
-              <span>Takeaway 🛍️</span>
+            <ShoppingBag className="h-16 w-16" />
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-bold">Takeaway 🛍️</span>
               <span className="text-sm font-normal opacity-80">Skip table selection</span>
             </div>
           </Button>

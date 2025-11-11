@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Award, Gift } from "lucide-react";
@@ -38,9 +39,10 @@ export default memo(function LoyaltyStats() {
     queryClient.invalidateQueries({ queryKey: ["loyalty-stats"] });
   });
   
-  const { data: stats, isLoading, refetch } = useQuery({
+  const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ["loyalty-stats", config.topNCustomers],
     queryFn: async () => {
+      console.log('[LoyaltyStats] Fetching data...');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -49,7 +51,10 @@ export default memo(function LoyaltyStats() {
         .select("points_delta, customer_id")
         .gte("created_at", today.toISOString());
 
-      if (txError) throw txError;
+      if (txError) {
+        console.error('[LoyaltyStats] Transaction query error:', txError);
+        throw txError;
+      }
 
       const { data: topCustomers, error: custError } = await supabase
         .from("customers")
@@ -57,10 +62,20 @@ export default memo(function LoyaltyStats() {
         .order("loyalty_points", { ascending: false })
         .limit(config.topNCustomers);
 
-      if (custError) throw custError;
+      if (custError) {
+        console.error('[LoyaltyStats] Customer query error:', custError);
+        throw custError;
+      }
 
       const totalPoints = transactions?.reduce((sum, t) => sum + t.points_delta, 0) || 0;
       const uniqueCustomers = new Set(transactions?.map(t => t.customer_id)).size;
+
+      console.log('[LoyaltyStats] Data fetched:', {
+        transactions: transactions?.length,
+        customers: topCustomers?.length,
+        totalPoints,
+        uniqueCustomers
+      });
 
       return {
         totalPoints,
@@ -69,6 +84,8 @@ export default memo(function LoyaltyStats() {
       };
     },
     refetchInterval: config.refreshInterval * 1000,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Register refetch function
@@ -99,6 +116,24 @@ export default memo(function LoyaltyStats() {
       </div>
     );
   });
+
+  if (error) {
+    return (
+      <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Users className="h-12 w-12 mx-auto mb-4 text-destructive opacity-50" />
+            <p className="text-sm text-destructive font-semibold">Failed to load loyalty data</p>
+            <p className="text-xs text-muted-foreground mt-2">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm" className="mt-4">
+              <Gift className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>

@@ -124,25 +124,28 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
 
         <div className="space-y-6 mt-4">
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-4 mb-6">
             <Button
               size="lg"
               variant="outline"
-              className="h-24"
+              className="flex-1 h-20 hover:bg-accent hover:border-primary"
               onClick={handleTakeaway}
             >
-              <div className="flex flex-col items-center gap-2">
-                <ShoppingBag className="h-8 w-8" />
-                <span className="font-semibold">Takeaway</span>
+              <div className="flex items-center gap-3">
+                <ShoppingBag className="h-10 w-10" />
+                <div className="text-left">
+                  <p className="font-semibold text-lg">Takeaway</p>
+                  <p className="text-xs text-muted-foreground">Skip table</p>
+                </div>
               </div>
             </Button>
             
-            <Card className="p-4 flex items-center justify-center bg-muted/30">
+            <div className="flex-1 h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">Dine-In</p>
-                <p className="text-xs text-muted-foreground mt-1">Select a table below</p>
+                <p className="font-semibold text-muted-foreground">Dine-In</p>
+                <p className="text-xs text-muted-foreground">Select table below</p>
               </div>
-            </Card>
+            </div>
           </div>
 
           {/* Tables Grid */}
@@ -155,27 +158,26 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
                 <p className="text-muted-foreground">No tables configured. Contact your manager.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-4 md:grid-cols-6 gap-3 max-h-[400px] overflow-y-auto">
+              <div className="grid grid-cols-5 md:grid-cols-6 gap-4 max-h-[450px] overflow-y-auto p-1">
                 {tables?.map((table) => {
                   const tableStatus = getTableStatus(table);
                   return (
                     <Card
                       key={table.id}
-                      className={`p-4 cursor-pointer transition-all hover:scale-105 
-                        ${tableStatus.bgColor} ${tableStatus.textColor} ${tableStatus.borderColor} ${
-                        tableStatus.canAssignOrder ? 'hover:border-primary' : 'cursor-not-allowed opacity-60'
-                      }`}
+                      className={`p-5 cursor-pointer transition-all hover:scale-110 hover:shadow-xl
+                        ${tableStatus.bgColor} ${tableStatus.textColor} ${tableStatus.borderColor}
+                        border-2
+                        ${tableStatus.canAssignOrder ? '' : 'cursor-not-allowed opacity-60'}
+                      `}
                       onClick={() => handleTableSelect(table, table.label)}
                     >
-                      <div className="text-center">
-                        <div className="text-xl font-bold mb-2">{table.label}</div>
-                        <div className="flex items-center justify-center gap-1 text-xs mb-2">
-                          <Users className="h-3 w-3" />
+                      <div className="text-center space-y-2">
+                        <div className="text-2xl font-bold">{table.label}</div>
+                        <div className="flex items-center justify-center gap-1 text-sm">
+                          <Users className="h-4 w-4" />
                           <span>{table.seats}</span>
                         </div>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {tableStatus.label}
-                        </Badge>
+                        <Badge variant="outline" className="text-xs">{tableStatus.label}</Badge>
                         {tableStatus.order && (
                           <div className="text-xs mt-2 font-medium">
                             RM {tableStatus.order.total.toFixed(2)}

@@ -160,50 +160,40 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
             )}
 
             {!isLoading && nfcCards && nfcCards.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {nfcCards.map((card) => (
                   <Card
                     key={card.id}
                     onClick={() => card.status === 'active' && handleCardSelect(card.id, card.card_uid)}
                     className={`
                       relative cursor-pointer transition-all 
-                      hover:scale-105 hover:shadow-xl
+                      hover:scale-105 hover:shadow-2xl
+                      border-3 p-6 min-h-[180px]
                       ${getCardStatusColor(card.status)}
-                      border-2 p-4 min-h-[140px]
                       ${selectedCard === card.id ? 'ring-2 ring-primary' : ''}
                       ${card.status !== 'active' ? 'pointer-events-none' : ''}
                     `}
                   >
-                    <div className="flex flex-col gap-3 h-full">
-                      {/* Header with Status Badge */}
+                    <div className="flex flex-col gap-4 h-full">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <NfcIcon className="h-5 w-5" />
-                        </div>
-                        <Badge variant="secondary" className={getStatusBadgeColor(card.status)}>
+                        <NfcIcon className="h-6 w-6" />
+                        <Badge variant="secondary" className={`${getStatusBadgeColor(card.status)} font-semibold`}>
                           {card.status}
                         </Badge>
                       </div>
 
-                      {/* Card UID - Large and Prominent */}
-                      <h3 className="text-xl font-bold tracking-tight break-all">
+                      <h3 className="text-2xl font-bold tracking-tight break-all">
                         {card.card_uid}
                       </h3>
 
-                      {/* Notes/Description */}
                       {card.notes && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 flex-1">
-                          {card.notes}
-                        </p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{card.notes}</p>
                       )}
 
-                      {/* Scan Info */}
-                      <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-auto">
-                        <span>Scans: {card.scan_count}</span>
+                      <div className="flex flex-col gap-2 text-sm text-muted-foreground mt-auto">
+                        <span className="font-medium">Scans: {card.scan_count}</span>
                         {card.last_scanned_at && (
-                          <span className="truncate">
-                            Last: {formatDistanceToNow(new Date(card.last_scanned_at), { addSuffix: true })}
-                          </span>
+                          <span>Last: {formatDistanceToNow(new Date(card.last_scanned_at), { addSuffix: true })}</span>
                         )}
                       </div>
                     </div>

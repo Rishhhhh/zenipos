@@ -175,14 +175,34 @@ export function useWidgetConfig<T extends BaseWidgetConfig = WidgetConfig>(widge
   
   const [config, setConfig] = useState<T>(() => {
     const saved = localStorage.getItem(storageKey);
+    const defaultConfig = getDefaultConfig(widgetId) as T;
+    
     if (saved) {
       try {
-        return JSON.parse(saved) as T;
+        const parsed = JSON.parse(saved);
+        // Merge with defaults to ensure all required fields exist
+        const merged: any = {
+          ...defaultConfig,
+          ...parsed,
+        };
+        
+        // Ensure nested objects are properly merged if they exist
+        if (parsed.goalTracking && 'goalTracking' in defaultConfig) {
+          merged.goalTracking = { ...(defaultConfig as any).goalTracking, ...parsed.goalTracking };
+        }
+        if (parsed.alertThreshold && 'alertThreshold' in defaultConfig) {
+          merged.alertThreshold = { ...(defaultConfig as any).alertThreshold, ...parsed.alertThreshold };
+        }
+        if (parsed.thresholds && 'thresholds' in defaultConfig) {
+          merged.thresholds = { ...(defaultConfig as any).thresholds, ...parsed.thresholds };
+        }
+        
+        return merged as T;
       } catch {
-        return getDefaultConfig(widgetId) as T;
+        return defaultConfig;
       }
     }
-    return getDefaultConfig(widgetId) as T;
+    return defaultConfig;
   });
   
   const saveConfig = useCallback((newConfig: T) => {

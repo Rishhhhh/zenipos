@@ -30,20 +30,27 @@ export default memo(function ActiveShifts() {
   const isGridMode = config.viewMode === 'grid';
   const isCompact = isGridMode;
   
-  const { data: activeShifts, isLoading, refetch } = useQuery({
+  const { data: activeShifts, isLoading, error, refetch } = useQuery({
     queryKey: ["active-shifts", isGridMode],
     queryFn: async () => {
+      console.log('[ActiveShifts] Fetching data...');
+      
       const { data, error } = await supabase
         .from("shifts")
         .select(`
           *,
-          employees (name, pay_rate)
+          employees!inner (name, pay_rate)
         `)
         .eq("status", "active")
         .order("clock_in_at", { ascending: false })
         .limit(isGridMode ? 6 : 20);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ActiveShifts] Query error:', error);
+        throw error;
+      }
+      
+      console.log('[ActiveShifts] Data fetched:', data?.length, 'shifts');
 
       return data?.map(shift => {
         const clockInTime = new Date(shift.clock_in_at);
@@ -58,6 +65,8 @@ export default memo(function ActiveShifts() {
       });
     },
     refetchInterval: config.refreshInterval * 1000,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const totalLaborCost = useMemo(() => activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0, [activeShifts]);
@@ -131,6 +140,24 @@ export default memo(function ActiveShifts() {
       </div>
     );
   });
+
+  if (error) {
+    return (
+      <Card className="glass-card p-4 w-full h-full flex flex-col">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <UserCircle className="h-12 w-12 mx-auto mb-4 text-destructive opacity-50" />
+            <p className="text-sm text-destructive font-semibold">Failed to load shifts</p>
+            <p className="text-xs text-muted-foreground mt-2">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm" className="mt-4">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (isGridMode) {
     return (

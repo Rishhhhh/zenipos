@@ -20,28 +20,53 @@ export default memo(function Sales() {
     queryClient.invalidateQueries({ queryKey: ["today-sales"] });
   });
   
+  const getComparisonDate = useCallback(() => {
+    const today = startOfDay(new Date());
+    switch (config.comparisonPeriod) {
+      case 'lastWeek':
+        return subDays(today, 7);
+      case 'lastMonth':
+        return subDays(today, 30);
+      default: // 'yesterday'
+        return subDays(today, 1);
+    }
+  }, [config.comparisonPeriod]);
+
   const { data: todayStats, isLoading, refetch } = useQuery({
-    queryKey: ["today-sales"],
+    queryKey: ["today-sales", config.comparisonPeriod],
     queryFn: async () => {
+      console.log('[Sales Widget] Fetching data...');
       const today = startOfDay(new Date());
-      const yesterday = startOfDay(subDays(new Date(), 1));
+      const comparisonDate = getComparisonDate();
 
       const { data: todayOrders, error: todayError } = await supabase
         .from("orders")
-        .select("total, order_items(quantity)")
+        .select("total, order_items(quantity), status")
         .gte("created_at", today.toISOString())
         .in("status", ["done", "preparing", "pending"]);
 
-      if (todayError) throw todayError;
+      if (todayError) {
+        console.error('[Sales Widget] Today query error:', todayError);
+        throw todayError;
+      }
 
-      const { data: yesterdayOrders, error: yesterdayError } = await supabase
+      console.log('[Sales Widget] Today orders:', {
+        total: todayOrders?.length,
+        statuses: todayOrders?.map(o => o.status),
+        revenue: todayOrders?.reduce((sum, o) => sum + o.total, 0)
+      });
+
+      const { data: comparisonOrders, error: comparisonError } = await supabase
         .from("orders")
         .select("total")
-        .gte("created_at", yesterday.toISOString())
+        .gte("created_at", comparisonDate.toISOString())
         .lt("created_at", today.toISOString())
         .in("status", ["done"]);
 
-      if (yesterdayError) throw yesterdayError;
+      if (comparisonError) {
+        console.error('[Sales Widget] Comparison query error:', comparisonError);
+        throw comparisonError;
+      }
 
       const todayRevenue = todayOrders?.reduce((sum, order) => sum + order.total, 0) || 0;
       const todayOrderCount = todayOrders?.length || 0;
@@ -51,15 +76,17 @@ export default memo(function Sales() {
         0
       ) || 0;
 
-      const yesterdayRevenue = yesterdayOrders?.reduce((sum, order) => sum + order.total, 0) || 0;
-      const yesterdayOrderCount = yesterdayOrders?.length || 0;
+      const comparisonRevenue = comparisonOrders?.reduce((sum, order) => sum + order.total, 0) || 0;
+      const comparisonOrderCount = comparisonOrders?.length || 0;
 
-      const revenueTrend = yesterdayRevenue > 0 
-        ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100 
+      const revenueTrend = comparisonRevenue > 0 
+        ? ((todayRevenue - comparisonRevenue) / comparisonRevenue) * 100 
         : 0;
-      const orderTrend = yesterdayOrderCount > 0 
-        ? ((todayOrderCount - yesterdayOrderCount) / yesterdayOrderCount) * 100 
+      const orderTrend = comparisonOrderCount > 0 
+        ? ((todayOrderCount - comparisonOrderCount) / comparisonOrderCount) * 100 
         : 0;
+
+      console.log('[Sales Widget] Stats calculated:', { todayRevenue, todayOrderCount, todayItemCount });
 
       return {
         revenue: todayRevenue,
@@ -69,7 +96,7 @@ export default memo(function Sales() {
         orderTrend,
       };
     },
-    refetchInterval: 60000, // Fallback polling
+    refetchInterval: config.refreshInterval * 1000,
   });
 
   const handleRefetch = useCallback(() => {
@@ -99,65 +126,107 @@ export default memo(function Sales() {
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
         {isLoading ? (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={cn(
-                  "rounded-lg animate-shimmer",
-                  config.compactMode ? "h-[52px]" : "h-[68px]"
+                  "rounded-lg animate-shimmer bg-muted/30",
+                  config.compactMode ? "h-[58px]" : "h-[72px]"
                 )}
               />
             ))}
           </div>
         ) : config.displayType === 'table' ? (
-          <div className="space-y-2 h-full overflow-y-auto animate-fade-in-content">
-          <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
-            <div>
-              <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Revenue</p>
-              <p className={cn("font-bold text-primary", config.compactMode ? "text-lg" : "text-2xl")}>
-                RM {todayStats?.revenue.toFixed(2) || "0.00"}
+          <div className="space-y-2.5 animate-fade-in">
+          <div className={cn(
+            "flex items-center justify-between bg-accent/30 rounded-lg",
+            config.compactMode ? "p-2.5" : "p-3.5"
+          )}>
+            <div className="flex-1 min-w-0">
+              <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>
+                Revenue
+              </p>
+              <p className={cn(
+                "font-bold text-primary truncate",
+                config.compactMode ? "text-base" : "text-xl"
+              )}>
+                RM {revenue.toFixed(2)}
               </p>
             </div>
-            <div className="flex items-center gap-1 text-sm">
-              {(todayStats?.revenueTrend || 0) >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-success" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-danger" />
-              )}
-              <span className={cn((todayStats?.revenueTrend || 0) >= 0 ? "text-success" : "text-danger")}>
-                {Math.abs(todayStats?.revenueTrend || 0).toFixed(1)}%
-              </span>
-            </div>
+            {config.showTrends && (
+              <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                {revenueTrend >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-success" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-danger" />
+                )}
+                <span className={cn(
+                  "font-semibold",
+                  revenueTrend >= 0 ? "text-success" : "text-danger"
+                )}>
+                  {Math.abs(revenueTrend).toFixed(1)}%
+                </span>
+              </div>
+            )}
           </div>
-          <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
-            <div>
+          <div className={cn(
+            "flex items-center justify-between bg-accent/30 rounded-lg",
+            config.compactMode ? "p-2.5" : "p-3.5"
+          )}>
+            <div className="flex-1 min-w-0">
               <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Orders</p>
-              <p className={cn("font-bold", config.compactMode ? "text-lg" : "text-2xl")}>
-                {todayStats?.orders || 0}
+              <p className={cn("font-bold truncate", config.compactMode ? "text-base" : "text-xl")}>
+                {orders}
               </p>
             </div>
-            <div className="flex items-center gap-1 text-sm">
-              {(todayStats?.orderTrend || 0) >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-success" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-danger" />
-              )}
-              <span className={cn((todayStats?.orderTrend || 0) >= 0 ? "text-success" : "text-danger")}>
-                {Math.abs(todayStats?.orderTrend || 0).toFixed(1)}%
-              </span>
-            </div>
+            {config.showTrends && (
+              <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                {orderTrend >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-success" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-danger" />
+                )}
+                <span className={cn(
+                  "font-semibold",
+                  orderTrend >= 0 ? "text-success" : "text-danger"
+                )}>
+                  {Math.abs(orderTrend).toFixed(1)}%
+                </span>
+              </div>
+            )}
           </div>
-          <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
-            <div>
+          <div className={cn(
+            "flex items-center justify-between bg-accent/30 rounded-lg",
+            config.compactMode ? "p-2.5" : "p-3.5"
+          )}>
+            <div className="flex-1 min-w-0">
               <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Items Sold</p>
-              <p className={cn("font-bold", config.compactMode ? "text-lg" : "text-2xl")}>
-                {todayStats?.items || 0}
+              <p className={cn("font-bold truncate", config.compactMode ? "text-base" : "text-xl")}>
+                {items}
               </p>
             </div>
           </div>
+
+          {config.goalTracking?.enabled && config.goalTracking.dailyTarget > 0 && (
+            <div className="mt-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-muted-foreground">Daily Goal</span>
+                <span className="text-sm font-bold text-primary">RM {config.goalTracking.dailyTarget}</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${Math.min((revenue / config.goalTracking.dailyTarget) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {((revenue / config.goalTracking.dailyTarget) * 100).toFixed(1)}% of goal
+              </p>
+            </div>
+          )}
         </div>
         ) : (
           <div className="grid grid-cols-3 gap-4 h-full animate-fade-in-content">

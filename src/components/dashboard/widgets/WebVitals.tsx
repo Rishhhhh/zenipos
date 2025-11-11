@@ -22,14 +22,29 @@ interface MetricCardProps {
 function MetricCard({ icon: Icon, name, value, unit, threshold, compactMode }: MetricCardProps) {
   const isGood = value <= threshold;
   return (
-    <div className={cn("flex flex-col items-center justify-center rounded-lg bg-muted/30 border border-border/50", compactMode ? "w-[88px] h-[88px] p-2" : "w-[96px] h-[96px] p-2.5")}>
-      <Icon className={cn("text-muted-foreground mb-1", compactMode ? "h-4 w-4" : "h-5 w-5")} />
-      <p className={cn("font-medium text-muted-foreground mb-0.5", compactMode ? "text-[10px]" : "text-[11px]")}>{name}</p>
-      <div className="flex items-center gap-1">
-        <span className={cn("font-bold", compactMode ? "text-base" : "text-lg", isGood ? "text-success" : "text-destructive")}>{unit === '' ? value.toFixed(3) : Math.round(value)}</span>
-        <span className={cn("text-muted-foreground", compactMode ? "text-[9px]" : "text-[10px]")}>{unit}</span>
+    <div className={cn(
+      "flex flex-col items-center justify-center rounded-lg bg-muted/30 border border-border/50",
+      compactMode ? "p-3 min-h-[90px]" : "p-4 min-h-[100px]"
+    )}>
+      <Icon className={cn("text-muted-foreground mb-2", compactMode ? "h-5 w-5" : "h-6 w-6")} />
+      <p className={cn("font-medium text-muted-foreground mb-1", compactMode ? "text-xs" : "text-sm")}>
+        {name}
+      </p>
+      <div className="flex items-baseline gap-1">
+        <span className={cn(
+          "font-bold",
+          compactMode ? "text-xl" : "text-2xl",
+          isGood ? "text-success" : "text-destructive"
+        )}>
+          {unit === '' ? value.toFixed(3) : Math.round(value)}
+        </span>
+        {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
       </div>
-      <div className={cn("rounded-full mt-1", compactMode ? "w-1.5 h-1.5" : "w-2 h-2", isGood ? "bg-success" : "bg-destructive")} />
+      <div className={cn(
+        "rounded-full mt-2",
+        compactMode ? "w-2 h-2" : "w-2.5 h-2.5",
+        isGood ? "bg-success" : "bg-destructive"
+      )} />
     </div>
   );
 }
@@ -87,17 +102,47 @@ export default memo(function WebVitals() {
         )}
       </div>
 
-      <div className="flex-1 flex items-center justify-center min-h-[200px]">
+      <div className="flex-1 flex items-center justify-center min-h-[220px]">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-2">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className={cn("rounded", config.compactMode ? "w-[88px] h-[88px]" : "w-[96px] h-[96px]")} />)}
+          <div className="grid grid-cols-2 gap-3 w-full">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="w-full h-[100px] rounded-lg" />
+            ))}
           </div>
         ) : (
-          <div className={cn("grid grid-cols-2 auto-rows-min", config.compactMode ? "gap-2" : "gap-2.5")}>
-            <MetricCard icon={Activity} name="LCP" value={avgMetrics.lcp} unit="ms" threshold={config.thresholds.lcp} compactMode={config.compactMode} />
-            <MetricCard icon={MousePointer} name="FID" value={avgMetrics.fid} unit="ms" threshold={config.thresholds.fid} compactMode={config.compactMode} />
-            <MetricCard icon={LayoutGrid} name="CLS" value={avgMetrics.cls} unit="" threshold={config.thresholds.cls} compactMode={config.compactMode} />
-            <MetricCard icon={TrendingUp} name="TTI" value={avgMetrics.tti} unit="ms" threshold={config.thresholds.tti} compactMode={config.compactMode} />
+          <div className="grid grid-cols-2 gap-3 w-full max-w-[420px]">
+            <MetricCard
+              icon={Activity}
+              name="LCP"
+              value={avgMetrics.lcp}
+              unit="ms"
+              threshold={config.thresholds.lcp}
+              compactMode={config.compactMode}
+            />
+            <MetricCard
+              icon={MousePointer}
+              name="FID"
+              value={avgMetrics.fid}
+              unit="ms"
+              threshold={config.thresholds.fid}
+              compactMode={config.compactMode}
+            />
+            <MetricCard
+              icon={LayoutGrid}
+              name="CLS"
+              value={avgMetrics.cls}
+              unit=""
+              threshold={config.thresholds.cls}
+              compactMode={config.compactMode}
+            />
+            <MetricCard
+              icon={TrendingUp}
+              name="TTI"
+              value={avgMetrics.tti}
+              unit="ms"
+              threshold={config.thresholds.tti}
+              compactMode={config.compactMode}
+            />
           </div>
         )}
       </div>
