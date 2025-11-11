@@ -329,7 +329,7 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
       ['sales', 'sales', 'revenue', 'revenue'],
       ['orders', 'shifts', 'revenue', 'revenue'],
       ['labor', 'top-items', 'top-items', 'loyalty'],
-      ['low-stock', 'pending-mods', 'eighty-six', 'web-vitals']
+      ['low-stock', 'web-vitals', 'web-vitals', 'web-vitals']
     ]
   },
   widgets: [
@@ -390,23 +390,9 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'pending-mods',
-      area: 'pending-mods',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'eighty-six',
-      area: 'eighty-six',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'web-vitals',
       area: 'web-vitals',
-      colSpan: 1,
+      colSpan: 3,
       rowSpan: 1,
       isMinimized: false
     }
@@ -426,7 +412,7 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
       ['orders', 'shifts'],
       ['labor', 'top-items'],
       ['low-stock', 'loyalty'],
-      ['pending-mods', 'web-vitals']
+      ['web-vitals', 'web-vitals']
     ]
   },
   widgets: [
@@ -487,16 +473,9 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'pending-mods',
-      area: 'pending-mods',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'web-vitals',
       area: 'web-vitals',
-      colSpan: 1,
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     }
@@ -507,7 +486,7 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
   role: 'owner',
   gridTemplate: {
     columns: '1fr',
-    rows: 'repeat(10, minmax(200px, auto))',
+    rows: 'repeat(9, minmax(200px, auto))',
     gap: '0.75rem',
     minHeight: 'auto',
     areas: [
@@ -519,7 +498,6 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
       ['top-items'],
       ['low-stock'],
       ['loyalty'],
-      ['pending-mods'],
       ['web-vitals']
     ]
   },
@@ -576,13 +554,6 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
     {
       id: 'loyalty-stats',
       area: 'loyalty',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'pending-mods',
-      area: 'pending-mods',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false
