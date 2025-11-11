@@ -2,13 +2,12 @@ import { useState, Suspense, lazy } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { WidgetLibrary } from "@/components/dashboard/WidgetLibrary";
 import { WidgetConfigModal } from "@/components/dashboard/WidgetConfigModal";
-import { GestureHints } from "@/components/dashboard/GestureHints";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
-import { useWidgetLayout } from "@/lib/widgets/useWidgetLayout";
+import { useBentoLayout } from "@/lib/widgets/useBentoLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const DraggableDashboard = lazy(() => import("@/components/dashboard/DraggableDashboard"));
+const BentoDashboard = lazy(() => import("@/components/dashboard/BentoDashboard"));
 
 export default function Dashboard() {
   const { employee } = useAuth();
@@ -16,7 +15,7 @@ export default function Dashboard() {
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
   
-  const { layout, addWidget, resetLayout } = useWidgetLayout();
+  const { activeWidgets, addWidget, resetLayout } = useBentoLayout(userRole, 'desktop');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-secondary/5 pb-24">
@@ -55,13 +54,13 @@ export default function Dashboard() {
       {/* Canvas spans full viewport width */}
       <div className="px-4 md:px-6">
         <Suspense fallback={<Skeleton className="w-full h-[600px] rounded-lg" />}>
-          <DraggableDashboard onConfigure={setConfigModalWidget} />
+          <BentoDashboard onConfigure={setConfigModalWidget} />
         </Suspense>
 
         {/* Help Text */}
         <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Press and hold (0.35s) to drag widgets • Auto-snaps to grid</p>
-          <p>Click maximize for full-screen • Press Escape to restore</p>
+          <p>Widgets arranged in optimized bento grid layout for your role</p>
+          <p>Click configure to customize • Click widget to open full view</p>
         </div>
       </div>
 
@@ -70,7 +69,7 @@ export default function Dashboard() {
         open={showWidgetLibrary}
         onOpenChange={setShowWidgetLibrary}
         userRole={userRole}
-        activeWidgets={layout.widgetOrder}
+        activeWidgets={activeWidgets}
         onAddWidget={addWidget}
       />
 
@@ -81,8 +80,6 @@ export default function Dashboard() {
         onOpenChange={(open) => !open && setConfigModalWidget(null)}
       />
 
-      {/* Touch Gesture Hints */}
-      <GestureHints />
     </div>
   );
 }
