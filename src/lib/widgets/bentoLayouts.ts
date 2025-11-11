@@ -142,7 +142,7 @@ export const MANAGER_DESKTOP_LAYOUT: BentoLayout = {
     areas: [
       ['sales', 'sales', 'orders', 'shifts'],
       ['revenue', 'revenue', 'orders', 'labor'],
-      ['low-stock', 'top-items', 'top-items', 'pending-mods']
+      ['top-items', 'top-items', 'top-items', 'top-items']
     ]
   },
   widgets: [
@@ -182,23 +182,9 @@ export const MANAGER_DESKTOP_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'low-stock',
-      area: 'low-stock',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'top-items',
       area: 'top-items',
-      colSpan: 2,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'pending-mods',
-      area: 'pending-mods',
-      colSpan: 1,
+      colSpan: 4,
       rowSpan: 1,
       isMinimized: false
     }
@@ -216,7 +202,7 @@ export const MANAGER_TABLET_LAYOUT: BentoLayout = {
       ['sales', 'sales'],
       ['orders', 'shifts'],
       ['revenue', 'revenue'],
-      ['labor', 'low-stock'],
+      ['labor', 'labor'],
       ['top-items', 'top-items']
     ]
   },
@@ -252,14 +238,7 @@ export const MANAGER_TABLET_LAYOUT: BentoLayout = {
     {
       id: 'labor-cost',
       area: 'labor',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'low-stock',
-      area: 'low-stock',
-      colSpan: 1,
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     },
@@ -277,7 +256,7 @@ export const MANAGER_MOBILE_LAYOUT: BentoLayout = {
   role: 'manager',
   gridTemplate: {
     columns: '1fr',
-    rows: 'repeat(7, minmax(200px, auto))',
+    rows: 'repeat(6, minmax(200px, auto))',
     gap: '0.75rem',
     minHeight: 'auto',
     areas: [
@@ -286,7 +265,6 @@ export const MANAGER_MOBILE_LAYOUT: BentoLayout = {
       ['revenue'],
       ['shifts'],
       ['labor'],
-      ['low-stock'],
       ['top-items']
     ]
   },
@@ -322,13 +300,6 @@ export const MANAGER_MOBILE_LAYOUT: BentoLayout = {
     {
       id: 'labor-cost',
       area: 'labor',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'low-stock',
-      area: 'low-stock',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false
