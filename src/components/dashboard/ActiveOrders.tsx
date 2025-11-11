@@ -11,6 +11,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import * as ReactWindow from 'react-window';
+
 const VariableSizeList = (ReactWindow as any).VariableSizeList;
 
 interface OrderRowProps {

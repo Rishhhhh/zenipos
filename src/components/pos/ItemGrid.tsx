@@ -9,6 +9,7 @@ import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 import { memo, useCallback, useState, useEffect, useRef, useMemo } from "react";
 import * as ReactWindow from "react-window";
+
 const FixedSizeGrid = (ReactWindow as any).FixedSizeGrid;
 
 // Custom hook for container dimensions using ResizeObserver
