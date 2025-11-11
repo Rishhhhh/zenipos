@@ -12,7 +12,6 @@ interface BentoWidgetProps {
   isMinimized: boolean;
   onMinimize: () => void;
   onConfigure: () => void;
-  onClose: () => void;
 }
 
 // Widget-specific error boundary
@@ -61,7 +60,6 @@ export function BentoWidget({
   isMinimized,
   onMinimize,
   onConfigure,
-  onClose,
 }: BentoWidgetProps) {
   const navigate = useNavigate();
   const widgetDef = getWidgetById(widgetId);
@@ -102,7 +100,6 @@ export function BentoWidget({
         isMinimized={isMinimized}
         onMinimize={onMinimize}
         onConfigure={onConfigure}
-        onClose={onClose}
         onNavigateToModule={handleNavigateToModule}
       />
 

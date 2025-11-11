@@ -31,7 +31,7 @@ export default function BentoDashboard({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { widgetStates, toggleMinimize, removeWidget } = useBentoLayout(role, breakpoint);
+  const { widgetStates, toggleMinimize } = useBentoLayout(role, breakpoint);
 
   // Get layout for current role and breakpoint
   const layout = useMemo(() => 
@@ -64,7 +64,6 @@ export default function BentoDashboard({
           isMinimized={widgetStates[widget.id]?.isMinimized || false}
           onMinimize={() => toggleMinimize(widget.id)}
           onConfigure={() => onConfigure(widget.id)}
-          onClose={() => removeWidget(widget.id)}
         />
       ))}
     </div>

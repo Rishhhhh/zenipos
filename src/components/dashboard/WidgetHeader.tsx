@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Minimize2, Maximize2, X, Settings, LayoutDashboard, MoreVertical, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { getWidgetById } from "@/lib/widgets/widgetCatalog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Minimize2, Maximize2, Settings, MoreVertical, ExternalLink } from "lucide-react";
 
 interface WidgetHeaderProps {
   widgetId: string;
@@ -10,7 +8,6 @@ interface WidgetHeaderProps {
   isMinimized: boolean;
   onMinimize: () => void;
   onNavigateToModule: () => void;
-  onClose: () => void;
   onConfigure: () => void;
 }
 
@@ -20,7 +17,6 @@ export function WidgetHeader({
   isMinimized,
   onMinimize,
   onNavigateToModule,
-  onClose,
   onConfigure,
 }: WidgetHeaderProps) {
   return (

@@ -84,40 +84,10 @@ export function useBentoLayout(role: 'staff' | 'manager' | 'owner', breakpoint: 
     }));
   };
 
-  const addWidget = (widgetId: string) => {
-    setState(prev => {
-      if (prev.activeWidgets.includes(widgetId)) {
-        return prev;
-      }
-      return {
-        ...prev,
-        activeWidgets: [...prev.activeWidgets, widgetId],
-        widgetStates: {
-          ...prev.widgetStates,
-          [widgetId]: { isMinimized: false },
-        },
-      };
-    });
-  };
-
-  const removeWidget = (widgetId: string) => {
-    setState(prev => ({
-      ...prev,
-      activeWidgets: prev.activeWidgets.filter(id => id !== widgetId),
-    }));
-  };
-
-  const resetLayout = () => {
-    setState(getDefaultBentoState(role, breakpoint));
-  };
-
   return {
     widgetStates: state.widgetStates,
     activeWidgets: state.activeWidgets,
     toggleMinimize,
     updateConfig,
-    addWidget,
-    removeWidget,
-    resetLayout,
   };
 }
