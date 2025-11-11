@@ -8,6 +8,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
+import { FixedSizeList } from 'react-window';
+
+interface CustomerRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    customers: any[];
+    getMedalIcon: (index: number) => any;
+    compactMode: boolean;
+  };
+}
 
 export default memo(function LoyaltyStats() {
   const { config } = useWidgetConfig<LoyaltyStatsConfig>('loyalty-stats');
@@ -52,6 +63,23 @@ export default memo(function LoyaltyStats() {
     return { emoji: "🏅", color: "text-muted-foreground" };
   }, []);
 
+  const CustomerRow = memo(({ index, style, data }: CustomerRowProps) => {
+    const customer = data.customers[index];
+    const medal = data.getMedalIcon(index);
+    
+    return (
+      <div style={{ ...style, paddingBottom: '6px' }}>
+        <div className={cn("flex items-center justify-between rounded-lg border bg-card/50 h-10", data.compactMode ? "px-2 py-1.5" : "px-3 py-2")}>
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <span className={cn("flex-shrink-0", data.compactMode ? "text-base" : "text-lg")}>{medal.emoji}</span>
+            <p className={cn("font-semibold line-clamp-1", data.compactMode ? "text-[13px]" : "text-sm")}>{customer.name || "Unknown"}</p>
+          </div>
+          <p className={cn("font-bold text-primary flex-shrink-0 ml-2", data.compactMode ? "text-base" : "text-lg")}>{customer.loyalty_points.toLocaleString()}</p>
+        </div>
+      </div>
+    );
+  });
+
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
       <div className="flex items-center justify-between mb-3">
@@ -91,20 +119,19 @@ export default memo(function LoyaltyStats() {
                   <p className="text-xs">No customers yet</p>
                 </div>
               ) : (
-                <div className="space-y-1.5 overflow-y-auto max-h-[160px]">
-                  {stats.topCustomers.slice(0, config.compactMode ? 5 : 10).map((customer, index) => {
-                    const medal = getMedalIcon(index);
-                    return (
-                      <div key={index} className={cn("flex items-center justify-between rounded-lg border bg-card/50 h-10", config.compactMode ? "px-2 py-1.5" : "px-3 py-2")}>
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <span className={cn("flex-shrink-0", config.compactMode ? "text-base" : "text-lg")}>{medal.emoji}</span>
-                          <p className={cn("font-semibold line-clamp-1", config.compactMode ? "text-[13px]" : "text-sm")}>{customer.name || "Unknown"}</p>
-                        </div>
-                        <p className={cn("font-bold text-primary flex-shrink-0 ml-2", config.compactMode ? "text-base" : "text-lg")}>{customer.loyalty_points.toLocaleString()}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                <FixedSizeList
+                  height={160}
+                  itemCount={stats.topCustomers.slice(0, config.compactMode ? 5 : 10).length}
+                  itemSize={46}
+                  width="100%"
+                  itemData={{
+                    customers: stats.topCustomers.slice(0, config.compactMode ? 5 : 10),
+                    getMedalIcon,
+                    compactMode: config.compactMode
+                  }}
+                >
+                  {CustomerRow}
+                </FixedSizeList>
               )}
             </div>
           </>
