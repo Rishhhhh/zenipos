@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, ArrowLeft } from 'lucide-react';
 import { CategoryDragList } from '@/components/admin/CategoryDragList';
 import { MenuItemsTable } from '@/components/admin/MenuItemsTable';
+import { BulkImageGenerator } from '@/components/admin/BulkImageGenerator';
 import { Link } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
@@ -52,7 +53,7 @@ export default function MenuManagement() {
   });
 
   // Fetch menu items with station info
-  const { data: menuItems = [], isLoading: itemsLoading } = useQuery({
+  const { data: menuItems = [], isLoading: itemsLoading, refetch: refetchItems } = useQuery({
     queryKey: ['menuItems', selectedCategoryId, debouncedSearch],
     queryFn: async () => {
       let query = supabase
@@ -146,6 +147,13 @@ export default function MenuManagement() {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
+        <div className="p-4">
+          <BulkImageGenerator 
+            menuItems={menuItems} 
+            onComplete={() => refetchItems()} 
+          />
+        </div>
+        
         <ResizablePanelGroup direction="horizontal">
           {/* Categories Sidebar */}
           <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
