@@ -55,25 +55,11 @@ export function LoyaltyStatsWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[360px] h-[300px]",
-      config.compactMode ? "p-3" : "p-5"
+      "glass-card flex flex-col w-full h-full",
+      config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className={cn(
-        "flex items-center justify-between",
-        config.compactMode ? "mb-2" : "mb-4"
-      )}>
-        <div className="flex items-center gap-2">
-          <Award className={cn(
-            "text-primary",
-            config.compactMode ? "h-4 w-4" : "h-5 w-5"
-          )} />
-          <h3 className={cn(
-            "font-semibold",
-            config.compactMode ? "text-base" : "text-lg"
-          )}>
-            {config.compactMode ? "Loyalty" : "Loyalty Stats"}
-          </h3>
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-end mb-3">
       </div>
 
       <div className={cn(
@@ -123,30 +109,24 @@ export function LoyaltyStatsWidget() {
               </div>
             </div>
 
-            {/* Top Customers - COMPACT DESIGN */}
-            {stats?.topCustomers && stats.topCustomers.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <h4 className={cn(
-                    "font-semibold",
-                    config.compactMode ? "text-xs" : "text-sm"
-                  )}>
-                    {config.compactMode ? `Top ${config.topNCustomers}` : "Top Customers"}
-                  </h4>
-                </div>
-                <div className={cn(
-                  "space-y-2 overflow-y-auto",
-                  config.compactMode ? "max-h-[124px]" : "max-h-[144px]"
-                )}>
-                  {stats.topCustomers.map((customer, index) => {
+            {/* Top Customers */}
+            <div className="flex-1 min-h-0 space-y-2">
+              <h4 className={cn(
+                "font-medium text-muted-foreground mb-2",
+                config.compactMode ? "text-xs" : "text-sm"
+              )}>
+                Top Customers
+              </h4>
+              {stats?.topCustomers && stats.topCustomers.length > 0 ? (
+                <div className="space-y-1.5 overflow-y-auto max-h-[160px]">
+                  {stats.topCustomers.slice(0, config.compactMode ? 5 : 10).map((customer, index) => {
                     const medal = getMedalIcon(index);
                     return (
                       <div
                         key={index}
                         className={cn(
-                          "flex items-center justify-between rounded-lg border bg-card/50 transition-all hover:bg-card",
-                          config.compactMode ? "px-2.5 py-2 h-[40px]" : "px-3 py-2.5 h-[48px]"
+                          "flex items-center justify-between rounded-lg border bg-card/50 h-10",
+                          config.compactMode ? "px-2 py-1.5" : "px-3 py-2"
                         )}
                       >
                         <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -173,8 +153,13 @@ export function LoyaltyStatsWidget() {
                     );
                   })}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-center h-20 text-muted-foreground">
+                  <Users className="h-6 w-6 mr-2 opacity-50" />
+                  <p className="text-xs">No customers yet</p>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

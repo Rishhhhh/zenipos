@@ -173,13 +173,9 @@ export function ActiveOrdersWidget() {
   };
 
   return (
-    <Card className={cn("glass-card h-full flex flex-col", config.compactMode ? "p-3" : "p-5")}>
+    <Card className={cn("glass-card w-full h-full flex flex-col", config.compactMode ? "p-3" : "p-4")}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <ChefHat className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">Active Orders</h3>
-        </div>
+      <div className="flex items-center justify-end mb-3">
         {filteredOrders && filteredOrders.length > 0 && (
           <Badge variant="default" className="bg-warning/20 text-warning">
             {filteredOrders.length}
@@ -188,11 +184,11 @@ export function ActiveOrdersWidget() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto mb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto mb-3">
         {!filteredOrders || filteredOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <ChefHat className="h-12 w-12 mb-2 opacity-50" />
-            <p className="text-sm">No active orders</p>
+          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+            <ChefHat className="h-8 w-8 mb-1 opacity-50" />
+            <p className="text-xs">No active orders</p>
           </div>
         ) : config.viewMode === 'kanban' ? (
           /* Kanban View */

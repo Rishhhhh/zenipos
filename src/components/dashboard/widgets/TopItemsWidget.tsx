@@ -66,38 +66,25 @@ export function TopItemsWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[360px] h-[300px]",
-      config.compactMode ? "p-3" : "p-5"
+      "glass-card flex flex-col w-full h-full",
+      config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className={cn(
-        "flex items-center gap-2",
-        config.compactMode ? "mb-2" : "mb-4"
-      )}>
-        <Trophy className={cn(
-          "text-primary",
-          config.compactMode ? "h-4 w-4" : "h-5 w-5"
-        )} />
-        <h3 className={cn(
-          "font-semibold",
-          config.compactMode ? "text-base" : "text-lg"
-        )}>
-          Top Selling Items
-        </h3>
+      {/* Header */}
+      <div className="flex items-center justify-end mb-3">
       </div>
 
-      <div className="h-[240px] overflow-y-auto space-y-2.5">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
         {isLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))
         ) : topItems && topItems.length > 0 ? (
-          <div className="space-y-2.5">
-            {topItems.slice(0, config.topN).map((item, index) => (
-              <div 
-                key={index} 
-                className={cn(
-                  "bg-gradient-to-r rounded-lg border transition-all hover:shadow-md",
-                  config.compactMode ? "p-2" : "p-3",
+          topItems.slice(0, config.compactMode ? 4 : 5).map((item, index) => (
+            <div 
+              key={index} 
+              className={cn(
+                "bg-gradient-to-r rounded-lg border transition-all hover:shadow-md h-[48px]",
+                config.compactMode ? "p-2" : "p-2.5",
                   index === 0 ? "from-yellow-500/10 to-transparent border-yellow-500/30" :
                   index === 1 ? "from-gray-400/10 to-transparent border-gray-400/30" :
                   index === 2 ? "from-amber-600/10 to-transparent border-amber-600/30" :
@@ -163,8 +150,7 @@ export function TopItemsWidget() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <TrendingUp className="h-12 w-12 mb-2 opacity-50" />

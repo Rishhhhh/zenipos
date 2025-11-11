@@ -57,20 +57,14 @@ export function LaborCostWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[240px] h-[240px]",
+      "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-2.5" : "p-3"
     )}>
       {/* Header */}
       <div className={cn(
-        "flex items-center justify-between",
+        "flex items-center justify-end",
         config.compactMode ? "mb-2" : "mb-3"
       )}>
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-base">
-            {config.compactMode ? "Labor" : "Labor Cost"}
-          </h3>
-        </div>
         <Button
           onClick={() => refetch()}
           variant="ghost"

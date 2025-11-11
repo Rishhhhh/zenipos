@@ -71,26 +71,11 @@ export function SalesWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[360px] h-[300px]",
-      config.compactMode ? "p-3" : "p-5"
+      "glass-card flex flex-col w-full h-full",
+      config.compactMode ? "p-3" : "p-4"
     )}>
       {/* Header */}
-      <div className={cn(
-        "flex items-center justify-between",
-        config.compactMode ? "mb-2" : "mb-4"
-      )}>
-        <div className="flex items-center gap-2">
-          <DollarSign className={cn(
-            "text-primary",
-            config.compactMode ? "h-4 w-4" : "h-5 w-5"
-          )} />
-          <h3 className={cn(
-            "font-semibold",
-            config.compactMode ? "text-base" : "text-lg"
-          )}>
-            Today's Sales
-          </h3>
-        </div>
+      <div className="flex items-center justify-end mb-2">
         <Button
           onClick={() => refetch()}
           variant="ghost"

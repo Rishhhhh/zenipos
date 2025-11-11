@@ -52,26 +52,14 @@ export function LowStockWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[240px] h-[240px]",
+      "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-2" : "p-3"
     )}>
       {/* Header */}
       <div className={cn(
-        "flex items-center justify-between",
+        "flex items-center justify-end",
         config.compactMode ? "mb-2" : "mb-3"
       )}>
-        <div className="flex items-center gap-1.5">
-          <AlertTriangle className={cn(
-            "text-warning",
-            config.compactMode ? "h-3.5 w-3.5" : "h-4 w-4"
-          )} />
-          <h3 className={cn(
-            "font-semibold",
-            config.compactMode ? "text-xs" : "text-sm"
-          )}>
-            Low Stock
-          </h3>
-        </div>
         {lowStockItems && lowStockItems.length > 0 && (
           <Badge 
             variant="outline" 

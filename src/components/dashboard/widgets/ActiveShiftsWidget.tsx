@@ -27,7 +27,7 @@ export function ActiveShiftsWidget() {
         `)
         .eq("status", "active")
         .order("clock_in_at", { ascending: false })
-        .limit(isGridMode ? 6 : 50);
+        .limit(isGridMode ? 6 : 20);
 
       if (error) throw error;
 
@@ -57,29 +57,25 @@ export function ActiveShiftsWidget() {
     return { bg: "bg-success/10", text: "text-success", border: "border-success/30" };
   };
 
-  // GRID MODE - Ultra compact avatar grid (240×240px)
+  // GRID MODE - Ultra compact avatar grid
   if (isGridMode) {
     return (
-      <Card className="glass-card p-3 w-[240px] h-[240px] flex flex-col">
-        {/* Compact Header */}
-        <div className="flex items-center justify-between mb-3">
+      <Card className="glass-card p-4 w-full h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-end mb-2">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-base">Active</h3>
-            {activeShifts && activeShifts.length > 0 && (
-              <Badge variant="secondary" className="h-5 text-xs px-1.5">
-                {activeShifts.length}
-              </Badge>
-            )}
+            <Badge variant="outline" className="bg-primary/10 text-primary text-xs h-5 px-2">
+              {activeShifts?.length || 0}
+            </Badge>
+            <Button
+              onClick={() => refetch()}
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
           </div>
-          <Button
-            onClick={() => refetch()}
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Button>
         </div>
 
         {/* Avatar Grid (3×2) */}
@@ -140,21 +136,15 @@ export function ActiveShiftsWidget() {
     );
   }
 
-  // LIST MODE - Detailed view (for M/L sizes: 360×300px+)
+  // LIST MODE - Detailed view
   return (
-    <Card className="glass-card p-5 w-[360px] min-h-[300px] flex flex-col">
+    <Card className="glass-card p-4 w-full h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-end mb-3">
         <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">Active Shifts</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          {activeShifts && activeShifts.length > 0 && (
-            <Badge variant="default" className="bg-success/20 text-success">
-              {activeShifts.length} active
-            </Badge>
-          )}
+          <Badge variant="outline" className="bg-primary/10 text-primary">
+            {activeShifts?.length || 0}
+          </Badge>
           <Button
             onClick={() => refetch()}
             variant="ghost"
@@ -191,14 +181,14 @@ export function ActiveShiftsWidget() {
             const isLongest = longestShift?.id === shift.id && activeShifts.length > 1;
             
             return (
-              <div 
-                key={shift.id} 
-                className={cn(
-                  "p-3 rounded-lg border transition-all hover:shadow-md h-[60px] flex items-center gap-3",
-                  shiftColor.bg,
-                  shiftColor.border
-                )}
-              >
+            <div 
+              key={shift.id} 
+              className={cn(
+                "p-2.5 rounded-lg border transition-all hover:shadow-md h-[52px] flex items-center gap-2.5",
+                shiftColor.bg,
+                shiftColor.border
+              )}
+            >
                 <div className="relative flex-shrink-0">
                   <Avatar className="h-10 w-10 border-2 border-success">
                     <AvatarFallback className="bg-success/20 text-success font-semibold text-sm">

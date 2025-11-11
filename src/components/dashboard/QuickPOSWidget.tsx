@@ -83,13 +83,9 @@ export function QuickPOSWidget() {
   };
 
   return (
-    <Card className="glass-card p-4 flex flex-col h-full">
+    <Card className="glass-card p-4 flex flex-col w-full h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Coffee className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">Quick POS</h3>
-        </div>
+      <div className="flex items-center justify-end mb-3">
         {totalItems > 0 && (
           <Badge variant="default" className="bg-primary text-primary-foreground">
             {totalItems}

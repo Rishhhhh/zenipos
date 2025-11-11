@@ -23,8 +23,8 @@ export const STAFF_DESKTOP_LAYOUT: BentoLayout = {
     gap: '1rem',
     minHeight: '100%',
     areas: [
-      ['pos', 'pos', 'orders', 'orders'],
-      ['eighty-six', 'eighty-six', 'orders', 'orders']
+      ['orders', 'orders', 'pos', 'pos'],
+      ['eighty-six', 'eighty-six', 'pos', 'pos']
     ]
   },
   widgets: [
@@ -60,8 +60,8 @@ export const STAFF_TABLET_LAYOUT: BentoLayout = {
     gap: '0.875rem',
     minHeight: '100%',
     areas: [
-      ['pos', 'pos'],
       ['orders', 'orders'],
+      ['pos', 'pos'],
       ['eighty-six', 'eighty-six']
     ]
   },
@@ -98,8 +98,8 @@ export const STAFF_MOBILE_LAYOUT: BentoLayout = {
     gap: '0.75rem',
     minHeight: 'auto',
     areas: [
-      ['pos'],
       ['orders'],
+      ['pos'],
       ['eighty-six']
     ]
   },

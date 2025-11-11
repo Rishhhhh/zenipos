@@ -105,39 +105,29 @@ export function WebVitalsWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[240px] h-[240px]",
+      "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-2.5" : "p-3"
     )}>
       {/* Header */}
       <div className={cn(
-        "flex items-center justify-between",
+        "flex items-center justify-end",
         config.compactMode ? "mb-2" : "mb-3"
       )}>
         <div className="flex items-center gap-2">
-          <Activity className={cn(
-            "text-primary",
-            config.compactMode ? "h-3.5 w-3.5" : "h-4 w-4"
-          )} />
-          <h3 className={cn(
-            "font-semibold",
-            config.compactMode ? "text-sm" : "text-base"
-          )}>
-            Web Vitals
-          </h3>
           {config.showAlertCount && alerts && alerts.length > 0 && (
             <Badge variant="destructive" className="text-xs h-4 px-1.5">
               {alerts.length}
             </Badge>
           )}
+          <Button
+            onClick={() => refetch()}
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
         </div>
-        <Button
-          onClick={() => refetch()}
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
       </div>
 
       {/* Content - 2×2 Grid */}

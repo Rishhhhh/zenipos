@@ -30,41 +30,25 @@ export function EightySixWidget() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[240px] h-[240px]",
-      config.compactMode ? "p-2.5" : "p-3"
+      "glass-card flex flex-col w-full h-full",
+      config.compactMode ? "p-2" : "p-3"
     )}>
       {/* Header */}
       <div className={cn(
-        "flex items-center justify-between",
+        "flex items-center justify-end",
         config.compactMode ? "mb-2" : "mb-3"
       )}>
-        <div className="flex items-center gap-2">
-          <AlertTriangle className={cn(
-            "text-warning",
-            config.compactMode ? "h-3.5 w-3.5" : "h-4 w-4"
-          )} />
-          <h3 className={cn(
-            "font-semibold",
-            config.compactMode ? "text-sm" : "text-base"
-          )}>
-            {config.compactMode ? "86" : "86 List"}
-          </h3>
-          {eightySixItems.length > 0 && (
-            <Badge variant="destructive" className={cn(
-              config.compactMode ? "text-xs h-4 px-1.5" : "text-sm h-5 px-2"
-            )}>
-              {eightySixItems.length}
-            </Badge>
-          )}
-        </div>
-        <Button
-          onClick={() => refetch()}
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
+        {eightySixItems && eightySixItems.length > 0 && (
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "bg-destructive/20 text-destructive border-destructive/30",
+              config.compactMode ? "text-[10px] h-4 px-1.5" : "text-xs h-5 px-2"
+            )}
+          >
+            {eightySixItems.length}
+          </Badge>
+        )}
       </div>
 
       {/* Content */}
