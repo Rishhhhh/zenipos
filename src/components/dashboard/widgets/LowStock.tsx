@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, PackageX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,10 +9,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LowStockConfig } from "@/types/widgetConfigs";
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 
 export default memo(function LowStock() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { config } = useWidgetConfig<LowStockConfig>('low-stock');
+  
+  // Real-time subscription for inventory changes
+  useRealtimeTable('inventory_items', () => {
+    queryClient.invalidateQueries({ queryKey: ["low-stock-items"] });
+  });
 
   const { data: lowStockItems, isLoading } = useQuery({
     queryKey: ["low-stock-items", config.maxItems],

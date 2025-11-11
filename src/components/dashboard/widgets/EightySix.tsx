@@ -1,5 +1,5 @@
 import { memo, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +11,17 @@ import { cn } from '@/lib/utils';
 import { EightySixBadge } from '@/components/ui/eighty-six-badge';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 export default memo(function EightySix() {
+  const queryClient = useQueryClient();
   const { config } = useWidgetConfig<EightySixConfig>('eighty-six');
   const navigate = useNavigate();
+  
+  // Real-time subscription for 86'd items
+  useRealtimeTable('eighty_six_items', () => {
+    queryClient.invalidateQueries({ queryKey: ['eighty-six-items-widget'] });
+  });
 
   const { data: eightySixItems = [], isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['eighty-six-items-widget', config.maxItems],

@@ -1,7 +1,7 @@
 import { memo, useMemo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { MagicBento } from "@/components/ui/magic-bento";
@@ -9,9 +9,16 @@ import { startOfDay, subDays } from "date-fns";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { SalesWidgetConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 
 export default memo(function Sales() {
+  const queryClient = useQueryClient();
   const { config } = useWidgetConfig<SalesWidgetConfig>('sales');
+  
+  // Real-time subscription for orders
+  useRealtimeTable('orders', () => {
+    queryClient.invalidateQueries({ queryKey: ["today-sales"] });
+  });
   
   const { data: todayStats, isLoading, refetch } = useQuery({
     queryKey: ["today-sales"],
@@ -62,7 +69,7 @@ export default memo(function Sales() {
         orderTrend,
       };
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Fallback polling
   });
 
   const handleRefetch = useCallback(() => {

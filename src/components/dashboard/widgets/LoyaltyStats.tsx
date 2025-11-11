@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Award, Gift } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +9,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import * as ReactWindow from 'react-window';
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 const FixedSizeList = (ReactWindow as any).FixedSizeList;
 
 interface CustomerRowProps {
@@ -22,7 +23,18 @@ interface CustomerRowProps {
 }
 
 export default memo(function LoyaltyStats() {
+  const queryClient = useQueryClient();
   const { config } = useWidgetConfig<LoyaltyStatsConfig>('loyalty-stats');
+  
+  // Real-time subscription for loyalty transactions
+  useRealtimeTable('loyalty_ledger', () => {
+    queryClient.invalidateQueries({ queryKey: ["loyalty-stats"] });
+  });
+  
+  // Also subscribe to customer updates (for points balance)
+  useRealtimeTable('customers', () => {
+    queryClient.invalidateQueries({ queryKey: ["loyalty-stats"] });
+  });
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["loyalty-stats", config.topNCustomers],

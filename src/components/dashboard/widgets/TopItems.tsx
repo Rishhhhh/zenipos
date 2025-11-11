@@ -1,16 +1,23 @@
 import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Star, Trophy, Crown, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { TopItemsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
+import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 
 export default memo(function TopItems() {
+  const queryClient = useQueryClient();
   const { config } = useWidgetConfig<TopItemsConfig>('top-items');
+  
+  // Real-time subscription for order items
+  useRealtimeTable('order_items', () => {
+    queryClient.invalidateQueries({ queryKey: ["top-selling-items"] });
+  });
   
   const { data: topItems, isLoading } = useQuery({
     queryKey: ["top-selling-items"],
@@ -53,7 +60,7 @@ export default memo(function TopItems() {
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 5);
     },
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000, // Fallback polling
   });
 
   const getRankIcon = useCallback((index: number) => {
