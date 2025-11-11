@@ -49,25 +49,11 @@ export default function RevenueChart() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-[480px] h-[360px]",
-      config.compactMode ? "p-3" : "p-5"
+      "glass-card flex flex-col w-full h-full",
+      config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className={cn(
-        "flex items-center justify-between gap-2 flex-wrap",
-        config.compactMode ? "mb-2" : "mb-4"
-      )}>
-        <div className="flex items-center gap-2">
-          <TrendingUp className={cn(
-            "text-primary",
-            config.compactMode ? "h-4 w-4" : "h-5 w-5"
-          )} />
-          <h3 className={cn(
-            "font-semibold",
-            config.compactMode ? "text-base" : "text-lg"
-          )}>
-            Revenue Trend
-          </h3>
-        </div>
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+        <h3 className="text-lg font-semibold">Revenue Trend</h3>
         <div className="flex items-center gap-3 flex-wrap">
           {!config.compactMode && peakHour && peakHour.revenue > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -90,9 +76,7 @@ export default function RevenueChart() {
         </div>
       </div>
 
-      <div className={cn(
-        config.compactMode ? "h-[316px]" : "h-[308px]"
-      )}>
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <Skeleton className="w-full h-full rounded-lg" />
         ) : (

@@ -31,22 +31,14 @@ export function EightySixWidget() {
   return (
     <Card className={cn(
       "glass-card flex flex-col w-full h-full",
-      config.compactMode ? "p-2" : "p-3"
+      config.compactMode ? "p-3" : "p-4"
     )}>
-      {/* Header */}
-      <div className={cn(
-        "flex items-center justify-end",
-        config.compactMode ? "mb-2" : "mb-3"
-      )}>
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">86'd Items</h3>
         {eightySixItems && eightySixItems.length > 0 && (
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "bg-destructive/20 text-destructive border-destructive/30",
-              config.compactMode ? "text-[10px] h-4 px-1.5" : "text-xs h-5 px-2"
-            )}
-          >
-            {eightySixItems.length}
+          <Badge variant="destructive" className="text-xs">
+            {eightySixItems.length} Items
           </Badge>
         )}
       </div>

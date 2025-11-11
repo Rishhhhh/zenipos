@@ -61,11 +61,12 @@ export function ActiveShiftsWidget() {
   if (isGridMode) {
     return (
       <Card className="glass-card p-4 w-full h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-end mb-2">
+        {/* Title Bar */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Active Shifts</h3>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-primary/10 text-primary text-xs h-5 px-2">
-              {activeShifts?.length || 0}
+            <Badge variant="outline" className="text-xs">
+              {activeShifts?.length || 0} Active
             </Badge>
             <Button
               onClick={() => refetch()}
@@ -139,11 +140,20 @@ export function ActiveShiftsWidget() {
   // LIST MODE - Detailed view
   return (
     <Card className="glass-card p-4 w-full h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-end mb-3">
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Active Shifts</h3>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-primary/10 text-primary">
-            {activeShifts?.length || 0}
+          {config.showLaborCost && totalLaborCost > 0 && (
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">Total Cost</p>
+              <p className="text-sm font-semibold text-primary">
+                RM {totalLaborCost.toFixed(2)}
+              </p>
+            </div>
+          )}
+          <Badge variant="outline" className="text-xs">
+            {activeShifts?.length || 0} Active
           </Badge>
           <Button
             onClick={() => refetch()}

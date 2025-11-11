@@ -174,8 +174,9 @@ export function ActiveOrdersWidget() {
 
   return (
     <Card className={cn("glass-card w-full h-full flex flex-col", config.compactMode ? "p-3" : "p-4")}>
-      {/* Header */}
-      <div className="flex items-center justify-end mb-3">
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Active Orders</h3>
         {filteredOrders && filteredOrders.length > 0 && (
           <Badge variant="default" className="bg-warning/20 text-warning">
             {filteredOrders.length}

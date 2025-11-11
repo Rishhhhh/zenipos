@@ -74,8 +74,9 @@ export function SalesWidget() {
       "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      {/* Header */}
-      <div className="flex items-center justify-end mb-2">
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Today's Sales</h3>
         <Button
           onClick={() => refetch()}
           variant="ghost"
@@ -87,10 +88,7 @@ export function SalesWidget() {
       </div>
 
       {/* Metrics Display */}
-      <div className={cn(
-        "overflow-y-auto",
-        config.showTrendFooter ? "h-[208px]" : "h-[256px]"
-      )}>
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-3")}>
             {[1, 2, 3].map((i) => (

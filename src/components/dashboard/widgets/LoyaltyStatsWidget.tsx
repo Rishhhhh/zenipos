@@ -58,14 +58,12 @@ export function LoyaltyStatsWidget() {
       "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      {/* Header */}
-      <div className="flex items-center justify-end mb-3">
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Loyalty Stats</h3>
       </div>
 
-      <div className={cn(
-        "space-y-3",
-        config.compactMode ? "h-[244px]" : "h-[240px]"
-      )}>
+      <div className="space-y-3 flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           <>
             <Skeleton className="h-16 w-full" />
@@ -117,7 +115,12 @@ export function LoyaltyStatsWidget() {
               )}>
                 Top Customers
               </h4>
-              {stats?.topCustomers && stats.topCustomers.length > 0 ? (
+              {!stats?.topCustomers || stats.topCustomers.length === 0 ? (
+                <div className="flex items-center justify-center h-20 text-muted-foreground">
+                  <Users className="h-6 w-6 mr-2 opacity-50" />
+                  <p className="text-xs">No customers yet</p>
+                </div>
+              ) : (
                 <div className="space-y-1.5 overflow-y-auto max-h-[160px]">
                   {stats.topCustomers.slice(0, config.compactMode ? 5 : 10).map((customer, index) => {
                     const medal = getMedalIcon(index);
@@ -152,11 +155,6 @@ export function LoyaltyStatsWidget() {
                       </div>
                     );
                   })}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-20 text-muted-foreground">
-                  <Users className="h-6 w-6 mr-2 opacity-50" />
-                  <p className="text-xs">No customers yet</p>
                 </div>
               )}
             </div>

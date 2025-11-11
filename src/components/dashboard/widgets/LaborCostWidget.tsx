@@ -28,7 +28,7 @@ export function LaborCostWidget() {
   });
 
   // Fetch sparkline data (last 8 hours)
-  const { data: sparklineData } = useQuery({
+  const { data: sparklineData, refetch: refetchSparkline } = useQuery({
     queryKey: ['labor-sparkline'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_labor_sparkline', {
@@ -58,20 +58,21 @@ export function LaborCostWidget() {
   return (
     <Card className={cn(
       "glass-card flex flex-col w-full h-full",
-      config.compactMode ? "p-2.5" : "p-3"
+      config.compactMode ? "p-3" : "p-4"
     )}>
-      {/* Header */}
-      <div className={cn(
-        "flex items-center justify-end",
-        config.compactMode ? "mb-2" : "mb-3"
-      )}>
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Labor Cost %</h3>
         <Button
-          onClick={() => refetch()}
+          onClick={() => {
+            refetch();
+            refetchSparkline();
+          }}
           variant="ghost"
           size="sm"
-          className="h-7 w-7 p-0"
+          className="h-8 w-8 p-0"
         >
-          <RefreshCw className="h-3.5 w-3.5" />
+          <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
 

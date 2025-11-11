@@ -69,8 +69,12 @@ export function TopItemsWidget() {
       "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      {/* Header */}
-      <div className="flex items-center justify-end mb-3">
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Top Items</h3>
+        <Badge variant="outline" className="text-xs">
+          Top {config.topN}
+        </Badge>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
@@ -79,7 +83,7 @@ export function TopItemsWidget() {
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))
         ) : topItems && topItems.length > 0 ? (
-          topItems.slice(0, config.compactMode ? 4 : 5).map((item, index) => (
+          topItems.slice(0, 4).map((item, index) => (
             <div 
               key={index} 
               className={cn(

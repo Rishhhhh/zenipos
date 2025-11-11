@@ -55,20 +55,9 @@ export function WidgetHeader({
             e.stopPropagation();
             onNavigateToModule();
           }}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Open in Full View
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="text-destructive focus:text-destructive"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Remove Widget
-          </DropdownMenuItem>
+          <ExternalLink className="mr-2 h-4 w-4" />
+          Open in Full View
+        </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

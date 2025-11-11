@@ -106,13 +106,11 @@ export function WebVitalsWidget() {
   return (
     <Card className={cn(
       "glass-card flex flex-col w-full h-full",
-      config.compactMode ? "p-2.5" : "p-3"
+      config.compactMode ? "p-3" : "p-4"
     )}>
-      {/* Header */}
-      <div className={cn(
-        "flex items-center justify-end",
-        config.compactMode ? "mb-2" : "mb-3"
-      )}>
+      {/* Title Bar */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Web Vitals</h3>
         <div className="flex items-center gap-2">
           {config.showAlertCount && alerts && alerts.length > 0 && (
             <Badge variant="destructive" className="text-xs h-4 px-1.5">
