@@ -19,7 +19,7 @@ const employeeSchema = z.object({
   email: z.string().email('Invalid email address').optional(),
   phone: z.string().optional(),
   pin: z.string().min(4, 'PIN must be at least 4 characters'),
-  role: z.enum(['cashier', 'manager', 'admin', 'kitchen']),
+  role: z.enum(['staff', 'manager', 'owner', 'kitchen']),
   active: z.boolean(),
   hire_date: z.string().optional(),
 });
@@ -43,7 +43,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
       email: '',
       phone: '',
       pin: '',
-      role: 'cashier',
+      role: 'staff',
       active: true,
       hire_date: new Date().toISOString().split('T')[0],
     },
@@ -56,7 +56,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
         email: employee.email || '',
         phone: employee.phone || '',
         pin: '', // Don't populate PIN for security
-        role: employee.user_roles?.[0]?.role || 'cashier',
+        role: employee.user_roles?.[0]?.role || 'staff',
         active: employee.active,
         hire_date: employee.hire_date || new Date().toISOString().split('T')[0],
       });
@@ -66,7 +66,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
         email: '',
         phone: '',
         pin: '',
-        role: 'cashier',
+        role: 'staff',
         active: true,
         hire_date: new Date().toISOString().split('T')[0],
       });
@@ -112,11 +112,11 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
           .eq('employee_id', employee.id);
 
         if (employee.user_id) {
-          await supabase.from('user_roles').insert({
+          await supabase.from('user_roles').insert([{
             user_id: employee.user_id,
             employee_id: employee.id,
             role: values.role,
-          });
+          }]);
         }
       } else {
         // Create new employee
@@ -231,9 +231,9 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="cashier">Cashier</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="owner">Owner</SelectItem>
                     <SelectItem value="kitchen">Kitchen</SelectItem>
                   </SelectContent>
                 </Select>

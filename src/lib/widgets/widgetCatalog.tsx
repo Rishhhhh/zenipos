@@ -34,7 +34,7 @@ export interface WidgetDefinition {
   name: string;
   description: string;
   icon: React.ComponentType<any>;
-  roles: ("cashier" | "manager" | "admin")[];
+  roles: ("staff" | "manager" | "owner")[];
   category: string;
   fixedSize: 'XS' | 'S' | 'S_TALL' | 'M' | 'M_WIDE' | 'M_TALL' | 'L' | 'L_WIDE' | 'L_TALL' | 'XL' | 'XL_WIDE' | 'XXL';
   defaultSize: { cols: number; rows: number };
@@ -55,7 +55,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Quick POS",
       description: "Fast checkout with category filters and mini cart",
       icon: ShoppingCart,
-      roles: ["cashier", "manager", "admin"],
+      roles: ["staff", "manager", "owner"],
       category: "pos",
       fixedSize: 'XL',
       defaultSize: { cols: 14, rows: 11 },
@@ -72,7 +72,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Active Orders",
       description: "Live view of pending and preparing orders",
       icon: ChefHat,
-      roles: ["cashier", "manager", "admin"],
+      roles: ["staff", "manager", "owner"],
       category: "pos",
       fixedSize: 'L_TALL',
       defaultSize: { cols: 9, rows: 12 },
@@ -89,7 +89,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Pending Approvals",
       description: "Order modifications awaiting manager approval",
       icon: AlertTriangle,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "pos",
       fixedSize: 'M_TALL',
       defaultSize: { cols: 7, rows: 9 },
@@ -108,7 +108,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Sales Overview",
       description: "Today's sales performance and key metrics",
       icon: BarChart3,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "analytics",
       fixedSize: 'M_WIDE',
       defaultSize: { cols: 10, rows: 6 },
@@ -125,7 +125,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Revenue Chart",
       description: "Visual revenue trends over time",
       icon: TrendingUp,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "analytics",
       fixedSize: 'L_WIDE',
       defaultSize: { cols: 14, rows: 7 },
@@ -142,7 +142,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Top Selling Items",
       description: "Best performing menu items by sales",
       icon: Star,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "analytics",
       fixedSize: 'M_TALL',
       defaultSize: { cols: 7, rows: 9 },
@@ -161,7 +161,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Low Stock Alert",
       description: "Items that need reordering",
       icon: AlertTriangle,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "inventory",
       fixedSize: 'S_TALL',
       defaultSize: { cols: 5, rows: 8 },
@@ -178,7 +178,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "86 List",
       description: "Items currently out of stock (86'd)",
       icon: AlertTriangle,
-      roles: ["cashier", "manager", "admin"],
+      roles: ["staff", "manager", "owner"],
       category: "inventory",
       fixedSize: 'S_TALL',
       defaultSize: { cols: 5, rows: 8 },
@@ -197,7 +197,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Loyalty Stats",
       description: "Customer loyalty program insights",
       icon: Users,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "customers",
       fixedSize: 'M',
       defaultSize: { cols: 8, rows: 7 },
@@ -216,7 +216,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Active Shifts",
       description: "Currently clocked-in employees",
       icon: Clock,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "employees",
       fixedSize: 'S',
       defaultSize: { cols: 4, rows: 4 },
@@ -233,7 +233,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Labor Cost",
       description: "Real-time labor cost tracking and budget compliance",
       icon: DollarSign,
-      roles: ["manager", "admin"],
+      roles: ["manager", "owner"],
       category: "employees",
       fixedSize: 'S',
       defaultSize: { cols: 4, rows: 4 },
@@ -252,7 +252,7 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       name: "Core Web Vitals",
       description: "Monitor LCP, FID, CLS, and TTI performance metrics",
       icon: Activity,
-      roles: ["admin"],
+      roles: ["owner"],
       category: "performance",
       fixedSize: 'M',
       defaultSize: { cols: 8, rows: 7 },
@@ -275,6 +275,6 @@ export function getWidgetById(id: string): WidgetDefinition | undefined {
 }
 
 // Filter widgets by role
-export function getWidgetsByRole(role: "cashier" | "manager" | "admin"): WidgetDefinition[] {
+export function getWidgetsByRole(role: "staff" | "manager" | "owner"): WidgetDefinition[] {
   return ALL_WIDGETS.filter(w => w.roles.includes(role));
 }

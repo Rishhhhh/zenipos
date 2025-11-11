@@ -1,7 +1,7 @@
 import { Monitor, ChefHat, Flame, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen, LayoutGrid } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type AppRole = 'cashier' | 'manager' | 'admin';
+export type AppRole = 'staff' | 'manager' | 'owner';
 
 export interface DockApp {
   id: string;
@@ -28,7 +28,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: Monitor,
     route: '/pos',
     shortcut: '⌘1',
-    roles: ['cashier', 'manager', 'admin'],
+    roles: ['staff', 'manager', 'owner'],
   },
   {
     id: 'tables',
@@ -36,7 +36,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: LayoutGrid,
     route: '/tables',
     shortcut: '⌘2',
-    roles: ['cashier', 'manager', 'admin'],
+    roles: ['staff', 'manager', 'owner'],
   },
   {
     id: 'kds',
@@ -44,7 +44,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: ChefHat,
     route: '/kds',
     shortcut: '⌘3',
-    roles: ['cashier', 'manager', 'admin'],
+    roles: ['staff', 'manager', 'owner'],
   },
   {
     id: 'inventory',
@@ -52,7 +52,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: Package,
     route: '/admin/inventory',
     shortcut: '⌘4',
-    roles: ['manager', 'admin'],
+    roles: ['manager', 'owner'],
   },
   {
     id: 'reports',
@@ -60,7 +60,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: BarChart3,
     route: '/admin/reports',
     shortcut: '⌘5',
-    roles: ['manager', 'admin'],
+    roles: ['manager', 'owner'],
   },
   {
     id: 'admin',
@@ -68,7 +68,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: Settings,
     route: '/admin',
     shortcut: '⌘6',
-    roles: ['admin'],
+    roles: ['owner'],
   },
   {
     id: 'changelog',
@@ -76,7 +76,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: FileText,
     route: '/changelog',
     shortcut: '⌘8',
-    roles: ['manager', 'admin'],
+    roles: ['manager', 'owner'],
   },
   {
     id: 'docs',
@@ -84,7 +84,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: BookOpen,
     route: '/documentation',
     shortcut: '⌘9',
-    roles: ['manager', 'admin'],
+    roles: ['manager', 'owner'],
   },
   {
     id: 'expo',
@@ -92,7 +92,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: Flame,
     route: '/expo-station',
     shortcut: '⌘E',
-    roles: ['admin'],
+    roles: ['owner'],
   },
 ];
 

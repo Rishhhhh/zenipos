@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 interface WidgetLibraryProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userRole: "cashier" | "manager" | "admin";
+  userRole: "staff" | "manager" | "owner";
   activeWidgets: string[];
   onAddWidget: (widgetId: string, defaultSize: { cols: number; rows: number }) => void;
 }

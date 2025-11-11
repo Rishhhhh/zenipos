@@ -8,13 +8,13 @@ import { useState } from 'react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'admin' | 'manager' | 'cashier';
+  requiredRole?: 'owner' | 'manager' | 'staff';
 }
 
 const roleHierarchy = {
-  admin: 3,
+  owner: 3,
   manager: 2,
-  cashier: 1,
+  staff: 1,
 };
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {

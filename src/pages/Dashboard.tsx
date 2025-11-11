@@ -12,7 +12,7 @@ const DraggableDashboard = lazy(() => import("@/components/dashboard/DraggableDa
 
 export default function Dashboard() {
   const { employee } = useAuth();
-  const userRole = employee?.role || "cashier";
+  const userRole = (employee?.role as "staff" | "manager" | "owner") || "staff";
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
   const [configModalWidget, setConfigModalWidget] = useState<string | null>(null);
   

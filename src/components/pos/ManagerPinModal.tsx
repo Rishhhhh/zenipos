@@ -41,7 +41,7 @@ export function ManagerPinModal({ open, onOpenChange, onSuccess, action }: Manag
         .select('role')
         .eq('employee_id', employee.id);
 
-      const hasManagerRole = roles?.some(r => r.role === 'manager' || r.role === 'admin');
+      const hasManagerRole = roles?.some(r => r.role === 'manager' || r.role === 'owner');
       
       if (!hasManagerRole) {
         throw new Error('Employee does not have manager permissions');

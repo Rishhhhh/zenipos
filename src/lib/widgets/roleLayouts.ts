@@ -259,11 +259,11 @@ export const ADMIN_LAYOUT: WidgetLayout = {
 // Get layout based on user role
 export function getLayoutForRole(role: string): WidgetLayout {
   switch (role?.toLowerCase()) {
-    case 'cashier':
+    case 'staff':
       return CASHIER_LAYOUT;
     case 'manager':
       return MANAGER_LAYOUT;
-    case 'admin':
+    case 'owner':
       return ADMIN_LAYOUT;
     default:
       return CASHIER_LAYOUT;

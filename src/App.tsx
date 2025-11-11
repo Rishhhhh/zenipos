@@ -156,34 +156,34 @@ const App = () => (
               
               {/* Protected Routes with AppHeader */}
               <Route path="/" element={
-                <ProtectedRoute requiredRole="cashier">
+                <ProtectedRoute requiredRole="staff">
                   <AppHeader />
                   <Dashboard />
                 </ProtectedRoute>
               } />
               
               <Route path="/pos" element={
-                <ProtectedRoute requiredRole="cashier">
+                <ProtectedRoute requiredRole="staff">
                   <POSWithHeader />
                 </ProtectedRoute>
               } />
               
               <Route path="/tables" element={
-                <ProtectedRoute requiredRole="cashier">
+                <ProtectedRoute requiredRole="staff">
                   <AppHeader />
                   <TableManagement />
                 </ProtectedRoute>
               } />
               
               <Route path="/kds" element={
-                <ProtectedRoute requiredRole="cashier">
+                <ProtectedRoute requiredRole="staff">
                   <AppHeader />
                   <KDS />
                 </ProtectedRoute>
               } />
               
               <Route path="/expo-station" element={
-                <ProtectedRoute requiredRole="cashier">
+                <ProtectedRoute requiredRole="staff">
                   <ExpoStation />
                 </ProtectedRoute>
               } />
@@ -245,7 +245,7 @@ const App = () => (
               } />
               
               <Route path="/admin/branches" element={
-                <ProtectedRoute requiredRole="admin">
+                <ProtectedRoute requiredRole="owner">
                   <AppHeader />
                   <BranchManagement />
                 </ProtectedRoute>
@@ -259,21 +259,21 @@ const App = () => (
               } />
               
               <Route path="/admin/system-health" element={
-                <ProtectedRoute requiredRole="admin">
+                <ProtectedRoute requiredRole="owner">
                   <AppHeader />
                   <SystemHealthDashboard />
                 </ProtectedRoute>
               } />
               
               <Route path="/admin/performance" element={
-                <ProtectedRoute requiredRole="admin">
+                <ProtectedRoute requiredRole="owner">
                   <AppHeader />
                   <PerformanceDashboard />
                 </ProtectedRoute>
               } />
               
               <Route path="/admin/rate-limits" element={
-                <ProtectedRoute requiredRole="admin">
+                <ProtectedRoute requiredRole="owner">
                   <AppHeader />
                   <RateLimitMonitor />
                 </ProtectedRoute>
