@@ -18,9 +18,9 @@ export default function Dashboard() {
   const { activeWidgets, addWidget, resetLayout } = useBentoLayout(userRole, 'desktop');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-secondary/5 pb-24">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-background via-accent/5 to-secondary/5 overflow-hidden">
       {/* Header with max-width constraint */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6 mb-6">
+      <div className="flex-none max-w-7xl mx-auto w-full px-4 md:px-6 pt-4 md:pt-6 pb-4">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
@@ -52,16 +52,17 @@ export default function Dashboard() {
       </div>
 
       {/* Canvas spans full viewport width */}
-      <div className="px-4 md:px-6">
-        <Suspense fallback={<Skeleton className="w-full h-[600px] rounded-lg" />}>
-          <BentoDashboard onConfigure={setConfigModalWidget} />
-        </Suspense>
-
-        {/* Help Text */}
-        <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
-          <p>Widgets arranged in optimized bento grid layout for your role</p>
-          <p>Click configure to customize • Click widget to open full view</p>
+      <div className="flex-1 px-4 md:px-6 overflow-hidden">
+        <div className="h-full">
+          <Suspense fallback={<Skeleton className="w-full h-full rounded-lg" />}>
+            <BentoDashboard onConfigure={setConfigModalWidget} />
+          </Suspense>
         </div>
+      </div>
+
+      {/* Help Text */}
+      <div className="flex-none px-4 md:px-6 pb-4 text-center text-sm text-muted-foreground">
+        <p>Widgets arranged in optimized bento grid layout • Click configure to customize</p>
       </div>
 
       {/* Widget Library Modal */}

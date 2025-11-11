@@ -19,9 +19,9 @@ export const STAFF_DESKTOP_LAYOUT: BentoLayout = {
   role: 'staff',
   gridTemplate: {
     columns: 'repeat(4, 1fr)',
-    rows: 'repeat(2, minmax(300px, 1fr))',
+    rows: 'repeat(2, 1fr)',
     gap: '1rem',
-    minHeight: '700px',
+    minHeight: '100%',
     areas: [
       ['pos', 'pos', 'orders', 'orders'],
       ['eighty-six', 'eighty-six', 'orders', 'orders']
@@ -56,9 +56,9 @@ export const STAFF_TABLET_LAYOUT: BentoLayout = {
   role: 'staff',
   gridTemplate: {
     columns: 'repeat(2, 1fr)',
-    rows: 'repeat(3, minmax(240px, 1fr))',
+    rows: 'repeat(3, 1fr)',
     gap: '0.875rem',
-    minHeight: '600px',
+    minHeight: '100%',
     areas: [
       ['pos', 'pos'],
       ['orders', 'orders'],
@@ -136,9 +136,9 @@ export const MANAGER_DESKTOP_LAYOUT: BentoLayout = {
   role: 'manager',
   gridTemplate: {
     columns: 'repeat(4, 1fr)',
-    rows: 'repeat(3, minmax(280px, 1fr))',
+    rows: 'repeat(3, 1fr)',
     gap: '1rem',
-    minHeight: '900px',
+    minHeight: '100%',
     areas: [
       ['sales', 'sales', 'orders', 'shifts'],
       ['revenue', 'revenue', 'orders', 'labor'],
@@ -195,9 +195,9 @@ export const MANAGER_TABLET_LAYOUT: BentoLayout = {
   role: 'manager',
   gridTemplate: {
     columns: 'repeat(2, 1fr)',
-    rows: 'repeat(5, minmax(240px, 1fr))',
+    rows: 'repeat(5, 1fr)',
     gap: '0.875rem',
-    minHeight: '700px',
+    minHeight: '100%',
     areas: [
       ['sales', 'sales'],
       ['orders', 'shifts'],
@@ -322,9 +322,9 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
   role: 'owner',
   gridTemplate: {
     columns: 'repeat(4, 1fr)',
-    rows: 'repeat(4, minmax(280px, 1fr))',
+    rows: 'repeat(4, 1fr)',
     gap: '1rem',
-    minHeight: '1200px',
+    minHeight: '100%',
     areas: [
       ['sales', 'sales', 'revenue', 'revenue'],
       ['orders', 'shifts', 'revenue', 'revenue'],
@@ -403,9 +403,9 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
   role: 'owner',
   gridTemplate: {
     columns: 'repeat(2, 1fr)',
-    rows: 'repeat(6, minmax(240px, 1fr))',
+    rows: 'repeat(6, 1fr)',
     gap: '0.875rem',
-    minHeight: '800px',
+    minHeight: '100%',
     areas: [
       ['sales', 'sales'],
       ['revenue', 'revenue'],

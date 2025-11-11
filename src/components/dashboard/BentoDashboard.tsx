@@ -46,6 +46,7 @@ export default function BentoDashboard({
     gridTemplateRows: layout.gridTemplate.rows,
     gridTemplateAreas: areasToCSS(layout.gridTemplate.areas),
     gap: layout.gridTemplate.gap,
+    height: '100%',
     minHeight: layout.gridTemplate.minHeight,
   }), [layout.gridTemplate]);
 
