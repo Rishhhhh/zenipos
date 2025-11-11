@@ -129,7 +129,7 @@ export function WebVitalsWidget() {
       </div>
 
       {/* Content - 2×2 Grid */}
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center min-h-[200px]">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -141,7 +141,7 @@ export function WebVitalsWidget() {
           </div>
         ) : (
           <div className={cn(
-            "grid grid-cols-2",
+            "grid grid-cols-2 auto-rows-min",
             config.compactMode ? "gap-2" : "gap-2.5"
           )}>
             <MetricCard

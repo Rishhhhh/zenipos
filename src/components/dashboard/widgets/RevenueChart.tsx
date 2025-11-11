@@ -52,28 +52,25 @@ export default function RevenueChart() {
       "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
-        <h3 className="text-lg font-semibold">Revenue Trend</h3>
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-3 pr-12">
         <div className="flex items-center gap-3 flex-wrap">
-          {!config.compactMode && peakHour && peakHour.revenue > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Star className="h-3.5 w-3.5 text-primary fill-primary" />
-              <span>Peak: {peakHour.hour}</span>
-            </div>
-          )}
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Today
-            </p>
-            <p className={cn(
+          <h3 className="text-lg font-semibold">Revenue Trend</h3>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10">
+            <Clock className="h-3 w-3 text-primary" />
+            <span className={cn(
               "font-bold text-primary",
-              config.compactMode ? "text-base" : "text-lg"
+              config.compactMode ? "text-sm" : "text-base"
             )}>
               RM {totalRevenue.toFixed(2)}
-            </p>
+            </span>
           </div>
         </div>
+        {!config.compactMode && peakHour && peakHour.revenue > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Star className="h-3.5 w-3.5 text-primary fill-primary" />
+            <span>Peak: {peakHour.hour}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-h-0">
