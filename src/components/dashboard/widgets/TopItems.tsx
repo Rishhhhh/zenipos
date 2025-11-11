@@ -78,10 +78,11 @@ export default memo(function TopItems() {
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            <div key={i} className="h-[48px] w-full rounded-lg animate-shimmer border border-border/30" />
           ))
         ) : topItems && topItems.length > 0 ? (
-          topItems.slice(0, 4).map((item, index) => (
+          <div className="animate-fade-in-content space-y-2">
+          {topItems.slice(0, 4).map((item, index) => (
             <div 
               key={index} 
               className={cn(
@@ -152,7 +153,8 @@ export default memo(function TopItems() {
                   </div>
                 </div>
               </div>
-            ))
+            ))}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <TrendingUp className="h-12 w-12 mb-2 opacity-50" />

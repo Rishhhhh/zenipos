@@ -109,11 +109,11 @@ export default memo(function QuickPOS() {
         {isLoading ? (
           <div className={cn("grid gap-2", GRID_COLS_MAP[itemsPerRow])}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-24 bg-accent/50 rounded-lg animate-pulse" />
+              <div key={i} className={cn("rounded-lg animate-shimmer border border-border/30", config.displayDensity === 'compact' ? "h-[108px]" : "h-[132px]")} />
             ))}
           </div>
         ) : menuItems && menuItems.length > 0 ? (
-          <div className={cn("grid gap-2", GRID_COLS_MAP[itemsPerRow])}>
+          <div className={cn("grid gap-2 animate-fade-in-content", GRID_COLS_MAP[itemsPerRow])}>
             {menuItems.map((item) => {
               const quantity = getCartQuantity(item.id);
               const inStock = item.in_stock;

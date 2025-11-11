@@ -90,11 +90,19 @@ export default memo(function LoyaltyStats() {
       <div className="space-y-3 flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           <>
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-32 w-full" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className={cn("rounded-lg animate-shimmer border border-primary/20", config.compactMode ? "h-[68px]" : "h-[80px]")} />
+              <div className={cn("rounded-lg animate-shimmer border border-border/50", config.compactMode ? "h-[68px]" : "h-[80px]")} />
+            </div>
+            <div className="space-y-2">
+              <div className={cn("rounded animate-shimmer", config.compactMode ? "h-4" : "h-4")} />
+              {Array.from({ length: config.compactMode ? 3 : 5 }).map((_, i) => (
+                <div key={i} className="h-[46px] rounded-lg animate-shimmer border border-border/50" />
+              ))}
+            </div>
           </>
         ) : (
-          <>
+          <div className="animate-fade-in-content">
             <div className="grid grid-cols-2 gap-3">
               <div className={cn("rounded-lg border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent", config.compactMode ? "p-2" : "p-3")}>
                 <div className="flex items-center gap-2 mb-1">
@@ -135,7 +143,7 @@ export default memo(function LoyaltyStats() {
                 </FixedSizeList>
               )}
             </div>
-          </>
+          </div>
         )}
       </div>
     </Card>

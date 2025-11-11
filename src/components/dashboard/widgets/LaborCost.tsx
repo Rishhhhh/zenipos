@@ -81,16 +81,21 @@ export default memo(function LaborCost() {
         config.compactMode ? "h-[208px]" : "h-[192px]"
       )}>
         {isLoading ? (
-          <>
-            <Skeleton className="h-12 w-full rounded" />
-            <Skeleton className="h-8 w-full rounded mt-2" />
-            <Skeleton className="h-10 w-full rounded mt-2" />
-            {config.showSparkline && !config.compactMode && (
-              <Skeleton className="h-10 w-full rounded mt-2" />
-            )}
-          </>
+          <div className="space-y-3">
+            <div className={cn("rounded animate-shimmer mx-auto", config.compactMode ? "h-[58px] w-32" : "h-[52px] w-28")} />
+            <div className={cn("rounded animate-shimmer", config.compactMode ? "h-[14px]" : "h-[10px]")} />
+            <div className={cn("rounded-full animate-shimmer mx-auto", config.compactMode ? "h-5 w-40" : "h-4 w-32")} />
+            {config.showSparkline && !config.compactMode ? (
+              <div className="h-[46px] w-full rounded animate-shimmer" />
+            ) : config.compactMode ? (
+              <div className="space-y-1.5">
+                <div className="h-3 w-full rounded animate-shimmer" />
+                <div className="h-3 w-3/4 mx-auto rounded animate-shimmer" />
+              </div>
+            ) : null}
+          </div>
         ) : (
-          <>
+          <div className="animate-fade-in-content">
             <div className="text-center">
               <div className={cn(
                 "font-bold text-primary",
@@ -172,7 +177,7 @@ export default memo(function LaborCost() {
                 </div>
               </div>
             ) : null}
-          </>
+          </div>
         )}
       </div>
     </Card>

@@ -55,9 +55,14 @@ export default memo(function LowStock() {
 
       <div className={cn("flex-1 min-h-0", lowStockItems && lowStockItems.length > 0 ? "space-y-1.5 overflow-y-auto" : "flex items-center justify-center")}>
         {isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)
+          <div className="space-y-1.5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className={cn("rounded-md animate-shimmer border border-border/30", config.compactMode ? "h-[36px]" : "h-[40px]")} />
+            ))}
+          </div>
         ) : lowStockItems && lowStockItems.length > 0 ? (
-          lowStockItems.map((item) => {
+          <div className="space-y-1.5 animate-fade-in-content">
+          {lowStockItems.map((item) => {
             const status = getStockStatus(Number(item.current_qty), Number(item.reorder_point));
             return (
               <button key={item.id} onClick={handleNavigateToInventory} className={cn("w-full rounded-md border transition-all hover:shadow-sm active:scale-[0.98]", config.compactMode ? "p-1.5" : "p-2", status.bg, status.animate ? "border-destructive/30" : "border-border/30")}>
@@ -73,7 +78,8 @@ export default memo(function LowStock() {
                 </div>
               </button>
             );
-          })
+          })}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-muted-foreground">
             <PackageX className={cn("mb-1 opacity-40", config.compactMode ? "h-8 w-8" : "h-10 w-10")} />

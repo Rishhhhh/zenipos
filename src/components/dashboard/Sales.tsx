@@ -94,16 +94,19 @@ export default memo(function Sales() {
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
-          <div className={cn("grid gap-4", config.displayType === 'table' ? "grid-cols-1" : "grid-cols-3")}>
+          <div className="space-y-2">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-32 bg-accent/50 rounded-lg animate-pulse"
+                className={cn(
+                  "rounded-lg animate-shimmer",
+                  config.compactMode ? "h-[52px]" : "h-[68px]"
+                )}
               />
             ))}
           </div>
         ) : config.displayType === 'table' ? (
-          <div className="space-y-2 h-full overflow-y-auto">
+          <div className="space-y-2 h-full overflow-y-auto animate-fade-in-content">
           <div className={cn("flex items-center justify-between bg-accent/30 rounded-lg", config.compactMode ? "p-2" : "p-3")}>
             <div>
               <p className={cn("text-muted-foreground", config.compactMode ? "text-xs" : "text-sm")}>Revenue</p>
@@ -150,7 +153,7 @@ export default memo(function Sales() {
           </div>
         </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 h-full">
+          <div className="grid grid-cols-3 gap-4 h-full animate-fade-in-content">
           <MagicBento
             title="Revenue"
             value={`RM ${todayStats?.revenue.toFixed(2) || "0.00"}`}

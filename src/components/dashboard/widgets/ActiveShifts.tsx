@@ -156,11 +156,11 @@ export default memo(function ActiveShifts() {
           {isLoading ? (
             <div className="grid grid-cols-3 gap-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-[64px] rounded-lg" />
+                <div key={i} className={cn("rounded-lg animate-shimmer border border-border/30", config.compactMode ? "h-[58px]" : "h-[64px]")} />
               ))}
             </div>
           ) : activeShifts && activeShifts.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2 h-full">
+            <div className="grid grid-cols-3 gap-2 h-full animate-fade-in-content">
               {activeShifts.slice(0, 6).map((shift) => {
                 const initials = shift.employees?.name
                   ?.split(' ')
@@ -252,10 +252,11 @@ export default memo(function ActiveShifts() {
         {isLoading ? (
           <div className="space-y-2.5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-[60px] w-full rounded-lg" />
+              <div key={i} className={cn("rounded-lg animate-shimmer border border-border/30", config.compactMode ? "h-[52px]" : "h-[62px]")} />
             ))}
           </div>
         ) : activeShifts && activeShifts.length > 0 ? (
+          <div className="animate-fade-in-content">
           <FixedSizeList
             height={400}
             itemCount={activeShifts.length}
@@ -270,6 +271,7 @@ export default memo(function ActiveShifts() {
           >
             {ShiftRow}
           </FixedSizeList>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <UserCircle className="h-12 w-12 mb-2 opacity-50" />
