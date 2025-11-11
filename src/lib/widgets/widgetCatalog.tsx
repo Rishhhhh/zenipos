@@ -12,21 +12,20 @@ import {
   Award,
   Activity,
 } from "lucide-react";
-import { lazy } from "react";
 
-// Lazy load widgets for better performance
-const QuickPOSWidget = lazy(() => import("@/components/dashboard/QuickPOSWidget").then(m => ({ default: m.QuickPOSWidget })));
-const ActiveOrdersWidget = lazy(() => import("@/components/dashboard/ActiveOrdersWidget").then(m => ({ default: m.ActiveOrdersWidget })));
-const SalesWidget = lazy(() => import("@/components/dashboard/SalesWidget").then(m => ({ default: m.SalesWidget })));
-const RevenueChartWidget = lazy(() => import("@/components/dashboard/widgets/RevenueChartWidget").then(m => ({ default: m.RevenueChartWidget })));
-const TopItemsWidget = lazy(() => import("@/components/dashboard/widgets/TopItemsWidget").then(m => ({ default: m.TopItemsWidget })));
-const LowStockWidget = lazy(() => import("@/components/dashboard/widgets/LowStockWidget").then(m => ({ default: m.LowStockWidget })));
-const LoyaltyStatsWidget = lazy(() => import("@/components/dashboard/widgets/LoyaltyStatsWidget").then(m => ({ default: m.LoyaltyStatsWidget })));
-const ActiveShiftsWidget = lazy(() => import("@/components/dashboard/widgets/ActiveShiftsWidget").then(m => ({ default: m.ActiveShiftsWidget })));
-const LaborCostWidget = lazy(() => import("@/components/dashboard/widgets/LaborCostWidget").then(m => ({ default: m.LaborCostWidget })));
-const EightySixWidget = lazy(() => import("@/components/dashboard/widgets/EightySixWidget").then(m => ({ default: m.EightySixWidget })));
-const PendingModsWidget = lazy(() => import("@/components/dashboard/widgets/PendingModsWidget").then(m => ({ default: m.PendingModsWidget })));
-const WebVitalsWidget = lazy(() => import("@/components/dashboard/widgets/WebVitalsWidget").then(m => ({ default: m.WebVitalsWidget })));
+// All widgets are lazy loaded with Suspense wrappers
+import { QuickPOSWidget } from "@/components/dashboard/QuickPOSWidget";
+import { ActiveOrdersWidget } from "@/components/dashboard/ActiveOrdersWidget";
+import { SalesWidget } from "@/components/dashboard/SalesWidget";
+import { RevenueChartWidget } from "@/components/dashboard/widgets/RevenueChartWidget";
+import { TopItemsWidget } from "@/components/dashboard/widgets/TopItemsWidget";
+import { LowStockWidget } from "@/components/dashboard/widgets/LowStockWidget";
+import { LoyaltyStatsWidget } from "@/components/dashboard/widgets/LoyaltyStatsWidget";
+import { ActiveShiftsWidget } from "@/components/dashboard/widgets/ActiveShiftsWidget";
+import { LaborCostWidget } from "@/components/dashboard/widgets/LaborCostWidget";
+import { EightySixWidget } from "@/components/dashboard/widgets/EightySixWidget";
+import { PendingModsWidget } from "@/components/dashboard/widgets/PendingModsWidget";
+import { WebVitalsWidget } from "@/components/dashboard/widgets/WebVitalsWidget";
 
 export interface WidgetDefinition {
   id: string;
