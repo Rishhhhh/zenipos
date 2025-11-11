@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Check } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Search, Plus, Check, AlertCircle } from "lucide-react";
 import { WIDGET_CATALOG, WidgetDefinition } from "@/lib/widgets/widgetCatalog";
+import { getBentoLayoutForRole } from "@/lib/widgets/bentoLayouts";
+import { detectBreakpoint } from "@/lib/widgets/bentoGrid";
 import { cn } from "@/lib/utils";
 
 interface WidgetLibraryProps {
@@ -26,7 +29,18 @@ export function WidgetLibrary({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Filter widgets by role and search
+  // Get current bento layout for role
+  const breakpoint = detectBreakpoint();
+  const bentoLayout = getBentoLayoutForRole(userRole, breakpoint);
+  
+  // Calculate available slots
+  const availableSlots = useMemo(() => {
+    return bentoLayout.widgets.filter(w => !activeWidgets.includes(w.id));
+  }, [bentoLayout.widgets, activeWidgets]);
+
+  const hasAvailableSlots = availableSlots.length > 0;
+
+  // Filter widgets by role, search, and available bento slots
   const filteredWidgets = useMemo(() => {
     const allWidgets = Object.entries(WIDGET_CATALOG).flatMap(([category, widgets]) =>
       widgets.map(w => ({ ...w, category }))
@@ -38,9 +52,12 @@ export function WidgetLibrary({
                            widget.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "all" || widget.category === selectedCategory;
       
-      return matchesRole && matchesSearch && matchesCategory;
+      // Only show widgets that have available bento areas
+      const hasAvailableArea = availableSlots.some(slot => slot.id === widget.id);
+      
+      return matchesRole && matchesSearch && matchesCategory && hasAvailableArea;
     });
-  }, [userRole, searchQuery, selectedCategory]);
+  }, [userRole, searchQuery, selectedCategory, availableSlots]);
 
   const categories = useMemo(() => {
     return ["all", ...Object.keys(WIDGET_CATALOG)];
@@ -69,6 +86,16 @@ export function WidgetLibrary({
             className="pl-10"
           />
         </div>
+
+        {/* Max Widgets Alert */}
+        {!hasAvailableSlots && (
+          <Alert className="mb-4 border-warning/50 bg-warning/10">
+            <AlertCircle className="h-4 w-4 text-warning" />
+            <AlertDescription className="text-warning">
+              Maximum widgets reached for your role. Remove a widget to add a new one.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Category Tabs */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col overflow-hidden">
