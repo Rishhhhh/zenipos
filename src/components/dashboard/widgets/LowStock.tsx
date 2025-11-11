@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,18 +10,20 @@ import { cn } from "@/lib/utils";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LowStockConfig } from "@/types/widgetConfigs";
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
+import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
 
 export default memo(function LowStock() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { config } = useWidgetConfig<LowStockConfig>('low-stock');
+  const { registerRefresh } = useWidgetRefresh();
   
   // Real-time subscription for inventory changes
   useRealtimeTable('inventory_items', () => {
     queryClient.invalidateQueries({ queryKey: ["low-stock-items"] });
   });
 
-  const { data: lowStockItems, isLoading } = useQuery({
+  const { data: lowStockItems, isLoading, refetch } = useQuery({
     queryKey: ["low-stock-items", config.maxItems],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,6 +40,11 @@ export default memo(function LowStock() {
     },
     refetchInterval: config.refreshInterval * 1000,
   });
+
+  // Register refetch function
+  useEffect(() => {
+    registerRefresh(refetch);
+  }, [refetch, registerRefresh]);
 
   const getStockStatus = useCallback((current: number, reorder: number) => {
     const percentage = (current / reorder) * 100;

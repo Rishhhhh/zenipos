@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getWidgetById } from '@/lib/widgets/widgetCatalog';
 import { WidgetHeader } from './WidgetHeader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { WidgetRefreshProvider } from '@/contexts/WidgetRefreshContext';
 
 interface BentoWidgetProps {
   widgetId: string;
@@ -94,34 +95,36 @@ export function BentoWidget({
       data-minimized={isMinimized}
       data-widget-id={widgetId}
     >
-      <WidgetHeader
-        widgetId={widgetId}
-        widgetName={widgetDef.name}
-        isMinimized={isMinimized}
-        onMinimize={onMinimize}
-        onConfigure={onConfigure}
-        onNavigateToModule={handleNavigateToModule}
-      />
+      <WidgetRefreshProvider>
+        <WidgetHeader
+          widgetId={widgetId}
+          widgetName={widgetDef.name}
+          isMinimized={isMinimized}
+          onMinimize={onMinimize}
+          onConfigure={onConfigure}
+          onNavigateToModule={handleNavigateToModule}
+        />
 
-      {!isMinimized && (
-        <div className="bento-widget__content">
-          <WidgetErrorBoundary widgetId={widgetId}>
-            <Suspense fallback={
-              <div className="p-4 space-y-3">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-8 w-3/4" />
-              </div>
-            }>
-              <WidgetComponent />
-            </Suspense>
-          </WidgetErrorBoundary>
-        </div>
-      )}
+        {!isMinimized && (
+          <div className="bento-widget__content">
+            <WidgetErrorBoundary widgetId={widgetId}>
+              <Suspense fallback={
+                <div className="p-4 space-y-3">
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-8 w-3/4" />
+                </div>
+              }>
+                <WidgetComponent />
+              </Suspense>
+            </WidgetErrorBoundary>
+          </div>
+        )}
 
-      {isMinimized && (
-        <div className="bento-widget__minimized-indicator" />
-      )}
+        {isMinimized && (
+          <div className="bento-widget__minimized-indicator" />
+        )}
+      </WidgetRefreshProvider>
     </div>
   );
 }

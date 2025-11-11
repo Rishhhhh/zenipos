@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useMemo } from "react";
+import { useState, memo, useCallback, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { haptics } from "@/lib/haptics";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { QuickPOSConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
+import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
 
 const GRID_COLS_MAP = {
   2: 'grid-cols-2',
@@ -24,6 +25,7 @@ export default memo(function QuickPOS() {
   const navigate = useNavigate();
   const { items, addItem } = useCartStore();
   const { config } = useWidgetConfig<QuickPOSConfig>('quick-pos');
+  const { registerRefresh } = useWidgetRefresh();
   const [selectedCategory, setSelectedCategory] = useState<string>(config.defaultCategoryId || "all");
   
   const itemsPerRow = config.displayDensity === 'compact' ? 2 : 3;
@@ -41,7 +43,7 @@ export default memo(function QuickPOS() {
     },
   });
 
-  const { data: menuItems, isLoading } = useQuery({
+  const { data: menuItems, isLoading, refetch } = useQuery({
     queryKey: ["quick-pos-items", selectedCategory],
     queryFn: async () => {
       let query = supabase
@@ -60,6 +62,11 @@ export default memo(function QuickPOS() {
       return data;
     },
   });
+
+  // Register refetch function
+  useEffect(() => {
+    registerRefresh(refetch);
+  }, [refetch, registerRefresh]);
 
   const handleAddToCart = useCallback((item: any) => {
     addItem({
@@ -86,7 +93,8 @@ export default memo(function QuickPOS() {
 
   return (
     <Card className="glass-card p-4 flex flex-col w-full h-full">
-      <div className="flex items-center justify-end mb-3">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Quick POS</h3>
         {totalItems > 0 && (
           <Badge variant="default" className="bg-primary text-primary-foreground">
             {totalItems}

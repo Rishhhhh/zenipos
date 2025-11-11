@@ -1,14 +1,14 @@
-import { memo, useMemo, useCallback } from 'react';
+import { memo, useMemo, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Activity, MousePointer, LayoutGrid, TrendingUp, RefreshCw } from 'lucide-react';
+import { Activity, MousePointer, LayoutGrid, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWidgetConfig } from '@/hooks/useWidgetConfig';
 import { WebVitalsConfig } from '@/types/widgetConfigs';
 import { cn } from '@/lib/utils';
+import { useWidgetRefresh } from '@/contexts/WidgetRefreshContext';
 
 interface MetricCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -36,6 +36,7 @@ function MetricCard({ icon: Icon, name, value, unit, threshold, compactMode }: M
 
 export default memo(function WebVitals() {
   const { config } = useWidgetConfig<WebVitalsConfig>('web-vitals');
+  const { registerRefresh } = useWidgetRefresh();
   
   const { data: vitals, isLoading, refetch } = useQuery({
     queryKey: ['web-vitals-widget'],
@@ -72,18 +73,18 @@ export default memo(function WebVitals() {
     tti: calculateAvg(vitals, 'page_load'),
   }), [vitals, calculateAvg]);
 
-  const handleRefetch = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  // Register refetch function
+  useEffect(() => {
+    registerRefresh(refetch);
+  }, [refetch, registerRefresh]);
 
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Web Vitals</h3>
-        <div className="flex items-center gap-2">
-          {config.showAlertCount && alerts && alerts.length > 0 && <Badge variant="destructive" className="text-xs h-4 px-1.5">{alerts.length}</Badge>}
-          <Button onClick={handleRefetch} variant="ghost" size="sm" className="h-7 w-7 p-0"><RefreshCw className="h-3.5 w-3.5" /></Button>
-        </div>
+        {config.showAlertCount && alerts && alerts.length > 0 && (
+          <Badge variant="destructive" className="text-xs h-4 px-1.5">{alerts.length}</Badge>
+        )}
       </div>
 
       <div className="flex-1 flex items-center justify-center min-h-[200px]">

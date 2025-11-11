@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,17 +9,19 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { TopItemsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
+import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
 
 export default memo(function TopItems() {
   const queryClient = useQueryClient();
   const { config } = useWidgetConfig<TopItemsConfig>('top-items');
+  const { registerRefresh } = useWidgetRefresh();
   
   // Real-time subscription for order items
   useRealtimeTable('order_items', () => {
     queryClient.invalidateQueries({ queryKey: ["top-selling-items"] });
   });
   
-  const { data: topItems, isLoading } = useQuery({
+  const { data: topItems, isLoading, refetch } = useQuery({
     queryKey: ["top-selling-items"],
     queryFn: async () => {
       const today = new Date();
@@ -63,6 +65,11 @@ export default memo(function TopItems() {
     refetchInterval: 2 * 60 * 1000, // Fallback polling
   });
 
+  // Register refetch function
+  useEffect(() => {
+    registerRefresh(refetch);
+  }, [refetch, registerRefresh]);
+
   const getRankIcon = useCallback((index: number) => {
     if (index === 0) return <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
     if (index === 1) return <Trophy className="h-4 w-4 text-gray-400 fill-gray-400" />;
@@ -77,9 +84,6 @@ export default memo(function TopItems() {
     )}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Top Items</h3>
-        <Badge variant="outline" className="text-xs">
-          Top {config.topN}
-        </Badge>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2">

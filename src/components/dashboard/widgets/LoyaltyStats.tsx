@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import * as ReactWindow from 'react-window';
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
+import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
 const FixedSizeList = (ReactWindow as any).FixedSizeList;
 
 interface CustomerRowProps {
@@ -25,6 +26,7 @@ interface CustomerRowProps {
 export default memo(function LoyaltyStats() {
   const queryClient = useQueryClient();
   const { config } = useWidgetConfig<LoyaltyStatsConfig>('loyalty-stats');
+  const { registerRefresh } = useWidgetRefresh();
   
   // Real-time subscription for loyalty transactions
   useRealtimeTable('loyalty_ledger', () => {
@@ -36,7 +38,7 @@ export default memo(function LoyaltyStats() {
     queryClient.invalidateQueries({ queryKey: ["loyalty-stats"] });
   });
   
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ["loyalty-stats", config.topNCustomers],
     queryFn: async () => {
       const today = new Date();
@@ -68,6 +70,11 @@ export default memo(function LoyaltyStats() {
     },
     refetchInterval: config.refreshInterval * 1000,
   });
+
+  // Register refetch function
+  useEffect(() => {
+    registerRefresh(refetch);
+  }, [refetch, registerRefresh]);
 
   const getMedalIcon = useCallback((index: number) => {
     if (index === 0) return { emoji: "🥇", color: "text-yellow-500" };
