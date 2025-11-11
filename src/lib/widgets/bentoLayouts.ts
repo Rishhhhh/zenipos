@@ -24,7 +24,7 @@ export const STAFF_DESKTOP_LAYOUT: BentoLayout = {
     minHeight: '700px',
     areas: [
       ['pos', 'pos', 'orders', 'orders'],
-      ['shifts', 'eighty-six', 'orders', 'orders']
+      ['eighty-six', 'eighty-six', 'orders', 'orders']
     ]
   },
   widgets: [
@@ -43,16 +43,9 @@ export const STAFF_DESKTOP_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'active-shifts',
-      area: 'shifts',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'eighty-six',
       area: 'eighty-six',
-      colSpan: 1,
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     }
@@ -69,7 +62,7 @@ export const STAFF_TABLET_LAYOUT: BentoLayout = {
     areas: [
       ['pos', 'pos'],
       ['orders', 'orders'],
-      ['shifts', 'eighty-six']
+      ['eighty-six', 'eighty-six']
     ]
   },
   widgets: [
@@ -88,16 +81,9 @@ export const STAFF_TABLET_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'active-shifts',
-      area: 'shifts',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'eighty-six',
       area: 'eighty-six',
-      colSpan: 1,
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     }
@@ -108,13 +94,12 @@ export const STAFF_MOBILE_LAYOUT: BentoLayout = {
   role: 'staff',
   gridTemplate: {
     columns: '1fr',
-    rows: 'repeat(4, minmax(200px, auto))',
+    rows: 'repeat(3, minmax(200px, auto))',
     gap: '0.75rem',
     minHeight: 'auto',
     areas: [
       ['pos'],
       ['orders'],
-      ['shifts'],
       ['eighty-six']
     ]
   },
@@ -129,13 +114,6 @@ export const STAFF_MOBILE_LAYOUT: BentoLayout = {
     {
       id: 'active-orders',
       area: 'orders',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'active-shifts',
-      area: 'shifts',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false
