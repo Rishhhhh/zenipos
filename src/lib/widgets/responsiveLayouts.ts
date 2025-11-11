@@ -101,18 +101,18 @@ export const TABLET_ADMIN_LAYOUT: WidgetLayout = {
 export function getResponsiveLayout(breakpoint: string, role: string): WidgetLayout | null {
   if (breakpoint === 'mobile') {
     switch (role?.toLowerCase()) {
-      case 'cashier': return MOBILE_CASHIER_LAYOUT;
+      case 'staff': return MOBILE_CASHIER_LAYOUT;
       case 'manager': return MOBILE_MANAGER_LAYOUT;
-      case 'admin': return MOBILE_ADMIN_LAYOUT;
+      case 'owner': return MOBILE_ADMIN_LAYOUT;
       default: return MOBILE_CASHIER_LAYOUT;
     }
   }
   
   if (breakpoint === 'tablet') {
     switch (role?.toLowerCase()) {
-      case 'cashier': return TABLET_CASHIER_LAYOUT;
+      case 'staff': return TABLET_CASHIER_LAYOUT;
       case 'manager': return TABLET_MANAGER_LAYOUT;
-      case 'admin': return TABLET_ADMIN_LAYOUT;
+      case 'owner': return TABLET_ADMIN_LAYOUT;
       default: return TABLET_CASHIER_LAYOUT;
     }
   }

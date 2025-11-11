@@ -33,7 +33,7 @@ export function LinkDisplayModal({
   const displayUrl = `${window.location.origin}/customer-screen?displayId=${displayId}`;
   
   // Only managers can link displays (they have dual screens)
-  const canLinkDisplay = role === 'manager' || role === 'admin';
+  const canLinkDisplay = role === 'manager' || role === 'owner';
 
   // Mutation to link display to database
   const linkDisplayMutation = useMutation({

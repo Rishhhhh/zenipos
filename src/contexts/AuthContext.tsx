@@ -6,14 +6,14 @@ interface Employee {
   id: string;
   name: string;
   email?: string;
-  role: 'admin' | 'manager' | 'cashier';
+  role: 'owner' | 'manager' | 'staff';
   branch_id?: string;
 }
 
 interface POSSession {
   employeeId: string;
   employeeName: string;
-  role: 'admin' | 'manager' | 'cashier';
+  role: 'owner' | 'manager' | 'staff';
   shiftId?: string;
   loginTime: number;
   expiresAt: number;
@@ -22,7 +22,7 @@ interface POSSession {
 
 interface AuthContextType {
   employee: Employee | null;
-  role: 'admin' | 'manager' | 'cashier' | null;
+  role: 'owner' | 'manager' | 'staff' | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   shiftId: string | null;

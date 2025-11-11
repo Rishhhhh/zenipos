@@ -26,7 +26,7 @@ export function useWidgetLayout() {
   
   // Get role-based default layout
   const getDefaultLayout = useCallback(() => {
-    return getLayoutForRole(employee?.role || 'cashier');
+    return getLayoutForRole(employee?.role || 'staff');
   }, [employee?.role]);
   
   const [layout, setLayout] = useState<WidgetLayout>(() => {
