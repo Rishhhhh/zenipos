@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +9,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { TopItemsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
-export default function TopItems() {
+export default memo(function TopItems() {
   const { config } = useWidgetConfig<TopItemsConfig>('top-items');
   
   const { data: topItems, isLoading } = useQuery({
@@ -55,12 +56,12 @@ export default function TopItems() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const getRankIcon = (index: number) => {
+  const getRankIcon = useCallback((index: number) => {
     if (index === 0) return <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
     if (index === 1) return <Trophy className="h-4 w-4 text-gray-400 fill-gray-400" />;
     if (index === 2) return <Trophy className="h-4 w-4 text-amber-600 fill-amber-600" />;
     return <Star className="h-3.5 w-3.5 text-muted-foreground" />;
-  };
+  }, []);
 
   return (
     <Card className={cn(
@@ -161,4 +162,4 @@ export default function TopItems() {
       </div>
     </Card>
   );
-}
+});

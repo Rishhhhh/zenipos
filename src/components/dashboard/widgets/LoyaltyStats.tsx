@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +9,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
-export default function LoyaltyStats() {
+export default memo(function LoyaltyStats() {
   const { config } = useWidgetConfig<LoyaltyStatsConfig>('loyalty-stats');
   
   const { data: stats, isLoading } = useQuery({
@@ -44,12 +45,12 @@ export default function LoyaltyStats() {
     refetchInterval: config.refreshInterval * 1000,
   });
 
-  const getMedalIcon = (index: number) => {
+  const getMedalIcon = useCallback((index: number) => {
     if (index === 0) return { emoji: "🥇", color: "text-yellow-500" };
     if (index === 1) return { emoji: "🥈", color: "text-gray-400" };
     if (index === 2) return { emoji: "🥉", color: "text-amber-600" };
     return { emoji: "🏅", color: "text-muted-foreground" };
-  };
+  }, []);
 
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
@@ -111,4 +112,4 @@ export default function LoyaltyStats() {
       </div>
     </Card>
   );
-}
+});

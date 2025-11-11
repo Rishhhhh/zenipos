@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { RevenueChartConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
-export default function RevenueChart() {
+export default memo(function RevenueChart() {
   const { config } = useWidgetConfig<RevenueChartConfig>('revenue-chart');
   const { data: revenueData, isLoading } = useQuery({
     queryKey: ["revenue-chart"],
@@ -44,8 +45,8 @@ export default function RevenueChart() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const totalRevenue = revenueData?.reduce((sum, d) => sum + d.revenue, 0) || 0;
-  const peakHour = revenueData?.reduce((max, d) => d.revenue > max.revenue ? d : max, { hour: '', revenue: 0 });
+  const totalRevenue = useMemo(() => revenueData?.reduce((sum, d) => sum + d.revenue, 0) || 0, [revenueData]);
+  const peakHour = useMemo(() => revenueData?.reduce((max, d) => d.revenue > max.revenue ? d : max, { hour: '', revenue: 0 }), [revenueData]);
 
   return (
     <Card className={cn(
@@ -89,4 +90,4 @@ export default function RevenueChart() {
       </div>
     </Card>
   );
-}
+});

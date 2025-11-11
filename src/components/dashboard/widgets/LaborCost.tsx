@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { LaborCostConfig } from '@/types/widgetConfigs';
 import { cn } from '@/lib/utils';
 import { Sparkline } from '@/components/ui/sparkline';
 
-export default function LaborCost() {
+export default memo(function LaborCost() {
   const { config } = useWidgetConfig<LaborCostConfig>('labor-cost');
   
   const { data: metrics, isLoading, refetch } = useQuery({
@@ -42,16 +43,21 @@ export default function LaborCost() {
     refetchInterval: config.refreshInterval * 1000,
   });
 
-  const laborPercentage = Number(metrics?.labor_percentage || 0);
-  const isOverBudget = laborPercentage > config.targetPercentage;
-  const variance = laborPercentage - config.targetPercentage;
-  const progressMax = config.targetPercentage * 1.5;
+  const laborPercentage = useMemo(() => Number(metrics?.labor_percentage || 0), [metrics?.labor_percentage]);
+  const isOverBudget = useMemo(() => laborPercentage > config.targetPercentage, [laborPercentage, config.targetPercentage]);
+  const variance = useMemo(() => laborPercentage - config.targetPercentage, [laborPercentage, config.targetPercentage]);
+  const progressMax = useMemo(() => config.targetPercentage * 1.5, [config.targetPercentage]);
 
-  const getProgressColor = () => {
+  const getProgressColor = useCallback(() => {
     if (laborPercentage > config.targetPercentage * 1.2) return 'bg-destructive';
     if (laborPercentage > config.targetPercentage) return 'bg-warning';
     return 'bg-success';
-  };
+  }, [laborPercentage, config.targetPercentage]);
+
+  const handleRefetch = useCallback(() => {
+    refetch();
+    refetchSparkline();
+  }, [refetch, refetchSparkline]);
 
   return (
     <Card className={cn(
@@ -61,10 +67,7 @@ export default function LaborCost() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Labor Cost %</h3>
         <Button
-          onClick={() => {
-            refetch();
-            refetchSparkline();
-          }}
+          onClick={handleRefetch}
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
@@ -174,4 +177,4 @@ export default function LaborCost() {
       </div>
     </Card>
   );
-}
+});

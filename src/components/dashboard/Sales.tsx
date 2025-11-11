@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { SalesWidgetConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
-export default function Sales() {
+export default memo(function Sales() {
   const { config } = useWidgetConfig<SalesWidgetConfig>('sales');
   
   const { data: todayStats, isLoading, refetch } = useQuery({
@@ -64,6 +65,16 @@ export default function Sales() {
     refetchInterval: 30000,
   });
 
+  const handleRefetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const revenue = useMemo(() => todayStats?.revenue || 0, [todayStats?.revenue]);
+  const orders = useMemo(() => todayStats?.orders || 0, [todayStats?.orders]);
+  const items = useMemo(() => todayStats?.items || 0, [todayStats?.items]);
+  const revenueTrend = useMemo(() => todayStats?.revenueTrend || 0, [todayStats?.revenueTrend]);
+  const orderTrend = useMemo(() => todayStats?.orderTrend || 0, [todayStats?.orderTrend]);
+
   return (
     <Card className={cn(
       "glass-card flex flex-col w-full h-full",
@@ -72,7 +83,7 @@ export default function Sales() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Today's Sales</h3>
         <Button
-          onClick={() => refetch()}
+          onClick={handleRefetch}
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
@@ -203,4 +214,4 @@ export default function Sales() {
       )}
     </Card>
   );
-}
+});

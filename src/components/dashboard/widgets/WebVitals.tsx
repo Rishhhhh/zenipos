@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -33,7 +34,7 @@ function MetricCard({ icon: Icon, name, value, unit, threshold, compactMode }: M
   );
 }
 
-export default function WebVitals() {
+export default memo(function WebVitals() {
   const { config } = useWidgetConfig<WebVitalsConfig>('web-vitals');
   
   const { data: vitals, isLoading, refetch } = useQuery({
@@ -57,19 +58,23 @@ export default function WebVitals() {
     enabled: config.showAlertCount,
   });
 
-  const calculateAvg = (data: any[] | undefined, type: string): number => {
+  const calculateAvg = useCallback((data: any[] | undefined, type: string): number => {
     if (!data || data.length === 0) return 0;
     const filtered = data.filter(d => d.metric_type === type);
     if (filtered.length === 0) return 0;
     return filtered.reduce((sum, d) => sum + d.duration_ms, 0) / filtered.length;
-  };
+  }, []);
 
-  const avgMetrics = {
+  const avgMetrics = useMemo(() => ({
     lcp: calculateAvg(vitals, 'lcp'),
     fid: calculateAvg(vitals, 'fid'),
     cls: calculateAvg(vitals, 'cls') / 1000,
     tti: calculateAvg(vitals, 'page_load'),
-  };
+  }), [vitals, calculateAvg]);
+
+  const handleRefetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
@@ -77,7 +82,7 @@ export default function WebVitals() {
         <h3 className="text-lg font-semibold">Web Vitals</h3>
         <div className="flex items-center gap-2">
           {config.showAlertCount && alerts && alerts.length > 0 && <Badge variant="destructive" className="text-xs h-4 px-1.5">{alerts.length}</Badge>}
-          <Button onClick={() => refetch()} variant="ghost" size="sm" className="h-7 w-7 p-0"><RefreshCw className="h-3.5 w-3.5" /></Button>
+          <Button onClick={handleRefetch} variant="ghost" size="sm" className="h-7 w-7 p-0"><RefreshCw className="h-3.5 w-3.5" /></Button>
         </div>
       </div>
 
@@ -97,4 +102,4 @@ export default function WebVitals() {
       </div>
     </Card>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LowStockConfig } from "@/types/widgetConfigs";
 
-export default function LowStock() {
+export default memo(function LowStock() {
   const navigate = useNavigate();
   const { config } = useWidgetConfig<LowStockConfig>('low-stock');
 
@@ -31,13 +32,17 @@ export default function LowStock() {
     refetchInterval: config.refreshInterval * 1000,
   });
 
-  const getStockStatus = (current: number, reorder: number) => {
+  const getStockStatus = useCallback((current: number, reorder: number) => {
     const percentage = (current / reorder) * 100;
     if (percentage <= config.alertThreshold.critical) {
       return { color: "text-destructive", bg: "bg-destructive/10", label: "Critical", animate: true };
     }
     return { color: "text-warning", bg: "bg-warning/10", label: "Low", animate: false };
-  };
+  }, [config.alertThreshold.critical]);
+
+  const handleNavigateToInventory = useCallback(() => {
+    navigate("/admin/inventory");
+  }, [navigate]);
 
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
@@ -55,7 +60,7 @@ export default function LowStock() {
           lowStockItems.map((item) => {
             const status = getStockStatus(Number(item.current_qty), Number(item.reorder_point));
             return (
-              <button key={item.id} onClick={() => navigate("/admin/inventory")} className={cn("w-full rounded-md border transition-all hover:shadow-sm active:scale-[0.98]", config.compactMode ? "p-1.5" : "p-2", status.bg, status.animate ? "border-destructive/30" : "border-border/30")}>
+              <button key={item.id} onClick={handleNavigateToInventory} className={cn("w-full rounded-md border transition-all hover:shadow-sm active:scale-[0.98]", config.compactMode ? "p-1.5" : "p-2", status.bg, status.animate ? "border-destructive/30" : "border-border/30")}>
                 <div className="flex items-center gap-2">
                   <div className={cn("flex items-center justify-center rounded-full flex-shrink-0", config.compactMode ? "w-6 h-6" : "w-7 h-7", status.animate ? "bg-destructive/20" : "bg-warning/20")}>
                     {status.animate ? <PackageX className={cn("text-destructive animate-pulse", config.compactMode ? "h-3 w-3" : "h-3.5 w-3.5")} /> : <AlertTriangle className={cn("text-warning", config.compactMode ? "h-3 w-3" : "h-3.5 w-3.5")} />}
@@ -78,4 +83,4 @@ export default function LowStock() {
       </div>
     </Card>
   );
-}
+});

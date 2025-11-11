@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { EightySixBadge } from '@/components/ui/eighty-six-badge';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
-export default function EightySix() {
+export default memo(function EightySix() {
   const { config } = useWidgetConfig<EightySixConfig>('eighty-six');
   const navigate = useNavigate();
 
@@ -25,7 +26,11 @@ export default function EightySix() {
     refetchInterval: config.refreshInterval * 1000,
   });
 
-  const lastUpdated = formatDistanceToNow(dataUpdatedAt, { addSuffix: true });
+  const lastUpdated = useMemo(() => formatDistanceToNow(dataUpdatedAt, { addSuffix: true }), [dataUpdatedAt]);
+
+  const handleNavigateToEightySix = useCallback(() => {
+    navigate('/admin/eighty-six');
+  }, [navigate]);
 
   return (
     <Card className={cn("glass-card flex flex-col w-full h-full", config.compactMode ? "p-3" : "p-4")}>
@@ -51,7 +56,7 @@ export default function EightySix() {
         ) : (
           <div className={cn("space-y-2 overflow-y-auto", config.compactMode ? "max-h-[172px]" : "max-h-[164px]")}>
             {eightySixItems.map((item: any) => (
-              <button key={item.id} onClick={() => navigate('/admin/eighty-six')} className={cn("w-full flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 transition-all hover:bg-destructive/10 hover:border-destructive/30", config.compactMode ? "px-2.5 py-2 h-[40px]" : "px-3 py-2.5 h-[48px]")}>
+              <button key={item.id} onClick={handleNavigateToEightySix} className={cn("w-full flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 transition-all hover:bg-destructive/10 hover:border-destructive/30", config.compactMode ? "px-2.5 py-2 h-[40px]" : "px-3 py-2.5 h-[48px]")}>
                 <p className={cn("font-medium line-clamp-1 text-left flex-1 mr-2", config.compactMode ? "text-[13px]" : "text-sm")}>{item.menu_item_name}</p>
                 <EightySixBadge size={config.compactMode ? "sm" : "default"} showIcon={false} />
               </button>
@@ -67,4 +72,4 @@ export default function EightySix() {
       )}
     </Card>
   );
-}
+});

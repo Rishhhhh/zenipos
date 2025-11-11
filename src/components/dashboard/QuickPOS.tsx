@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ const GRID_COLS_MAP = {
   4: 'grid-cols-4'
 } as const;
 
-export default function QuickPOS() {
+export default memo(function QuickPOS() {
   const navigate = useNavigate();
   const { items, addItem } = useCartStore();
   const { config } = useWidgetConfig<QuickPOSConfig>('quick-pos');
@@ -61,7 +61,7 @@ export default function QuickPOS() {
     },
   });
 
-  const handleAddToCart = (item: any) => {
+  const handleAddToCart = useCallback((item: any) => {
     addItem({
       menu_item_id: item.id,
       name: item.name,
@@ -69,15 +69,20 @@ export default function QuickPOS() {
     });
     toast.success(`Added ${item.name}`);
     haptics.medium();
-  };
+  }, [addItem]);
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+  const totalPrice = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
 
-  const getCartQuantity = (itemId: string) => {
+  const getCartQuantity = useCallback((itemId: string) => {
     const cartItem = items.find(i => i.menu_item_id === itemId);
     return cartItem?.quantity || 0;
-  };
+  }, [items]);
+
+  const handleNavigateToPOS = useCallback(() => {
+    navigate("/pos");
+    haptics.light();
+  }, [navigate]);
 
   return (
     <Card className="glass-card p-4 flex flex-col w-full h-full">
@@ -176,10 +181,7 @@ export default function QuickPOS() {
       )}
 
       <Button
-        onClick={() => {
-          navigate("/pos");
-          haptics.light();
-        }}
+        onClick={handleNavigateToPOS}
         className="w-full h-10"
         variant={totalItems > 0 ? "default" : "outline"}
         size="lg"
@@ -190,4 +192,4 @@ export default function QuickPOS() {
       </Button>
     </Card>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +11,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 
-export default function ActiveOrders() {
+export default memo(function ActiveOrders() {
   const navigate = useNavigate();
   const { config } = useWidgetConfig<ActiveOrdersConfig>('active-orders');
 
@@ -31,7 +32,7 @@ export default function ActiveOrders() {
 
   useRealtimeTable('orders', () => refetch());
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "pending":
         return { bg: "bg-warning/20", text: "text-warning", border: "border-warning/30" };
@@ -42,16 +43,16 @@ export default function ActiveOrders() {
       default:
         return { bg: "bg-accent", text: "text-foreground", border: "border-border" };
     }
-  };
+  }, []);
   
-  const getTimerColor = (createdAt: string) => {
+  const getTimerColor = useCallback((createdAt: string) => {
     const minutes = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60);
     if (minutes > config.alertThresholdMinutes) return "text-destructive";
     if (minutes > config.alertThresholdMinutes * 0.7) return "text-warning";
     return "text-success";
-  };
+  }, [config.alertThresholdMinutes]);
 
-  const getOrdersByStatus = (status: string) => {
+  const getOrdersByStatus = useMemo(() => (status: string) => {
     if (!orders) return [];
     return orders
       .filter(order => order.status === status && config.statusFilters.includes(order.status as any))
@@ -66,12 +67,12 @@ export default function ActiveOrders() {
           case 'priority':
             return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           default:
-            return 0;
+          return 0;
         }
       });
-  };
+  }, [orders, config.statusFilters, config.sortBy]);
 
-  const getFilteredOrders = () => {
+  const getFilteredOrders = useMemo(() => () => {
     if (!orders) return [];
     return orders
       .filter(order => config.statusFilters.includes(order.status as any))
@@ -86,12 +87,16 @@ export default function ActiveOrders() {
           case 'priority':
             return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           default:
-            return 0;
+          return 0;
         }
       });
-  };
+  }, [orders, config.statusFilters, config.sortBy]);
 
-  const filteredOrders = getFilteredOrders();
+  const filteredOrders = useMemo(() => getFilteredOrders(), [getFilteredOrders]);
+
+  const handleNavigateToKDS = useCallback(() => {
+    navigate("/kds");
+  }, [navigate]);
 
   const OrderCard = ({ order, compact = false }: { order: any; compact?: boolean }) => {
     const statusColors = getStatusColor(order.status);
@@ -355,7 +360,7 @@ export default function ActiveOrders() {
       </div>
 
       <Button
-        onClick={() => navigate("/kds")}
+        onClick={handleNavigateToKDS}
         className="w-full"
         variant="outline"
       >
@@ -364,4 +369,4 @@ export default function ActiveOrders() {
       </Button>
     </Card>
   );
-}
+});

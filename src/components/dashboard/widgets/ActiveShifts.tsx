@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { ActiveShiftsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export default function ActiveShifts() {
+export default memo(function ActiveShifts() {
   const { config } = useWidgetConfig<ActiveShiftsConfig>('active-shifts');
   
   const isGridMode = config.viewMode === 'grid';
@@ -46,16 +47,20 @@ export default function ActiveShifts() {
     refetchInterval: config.refreshInterval * 1000,
   });
 
-  const totalLaborCost = activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0;
-  const longestShift = activeShifts?.reduce((max, s) => 
+  const totalLaborCost = useMemo(() => activeShifts?.reduce((sum, s) => sum + s.laborCost, 0) || 0, [activeShifts]);
+  const longestShift = useMemo(() => activeShifts?.reduce((max, s) => 
     s.hoursWorked > max.hoursWorked ? s : max, activeShifts[0]
-  );
+  ), [activeShifts]);
   
-  const getShiftColor = (hours: number) => {
+  const getShiftColor = useCallback((hours: number) => {
     if (hours >= 8) return { bg: "bg-destructive/10", text: "text-destructive", border: "border-destructive/30" };
     if (hours >= 4) return { bg: "bg-warning/10", text: "text-warning", border: "border-warning/30" };
     return { bg: "bg-success/10", text: "text-success", border: "border-success/30" };
-  };
+  }, []);
+
+  const handleRefetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   if (isGridMode) {
     return (
@@ -67,7 +72,7 @@ export default function ActiveShifts() {
               {activeShifts?.length || 0} Active
             </Badge>
             <Button
-              onClick={() => refetch()}
+              onClick={handleRefetch}
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0"
@@ -151,7 +156,7 @@ export default function ActiveShifts() {
             {activeShifts?.length || 0} Active
           </Badge>
           <Button
-            onClick={() => refetch()}
+            onClick={handleRefetch}
             variant="ghost"
             size="sm"
             className="h-8 w-8 p-0"
@@ -242,4 +247,4 @@ export default function ActiveShifts() {
       </div>
     </Card>
   );
-}
+});
