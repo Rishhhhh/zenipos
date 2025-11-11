@@ -10,20 +10,6 @@ import { Button } from "@/components/ui/button";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
-import { VariableSizeList } from 'react-window';
-
-interface OrderRowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: {
-    orders: any[];
-    getStatusColor: (status: string) => any;
-    getTimerColor: (createdAt: string) => string;
-    compactMode: boolean;
-    config: ActiveOrdersConfig;
-    navigate: (path: string) => void;
-  };
-}
 
 export default memo(function ActiveOrders() {
   const navigate = useNavigate();
@@ -111,147 +97,6 @@ export default memo(function ActiveOrders() {
   const handleNavigateToKDS = useCallback(() => {
     navigate("/kds");
   }, [navigate]);
-
-  const getItemHeight = useCallback((index: number) => {
-    return config.compactMode ? 66 : 88;
-  }, [config.compactMode]);
-
-  const OrderRow = memo(({ index, style, data }: OrderRowProps) => {
-    const order = data.orders[index];
-    const statusColors = data.getStatusColor(order.status);
-    const timerColor = data.getTimerColor(order.created_at);
-    const minutes = Math.floor((Date.now() - new Date(order.created_at).getTime()) / (1000 * 60));
-    
-    return (
-      <div style={{ ...style, paddingBottom: data.compactMode ? '6px' : '8px' }}>
-        {data.compactMode ? (
-          <div
-            className={cn(
-              "p-2 rounded-lg border transition-all hover:shadow-md cursor-pointer",
-              statusColors.bg,
-              statusColors.border
-            )}
-            onClick={() => data.navigate("/kds")}
-          >
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <ChefHat className={cn("h-4 w-4 flex-shrink-0", statusColors.text)} />
-                <span className="font-mono font-semibold text-xs truncate">
-                  #{order.id.slice(0, 8)}
-                </span>
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    statusColors.bg,
-                    statusColors.text,
-                    statusColors.border,
-                    "text-[10px] h-4 px-1"
-                  )}
-                >
-                  {order.status}
-                </Badge>
-              </div>
-              <span className="text-sm font-bold text-primary flex-shrink-0">
-                RM {order.total.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground pl-6">
-              {order.table_id && <span>Table {order.table_id}</span>}
-              <span>•</span>
-              <span>{Array.isArray(order.order_items) ? order.order_items.length : 0} items</span>
-              {data.config.showTimer && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <Clock className={cn("h-3 w-3", timerColor)} />
-                    <span className={cn("font-semibold", timerColor)}>
-                      {minutes < 1 ? "Just now" : `${minutes} min`}
-                    </span>
-                    {minutes > data.config.alertThresholdMinutes && (
-                      <span className="text-destructive font-semibold ml-1 animate-pulse">⚠️ OVERDUE</span>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div
-            className={cn(
-              "p-3 rounded-lg border transition-all hover:shadow-md cursor-pointer",
-              statusColors.bg,
-              statusColors.border
-            )}
-            onClick={() => data.navigate("/kds")}
-          >
-            <div className="flex items-start gap-3">
-              <div className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0",
-                statusColors.bg
-              )}>
-                <ChefHat className={cn("h-5 w-5", statusColors.text)} />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-sm">
-                      #{order.id.slice(0, 8)}
-                    </span>
-                    <Badge 
-                      variant="outline" 
-                      className={cn(
-                        statusColors.bg,
-                        statusColors.text,
-                        statusColors.border,
-                        "text-xs h-5"
-                      )}
-                    >
-                      {order.status}
-                    </Badge>
-                  </div>
-                  <span className="text-lg font-bold text-primary">
-                    RM {order.total.toFixed(2)}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                  {order.table_id && (
-                    <div className="flex items-center gap-1.5">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">Table {order.table_id}</span>
-                    </div>
-                  )}
-                  {order.order_items && (
-                    <div className="flex items-center gap-1.5">
-                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {Array.isArray(order.order_items) ? order.order_items.length : 0} items
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {data.config.showTimer && (
-                  <div className="flex items-center gap-1.5">
-                    <Clock className={cn("h-3.5 w-3.5", timerColor)} />
-                    <span className={cn("text-xs font-semibold", timerColor)}>
-                      {minutes < 1 ? "Just now" : `${minutes} min${minutes > 1 ? 's' : ''} ago`}
-                    </span>
-                    {minutes > data.config.alertThresholdMinutes && (
-                      <Badge variant="outline" className="ml-auto bg-destructive/20 text-destructive text-xs border-destructive/30 animate-pulse">
-                        Overdue
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  });
 
   const OrderCard = ({ order, compact = false }: { order: any; compact?: boolean }) => {
     const statusColors = getStatusColor(order.status);
@@ -376,22 +221,15 @@ export default memo(function ActiveOrders() {
             })}
           </div>
         ) : (
-          <VariableSizeList
-            height={500}
-            itemCount={filteredOrders.length}
-            itemSize={getItemHeight}
-            width="100%"
-            itemData={{
-              orders: filteredOrders,
-              getStatusColor,
-              getTimerColor,
-              compactMode: config.compactMode,
-              config,
-              navigate
-            }}
-          >
-            {OrderRow}
-          </VariableSizeList>
+          <div className="space-y-2 overflow-y-auto" style={{ maxHeight: '400px' }}>
+            {filteredOrders.map(order => (
+              <OrderCard 
+                key={order.id}
+                order={order} 
+                compact={config.compactMode}
+              />
+            ))}
+          </div>
         )}
       </div>
 

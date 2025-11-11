@@ -10,18 +10,6 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveShiftsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FixedSizeList } from 'react-window';
-
-interface ShiftRowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: {
-    shifts: any[];
-    getShiftColor: (hours: number) => any;
-    longestShift: any;
-    config: ActiveShiftsConfig;
-  };
-}
 
 export default memo(function ActiveShifts() {
   const { config } = useWidgetConfig<ActiveShiftsConfig>('active-shifts');
@@ -83,62 +71,57 @@ export default memo(function ActiveShifts() {
     refetch();
   }, [refetch]);
 
-  const ShiftRow = memo(({ index, style, data }: ShiftRowProps) => {
-    const shift = data.shifts[index];
-    const shiftColor = data.getShiftColor(shift.hoursWorked);
-    const isLongest = data.longestShift?.id === shift.id && data.shifts.length > 1;
+  const ShiftCard = ({ shift }: { shift: any }) => {
+    const initials = shift.employees?.name
+      ?.split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || "?";
+    const shiftColor = getShiftColor(shift.hoursWorked);
+    const isLongest = longestShift?.id === shift.id && activeShifts && activeShifts.length > 1;
     
     return (
-      <div style={{ ...style, paddingBottom: '10px' }}>
-        <div 
-          className={cn(
-            "p-2.5 rounded-lg border transition-all hover:shadow-md h-[52px] flex items-center gap-2.5",
+      <div 
+        className={cn(
+          "p-2.5 rounded-lg border transition-all hover:shadow-md flex items-center gap-2.5",
+          shiftColor.bg,
+          shiftColor.border
+        )}
+      >
+        <Avatar className={cn(
+          "h-8 w-8 border",
+          shiftColor.border
+        )}>
+          <AvatarFallback className={cn(
+            "text-xs font-semibold",
             shiftColor.bg,
-            shiftColor.border
-          )}
-        >
-          <div className="relative flex-shrink-0">
-            <Avatar className="h-10 w-10 border-2 border-success">
-              <AvatarFallback className="bg-success/20 text-success font-semibold text-sm">
-                {shift.employees?.name?.charAt(0) || "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background" />
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <h4 className="font-semibold text-sm line-clamp-1">
-                  {shift.employees?.name || "Unknown"}
-                </h4>
-                {isLongest && (
-                  <Award className="h-3.5 w-3.5 text-warning fill-warning flex-shrink-0" />
-                )}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 text-xs mt-0.5">
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  {shift.hoursWorked.toFixed(1)}h
-                </span>
-              </div>
-              {data.config.showLaborCost && (
-                <div className="flex items-center gap-1.5">
-                  <DollarSign className="h-3 w-3 text-primary" />
-                  <span className="font-semibold text-primary">
-                    RM {shift.laborCost.toFixed(2)}
-                  </span>
-                </div>
-              )}
-            </div>
+            shiftColor.text
+          )}>
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold line-clamp-1">{shift.employees?.name || "Unknown"}</p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{shift.hoursWorked.toFixed(1)}h</span>
+            <span>•</span>
+            <DollarSign className="h-3 w-3" />
+            <span>RM {shift.laborCost.toFixed(2)}</span>
           </div>
         </div>
+        
+        {isLongest && (
+          <Badge variant="outline" className="text-xs bg-warning/20 text-warning border-warning/30 flex-shrink-0">
+            <Award className="h-3 w-3 mr-1" />
+            Longest
+          </Badge>
+        )}
       </div>
     );
-  });
+  };
 
   if (error) {
     return (
@@ -282,21 +265,10 @@ export default memo(function ActiveShifts() {
             ))}
           </div>
         ) : activeShifts && activeShifts.length > 0 ? (
-          <div className="animate-fade-in-content">
-          <FixedSizeList
-            height={400}
-            itemCount={activeShifts.length}
-            itemSize={62}
-            width="100%"
-            itemData={{ 
-              shifts: activeShifts, 
-              getShiftColor, 
-              longestShift, 
-              config 
-            }}
-          >
-            {ShiftRow}
-          </FixedSizeList>
+          <div className="space-y-2 overflow-y-auto animate-fade-in-content" style={{ maxHeight: '400px' }}>
+            {activeShifts.map(shift => (
+              <ShiftCard key={shift.id} shift={shift} />
+            ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
