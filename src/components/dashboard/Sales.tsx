@@ -15,8 +15,13 @@ export default memo(function Sales() {
   const queryClient = useQueryClient();
   const { config } = useWidgetConfig<SalesWidgetConfig>('sales');
   
-  // Real-time subscription for orders
-  useRealtimeTable('orders', () => {
+  // Real-time subscription for orders with logging
+  useRealtimeTable('orders', (payload) => {
+    console.log('[Sales Widget] Real-time update:', {
+      eventType: payload.eventType,
+      order_id: payload.new?.id || payload.old?.id,
+      timestamp: new Date().toISOString()
+    });
     queryClient.invalidateQueries({ queryKey: ["today-sales"] });
   });
   
@@ -43,7 +48,7 @@ export default memo(function Sales() {
         .from("orders")
         .select("total, order_items(quantity), status")
         .gte("created_at", today.toISOString())
-        .in("status", ["done", "preparing", "pending"]);
+        .in("status", ["done", "preparing", "pending", "completed"]);
 
       if (todayError) {
         console.error('[Sales Widget] Today query error:', todayError);
@@ -55,6 +60,17 @@ export default memo(function Sales() {
         statuses: todayOrders?.map(o => o.status),
         revenue: todayOrders?.reduce((sum, o) => sum + o.total, 0)
       });
+
+      // Fallback check if no orders found today
+      if (!todayOrders || todayOrders.length === 0) {
+        console.warn('[Sales Widget] No orders today. Checking recent orders...');
+        const { data: recentOrders } = await supabase
+          .from("orders")
+          .select("created_at, status, total")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        console.log('[Sales Widget] Last 10 orders:', recentOrders);
+      }
 
       const { data: comparisonOrders, error: comparisonError } = await supabase
         .from("orders")
@@ -111,7 +127,7 @@ export default memo(function Sales() {
 
   return (
     <Card className={cn(
-      "glass-card flex flex-col w-full h-full",
+      "glass-card flex flex-col w-full h-full overflow-hidden",
       config.compactMode ? "p-3" : "p-4"
     )}>
       <div className="flex items-center justify-between mb-3">
