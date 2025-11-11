@@ -7,6 +7,13 @@ declare module 'react-window' {
     data: T;
   }
 
+  export interface GridChildComponentProps<T = any> {
+    columnIndex: number;
+    rowIndex: number;
+    style: React.CSSProperties;
+    data: T;
+  }
+
   export interface FixedSizeListProps {
     children: React.ComponentType<ListChildComponentProps>;
     className?: string;
@@ -70,14 +77,92 @@ declare module 'react-window' {
     width: number | string;
   }
 
-  export class FixedSizeList extends React.Component<FixedSizeListProps> {
-    scrollTo(scrollOffset: number): void;
-    scrollToItem(index: number, align?: 'auto' | 'smart' | 'center' | 'end' | 'start'): void;
+  export interface FixedSizeGridProps {
+    children: React.ComponentType<GridChildComponentProps>;
+    className?: string;
+    columnCount: number;
+    columnWidth: number;
+    direction?: 'ltr' | 'rtl';
+    height: number | string;
+    initialScrollLeft?: number;
+    initialScrollTop?: number;
+    innerRef?: React.Ref<any>;
+    innerElementType?: React.ElementType;
+    itemData?: any;
+    itemKey?: (params: { columnIndex: number; rowIndex: number; data: any }) => any;
+    onItemsRendered?: (props: {
+      overscanColumnStartIndex: number;
+      overscanColumnStopIndex: number;
+      overscanRowStartIndex: number;
+      overscanRowStopIndex: number;
+      visibleColumnStartIndex: number;
+      visibleColumnStopIndex: number;
+      visibleRowStartIndex: number;
+      visibleRowStopIndex: number;
+    }) => void;
+    onScroll?: (props: {
+      horizontalScrollDirection: 'forward' | 'backward';
+      scrollLeft: number;
+      scrollTop: number;
+      scrollUpdateWasRequested: boolean;
+      verticalScrollDirection: 'forward' | 'backward';
+    }) => void;
+    outerRef?: React.Ref<any>;
+    outerElementType?: React.ElementType;
+    overscanColumnCount?: number;
+    overscanRowCount?: number;
+    rowCount: number;
+    rowHeight: number;
+    style?: React.CSSProperties;
+    useIsScrolling?: boolean;
+    width: number | string;
   }
 
-  export class VariableSizeList extends React.Component<VariableSizeListProps> {
-    resetAfterIndex(index: number, shouldForceUpdate?: boolean): void;
-    scrollTo(scrollOffset: number): void;
-    scrollToItem(index: number, align?: 'auto' | 'smart' | 'center' | 'end' | 'start'): void;
+  export interface VariableSizeGridProps {
+    children: React.ComponentType<GridChildComponentProps>;
+    className?: string;
+    columnCount: number;
+    columnWidth: (index: number) => number;
+    direction?: 'ltr' | 'rtl';
+    estimatedColumnWidth?: number;
+    estimatedRowHeight?: number;
+    height: number | string;
+    initialScrollLeft?: number;
+    initialScrollTop?: number;
+    innerRef?: React.Ref<any>;
+    innerElementType?: React.ElementType;
+    itemData?: any;
+    itemKey?: (params: { columnIndex: number; rowIndex: number; data: any }) => any;
+    onItemsRendered?: (props: {
+      overscanColumnStartIndex: number;
+      overscanColumnStopIndex: number;
+      overscanRowStartIndex: number;
+      overscanRowStopIndex: number;
+      visibleColumnStartIndex: number;
+      visibleColumnStopIndex: number;
+      visibleRowStartIndex: number;
+      visibleRowStopIndex: number;
+    }) => void;
+    onScroll?: (props: {
+      horizontalScrollDirection: 'forward' | 'backward';
+      scrollLeft: number;
+      scrollTop: number;
+      scrollUpdateWasRequested: boolean;
+      verticalScrollDirection: 'forward' | 'backward';
+    }) => void;
+    outerRef?: React.Ref<any>;
+    outerElementType?: React.ElementType;
+    overscanColumnCount?: number;
+    overscanRowCount?: number;
+    rowCount: number;
+    rowHeight: (index: number) => number;
+    style?: React.CSSProperties;
+    useIsScrolling?: boolean;
+    width: number | string;
   }
+
+  export const FixedSizeList: React.ComponentType<FixedSizeListProps>;
+  export const VariableSizeList: React.ComponentType<VariableSizeListProps>;
+  export const FixedSizeGrid: React.ComponentType<FixedSizeGridProps>;
+  export const VariableSizeGrid: React.ComponentType<VariableSizeGridProps>;
 }

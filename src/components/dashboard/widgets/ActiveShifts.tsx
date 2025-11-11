@@ -10,9 +10,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveShiftsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import ReactWindow from 'react-window';
-
-const { FixedSizeList } = ReactWindow as any;
+import { FixedSizeList } from 'react-window';
 
 interface ShiftRowProps {
   index: number;

@@ -10,9 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
-import ReactWindow from 'react-window';
-
-const { VariableSizeList } = ReactWindow as any;
+import { VariableSizeList } from 'react-window';
 
 interface OrderRowProps {
   index: number;

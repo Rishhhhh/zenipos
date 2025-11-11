@@ -8,9 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 import { memo, useCallback, useState, useEffect, useRef, useMemo } from "react";
-import ReactWindow from "react-window";
-
-const { FixedSizeGrid } = ReactWindow as any;
+import { FixedSizeGrid } from "react-window";
 
 // Custom hook for container dimensions using ResizeObserver
 function useContainerDimensions() {
