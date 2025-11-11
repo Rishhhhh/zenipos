@@ -9,11 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
-import * as ReactWindow from 'react-window';
+import ReactWindow from 'react-window';
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
 
-const FixedSizeList = (ReactWindow as any).FixedSizeList;
+const { FixedSizeList } = ReactWindow as any;
 
 interface CustomerRowProps {
   index: number;
