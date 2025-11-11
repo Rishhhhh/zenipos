@@ -161,8 +161,8 @@ declare module 'react-window' {
     width: number | string;
   }
 
-  export const FixedSizeList: React.ComponentType<FixedSizeListProps>;
-  export const VariableSizeList: React.ComponentType<VariableSizeListProps>;
-  export const FixedSizeGrid: React.ComponentType<FixedSizeGridProps>;
-  export const VariableSizeGrid: React.ComponentType<VariableSizeGridProps>;
+  export class FixedSizeList extends React.Component<FixedSizeListProps> {}
+  export class VariableSizeList extends React.Component<VariableSizeListProps> {}
+  export class FixedSizeGrid extends React.Component<FixedSizeGridProps> {}
+  export class VariableSizeGrid extends React.Component<VariableSizeGridProps> {}
 }
