@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { detectBreakpoint, type BentoBreakpoint } from '@/lib/widgets/bentoGrid';
+import { detectBreakpoint, areasToCSS, type BentoBreakpoint } from '@/lib/widgets/bentoGrid';
 import { getBentoLayoutForRole } from '@/lib/widgets/bentoLayouts';
 import { useBentoLayout } from '@/lib/widgets/useBentoLayout';
 import { BentoWidget } from './BentoWidget';
@@ -44,6 +44,7 @@ export default function BentoDashboard({
     display: 'grid',
     gridTemplateColumns: layout.gridTemplate.columns,
     gridTemplateRows: layout.gridTemplate.rows,
+    gridTemplateAreas: areasToCSS(layout.gridTemplate.areas),
     gap: layout.gridTemplate.gap,
     minHeight: layout.gridTemplate.minHeight,
   }), [layout.gridTemplate]);

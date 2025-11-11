@@ -91,7 +91,7 @@ export function BentoWidget({
 
   return (
     <div 
-      className="bento-widget" 
+      className="bento-widget group" 
       style={gridStyles}
       data-minimized={isMinimized}
       data-widget-id={widgetId}
