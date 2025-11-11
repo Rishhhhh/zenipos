@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { LoyaltyStatsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
-import { FixedSizeList } from '@/lib/react-window-wrapper';
+import { FixedSizeList } from 'react-window';
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
 

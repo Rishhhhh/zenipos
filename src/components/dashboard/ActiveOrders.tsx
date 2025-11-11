@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
-import { VariableSizeList } from '@/lib/react-window-wrapper';
+import { VariableSizeList } from 'react-window';
 
 interface OrderRowProps {
   index: number;
