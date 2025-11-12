@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ZeniPOSLogo } from './ZeniPOSLogo';
 import { QueueStatusBadge } from '@/components/offline/QueueStatusBadge';
+import { BranchSelector } from '@/components/branch/BranchSelector';
+import { useBranch } from '@/contexts/BranchContext';
 
 export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut }: {
   currentShiftId?: string | null;
@@ -28,6 +30,7 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
   const [showAI, setShowAI] = useState(false);
   const [pendingCommand, setPendingCommand] = useState<string | undefined>(undefined);
   const { employee, role, logout } = useAuth();
+  const { selectedBranchId, selectBranch, hasMultipleBranches, branches, isLoading: branchesLoading } = useBranch();
   const location = useLocation();
   const { openModal } = useModalManager();
   const isPOSPage = location.pathname === '/pos';
@@ -65,6 +68,19 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Branch Selector - only if multiple branches */}
+            {hasMultipleBranches && !branchesLoading && (
+              <div className="hidden sm:block">
+                <BranchSelector 
+                  value={selectedBranchId} 
+                  onChange={selectBranch}
+                  showAll={true}
+                  branches={branches}
+                  isLoading={branchesLoading}
+                />
+              </div>
+            )}
+
             {/* Offline sync status */}
             <QueueStatusBadge />
 

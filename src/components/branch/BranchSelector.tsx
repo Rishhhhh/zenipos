@@ -1,5 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Select,
   SelectContent,
@@ -9,29 +7,21 @@ import {
 } from '@/components/ui/select';
 import { Store } from 'lucide-react';
 
+interface Branch {
+  id: string;
+  name: string;
+  code: string | null;
+}
+
 interface BranchSelectorProps {
   value: string | null;
   onChange: (branchId: string) => void;
   showAll?: boolean;
+  branches: Branch[];
+  isLoading?: boolean;
 }
 
-export function BranchSelector({ value, onChange, showAll = true }: BranchSelectorProps) {
-  const { data: branches, isLoading } = useQuery({
-    queryKey: ['user-branches'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('branches')
-        .select(`
-          *,
-          organizations(name)
-        `)
-        .order('name');
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
+export function BranchSelector({ value, onChange, showAll = true, branches, isLoading }: BranchSelectorProps) {
   if (isLoading) {
     return <div className="h-10 w-64 animate-pulse bg-muted rounded" />;
   }

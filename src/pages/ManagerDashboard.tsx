@@ -11,8 +11,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
+import { useBranch } from '@/contexts/BranchContext';
 
 export default function ManagerDashboard() {
+  const { branches, isLoading: branchesLoading } = useBranch();
   const [selectedBranch, setSelectedBranch] = useState<string | null>('all');
   const [date, setDate] = useState<Date>(new Date());
 
@@ -41,7 +43,12 @@ export default function ManagerDashboard() {
             </PopoverContent>
           </Popover>
 
-          <BranchSelector value={selectedBranch} onChange={setSelectedBranch} />
+          <BranchSelector 
+            value={selectedBranch} 
+            onChange={setSelectedBranch}
+            branches={branches}
+            isLoading={branchesLoading}
+          />
         </div>
       </div>
 

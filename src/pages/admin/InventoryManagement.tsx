@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import { TransferInventoryModal } from '@/components/admin/TransferInventoryModal';
 import {
   Package,
   TrendingDown,
@@ -16,6 +17,7 @@ import {
   RefreshCw,
   Brain,
   ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -24,6 +26,8 @@ export default function InventoryManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [itemToTransfer, setItemToTransfer] = useState<any>(null);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['inventory-items'],
@@ -182,19 +186,31 @@ export default function InventoryManagement() {
                             )}
                           </td>
                           <td className="p-3 text-right">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openModal('stockAdjustment', {
-                                item,
-                                onSuccess: () => {
-                                  queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-                                  queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
-                                },
-                              })}
-                            >
-                              Adjust
-                            </Button>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openModal('stockAdjustment', {
+                                  item,
+                                  onSuccess: () => {
+                                    queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+                                    queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
+                                  },
+                                })}
+                              >
+                                Adjust
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setItemToTransfer(item);
+                                  setTransferModalOpen(true);
+                                }}
+                              >
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -242,6 +258,12 @@ export default function InventoryManagement() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <TransferInventoryModal
+          open={transferModalOpen}
+          onOpenChange={setTransferModalOpen}
+          item={itemToTransfer}
+        />
       </div>
     </div>
   );

@@ -8,7 +8,9 @@ import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
+import { BranchProvider } from "./contexts/BranchContext";
 import { ModalProvider } from "./contexts/ModalContext";
+import { WidgetRefreshProvider } from "./contexts/WidgetRefreshContext";
 import { OrgProtectedRoute } from "./components/auth/OrgProtectedRoute";
 import { FullyProtectedRoute } from "./components/auth/FullyProtectedRoute";
 import Login from "./pages/Login";
@@ -138,8 +140,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
-        <ModalProvider>
-          <TooltipProvider>
+        <BranchProvider>
+          <WidgetRefreshProvider>
+            <ModalProvider>
+              <TooltipProvider>
             <Suspense fallback={
               <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
@@ -436,10 +440,12 @@ const App = () => (
               </BrowserRouter>
             </Suspense>
             </TooltipProvider>
-        </ModalProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+          </ModalProvider>
+        </WidgetRefreshProvider>
+      </BranchProvider>
+    </AuthProvider>
+  </ThemeProvider>
+</QueryClientProvider>
 );
 
 export default App;

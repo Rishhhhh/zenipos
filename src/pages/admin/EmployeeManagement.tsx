@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ShiftHistoryPanel } from '@/components/admin/ShiftHistoryPanel';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import { TransferEmployeeModal } from '@/components/admin/TransferEmployeeModal';
 import {
   Users,
   Plus,
@@ -18,6 +19,7 @@ import {
   UserCheck,
   Search,
   Clock,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function EmployeeManagement() {
@@ -28,6 +30,8 @@ export default function EmployeeManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [employeeToTransfer, setEmployeeToTransfer] = useState<any>(null);
 
   const { data: employees } = useQuery({
     queryKey: ['employees'],
@@ -148,6 +152,17 @@ export default function EmployeeManagement() {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setEmployeeToTransfer(employee);
+                          setTransferModalOpen(true);
+                        }}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           toggleActive.mutate({ id: employee.id, active: employee.active });
                         }}
                       >
@@ -179,6 +194,12 @@ export default function EmployeeManagement() {
           )}
         </div>
       </div>
+
+      <TransferEmployeeModal
+        open={transferModalOpen}
+        onOpenChange={setTransferModalOpen}
+        employee={employeeToTransfer}
+      />
     </div>
   );
 }
