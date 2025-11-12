@@ -134,9 +134,23 @@ serve(async (req) => {
 
     if (authError || !authData.user) {
       console.error('[Organization Signup] ❌ Auth user creation failed:', authError);
+      
+      // Check if it's a duplicate email error from Supabase Auth
+      const isDuplicateEmail = authError?.message?.toLowerCase().includes('already') || 
+                               authError?.message?.toLowerCase().includes('registered') ||
+                               authError?.code === 'email_exists';
+      
       return new Response(
-        JSON.stringify({ success: false, error: `Failed to create user: ${authError?.message}` }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        JSON.stringify({ 
+          success: false, 
+          error: isDuplicateEmail 
+            ? 'Email already registered' 
+            : `Failed to create user: ${authError?.message}` 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: isDuplicateEmail ? 422 : 500 
+        }
       );
     }
 

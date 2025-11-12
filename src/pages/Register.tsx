@@ -149,28 +149,45 @@ export default function Register() {
 
       if (signupError) {
         console.error('[Registration] ❌ Signup failed:', signupError);
+        console.error('[Registration] Response data:', signupData);
         
-        // Check for specific error types
-        if (signupError.message?.includes('409') || signupError.message?.toLowerCase().includes('already exists')) {
+        // Extract error message from BOTH error and data
+        const errorMessage = signupData?.error || signupError.message || 'Failed to create organization';
+        const statusCode = signupError.status || signupError.message?.match(/\d{3}/)?.[0];
+        
+        console.log('[Registration] Error message:', errorMessage);
+        console.log('[Registration] Status code:', statusCode);
+        
+        // Check for email already registered (409 or 422)
+        if (statusCode === 409 || statusCode === 422 || 
+            errorMessage.toLowerCase().includes('already registered') ||
+            errorMessage.toLowerCase().includes('already exists') ||
+            errorMessage.toLowerCase().includes('email address has already been registered')) {
           toast.error('This email is already registered. Please use a different email or try logging in.', {
             duration: 5000
           });
           throw new Error('Email already registered');
-        } else if (signupError.message?.includes('400')) {
+        } 
+        // Invalid data
+        else if (statusCode === 400) {
           toast.error('Invalid registration data. Please check all fields and try again.', {
             duration: 5000
           });
           throw new Error('Invalid registration data');
-        } else if (signupError.message?.includes('timeout')) {
+        } 
+        // Timeout
+        else if (errorMessage.includes('timeout')) {
           toast.error('Registration is taking longer than expected. Please check your connection and try again.', {
             duration: 5000
           });
           throw new Error('Request timeout');
-        } else {
-          toast.error('Unable to create organization. Please try again or contact support.', {
+        } 
+        // Generic error with actual message from server
+        else {
+          toast.error(errorMessage || 'Unable to create organization. Please try again or contact support.', {
             duration: 5000
           });
-          throw new Error(signupError.message || 'Failed to create organization');
+          throw new Error(errorMessage);
         }
       }
 
