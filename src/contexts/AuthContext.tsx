@@ -276,6 +276,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
 
+      // ✅ SECURITY: Prioritize user_roles over employees.role to prevent privilege escalation
+      let effectiveRole = employeeData.role;
+      
+      if (data.user?.id) {
+        const { data: userRole, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (!roleError && userRole?.role) {
+          effectiveRole = userRole.role as 'owner' | 'manager' | 'staff';
+          console.log(`✅ Role from user_roles: ${effectiveRole} (employee.role: ${employeeData.role})`);
+        } else {
+          console.log(`⚠️ Falling back to employee.role: ${employeeData.role}`);
+        }
+      }
+
       // Create shift record
       const { data: shift, error: shiftError } = await supabase
         .from('shifts')
@@ -292,12 +310,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Failed to create shift:', shiftError);
       }
 
-      // Create employee session
+      // Create employee session with verified role
       const empSession: EmployeeSession = {
         organizationId: organization.id,
         employeeId: employeeData.id,
         employeeName: employeeData.name,
-        role: employeeData.role,
+        role: effectiveRole, // ✅ Use verified role from user_roles
         shiftId: shift?.id,
         loginTime: Date.now(),
         expiresAt: Date.now() + EMPLOYEE_SESSION_DURATION,

@@ -26,14 +26,14 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) throw new Error('Unauthorized');
 
-    // Validate manager PIN
+    // ✅ SECURITY: Validate manager PIN with user_id for role verification
     const { data: managerValidation, error: pinError } = await supabase.functions.invoke(
       'validate-manager-pin',
-      { body: { pin: manager_pin } }
+      { body: { user_id: user.id, pin: manager_pin } }
     );
 
     if (pinError || !managerValidation?.valid) {
-      throw new Error('Invalid manager PIN');
+      throw new Error('Invalid manager PIN or insufficient permissions');
     }
 
     // Execute approved action
