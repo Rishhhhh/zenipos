@@ -120,7 +120,7 @@ export default function Register() {
         throw new Error('Supabase configuration is missing. Please check your .env file.');
       }
 
-      toast.info('Creating organization...');
+      toast.loading('Creating your organization...', { id: 'registration' });
       console.log('[Registration] Step 1/5: Creating organization + owner account');
       
       // Step 1: Create organization + owner with retry logic
@@ -149,7 +149,29 @@ export default function Register() {
 
       if (signupError) {
         console.error('[Registration] ❌ Signup failed:', signupError);
-        throw new Error(signupError.message || 'Failed to create organization');
+        
+        // Check for specific error types
+        if (signupError.message?.includes('409') || signupError.message?.toLowerCase().includes('already exists')) {
+          toast.error('This email is already registered. Please use a different email or try logging in.', {
+            duration: 5000
+          });
+          throw new Error('Email already registered');
+        } else if (signupError.message?.includes('400')) {
+          toast.error('Invalid registration data. Please check all fields and try again.', {
+            duration: 5000
+          });
+          throw new Error('Invalid registration data');
+        } else if (signupError.message?.includes('timeout')) {
+          toast.error('Registration is taking longer than expected. Please check your connection and try again.', {
+            duration: 5000
+          });
+          throw new Error('Request timeout');
+        } else {
+          toast.error('Unable to create organization. Please try again or contact support.', {
+            duration: 5000
+          });
+          throw new Error(signupError.message || 'Failed to create organization');
+        }
       }
 
       console.log('[Registration] ✅ Organization created successfully');
@@ -169,7 +191,7 @@ export default function Register() {
       // Update local data with org info
       updateData({ organizationId, defaultPin, slug });
 
-      toast.success('Organization created!');
+      toast.success('Organization created successfully!', { id: 'registration' });
       
       // Step 2: Branches
       if (data.branches && data.branches.length > 0) {
@@ -261,9 +283,17 @@ export default function Register() {
       console.error('[Registration] Error details:', JSON.stringify(error, null, 2));
       console.error('═══════════════════════════════════════════════════════');
       
+      // Provide user-friendly error messages
+      const errorMessage = error.message || 'An unexpected error occurred during registration.';
+      const isKnownError = errorMessage.includes('already registered') || 
+                          errorMessage.includes('Invalid registration') || 
+                          errorMessage.includes('timeout');
+      
       toast.error('Registration Failed', {
-        description: error.message || 'An unexpected error occurred. Please check the console for details.',
-        duration: 8000,
+        description: isKnownError 
+          ? errorMessage 
+          : 'Something went wrong. Please try again or contact support if the issue persists.',
+        duration: isKnownError ? 6000 : 8000,
       });
     } finally {
       setIsSubmitting(false);
