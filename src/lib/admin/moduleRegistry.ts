@@ -228,6 +228,15 @@ export const ADMIN_MODULES = {
       icon: Store,
       path: "/admin/branches",
       description: "Manage multiple locations",
+      roleRequired: "owner",
+    },
+    {
+      id: "organization-settings",
+      name: "Organization Settings",
+      icon: Settings,
+      path: "/admin/organization-settings",
+      description: "Configure restaurant info, branding, and security",
+      roleRequired: "owner",
     },
     {
       id: "ai-history",

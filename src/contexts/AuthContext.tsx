@@ -54,6 +54,7 @@ interface EmployeeSession {
 interface AuthContextType {
   // Organization-level
   organization: Organization | null;
+  setOrganization: ((org: Organization | null) => void) | null;
   isOrganizationAuthenticated: boolean;
   organizationLogin: (email: string, password: string) => Promise<void>;
   organizationLogout: () => Promise<void>;
@@ -369,6 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         // Organization-level
         organization,
+        setOrganization,
         isOrganizationAuthenticated,
         organizationLogin,
         organizationLogout,

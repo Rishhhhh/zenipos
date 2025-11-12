@@ -62,6 +62,7 @@ const EightySixManagement = lazy(() => import("./pages/admin/EightySixManagement
 const PendingModifications = lazy(() => import("./pages/admin/PendingModifications"));
 const StationKDS = lazy(() => import("./pages/StationKDS"));
 const TabletPOS = lazy(() => import("./pages/TabletPOS"));
+const OrganizationSettings = lazy(() => import("./pages/admin/OrganizationSettings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -257,6 +258,13 @@ const App = () => (
                 <FullyProtectedRoute requiredRole="owner">
                   <AppHeader />
                   <BranchManagement />
+                </FullyProtectedRoute>
+              } />
+              
+              <Route path="/admin/organization-settings" element={
+                <FullyProtectedRoute requiredRole="owner">
+                  <AppHeader />
+                  <OrganizationSettings />
                 </FullyProtectedRoute>
               } />
               

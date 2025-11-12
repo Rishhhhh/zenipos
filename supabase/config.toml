@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.organization-setup-wizard]
 verify_jwt = true
 
+[functions.organization-settings-update]
+verify_jwt = true
+
 [functions.mcp-pos]
 verify_jwt = true
 
