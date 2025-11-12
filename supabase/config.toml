@@ -1,5 +1,14 @@
 project_id = "eiutjobcaojpnlzgqhis"
 
+[functions.organization-signup]
+verify_jwt = false
+
+[functions.organization-login]
+verify_jwt = false
+
+[functions.organization-setup-wizard]
+verify_jwt = true
+
 [functions.mcp-pos]
 verify_jwt = true
 
