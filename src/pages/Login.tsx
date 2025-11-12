@@ -14,17 +14,30 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const { login, isAuthenticated } = useAuth();
+  const { 
+    employeeLogin, 
+    isEmployeeAuthenticated, 
+    isOrganizationAuthenticated,
+    organization,
+    organizationLogout 
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Redirect to org login if no org session
+  useEffect(() => {
+    if (!isOrganizationAuthenticated) {
+      navigate('/auth', { replace: true });
+    }
+  }, [isOrganizationAuthenticated, navigate]);
+
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isEmployeeAuthenticated) {
       const from = (location.state as any)?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isEmployeeAuthenticated, navigate, location]);
 
   // Auto-submit when PIN is complete
   useEffect(() => {
@@ -40,7 +53,7 @@ export default function Login() {
     setError('');
 
     try {
-      await login(pin, rememberMe);
+      await employeeLogin(pin, rememberMe);
       // Navigation handled by AuthContext and useEffect above
     } catch (err: any) {
       setError(err.message || 'Invalid PIN');
@@ -70,12 +83,26 @@ export default function Login() {
       <GlassLoginCard>
         {/* Logo & Branding */}
         <div className="text-center mb-8 animate-[fade-in_0.8s_ease-out]">
-          <div className="inline-flex items-center justify-center mb-4">
-            <ZeniPOSLogo variant="full" theme="auto" className="h-20" />
-          </div>
+          {organization?.logoUrl ? (
+            <div className="inline-flex items-center justify-center mb-4">
+              <img 
+                src={organization.logoUrl} 
+                alt={organization.name} 
+                className="h-20 object-contain"
+              />
+            </div>
+          ) : (
+            <div className="inline-flex items-center justify-center mb-4">
+              <ZeniPOSLogo variant="full" theme="auto" className="h-20" />
+            </div>
+          )}
           <h1 className="text-3xl font-bold mb-2">
-            <span className="text-foreground">ZENI</span>
-            <span className="text-primary">POS</span>
+            {organization?.name || (
+              <>
+                <span className="text-foreground">ZENI</span>
+                <span className="text-primary">POS</span>
+              </>
+            )}
           </h1>
           <p className="text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
           <p className="text-muted-foreground mt-2">Enter your PIN to continue</p>
@@ -122,10 +149,20 @@ export default function Login() {
           </div>
         )}
 
+        {/* Switch Organization */}
+        <div className="mt-6 pt-6 border-t border-border/20 text-center animate-[fade-in_1s_ease-out_0.6s_both]">
+          <button
+            onClick={organizationLogout}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Not {organization?.name}? <span className="underline">Switch Organization</span>
+          </button>
+        </div>
+
         {/* Test Credentials */}
-        <div className="mt-6 pt-6 border-t border-border/20 text-center text-xs text-muted-foreground animate-[fade-in_1s_ease-out_0.6s_both]">
+        <div className="mt-4 text-center text-xs text-muted-foreground animate-[fade-in_1s_ease-out_0.6s_both]">
           <p>Test PIN: <span className="font-mono font-semibold text-foreground">12345</span></p>
-          <p className="mt-1">Available roles: Cashier, Manager, Admin</p>
+          <p className="mt-1">Available roles: Staff, Manager, Owner</p>
         </div>
       </GlassLoginCard>
     </div>
