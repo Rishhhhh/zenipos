@@ -43,11 +43,22 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
     console.log(`[Registration Debug] Checking email uniqueness: ${email} (Attempt ${retryCount + 1})`);
     
     try {
-      const { data: existingOrg, error } = await supabase
+      // Create a 10-second timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Email check timeout after 10 seconds')), 10000);
+      });
+
+      // Race between actual check and timeout
+      const checkPromise = supabase
         .from('organizations')
         .select('id')
         .eq('login_email', email)
         .maybeSingle();
+
+      const { data: existingOrg, error } = await Promise.race([
+        checkPromise,
+        timeoutPromise
+      ]) as Awaited<typeof checkPromise>;
       
       if (error && error.code !== 'PGRST116') {
         console.error('[Registration Debug] Email check error:', error);
@@ -74,6 +85,14 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
       return true;
     } catch (error) {
       console.error('[Registration Debug] Email check exception:', error);
+      
+      // Check if it's a timeout error
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn('[Registration Debug] Email check timed out after 10 seconds');
+        setEmailCheckStatus('error');
+        toast.warning('Email check is taking too long. You can proceed, but verify your email is correct.');
+        return true; // Allow to proceed with warning
+      }
       
       if (retryCount < maxRetries) {
         console.log(`[Registration Debug] Retrying email check after exception (${retryCount + 1}/${maxRetries})`);
