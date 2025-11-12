@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
 
+// Organization Signup Edge Function - Multi-tenant registration handler
+// Last updated: 2025-11-12 - Trigger deployment
+
 // Hash password using Web Crypto API (compatible with Deno edge runtime)
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
