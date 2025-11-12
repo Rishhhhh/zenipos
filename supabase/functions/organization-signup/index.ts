@@ -34,21 +34,36 @@ function isValidPassword(password: string): boolean {
 }
 
 serve(async (req) => {
+  console.log('[Organization Signup] Received request:', req.method);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('[Organization Signup] Initializing Supabase client...');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    console.log('[Organization Signup] Parsing request body...');
     const body: SignupRequest = await req.json();
     const { email, password, restaurantName, ownerName, phone, businessType } = body;
+    
+    console.log('[Organization Signup] Received data:', {
+      restaurantName,
+      ownerName,
+      email,
+      phone,
+      businessType,
+      hasPassword: !!password
+    });
 
     // Validate required fields
+    console.log('[Organization Signup] Validating required fields...');
     if (!email || !password || !restaurantName || !ownerName) {
+      console.error('[Organization Signup] Missing required fields');
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -57,6 +72,7 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
+    console.log('[Organization Signup] ✅ All required fields present');
 
     // Validate email format
     if (!isValidEmail(email)) {
@@ -75,6 +91,7 @@ serve(async (req) => {
     }
 
     // Check if email already exists in organizations
+    console.log('[Organization Signup] Checking email uniqueness in database...');
     const { data: existingOrg, error: checkError } = await supabase
       .from('organizations')
       .select('id')
@@ -82,19 +99,22 @@ serve(async (req) => {
       .single();
 
     if (existingOrg) {
+      console.log('[Organization Signup] ❌ Email already registered');
       return new Response(
         JSON.stringify({ success: false, error: 'Email already registered' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 }
       );
     }
+    console.log('[Organization Signup] ✅ Email is unique');
 
     // Hash password with bcrypt (10 rounds)
-    console.log('Hashing password...');
+    console.log('[Organization Signup] Hashing password...');
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
+    console.log('[Organization Signup] ✅ Password hashed');
 
     // Create Supabase auth user for owner
-    console.log('Creating auth user...');
+    console.log('[Organization Signup] Creating Supabase auth user...');
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -106,7 +126,7 @@ serve(async (req) => {
     });
 
     if (authError || !authData.user) {
-      console.error('Auth user creation failed:', authError);
+      console.error('[Organization Signup] ❌ Auth user creation failed:', authError);
       return new Response(
         JSON.stringify({ success: false, error: `Failed to create user: ${authError?.message}` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -114,6 +134,7 @@ serve(async (req) => {
     }
 
     const userId = authData.user.id;
+    console.log('[Organization Signup] ✅ Auth user created:', userId);
     let organizationId: string | null = null;
     let branchId: string | null = null;
     let employeeId: string | null = null;
@@ -223,7 +244,14 @@ serve(async (req) => {
         console.warn('Setup token generation failed:', sessionError);
       }
 
-      console.log('Organization signup completed successfully');
+      console.log('[Organization Signup] ✅ Organization signup completed successfully');
+      console.log('[Organization Signup] Summary:', {
+        organizationId,
+        branchId,
+        employeeId,
+        slug,
+        defaultPin
+      });
 
       // Send welcome email with Resend
       try {
@@ -334,11 +362,14 @@ serve(async (req) => {
     }
 
   } catch (error: any) {
-    console.error('Organization signup error:', error);
+    console.error('[Organization Signup] ❌ Fatal error:', error);
+    console.error('[Organization Signup] Error stack:', error.stack);
+    console.error('[Organization Signup] Error details:', JSON.stringify(error, null, 2));
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Internal server error' 
+        error: error.message || 'Internal server error',
+        details: error.toString()
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );

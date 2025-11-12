@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { RegistrationData } from '@/hooks/useRegistrationWizard';
 
 interface Step1Props {
@@ -17,6 +18,9 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isValidating, setIsValidating] = useState(false);
+  const [validFields, setValidFields] = useState<Record<string, boolean>>({});
+  const [debugMode, setDebugMode] = useState(false);
+  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'error'>('idle');
 
   const validateEmail = (email: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,127 +36,300 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
     return null;
   };
 
+  const checkEmailUniqueness = async (email: string, retryCount = 0): Promise<boolean> => {
+    const maxRetries = 2;
+    setEmailCheckStatus('checking');
+    
+    console.log(`[Registration Debug] Checking email uniqueness: ${email} (Attempt ${retryCount + 1})`);
+    
+    try {
+      const { data: existingOrg, error } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('login_email', email)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('[Registration Debug] Email check error:', error);
+        
+        if (retryCount < maxRetries) {
+          console.log(`[Registration Debug] Retrying email check (${retryCount + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return checkEmailUniqueness(email, retryCount + 1);
+        }
+        
+        setEmailCheckStatus('error');
+        toast.warning('Could not verify email uniqueness. You may proceed, but the email might already be in use.');
+        return true; // Allow to proceed with warning
+      }
+      
+      if (existingOrg) {
+        console.log('[Registration Debug] Email already exists in database');
+        setEmailCheckStatus('taken');
+        return false;
+      }
+      
+      console.log('[Registration Debug] Email is available');
+      setEmailCheckStatus('available');
+      return true;
+    } catch (error) {
+      console.error('[Registration Debug] Email check exception:', error);
+      
+      if (retryCount < maxRetries) {
+        console.log(`[Registration Debug] Retrying email check after exception (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return checkEmailUniqueness(email, retryCount + 1);
+      }
+      
+      setEmailCheckStatus('error');
+      toast.warning('Network error. You may proceed, but please ensure your email is unique.');
+      return true; // Allow to proceed with warning
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[Registration Debug] Starting Step 1 validation');
+    console.log('[Registration Debug] Form data:', { 
+      restaurantName: data.restaurantName, 
+      ownerName: data.ownerName,
+      email: data.email,
+      phone: data.phone,
+      hasPassword: !!data.password,
+      termsAccepted: data.termsAccepted
+    });
+    
     setErrors({});
+    setValidFields({});
     setIsValidating(true);
 
     const newErrors: Record<string, string> = {};
+    const newValidFields: Record<string, boolean> = {};
 
-    // Validation
-    if (!data.restaurantName?.trim()) newErrors.restaurantName = 'Restaurant name is required';
-    if (!data.ownerName?.trim()) newErrors.ownerName = 'Owner name is required';
+    // Validation with detailed logging
+    console.log('[Registration Debug] Validating restaurant name...');
+    if (!data.restaurantName?.trim()) {
+      newErrors.restaurantName = 'Restaurant name is required';
+      console.log('[Registration Debug] ❌ Restaurant name failed');
+    } else {
+      newValidFields.restaurantName = true;
+      console.log('[Registration Debug] ✅ Restaurant name valid');
+    }
     
+    console.log('[Registration Debug] Validating owner name...');
+    if (!data.ownerName?.trim()) {
+      newErrors.ownerName = 'Owner name is required';
+      console.log('[Registration Debug] ❌ Owner name failed');
+    } else {
+      newValidFields.ownerName = true;
+      console.log('[Registration Debug] ✅ Owner name valid');
+    }
+    
+    console.log('[Registration Debug] Validating email...');
     if (!data.email?.trim()) {
       newErrors.email = 'Email is required';
+      console.log('[Registration Debug] ❌ Email is empty');
     } else if (!validateEmail(data.email)) {
       newErrors.email = 'Invalid email format';
+      console.log('[Registration Debug] ❌ Email format invalid');
+    } else {
+      newValidFields.email = true;
+      console.log('[Registration Debug] ✅ Email format valid');
     }
     
-    if (!data.phone?.trim()) newErrors.phone = 'Phone number is required';
+    console.log('[Registration Debug] Validating phone...');
+    if (!data.phone?.trim()) {
+      newErrors.phone = 'Phone number is required';
+      console.log('[Registration Debug] ❌ Phone failed');
+    } else {
+      newValidFields.phone = true;
+      console.log('[Registration Debug] ✅ Phone valid');
+    }
     
+    console.log('[Registration Debug] Validating password...');
     const passwordError = validatePassword(data.password || '');
-    if (passwordError) newErrors.password = passwordError;
+    if (passwordError) {
+      newErrors.password = passwordError;
+      console.log('[Registration Debug] ❌ Password failed:', passwordError);
+    } else {
+      newValidFields.password = true;
+      console.log('[Registration Debug] ✅ Password valid');
+    }
     
+    console.log('[Registration Debug] Validating password confirmation...');
     if (data.password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
+      console.log('[Registration Debug] ❌ Password confirmation failed');
+    } else {
+      newValidFields.confirmPassword = true;
+      console.log('[Registration Debug] ✅ Password confirmation valid');
     }
     
+    console.log('[Registration Debug] Validating terms acceptance...');
     if (!data.termsAccepted) {
       newErrors.terms = 'You must accept the terms and conditions';
+      console.log('[Registration Debug] ❌ Terms not accepted');
+    } else {
+      newValidFields.terms = true;
+      console.log('[Registration Debug] ✅ Terms accepted');
     }
 
-    // Check email uniqueness
+    setValidFields(newValidFields);
+
+    // Check email uniqueness if email is valid
     if (data.email && !newErrors.email) {
-      try {
-        const { data: existingOrg, error } = await supabase
-          .from('organizations')
-          .select('id')
-          .eq('login_email', data.email)
-          .maybeSingle();
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error checking email:', error);
-        } else if (existingOrg) {
-          newErrors.email = 'Email already registered';
-        }
-      } catch (error) {
-        console.error('Error checking email uniqueness:', error);
+      console.log('[Registration Debug] Checking email uniqueness with backend...');
+      const isEmailAvailable = await checkEmailUniqueness(data.email);
+      
+      if (!isEmailAvailable) {
+        newErrors.email = 'Email already registered';
+        console.log('[Registration Debug] ❌ Email uniqueness check failed');
+        delete newValidFields.email;
+      } else {
+        console.log('[Registration Debug] ✅ Email uniqueness check passed');
       }
     }
 
     if (Object.keys(newErrors).length > 0) {
+      console.log('[Registration Debug] Validation failed with errors:', newErrors);
       setErrors(newErrors);
       setIsValidating(false);
+      
+      // Show toast with first error
+      const firstError = Object.values(newErrors)[0];
+      toast.error(`Validation Error: ${firstError}`);
       return;
     }
 
+    console.log('[Registration Debug] ✅ All validations passed! Proceeding to next step...');
+    toast.success('Step 1 completed successfully!');
     setIsValidating(false);
     onNext();
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Debug Mode Toggle */}
+      <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+        <Label htmlFor="debugMode" className="text-xs text-muted-foreground cursor-pointer">
+          Debug Mode (Show Validation Status)
+        </Label>
+        <Checkbox
+          id="debugMode"
+          checked={debugMode}
+          onCheckedChange={(checked) => setDebugMode(checked as boolean)}
+        />
+      </div>
+
+      {/* Debug Status Panel */}
+      {debugMode && (
+        <div className="p-3 bg-muted/50 rounded-md space-y-2 text-xs">
+          <h4 className="font-semibold text-sm">Validation Status:</h4>
+          <div className="space-y-1">
+            {['restaurantName', 'ownerName', 'email', 'phone', 'password', 'confirmPassword', 'terms'].map(field => (
+              <div key={field} className="flex items-center gap-2">
+                {validFields[field] ? (
+                  <CheckCircle2 className="h-3 w-3 text-success" />
+                ) : errors[field] ? (
+                  <XCircle className="h-3 w-3 text-danger" />
+                ) : (
+                  <AlertCircle className="h-3 w-3 text-muted-foreground" />
+                )}
+                <span className={validFields[field] ? 'text-success' : errors[field] ? 'text-danger' : ''}>
+                  {field}: {validFields[field] ? 'Valid' : errors[field] || 'Not validated'}
+                </span>
+              </div>
+            ))}
+            {data.email && (
+              <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                {emailCheckStatus === 'checking' && <Loader2 className="h-3 w-3 animate-spin" />}
+                {emailCheckStatus === 'available' && <CheckCircle2 className="h-3 w-3 text-success" />}
+                {emailCheckStatus === 'taken' && <XCircle className="h-3 w-3 text-danger" />}
+                {emailCheckStatus === 'error' && <AlertCircle className="h-3 w-3 text-warning" />}
+                <span>Email Check: {emailCheckStatus}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div>
         <Label htmlFor="restaurantName">Restaurant Name *</Label>
-        <Input
-          id="restaurantName"
-          value={data.restaurantName || ''}
-          onChange={(e) => onUpdate({ restaurantName: e.target.value })}
-          placeholder="e.g., Golden Dragon Restaurant"
-          className="bg-background/50"
-        />
+        <div className="relative">
+          <Input
+            id="restaurantName"
+            value={data.restaurantName || ''}
+            onChange={(e) => onUpdate({ restaurantName: e.target.value })}
+            placeholder="e.g., Golden Dragon Restaurant"
+            className="bg-background/50"
+          />
+          {validFields.restaurantName && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
+        </div>
         {errors.restaurantName && <p className="text-sm text-danger mt-1">{errors.restaurantName}</p>}
       </div>
 
       <div>
         <Label htmlFor="ownerName">Owner Name *</Label>
-        <Input
-          id="ownerName"
-          value={data.ownerName || ''}
-          onChange={(e) => onUpdate({ ownerName: e.target.value })}
-          placeholder="e.g., John Tan"
-          className="bg-background/50"
-        />
+        <div className="relative">
+          <Input
+            id="ownerName"
+            value={data.ownerName || ''}
+            onChange={(e) => onUpdate({ ownerName: e.target.value })}
+            placeholder="e.g., John Tan"
+            className="bg-background/50"
+          />
+          {validFields.ownerName && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
+        </div>
         {errors.ownerName && <p className="text-sm text-danger mt-1">{errors.ownerName}</p>}
       </div>
 
       <div>
         <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          value={data.email || ''}
-          onChange={(e) => onUpdate({ email: e.target.value })}
-          placeholder="owner@restaurant.com"
-          className="bg-background/50"
-        />
+        <div className="relative">
+          <Input
+            id="email"
+            type="email"
+            value={data.email || ''}
+            onChange={(e) => onUpdate({ email: e.target.value })}
+            placeholder="owner@restaurant.com"
+            className="bg-background/50"
+          />
+          {emailCheckStatus === 'checking' && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-primary" />}
+          {emailCheckStatus === 'available' && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
+          {emailCheckStatus === 'taken' && <XCircle className="absolute right-3 top-3 h-4 w-4 text-danger" />}
+          {emailCheckStatus === 'error' && <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-warning" />}
+        </div>
         {errors.email && <p className="text-sm text-danger mt-1">{errors.email}</p>}
       </div>
 
       <div>
         <Label htmlFor="phone">Phone Number *</Label>
-        <Input
-          id="phone"
-          type="tel"
-          value={data.phone || ''}
-          onChange={(e) => onUpdate({ phone: e.target.value })}
-          placeholder="+60 12-345 6789"
-          className="bg-background/50"
-        />
+        <div className="relative">
+          <Input
+            id="phone"
+            type="tel"
+            value={data.phone || ''}
+            onChange={(e) => onUpdate({ phone: e.target.value })}
+            placeholder="+60 12-345 6789"
+            className="bg-background/50"
+          />
+          {validFields.phone && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
+        </div>
         {errors.phone && <p className="text-sm text-danger mt-1">{errors.phone}</p>}
       </div>
 
       <div>
         <Label htmlFor="password">Password *</Label>
-        <Input
-          id="password"
-          type="password"
-          value={data.password || ''}
-          onChange={(e) => onUpdate({ password: e.target.value })}
-          placeholder="Min 8 characters, 1 uppercase, 1 number"
-          className="bg-background/50"
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type="password"
+            value={data.password || ''}
+            onChange={(e) => onUpdate({ password: e.target.value })}
+            placeholder="Min 8 characters, 1 uppercase, 1 number"
+            className="bg-background/50"
+          />
+          {validFields.password && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
+        </div>
         <p className="text-xs text-muted-foreground mt-1">
           Must be at least 8 characters with uppercase, lowercase, and number
         </p>
@@ -161,14 +338,17 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
 
       <div>
         <Label htmlFor="confirmPassword">Confirm Password *</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Re-enter password"
-          className="bg-background/50"
-        />
+        <div className="relative">
+          <Input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter password"
+            className="bg-background/50"
+          />
+          {validFields.confirmPassword && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
+        </div>
         {errors.confirmPassword && <p className="text-sm text-danger mt-1">{errors.confirmPassword}</p>}
       </div>
 
