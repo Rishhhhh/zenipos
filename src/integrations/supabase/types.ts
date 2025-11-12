@@ -2454,41 +2454,74 @@ export type Database = {
       }
       organizations: {
         Row: {
+          accent_color: string | null
+          address: string | null
+          business_type: string | null
           created_at: string | null
           currency: string | null
           date_format: string | null
           id: string
+          is_active: boolean | null
+          login_email: string | null
+          login_password_hash: string | null
+          logo_url: string | null
           max_branches: number | null
           name: string
+          onboarding_completed: boolean | null
           owner_id: string
+          phone: string | null
           plan_type: string | null
+          primary_color: string | null
           settings: Json | null
+          slug: string
           timezone: string | null
           updated_at: string | null
         }
         Insert: {
+          accent_color?: string | null
+          address?: string | null
+          business_type?: string | null
           created_at?: string | null
           currency?: string | null
           date_format?: string | null
           id?: string
+          is_active?: boolean | null
+          login_email?: string | null
+          login_password_hash?: string | null
+          logo_url?: string | null
           max_branches?: number | null
           name: string
+          onboarding_completed?: boolean | null
           owner_id: string
+          phone?: string | null
           plan_type?: string | null
+          primary_color?: string | null
           settings?: Json | null
+          slug: string
           timezone?: string | null
           updated_at?: string | null
         }
         Update: {
+          accent_color?: string | null
+          address?: string | null
+          business_type?: string | null
           created_at?: string | null
           currency?: string | null
           date_format?: string | null
           id?: string
+          is_active?: boolean | null
+          login_email?: string | null
+          login_password_hash?: string | null
+          logo_url?: string | null
           max_branches?: number | null
           name?: string
+          onboarding_completed?: boolean | null
           owner_id?: string
+          phone?: string | null
           plan_type?: string | null
+          primary_color?: string | null
           settings?: Json | null
+          slug?: string
           timezone?: string | null
           updated_at?: string | null
         }
@@ -4010,6 +4043,10 @@ export type Database = {
         Returns: undefined
       }
       end_break: { Args: { break_id_param: string }; Returns: undefined }
+      generate_organization_slug: {
+        Args: { org_name: string }
+        Returns: string
+      }
       get_active_break: {
         Args: { employee_id_param: string }
         Returns: {
