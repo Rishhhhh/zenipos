@@ -1,6 +1,6 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, LogIn, Clock } from 'lucide-react';
+import { LogOut, User, LogIn, Clock, Shield } from 'lucide-react';
 import { AISearchBar } from '@/components/ai/AISearchBar';
 import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -29,9 +29,10 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
 }) {
   const [showAI, setShowAI] = useState(false);
   const [pendingCommand, setPendingCommand] = useState<string | undefined>(undefined);
-  const { employee, role, logout } = useAuth();
+  const { employee, role, logout, isSuperAdmin } = useAuth();
   const { selectedBranchId, selectBranch, hasMultipleBranches, branches, isLoading: branchesLoading } = useBranch();
   const location = useLocation();
+  const navigate = useNavigate();
   const { openModal } = useModalManager();
   const isPOSPage = location.pathname === '/pos';
 
@@ -68,6 +69,19 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Super Admin Button */}
+            {isSuperAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/super-admin')}
+                className="hidden sm:flex"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Super Admin
+              </Button>
+            )}
+            
             {/* Branch Selector - only if multiple branches */}
             {hasMultipleBranches && !branchesLoading && (
               <div className="hidden sm:block">

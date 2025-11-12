@@ -66,6 +66,13 @@ interface AuthContextType {
   employeeLogin: (pin: string, rememberMe: boolean) => Promise<void>;
   employeeLogout: () => Promise<void>;
   
+  // Super Admin
+  isSuperAdmin: boolean;
+  isImpersonating: boolean;
+  impersonatedOrganization: Organization | null;
+  startImpersonation: (orgId: string, reason: string) => Promise<void>;
+  endImpersonation: () => Promise<void>;
+  
   // Combined state
   isFullyAuthenticated: boolean;
   isAuthenticated: boolean; // Legacy - maps to isEmployeeAuthenticated
@@ -87,6 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [shiftId, setShiftId] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonatedOrganization, setImpersonatedOrganization] = useState<Organization | null>(null);
 
   // Session restoration and auth state management
   useEffect(() => {
@@ -140,15 +150,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const checkSuperAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'super_admin'
+      });
+
+      if (!error && data) {
+        setIsSuperAdmin(true);
+      }
+    };
+
+    const checkImpersonation = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: orgId } = await supabase.rpc('is_impersonating', {
+        _user_id: user.id
+      });
+
+      if (orgId) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', orgId)
+          .single();
+
+        if (org) {
+          setIsImpersonating(true);
+          setImpersonatedOrganization({
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+            branding: {
+              name: org.name,
+              logoUrl: org.logo_url,
+              primaryColor: org.primary_color,
+              accentColor: org.accent_color,
+            }
+          });
+        }
+      }
+    };
+
     // Set up Supabase auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           await restoreSessions();
+          await checkSuperAdmin();
+          await checkImpersonation();
         } else if (event === 'SIGNED_OUT') {
           setOrganization(null);
           setEmployee(null);
           setShiftId(null);
+          setIsSuperAdmin(false);
+          setIsImpersonating(false);
+          setImpersonatedOrganization(null);
           localStorage.removeItem(ORG_SESSION_KEY);
           localStorage.removeItem(EMPLOYEE_SESSION_KEY);
         }
@@ -157,6 +218,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Initial session restoration
     restoreSessions();
+    checkSuperAdmin();
+    checkImpersonation();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -361,6 +424,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const startImpersonation = async (orgId: string, reason: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('super-admin-impersonate', {
+        body: { action: 'start', organizationId: orgId, reason }
+      });
+
+      if (error) throw error;
+
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', orgId)
+        .single();
+
+      if (org) {
+        setIsImpersonating(true);
+        setImpersonatedOrganization({
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          branding: {
+            name: org.name,
+            logoUrl: org.logo_url,
+            primaryColor: org.primary_color,
+            accentColor: org.accent_color,
+          }
+        });
+        toast.success(`Now impersonating ${org.name}`);
+      }
+    } catch (error: any) {
+      console.error('Impersonation start error:', error);
+      toast.error(error.message || 'Failed to start impersonation');
+      throw error;
+    }
+  };
+
+  const endImpersonation = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('super-admin-impersonate', {
+        body: { action: 'end' }
+      });
+
+      if (error) throw error;
+
+      setIsImpersonating(false);
+      setImpersonatedOrganization(null);
+      toast.success('Impersonation ended');
+    } catch (error: any) {
+      console.error('Impersonation end error:', error);
+      toast.error(error.message || 'Failed to end impersonation');
+      throw error;
+    }
+  };
+
   const isOrganizationAuthenticated = !!organization;
   const isEmployeeAuthenticated = !!employee;
   const isFullyAuthenticated = isOrganizationAuthenticated && isEmployeeAuthenticated;
@@ -381,6 +498,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isEmployeeAuthenticated,
         employeeLogin,
         employeeLogout,
+        
+        // Super Admin
+        isSuperAdmin,
+        isImpersonating,
+        impersonatedOrganization,
+        startImpersonation,
+        endImpersonation,
         
         // Combined state
         isFullyAuthenticated,

@@ -13,6 +13,7 @@ import { ModalProvider } from "./contexts/ModalContext";
 import { WidgetRefreshProvider } from "./contexts/WidgetRefreshContext";
 import { OrgProtectedRoute } from "./components/auth/OrgProtectedRoute";
 import { FullyProtectedRoute } from "./components/auth/FullyProtectedRoute";
+import { SuperAdminProtectedRoute } from "./components/auth/SuperAdminProtectedRoute";
 import Login from "./pages/Login";
 import Auth from "./pages/Auth";
 import CustomerScreen from "./pages/CustomerScreen";
@@ -45,6 +46,7 @@ const Documentation = lazy(() => import("./pages/Documentation"));
 const ManagerDashboard = lazy(() => import("./pages/ManagerDashboard"));
 const SystemHealthDashboard = lazy(() => import("./pages/admin/SystemHealthDashboard"));
 const PerformanceDashboard = lazy(() => import("./pages/admin/PerformanceDashboard"));
+const SuperAdmin = lazy(() => import("./pages/SuperAdmin"));
 const RateLimitMonitor = lazy(() => import("./pages/admin/RateLimitMonitor"));
 const SupplierManagement = lazy(() => import("./pages/admin/SupplierManagement"));
 const PurchaseOrders = lazy(() => import("./pages/admin/PurchaseOrders"));
@@ -166,6 +168,16 @@ const App = () => (
                 <OrgProtectedRoute>
                   <Login />
                 </OrgProtectedRoute>
+              } />
+              
+              {/* Super Admin Route */}
+              <Route path="/super-admin" element={
+                <SuperAdminProtectedRoute>
+                  <>
+                    <AppHeader />
+                    <SuperAdmin />
+                  </>
+                </SuperAdminProtectedRoute>
               } />
               
               {/* Fully-Protected Routes (org + employee auth) */}

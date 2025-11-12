@@ -3480,6 +3480,53 @@ export type Database = {
           },
         ]
       }
+      super_admin_impersonations: {
+        Row: {
+          actions_performed: Json | null
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          ip_address: string | null
+          organization_id: string
+          reason: string
+          started_at: string | null
+          super_admin_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          actions_performed?: Json | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id: string
+          reason: string
+          started_at?: string | null
+          super_admin_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          actions_performed?: Json | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id?: string
+          reason?: string
+          started_at?: string | null
+          super_admin_user_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "super_admin_impersonations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           active: boolean | null
@@ -4170,6 +4217,16 @@ export type Database = {
           voids: number
         }[]
       }
+      get_super_admin_analytics: {
+        Args: never
+        Returns: {
+          active_impersonations: number
+          active_organizations: number
+          total_orders_today: number
+          total_organizations: number
+          total_revenue_today: number
+        }[]
+      }
       get_tip_report: {
         Args: { end_date_param: string; start_date_param: string }
         Returns: {
@@ -4227,6 +4284,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_impersonating: { Args: { _user_id: string }; Returns: string }
       log_nfc_scan: { Args: { card_uid_param: string }; Returns: string }
       log_performance_metric: {
         Args: {
@@ -4274,7 +4332,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "owner" | "manager" | "staff" | "kitchen"
+      app_role: "owner" | "manager" | "staff" | "kitchen" | "super_admin"
       loyalty_transaction_type:
         | "earned"
         | "redeemed"
@@ -4430,7 +4488,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "manager", "staff", "kitchen"],
+      app_role: ["owner", "manager", "staff", "kitchen", "super_admin"],
       loyalty_transaction_type: [
         "earned",
         "redeemed",
