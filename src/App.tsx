@@ -161,6 +161,14 @@ const App = () => (
                   <Routes>
               {/* Public Routes */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/register" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
+                  {(() => {
+                    const Register = lazy(() => import("./pages/Register"));
+                    return <Register />;
+                  })()}
+                </Suspense>
+              } />
               <Route path="/customer/:sessionId" element={<CustomerScreen />} />
               
               {/* Organization-Protected Routes (org auth only) */}

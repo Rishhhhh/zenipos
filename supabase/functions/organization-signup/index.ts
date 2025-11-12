@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -223,6 +224,76 @@ serve(async (req) => {
       }
 
       console.log('Organization signup completed successfully');
+
+      // Send welcome email with Resend
+      try {
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+        
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #8B5CF6 0%, #10B981 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .pin-box { background: white; border: 2px solid #8B5CF6; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; border-radius: 8px; }
+    .info-box { background: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Welcome to ZeniPOS!</h1>
+    </div>
+    <div class="content">
+      <h2>Hi ${ownerName},</h2>
+      <p>Your organization <strong>${restaurantName}</strong> has been successfully registered!</p>
+      
+      <div class="info-box">
+        <p><strong>Login Email:</strong> ${email}</p>
+        <p><strong>Organization Slug:</strong> ${slug}</p>
+        <p><strong>Restaurant Type:</strong> ${businessType || 'restaurant'}</p>
+      </div>
+      
+      <p><strong>Your Owner PIN for POS access:</strong></p>
+      <div class="pin-box">${defaultPin}</div>
+      
+      <p style="color: #dc2626;"><strong>⚠️ Important:</strong> Please keep this PIN secure and change it after your first login.</p>
+      
+      <p><strong>Next steps:</strong></p>
+      <ol>
+        <li>Login at your organization portal</li>
+        <li>Use your email and password to access the organization</li>
+        <li>Use your PIN to access the POS system</li>
+        <li>Complete any remaining setup in the dashboard</li>
+      </ol>
+      
+      <p>If you need help, contact our support team.</p>
+      
+      <p style="margin-top: 30px; color: #6b7280;">
+        Best regards,<br>
+        The ZeniPOS Team
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+        await resend.emails.send({
+          from: 'ZeniPOS <onboarding@resend.dev>',
+          to: [email],
+          subject: `Welcome to ZeniPOS - Your PIN: ${defaultPin}`,
+          html: emailHtml,
+        });
+
+        console.log('Welcome email sent successfully to:', email);
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail the registration if email fails
+      }
 
       return new Response(
         JSON.stringify({

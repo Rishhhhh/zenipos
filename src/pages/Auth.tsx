@@ -134,7 +134,9 @@ export default function Auth() {
         {/* Contact Info */}
         <div className="mt-6 pt-6 border-t border-border/20 text-center text-xs text-muted-foreground animate-[fade-in_1s_ease-out_0.4s_both]">
           <p>Don't have an account?</p>
-          <p className="mt-1">Contact your system administrator or sales team</p>
+          <a href="/register" className="text-primary hover:underline mt-1 inline-block">
+            Register a new organization
+          </a>
         </div>
       </GlassLoginCard>
     </div>
