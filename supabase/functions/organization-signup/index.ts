@@ -89,7 +89,8 @@ serve(async (req) => {
 
     // Hash password with bcrypt (10 rounds)
     console.log('Hashing password...');
-    const passwordHash = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
 
     // Create Supabase auth user for owner
     console.log('Creating auth user...');
@@ -167,7 +168,8 @@ serve(async (req) => {
 
       // Generate random 5-digit PIN for owner
       const defaultPin = generateRandomPin();
-      const hashedPin = await bcrypt.hash(defaultPin, 10);
+      const pinSalt = await bcrypt.genSalt(10);
+      const hashedPin = await bcrypt.hash(defaultPin, pinSalt);
 
       // Create owner employee record
       console.log('Creating owner employee record...');

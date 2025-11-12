@@ -216,7 +216,8 @@ serve(async (req) => {
 
           // Generate random PIN
           const pin = generateRandomPin();
-          const hashedPin = await bcrypt.hash(pin, 10);
+          const salt = await bcrypt.genSalt(10);
+          const hashedPin = await bcrypt.hash(pin, salt);
 
           const { data: empData, error: empError } = await supabaseAdmin
             .from('employees')
