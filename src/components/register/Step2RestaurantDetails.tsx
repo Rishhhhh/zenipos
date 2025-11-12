@@ -77,9 +77,9 @@ export function Step2RestaurantDetails({ data, onUpdate, onNext, onPrev }: Step2
 
       <div>
         <Label>Cuisine Types * (Select multiple)</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
+        <div className="grid grid-cols-2 gap-3 mt-3">
           {CUISINE_TYPES.map(cuisine => (
-            <div key={cuisine} className="flex items-center gap-2">
+            <div key={cuisine} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50 transition-colors">
               <Checkbox
                 id={`cuisine-${cuisine}`}
                 checked={data.cuisineTypes?.includes(cuisine)}
@@ -92,7 +92,7 @@ export function Step2RestaurantDetails({ data, onUpdate, onNext, onPrev }: Step2
                   }
                 }}
               />
-              <Label htmlFor={`cuisine-${cuisine}`} className="text-sm cursor-pointer">
+              <Label htmlFor={`cuisine-${cuisine}`} className="text-sm font-medium cursor-pointer">
                 {cuisine}
               </Label>
             </div>
