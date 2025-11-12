@@ -3980,6 +3980,10 @@ export type Database = {
         Args: { _branch_id: string; _user_id: string }
         Returns: boolean
       }
+      can_access_organization: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           p_endpoint: string
@@ -4209,6 +4213,13 @@ export type Database = {
           branch_id: string
         }[]
       }
+      get_user_branches: {
+        Args: { _user_id: string }
+        Returns: {
+          branch_id: string
+        }[]
+      }
+      get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
