@@ -135,21 +135,21 @@ export const STAFF_MOBILE_LAYOUT: BentoLayout = {
 export const MANAGER_DESKTOP_LAYOUT: BentoLayout = {
   role: 'manager',
   gridTemplate: {
-    columns: 'repeat(6, 1fr)',
+    columns: 'repeat(4, 1fr)',
     rows: 'repeat(3, 1fr)',
     gap: '1rem',
     minHeight: '100%',
     areas: [
-      ['sales', 'sales', 'sales', 'orders', 'shifts', 'shifts'],
-      ['revenue', 'revenue', 'revenue', 'orders', 'labor', 'labor'],
-      ['top-items', 'top-items', 'top-items', 'top-items', 'empty', 'empty']
+      ['sales', 'sales', 'orders', 'shifts'],
+      ['revenue', 'revenue', 'orders', 'labor'],
+      ['top-items', 'top-items', 'top-items', 'top-items']
     ]
   },
   widgets: [
     {
       id: 'sales',
       area: 'sales',
-      colSpan: 3,
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     },
@@ -163,21 +163,21 @@ export const MANAGER_DESKTOP_LAYOUT: BentoLayout = {
     {
       id: 'active-shifts',
       area: 'shifts',
-      colSpan: 2,
+      colSpan: 1,
       rowSpan: 1,
       isMinimized: false
     },
     {
       id: 'revenue-chart',
       area: 'revenue',
-      colSpan: 3,
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     },
     {
       id: 'labor-cost',
       area: 'labor',
-      colSpan: 2,
+      colSpan: 1,
       rowSpan: 1,
       isMinimized: false
     },

@@ -265,7 +265,7 @@ export default memo(function ActiveShifts() {
             ))}
           </div>
         ) : activeShifts && activeShifts.length > 0 ? (
-          <div className="space-y-2 animate-fade-in-content">
+          <div className="space-y-2 overflow-y-auto animate-fade-in-content" style={{ maxHeight: '400px' }}>
             {activeShifts.map(shift => (
               <ShiftCard key={shift.id} shift={shift} />
             ))}
