@@ -1,6 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
+
+// Hash password using Web Crypto API (compatible with Deno edge runtime)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,7 +112,8 @@ serve(async (req) => {
     // Check PIN against each employee
     for (const employee of employees || []) {
       try {
-        const isValid = await bcrypt.compare(pin, employee.pin);
+        const pinHash = await hashPassword(pin);
+        const isValid = pinHash === employee.pin;
         
         if (isValid) {
           // Create or get auth user for this employee
@@ -112,9 +122,10 @@ serve(async (req) => {
           if (!authUserId) {
             // Create auth user for employee (first-time setup)
             const email = employee.email || `employee-${employee.id}@pos.internal`;
+            const tempPassword = crypto.randomUUID(); // Random password for internal employees
             const { data: authData, error: createError } = await supabase.auth.admin.createUser({
               email,
-              password: pin,
+              password: tempPassword,
               email_confirm: true,
               user_metadata: {
                 employee_id: employee.id,
@@ -144,18 +155,22 @@ serve(async (req) => {
               .from('user_roles')
               .upsert({ 
                 user_id: authUserId, 
-                role: employee.role 
+                role: employee.role,
+                employee_id: employee.id
               });
           }
 
-          // Sign in with Supabase Auth to get proper session
-          const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
+          // Generate session using admin API (bypass password requirement)
+          const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
             email: employee.email || `employee-${employee.id}@pos.internal`,
-            password: pin
+            options: {
+              redirectTo: `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify`
+            }
           });
 
-          if (signInError) {
-            console.error('Sign in error:', signInError);
+          if (sessionError) {
+            console.error('Session generation error:', sessionError);
             return new Response(
               JSON.stringify({ success: false, error: 'Authentication failed' }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -172,8 +187,8 @@ serve(async (req) => {
               success: true, 
               employee: employeeData,
               organizationId: organizationId,
-              session: sessionData.session,
-              user: sessionData.user
+              authUserId: authUserId,
+              setupToken: sessionData?.properties?.action_link
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );

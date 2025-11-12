@@ -1,6 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+
+// Hash password using Web Crypto API (compatible with Deno edge runtime)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,9 +78,10 @@ serve(async (req) => {
       );
     }
 
-    // Verify password with bcrypt
+    // Verify password with SHA-256
     console.log('Verifying password...');
-    const passwordMatch = await bcrypt.compare(password, orgData.login_password_hash);
+    const passwordHash = await hashPassword(password);
+    const passwordMatch = passwordHash === orgData.login_password_hash;
 
     if (!passwordMatch) {
       console.log('Password mismatch');
