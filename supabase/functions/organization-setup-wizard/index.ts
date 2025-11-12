@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +15,16 @@ interface SetupWizardRequest {
 // Generate random 5-digit PIN
 function generateRandomPin(): string {
   return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
+// Hash password using Web Crypto API (compatible with Deno edge runtime)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 serve(async (req) => {
@@ -216,8 +225,7 @@ serve(async (req) => {
 
           // Generate random PIN
           const pin = generateRandomPin();
-          const salt = await bcrypt.genSalt(10);
-          const hashedPin = await bcrypt.hash(pin, salt);
+          const hashedPin = await hashPassword(pin);
 
           const { data: empData, error: empError } = await supabaseAdmin
             .from('employees')
