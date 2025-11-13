@@ -123,6 +123,21 @@ serve(async (req) => {
     const passwordHash = await hashPassword(password);
     console.log('[Organization Signup] ✅ Password hashed');
 
+    // Check if auth user already exists from incomplete registration
+    console.log('[Organization Signup] Checking for existing auth user...');
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const existingAuthUser = existingUsers?.users?.find(u => u.email === email);
+    
+    if (existingAuthUser) {
+      console.log('[Organization Signup] ⚠️ Found orphaned auth user, deleting...');
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(existingAuthUser.id);
+      if (deleteError) {
+        console.error('[Organization Signup] ❌ Failed to delete orphaned user:', deleteError);
+      } else {
+        console.log('[Organization Signup] ✅ Orphaned auth user deleted');
+      }
+    }
+
     // Create Supabase auth user for owner
     console.log('[Organization Signup] Creating Supabase auth user...');
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
