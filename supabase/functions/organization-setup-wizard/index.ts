@@ -1,3 +1,5 @@
+// Organization Setup Wizard - Multi-step onboarding for new restaurants
+// Version: 1.0.1 - Force redeploy to ensure Step 5 runs correctly
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
 

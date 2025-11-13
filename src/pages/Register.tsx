@@ -210,11 +210,11 @@ export default function Register() {
 
       toast.success('Organization created successfully!', { id: 'registration' });
       
-      // Step 2: Branches
-      if (data.branches && data.branches.length > 0) {
-        toast.info('Setting up branches...');
-        console.log('[Registration] Step 2/5: Creating branches');
-        console.log('[Registration] Branches to create:', data.branches);
+      // Step 2: Additional Branches (only if more than 1 branch - first one created in Step 1)
+      if (data.branches && data.branches.length > 1) {
+        toast.info('Setting up additional branches...');
+        console.log('[Registration] Step 2/5: Creating additional branches');
+        console.log('[Registration] Additional branches to create:', data.branches.slice(1));
         
         await retryWithBackoff(() => 
           invokeEdgeFunction('organization-setup-wizard', {
@@ -233,11 +233,11 @@ export default function Register() {
         toast.success('Branches configured!');
       }
 
-      // Step 3: Employees
+      // Step 3: Additional Employees (owner already created in Step 1)
       if (data.employees && data.employees.length > 0) {
-        toast.info('Adding employees...');
-        console.log('[Registration] Step 3/5: Creating employees');
-        console.log('[Registration] Employees to create:', data.employees);
+        toast.info('Adding additional employees...');
+        console.log('[Registration] Step 3/5: Creating additional employees');
+        console.log('[Registration] Additional employees to create:', data.employees);
         
         await retryWithBackoff(() =>
           invokeEdgeFunction('organization-setup-wizard', {
