@@ -226,13 +226,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const organizationLogin = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('organization-login', {
-        body: { email, password },
+      console.log('[Organization Login] Attempting login for:', email);
+      
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      // Use raw fetch() to properly extract error messages from non-2xx responses
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/organization-login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+
+      const data = await response.json();
+
+      console.log('[Organization Login] Response:', {
+        status: response.status,
+        ok: response.ok,
+        success: data?.success,
       });
 
-      if (error) throw error;
+      // Handle non-2xx responses with specific error messages
+      if (!response.ok) {
+        const errorMessage = data?.error || `Login failed (${response.status})`;
+        console.error('[Auth Error]', {
+          status: response.status,
+          message: errorMessage,
+          email,
+          timestamp: new Date().toISOString(),
+        });
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
       if (!data?.success) {
-        throw new Error(data?.error || 'Login failed');
+        const errorMsg = data?.error || 'Login failed';
+        console.error('[Organization Login] Failed:', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Set Supabase auth session
@@ -266,11 +304,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         branding: data.branding || { name: data.slug },
       });
 
+      console.log('[Organization Login] Success! Organization:', data.branding?.name || data.slug);
       toast.success(`Welcome to ${data.branding?.name || data.slug}!`);
     } catch (error: any) {
-      console.error('Organization login error:', error);
-      const message = error.message || 'Login failed. Please try again.';
-      toast.error(message);
+      console.error('[Organization Login] Unexpected error:', error);
+      toast.error(error.message || 'Login failed. Please try again.');
       throw error;
     }
   };
