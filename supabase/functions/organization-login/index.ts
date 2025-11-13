@@ -81,6 +81,8 @@ serve(async (req) => {
     // Verify password with SHA-256
     console.log('Verifying password...');
     const passwordHash = await hashPassword(password);
+    console.log('Generated hash:', passwordHash);
+    console.log('Stored hash:', orgData.login_password_hash);
     const passwordMatch = passwordHash === orgData.login_password_hash;
 
     if (!passwordMatch) {
@@ -91,20 +93,7 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase auth session
-    console.log('Creating auth session...');
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (authError) {
-      console.error('Auth session creation failed:', authError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Authentication failed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
+    console.log('Password verified successfully');
 
     // Generate session token
     const sessionToken = generateSessionToken();
