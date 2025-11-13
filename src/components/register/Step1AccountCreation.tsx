@@ -195,17 +195,26 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
 
     setValidFields(newValidFields);
 
-    // Check email uniqueness if email is valid
+    // Check email uniqueness if email is valid (skip in dev mode)
     if (data.email && !newErrors.email) {
-      console.log('[Registration Debug] Checking email uniqueness with backend...');
-      const isEmailAvailable = await checkEmailUniqueness(data.email);
+      const isDev = import.meta.env.VITE_DEV_MODE === 'true';
       
-      if (!isEmailAvailable) {
-        newErrors.email = 'Email already registered';
-        console.log('[Registration Debug] ❌ Email uniqueness check failed');
-        delete newValidFields.email;
+      if (isDev) {
+        console.log('[Registration Debug] 🚀 DEV MODE: Skipping email uniqueness check');
+        console.log('[Registration Debug] ✅ Email validation bypassed in development');
+        newValidFields.email = true;
+        setEmailCheckStatus('available');
       } else {
-        console.log('[Registration Debug] ✅ Email uniqueness check passed');
+        console.log('[Registration Debug] Checking email uniqueness with backend...');
+        const isEmailAvailable = await checkEmailUniqueness(data.email);
+        
+        if (!isEmailAvailable) {
+          newErrors.email = 'Email already registered';
+          console.log('[Registration Debug] ❌ Email uniqueness check failed');
+          delete newValidFields.email;
+        } else {
+          console.log('[Registration Debug] ✅ Email uniqueness check passed');
+        }
       }
     }
 
@@ -228,6 +237,14 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {import.meta.env.VITE_DEV_MODE === 'true' && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800 font-medium">
+            🚀 Development Mode Active - Email validation skipped
+          </p>
+        </div>
+      )}
+      
       {/* Debug Mode Toggle */}
       <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
         <Label htmlFor="debugMode" className="text-xs text-muted-foreground cursor-pointer">
