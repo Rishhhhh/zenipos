@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CategoryAssignmentPanel } from '@/components/admin/CategoryAssignmentPanel';
 
 export default function ModifierManagement() {
   const { toast } = useToast();
@@ -213,8 +214,14 @@ export default function ModifierManagement() {
             </ScrollArea>
           </Card>
 
-          {/* Modifiers List */}
-          <Card className="lg:col-span-2 p-6">
+          {/* Middle Column: Assigned Categories */}
+          <CategoryAssignmentPanel
+            selectedGroupId={selectedGroupId}
+            selectedGroupName={groups?.find(g => g.id === selectedGroupId)?.name || ''}
+          />
+
+          {/* Right Column: Modifiers List */}
+          <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">
                 {selectedGroupId ? 'Modifiers' : 'Select a group'}
