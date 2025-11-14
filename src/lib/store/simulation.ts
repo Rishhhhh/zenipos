@@ -12,7 +12,7 @@ interface SimulationState {
   updateInterval: NodeJS.Timeout | null;
 
   // Actions
-  startSimulation: (config: SimulationConfig) => Promise<void>;
+  startSimulation: (config: SimulationConfig, branchId: string) => Promise<void>;
   pauseSimulation: () => void;
   resumeSimulation: () => void;
   stopSimulation: () => void;
@@ -35,7 +35,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   engine: null,
   updateInterval: null,
 
-  startSimulation: async (config: SimulationConfig) => {
+  startSimulation: async (config: SimulationConfig, branchId: string) => {
     const state = get();
     
     // Stop existing engine if any
@@ -47,7 +47,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     }
 
     // Create and start new engine
-    const engine = new SimulationEngine(config);
+    const engine = new SimulationEngine(config, branchId);
     await engine.start();
 
     // Start update loop

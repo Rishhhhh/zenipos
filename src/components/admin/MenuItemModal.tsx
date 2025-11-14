@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { GlassModal } from '@/components/modals/GlassModal';
+import { useBranch } from '@/contexts/BranchContext';
 import {
   Form,
   FormControl,
@@ -75,6 +76,8 @@ export function MenuItemModal({
 }: MenuItemModalProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { currentBranch } = useBranch();
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [imageSrcsets, setImageSrcsets] = useState<{
     srcset_webp?: string;
     srcset_jpeg?: string;
@@ -173,7 +176,11 @@ export function MenuItemModal({
         });
       } else {
         // Create new item
+        if (!currentBranch?.id) {
+          throw new Error('No branch selected');
+        }
         const { error } = await supabase.from('menu_items').insert({
+          branch_id: currentBranch.id,
           name: values.name,
           sku: values.sku || null,
           category_id: values.category_id,

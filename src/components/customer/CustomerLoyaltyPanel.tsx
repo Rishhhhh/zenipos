@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useBranch } from '@/contexts/BranchContext';
 import { QrCode, Gift, Loader2, CheckCircle } from 'lucide-react';
 
 interface CustomerLoyaltyPanelProps {
@@ -16,6 +17,7 @@ interface CustomerLoyaltyPanelProps {
 
 export function CustomerLoyaltyPanel({ sessionId, total, onCustomerLinked }: CustomerLoyaltyPanelProps) {
   const { toast } = useToast();
+  const { currentBranch } = useBranch();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
@@ -50,9 +52,13 @@ export function CustomerLoyaltyPanel({ sessionId, total, onCustomerLinked }: Cus
 
       if (!existingCustomer) {
         // Create new customer
+        if (!currentBranch?.id) {
+          throw new Error('No branch selected');
+        }
         const { data: newCustomer, error: createError } = await supabase
           .from('customers')
           .insert({
+            branch_id: currentBranch.id,
             phone: formattedPhone,
             name: name || 'Guest',
             last_visit: new Date().toISOString(),

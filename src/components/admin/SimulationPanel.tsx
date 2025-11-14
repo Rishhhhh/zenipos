@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { useBranch } from '@/contexts/BranchContext';
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ export function SimulationPanel() {
   const [arrivalRate, setArrivalRate] = useState<ArrivalRate>('medium');
   const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
+  const { currentBranch } = useBranch();
 
   const {
     isRunning,
@@ -47,7 +49,7 @@ export function SimulationPanel() {
   } = useSimulation({
     speed,
     arrivalRate,
-  });
+  }, currentBranch?.id || '');
 
   const handleClearData = async () => {
     setIsClearing(true);
