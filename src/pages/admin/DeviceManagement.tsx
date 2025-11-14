@@ -88,7 +88,6 @@ const DeviceCard = ({ device, onEdit, onTest }: any) => {
             <span className="font-mono">{device.ip_address}</span>
           </div>
         )}
-        </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Last Seen:</span>
           <span>{formatDistanceToNow(new Date(device.last_seen))} ago</span>
@@ -340,12 +339,12 @@ export default function DeviceManagement() {
         {devices?.map((device) => (
           <DeviceCard
             key={device.id}
-            device={device}
+            device={device as Device}
             onEdit={() => {
-              setEditingDevice(device);
+              setEditingDevice(device as Device);
               setModalOpen(true);
             }}
-            onTest={() => setTestPrintDevice(device)}
+            onTest={() => setTestPrintDevice(device as Device)}
           />
         ))}
       </div>
