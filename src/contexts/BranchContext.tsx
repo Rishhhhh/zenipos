@@ -33,7 +33,6 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [autoCreateAttempted, setAutoCreateAttempted] = useState(false);
 
   const { data: branches = [], isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['user-branches', organization?.id],
@@ -82,52 +81,18 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Auto-create branch if needed or auto-select Main Branch
+  // Auto-select first available branch when branches are loaded
   useEffect(() => {
-    const autoCreateBranch = async () => {
-      if (!isLoading && branches.length === 0 && organization?.id && !autoCreateAttempted) {
-        setAutoCreateAttempted(true);
-        
-        console.log('[BranchContext] No branches found, attempting auto-creation...');
-        
-        try {
-          const { data: newBranch, error } = await supabase
-            .from('branches')
-            .insert({
-              organization_id: organization.id,
-              name: 'Main Branch',
-              code: 'MAIN',
-              active: true,
-            })
-            .select()
-            .single();
-
-          if (!error && newBranch) {
-            console.log('[BranchContext] ✅ Auto-created Main Branch:', newBranch.id);
-            refetch();
-          } else {
-            console.error('[BranchContext] Auto-creation failed:', error);
-            setError('no_branches');
-            setIsReady(true);
-          }
-        } catch (err) {
-          console.error('[BranchContext] Auto-creation error:', err);
-          setError('no_branches');
-          setIsReady(true);
-        }
-      } else if (!isLoading && branches.length > 0 && !selectedBranchId) {
-        // Auto-select Main Branch if available
-        const mainBranch = branches.find(b => b.code === 'MAIN') || branches[0];
-        console.log('[BranchContext] Auto-selecting Main Branch:', mainBranch.id);
-        selectBranch(mainBranch.id);
-        setIsReady(true);
-      } else if (!isLoading) {
-        setIsReady(true);
-      }
-    };
-
-    autoCreateBranch();
-  }, [isLoading, branches.length, organization?.id, autoCreateAttempted, refetch, selectedBranchId]);
+    if (!isLoading && branches.length > 0 && !selectedBranchId) {
+      // Auto-select Main Branch if available, otherwise first branch
+      const mainBranch = branches.find(b => b.code === 'MAIN') || branches[0];
+      console.log('[BranchContext] Auto-selecting branch:', mainBranch.id);
+      selectBranch(mainBranch.id);
+      setIsReady(true);
+    } else if (!isLoading) {
+      setIsReady(true);
+    }
+  }, [isLoading, branches.length, selectedBranchId]);
 
   // Restore from localStorage or auto-select on mount
   useEffect(() => {
@@ -147,12 +112,6 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     }
 
     if (!branches || branches.length === 0) {
-      if (!autoCreateAttempted) {
-        setIsReady(false);
-        return;
-      }
-      
-      // Auto-creation was attempted but failed
       setError('no_branches');
       setIsReady(true);
       return;
@@ -173,7 +132,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, 'all');
       setIsReady(true);
     }
-  }, [branches, isLoading, autoCreateAttempted, queryError]);
+  }, [branches, isLoading, queryError]);
 
   const selectBranch = (branchId: string) => {
     setSelectedBranchId(branchId);
