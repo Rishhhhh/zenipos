@@ -51,7 +51,7 @@ export default function InventoryManagement() {
     queryKey: ['inventory-low-stock', currentBranch?.id],
     queryFn: async () => {
       if (!currentBranch?.id) return [];
-      const { data, error } = await supabase.rpc('get_low_stock_items', {
+      const { data, error } = await (supabase.rpc as any)('get_low_stock_items', {
         branch_id_param: currentBranch.id
       });
       if (error) throw error;
