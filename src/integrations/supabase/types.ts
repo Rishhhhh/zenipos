@@ -4442,12 +4442,7 @@ export type Database = {
           branch_id: string
         }[]
       }
-      get_user_branches: {
-        Args: { _user_id: string }
-        Returns: {
-          branch_id: string
-        }[]
-      }
+      get_user_branches: { Args: { _user_id: string }; Returns: string[] }
       get_user_default_branch: { Args: { _user_id: string }; Returns: string }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_role: {
