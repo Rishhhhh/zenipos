@@ -7,6 +7,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -16,7 +17,11 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, Pencil, Trash2 } from 'lucide-react';
+import { 
+  GripVertical, Plus, Pencil, Trash2,
+  Utensils, Coffee, Wine, Pizza, Salad, Soup, 
+  Cake, IceCream, Beer, Sandwich 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -35,10 +40,21 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CategoryEditModal } from './CategoryEditModal';
 
+const ICON_MAP: Record<string, any> = {
+  Utensils, Coffee, Wine, Pizza, Salad, Soup, Cake, IceCream, Beer, Sandwich
+};
+
+const getIconComponent = (iconName?: string) => {
+  const Icon = ICON_MAP[iconName || 'Utensils'] || Utensils;
+  return <Icon className="h-4 w-4" />;
+};
+
 interface Category {
   id: string;
   name: string;
   sort_order: number;
+  color?: string;
+  icon?: string;
 }
 
 interface CategoryDragListProps {
@@ -65,12 +81,13 @@ function SortableCategory({
   onDelete,
   itemCount,
 }: SortableCategoryProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: category.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
@@ -91,7 +108,14 @@ function SortableCategory({
       </button>
       <div className="flex-1 cursor-pointer" onClick={onClick}>
         <div className="flex items-center justify-between">
-          <span className="font-medium">{category.name}</span>
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: category.color || '#8B5CF6' }}
+            />
+            {getIconComponent(category.icon)}
+            <span className="font-medium">{category.name}</span>
+          </div>
           <Badge variant="secondary" className="ml-2">
             {itemCount}
           </Badge>
@@ -132,6 +156,7 @@ export function CategoryDragList({
   onAddCategory,
 }: CategoryDragListProps) {
   const [items, setItems] = useState(categories);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
   const queryClient = useQueryClient();
@@ -258,7 +283,9 @@ export function CategoryDragList({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={(event) => setActiveId(event.active.id as string)}
         onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveId(null)}
       >
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
