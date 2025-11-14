@@ -68,7 +68,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       const { data: branchesData, error: branchError } = await supabase
         .from('branches')
         .select('*')
-        .in('id', branchIds.map((b: any) => b.branch_id))
+        .in('id', branchIds)
         .eq('active', true)
         .order('name');
 
