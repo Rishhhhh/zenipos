@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
-import { APP_CONFIG } from '@/lib/config';
 
 interface Branch {
   id: string;
@@ -83,18 +82,11 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Auto-create branch if needed or use default virtual branch
+  // Auto-create branch if needed or auto-select Main Branch
   useEffect(() => {
     const autoCreateBranch = async () => {
       if (!isLoading && branches.length === 0 && organization?.id && !autoCreateAttempted) {
         setAutoCreateAttempted(true);
-        
-        // In development mode with REQUIRE_BRANCHES = false, don't block on missing branches
-        if (!APP_CONFIG.REQUIRE_BRANCHES) {
-          console.log('[BranchContext] Development mode: Using virtual default branch');
-          setIsReady(true);
-          return;
-        }
         
         console.log('[BranchContext] No branches found, attempting auto-creation...');
         
@@ -123,11 +115,19 @@ export function BranchProvider({ children }: { children: ReactNode }) {
           setError('no_branches');
           setIsReady(true);
         }
+      } else if (!isLoading && branches.length > 0 && !selectedBranchId) {
+        // Auto-select Main Branch if available
+        const mainBranch = branches.find(b => b.code === 'MAIN') || branches[0];
+        console.log('[BranchContext] Auto-selecting Main Branch:', mainBranch.id);
+        selectBranch(mainBranch.id);
+        setIsReady(true);
+      } else if (!isLoading) {
+        setIsReady(true);
       }
     };
 
     autoCreateBranch();
-  }, [isLoading, branches.length, organization?.id, autoCreateAttempted, refetch]);
+  }, [isLoading, branches.length, organization?.id, autoCreateAttempted, refetch, selectedBranchId]);
 
   // Restore from localStorage or auto-select on mount
   useEffect(() => {
@@ -138,31 +138,17 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Handle query errors - don't block in development mode
+    // Handle query errors
     if (queryError) {
       console.error('[BranchContext] Query error:', queryError);
-      if (!APP_CONFIG.REQUIRE_BRANCHES) {
-        console.log('[BranchContext] Development mode: Ignoring query error, using default branch');
-        setSelectedBranchId('default-branch');
-        setIsReady(true);
-      } else {
-        setError('query_failed');
-        setIsReady(true);
-      }
+      setError('query_failed');
+      setIsReady(true);
       return;
     }
 
     if (!branches || branches.length === 0) {
       if (!autoCreateAttempted) {
         setIsReady(false);
-        return;
-      }
-      
-      // In development mode, use virtual default branch
-      if (!APP_CONFIG.REQUIRE_BRANCHES) {
-        console.log('[BranchContext] No branches found, using virtual default for development');
-        setSelectedBranchId('default-branch');
-        setIsReady(true);
         return;
       }
       
@@ -194,17 +180,8 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, branchId);
   };
 
-  // Get current branch or use virtual default in development mode
-  const currentBranch = branches.find(b => b.id === selectedBranchId) || 
-    (selectedBranchId === 'default-branch' && !APP_CONFIG.REQUIRE_BRANCHES ? {
-      id: 'default-branch',
-      name: 'Default Branch',
-      code: 'DEV',
-      address: null,
-      phone: null,
-      active: true,
-      organization_id: organization?.id || 'default-org',
-    } : null);
+  // Get current branch
+  const currentBranch = branches.find(b => b.id === selectedBranchId) || null;
   const hasMultipleBranches = branches.length > 1;
 
   return (
