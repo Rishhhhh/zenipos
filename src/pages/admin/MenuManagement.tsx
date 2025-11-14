@@ -37,7 +37,7 @@ interface MenuItem {
 export default function MenuManagement() {
   usePerformanceMonitor('MenuManagement');
   const { openModal } = useModalManager();
-  const { currentBranch } = useBranch();
+  const { currentBranch, isReady, isLoading: branchLoading } = useBranch();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -97,8 +97,13 @@ export default function MenuManagement() {
     const name = prompt('Enter category name:');
     if (!name) return;
 
+    if (branchLoading || !isReady) {
+      alert('Loading branch information, please try again in a moment.');
+      return;
+    }
+
     if (!currentBranch?.id) {
-      alert('No branch selected');
+      alert('No branch selected. Please select a branch first.');
       return;
     }
 

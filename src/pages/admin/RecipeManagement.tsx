@@ -11,7 +11,7 @@ import { ChefHat, Plus, ArrowLeft, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function RecipeManagement() {
-  const { currentBranch, branches, isLoading: branchLoading, selectBranch, selectedBranchId } = useBranch();
+  const { currentBranch, branches, isLoading: branchLoading, selectBranch, selectedBranchId, hasMultipleBranches } = useBranch();
   const [recipeModalOpen, setRecipeModalOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
 
@@ -83,13 +83,15 @@ export default function RecipeManagement() {
             <h1 className="text-3xl font-bold text-foreground">Recipe Management</h1>
             <p className="text-muted-foreground">Configure ingredient recipes for menu items</p>
           </div>
-          <BranchSelector 
-            value={selectedBranchId}
-            onChange={selectBranch}
-            branches={branches}
-            isLoading={branchLoading}
-            showAll={false}
-          />
+          {hasMultipleBranches && (
+            <BranchSelector 
+              value={selectedBranchId}
+              onChange={selectBranch}
+              branches={branches}
+              isLoading={branchLoading}
+              showAll={false}
+            />
+          )}
         </div>
 
         <div className="grid gap-4">

@@ -28,7 +28,7 @@ export default function InventoryManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
-  const { currentBranch, branches, isLoading: branchLoading, selectBranch, selectedBranchId } = useBranch();
+  const { currentBranch, branches, isLoading: branchLoading, selectBranch, selectedBranchId, hasMultipleBranches } = useBranch();
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [itemToTransfer, setItemToTransfer] = useState<any>(null);
 
@@ -91,13 +91,15 @@ export default function InventoryManagement() {
             <p className="text-muted-foreground">Track stock levels and manage ingredients</p>
           </div>
           <div className="flex gap-2">
-            <BranchSelector 
-              value={selectedBranchId}
-              onChange={selectBranch}
-              branches={branches}
-              isLoading={branchLoading}
-              showAll={false}
-            />
+            {hasMultipleBranches && (
+              <BranchSelector 
+                value={selectedBranchId}
+                onChange={selectBranch}
+                branches={branches}
+                isLoading={branchLoading}
+                showAll={false}
+              />
+            )}
             <Button onClick={() => openModal('aiForecast', { lowStockItems: lowStockItems || [] })} variant="outline">
               <Brain className="h-4 w-4 mr-2" />
               AI Forecast

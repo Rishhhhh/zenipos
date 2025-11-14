@@ -19,6 +19,7 @@ interface BranchContextType {
   currentBranch: Branch | null;
   hasMultipleBranches: boolean;
   isLoading: boolean;
+  isReady: boolean;
   selectBranch: (branchId: string) => void;
 }
 
@@ -29,6 +30,7 @@ const STORAGE_KEY = 'pos_selected_branch';
 export function BranchProvider({ children }: { children: ReactNode }) {
   const { organization } = useAuth();
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const { data: branches = [], isLoading } = useQuery({
     queryKey: ['user-branches', organization?.id],
@@ -57,19 +59,25 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   // Restore from localStorage or auto-select on mount
   useEffect(() => {
-    if (!branches || branches.length === 0) return;
+    if (!branches || branches.length === 0) {
+      setIsReady(false);
+      return;
+    }
 
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored && branches.some(b => b.id === stored || stored === 'all')) {
       setSelectedBranchId(stored);
+      setIsReady(true);
     } else if (branches.length === 1) {
-      // Auto-select if only 1 branch
+      // Auto-select if only 1 branch - immediate and ready
       setSelectedBranchId(branches[0].id);
       localStorage.setItem(STORAGE_KEY, branches[0].id);
+      setIsReady(true);
     } else {
       // Default to 'all' for multi-branch orgs
       setSelectedBranchId('all');
       localStorage.setItem(STORAGE_KEY, 'all');
+      setIsReady(true);
     }
   }, [branches]);
 
@@ -89,6 +97,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
         currentBranch,
         hasMultipleBranches,
         isLoading,
+        isReady,
         selectBranch,
       }}
     >

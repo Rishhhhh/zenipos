@@ -36,7 +36,7 @@ interface EmployeeModalProps {
 export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { currentBranch } = useBranch();
+  const { currentBranch, isReady, isLoading: branchLoading } = useBranch();
 
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
@@ -77,8 +77,12 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
 
   const saveMutation = useMutation({
     mutationFn: async (values: EmployeeFormValues) => {
+      if (branchLoading || !isReady) {
+        throw new Error('Loading branch information...');
+      }
+
       if (!currentBranch?.id) {
-        throw new Error('No branch selected');
+        throw new Error('No branch selected. Please select a branch first.');
       }
       
       // Validate duplicates within branch

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Edit, Trash, Store } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,6 +34,16 @@ export default function BranchManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
+      // Check if already has branches (single-branch limitation)
+      const { data: existingBranches } = await supabase
+        .from('branches')
+        .select('id')
+        .limit(2);
+      
+      if (existingBranches && existingBranches.length >= 1) {
+        throw new Error('Additional branches require a premium plan. Contact support to upgrade.');
+      }
+
       // Get first organization for this user
       const { data: org } = await supabase
         .from('organizations')
@@ -94,6 +105,8 @@ export default function BranchManagement() {
     },
   });
 
+  const canAddBranches = (branches?.length || 0) < 1;
+
   return (
     <div className="container mx-auto p-8">
       <div className="flex items-center justify-between mb-8">
@@ -101,10 +114,28 @@ export default function BranchManagement() {
           <h1 className="text-3xl font-bold mb-2">Branch Management</h1>
           <p className="text-muted-foreground">Manage your restaurant locations</p>
         </div>
-        <Button onClick={() => { setEditingBranch(null); setOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Branch
-        </Button>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button 
+                  onClick={() => { setEditingBranch(null); setOpen(true); }}
+                  disabled={!canAddBranches}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Branch
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!canAddBranches && (
+              <TooltipContent>
+                <p>Additional branches are a premium feature.</p>
+                <p className="text-xs text-muted-foreground">Contact support to upgrade.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <GlassModal

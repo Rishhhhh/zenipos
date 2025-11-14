@@ -19,7 +19,7 @@ interface StockAdjustmentModalProps {
 
 export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: StockAdjustmentModalProps) {
   const { toast } = useToast();
-  const { currentBranch } = useBranch();
+  const { currentBranch, isReady, isLoading: branchLoading } = useBranch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adjustmentType, setAdjustmentType] = useState<'purchase' | 'adjustment' | 'wastage'>('purchase');
   const [quantity, setQuantity] = useState(0);
@@ -29,6 +29,24 @@ export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: St
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!item) return;
+
+    if (branchLoading || !isReady) {
+      toast({
+        variant: 'destructive',
+        title: 'Please wait',
+        description: 'Loading branch information...',
+      });
+      return;
+    }
+
+    if (!currentBranch?.id) {
+      toast({
+        variant: 'destructive',
+        title: 'No branch selected',
+        description: 'Please select a branch first.',
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
