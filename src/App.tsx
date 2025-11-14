@@ -228,247 +228,311 @@ const App = () => (
                 </FullyProtectedRoute>
               } />
               
-              {/* Admin Routes - No Auth Required */}
+              {/* Admin Routes - Manager+ Required */}
               <Route path="/admin" element={
-                <>
-                  <AppHeader />
-                  <Admin />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <Admin />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/menu" element={
-                <>
-                  <AppHeader />
-                  <MenuManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <MenuManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/promotions" element={
-                <>
-                  <AppHeader />
-                  <PromotionManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <PromotionManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/inventory" element={
-                <>
-                  <AppHeader />
-                  <InventoryManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <InventoryManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/crm" element={
-                <>
-                  <AppHeader />
-                  <CRMDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <CRMDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/employees" element={
-                <>
-                  <AppHeader />
-                  <EmployeeManagement />
-                </>
+                <FullyProtectedRoute requiredRole="owner">
+                  <>
+                    <AppHeader />
+                    <EmployeeManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/reports" element={
-                <>
-                  <AppHeader />
-                  <ReportsDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <ReportsDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/ai-history" element={
-                <>
-                  <AppHeader />
-                  <AIHistoryDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <AIHistoryDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/branches" element={
-                <>
-                  <AppHeader />
-                  <BranchManagement />
-                </>
+                <FullyProtectedRoute requiredRole="owner">
+                  <>
+                    <AppHeader />
+                    <BranchManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/organization-settings" element={
-                <>
-                  <AppHeader />
-                  <OrganizationSettings />
-                </>
+                <FullyProtectedRoute requiredRole="owner">
+                  <>
+                    <AppHeader />
+                    <OrganizationSettings />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/manager" element={
-                <>
-                  <AppHeader />
-                  <ManagerDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <ManagerDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/system-health" element={
-                <>
-                  <AppHeader />
-                  <SystemHealthDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="owner">
+                  <>
+                    <AppHeader />
+                    <SystemHealthDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/performance" element={
-                <>
-                  <AppHeader />
-                  <PerformanceDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="owner">
+                  <>
+                    <AppHeader />
+                    <PerformanceDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/rate-limits" element={
-                <>
-                  <AppHeader />
-                  <RateLimitMonitor />
-                </>
+                <FullyProtectedRoute requiredRole="owner">
+                  <>
+                    <AppHeader />
+                    <RateLimitMonitor />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/suppliers" element={
-                <>
-                  <AppHeader />
-                  <SupplierManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <SupplierManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/purchase-orders" element={
-                <>
-                  <AppHeader />
-                  <PurchaseOrders />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <PurchaseOrders />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/cashbook" element={
-                <>
-                  <AppHeader />
-                  <Cashbook />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <Cashbook />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/general-ledger" element={
-                <>
-                  <AppHeader />
-                  <GeneralLedger />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <GeneralLedger />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/receipt-templates" element={
-                <>
-                  <AppHeader />
-                  <ReceiptTemplates />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <ReceiptTemplates />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/tables" element={
-                <>
-                  <AppHeader />
-                  <TableLayout />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <TableLayout />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/modifiers" element={
-                <>
-                  <AppHeader />
-                  <ModifierManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <ModifierManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/stations" element={
-                <>
-                  <AppHeader />
-                  <StationManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <StationManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/devices" element={
-                <>
-                  <AppHeader />
-                  <DeviceManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <DeviceManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/station-routing/:stationId" element={
-                <>
-                  <AppHeader />
-                  <StationRoutingConfig />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <StationRoutingConfig />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/nfc-cards" element={
-                <>
-                  <AppHeader />
-                  <NFCCardManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <NFCCardManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/marketing-content" element={
-                <>
-                  <AppHeader />
-                  <MarketingContent />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <MarketingContent />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/approvals" element={
-                <>
+                <FullyProtectedRoute requiredRole="manager">
                   <Approvals />
-                </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/tip-reports" element={
-                <>
+                <FullyProtectedRoute requiredRole="manager">
                   <TipReports />
-                </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/open-tabs" element={
-                <>
+                <FullyProtectedRoute requiredRole="manager">
                   <OpenTabs />
-                </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/shift-management" element={
-                <>
-                  <AppHeader />
-                  <ShiftManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <ShiftManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/eighty-six" element={
-                <>
-                  <AppHeader />
-                  <EightySixManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <EightySixManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/pending-modifications" element={
-                <>
-                  <AppHeader />
-                  <PendingModifications />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <PendingModifications />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/crm-testing" element={
-                <>
-                  <AppHeader />
-                  <CRMTestingDashboard />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <CRMTestingDashboard />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/promotion-analytics" element={
-                <>
-                  <AppHeader />
-                  <PromotionAnalytics />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <PromotionAnalytics />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               <Route path="/admin/recipes" element={
-                <>
-                  <AppHeader />
-                  <RecipeManagement />
-                </>
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <RecipeManagement />
+                  </>
+                </FullyProtectedRoute>
               } />
               
               {/* Keep KDS and Station Routes Protected */}
