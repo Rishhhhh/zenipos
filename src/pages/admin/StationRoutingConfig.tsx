@@ -79,9 +79,7 @@ export default function StationRoutingConfig() {
           station_id: stationId,
           menu_item_id: menuItemId,
           category_id: categoryId,
-          prep_time_estimate: prepTimes[menuItemId || categoryId] || 5,
-          auto_print: true,
-          auto_display: true
+          prep_time_minutes: prepTimes[menuItemId || categoryId] || 5,
         });
       if (error) throw error;
     },
@@ -215,7 +213,7 @@ export default function StationRoutingConfig() {
                     )}
                     <div className="mt-2">
                       <Badge variant="outline">
-                        Prep: {rule.prep_time_estimate || 5}min
+                        Prep: {rule.prep_time_minutes || 5}min
                       </Badge>
                     </div>
                   </div>

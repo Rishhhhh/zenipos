@@ -96,33 +96,26 @@ export class PrintRoutingService {
    */
   private static async printToStation(stationId: string, ticketData: any) {
     // Get station details and assigned printers
-    const { data: stationDevices } = await supabase
-      .from('station_devices')
-      .select(`
-        *,
-        device:devices (
-          id,
-          name,
-          ip_address,
-          device_capabilities,
-          status
-        ),
-        station:stations (
-          name,
-          color
-        )
-      `)
+    const { data: station } = await supabase
+      .from('stations')
+      .select('name, color')
+      .eq('id', stationId)
+      .single();
+
+    const { data: devices } = await supabase
+      .from('devices')
+      .select('*')
       .eq('station_id', stationId)
       .eq('role', 'printer');
     
-    if (!stationDevices || stationDevices.length === 0) {
+    if (!devices || devices.length === 0) {
       console.warn(`No printers found for station ${stationId}`);
       return;
     }
     
     // Filter online printers
-    const onlinePrinters = stationDevices.filter(sd => 
-      sd.device && sd.device.status === 'online'
+    const onlinePrinters = devices.filter(device => 
+      device && device.status === 'online'
     );
     
     if (onlinePrinters.length === 0) {
@@ -130,28 +123,27 @@ export class PrintRoutingService {
       return;
     }
     
-    // Print to primary printer (or first if no primary)
-    const primaryPrinter = onlinePrinters.find(sd => sd.is_primary);
-    const printersToPrint = primaryPrinter ? [primaryPrinter] : [onlinePrinters[0]];
+    // Print to first available online printer
+    const printersToPrint = [onlinePrinters[0]];
     
-    for (const sd of printersToPrint) {
+    for (const device of printersToPrint) {
       try {
         // Generate kitchen ticket
         const ticket = {
           ...ticketData,
-          station: sd.station.name.toUpperCase()
+          station: station?.name?.toUpperCase() || 'KITCHEN'
         };
         
         // Send to printer
         await printService.print80mm(ticket);
         
-        console.log(`✅ Printed to ${sd.device.name}`);
-      } catch (error) {
-        console.error(`❌ Failed to print to ${sd.device.name}:`, error);
+        console.log(`✅ Printed to ${device.name}`);
+      } catch (error: any) {
+        console.error(`❌ Failed to print to ${device.name}:`, error);
         
         // Log failure for monitoring
         await supabase.from('device_health_log').insert({
-          device_id: sd.device.id,
+          device_id: device.id,
           status: 'error',
           error_message: `Print failed: ${error.message}`
         });

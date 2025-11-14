@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { GlassModal } from '@/components/modals/GlassModal';
+import { useBranch } from '@/contexts/BranchContext';
 import {
   Form,
   FormControl,
@@ -63,6 +64,7 @@ export function PromotionModal({
 }: PromotionModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { selectedBranchId } = useBranch();
 
   const form = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionSchema),
@@ -156,6 +158,7 @@ export function PromotionModal({
         start_date: values.start_date || null,
         end_date: values.end_date || null,
         rules,
+        branch_id: selectedBranchId,
       };
 
       if (promotion) {
