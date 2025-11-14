@@ -221,48 +221,52 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const currentBranch = branches.find(b => b.id === selectedBranchId) || null;
   const hasMultipleBranches = branches.length > 1;
 
-  // Add error UI for query failures
-  if (error === 'query_failed') {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Cannot Load Branches</AlertTitle>
-          <AlertDescription>
-            There was an error connecting to the database. This may be due to:
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Database permissions issue</li>
-              <li>Network connectivity problem</li>
-              <li>Invalid authentication token</li>
-            </ul>
-            <div className="mt-4 text-sm">
-              Try <button 
-                onClick={() => window.location.href = '/login'}
-                className="underline font-medium"
-              >
-                logging out
-              </button> and back in, or contact support if the issue persists.
-            </div>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  // CRITICAL: Only show error UI if user IS authenticated
+  // If not authenticated, let router handle redirects to login
+  if (organization?.id) {
+    // Add error UI for query failures
+    if (error === 'query_failed') {
+      return (
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Cannot Load Branches</AlertTitle>
+            <AlertDescription>
+              There was an error connecting to the database. This may be due to:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Database permissions issue</li>
+                <li>Network connectivity problem</li>
+                <li>Invalid authentication token</li>
+              </ul>
+              <div className="mt-4 text-sm">
+                Try <button 
+                  onClick={() => window.location.href = '/login'}
+                  className="underline font-medium"
+                >
+                  logging out
+                </button> and back in, or contact support if the issue persists.
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
 
-  // Add UI for no branches case
-  if (error === 'no_branches' && !isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Alert className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>No Branches Available</AlertTitle>
-          <AlertDescription>
-            Your organization doesn't have any active branches set up yet. 
-            Please contact your organization owner to create a branch.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    // Add UI for no branches case - only when authenticated
+    if (error === 'no_branches' && !isLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Alert className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No Branches Available</AlertTitle>
+            <AlertDescription>
+              Your organization doesn't have any active branches set up yet. 
+              Please contact your organization owner to create a branch.
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
   }
 
   return (
