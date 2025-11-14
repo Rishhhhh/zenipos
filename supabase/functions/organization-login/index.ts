@@ -141,7 +141,32 @@ serve(async (req) => {
       .eq('active', true)
       .limit(1);
 
-    const hasEmployees = employees && employees.length > 0;
+    // CRITICAL FIX: Create Supabase Auth session for the owner
+    // This allows RLS policies to work correctly with auth.uid()
+    console.log('Creating auth session for owner...');
+    let authSession = null;
+    
+    if (orgData.owner_id) {
+      try {
+        // Sign in the owner using service role
+        const { data: signInData, error: signInError } = await supabase.auth.admin.createSession({
+          user_id: orgData.owner_id,
+          expires_in: 2592000 // 30 days
+        });
+
+        if (signInError) {
+          console.error('Failed to create auth session:', signInError);
+        } else if (signInData?.session) {
+          authSession = {
+            access_token: signInData.session.access_token,
+            refresh_token: signInData.session.refresh_token,
+          };
+          console.log('Auth session created successfully');
+        }
+      } catch (authError) {
+        console.error('Auth session creation error:', authError);
+      }
+    }
 
     console.log('Organization login successful');
 
@@ -154,6 +179,7 @@ serve(async (req) => {
         branches: branches || [],
         hasEmployees,
         onboardingCompleted: orgData.onboarding_completed,
+        session: authSession, // Include Supabase Auth session for RLS
         branding: {
           name: orgData.name,
           logoUrl: orgData.logo_url,
