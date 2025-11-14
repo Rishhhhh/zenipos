@@ -37,7 +37,7 @@ interface MenuItem {
 export default function MenuManagement() {
   usePerformanceMonitor('MenuManagement');
   const { openModal } = useModalManager();
-  const { currentBranch, isReady, isLoading: branchLoading } = useBranch();
+  const { currentBranch, isReady, isLoading: branchLoading, error: branchError } = useBranch();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -97,12 +97,21 @@ export default function MenuManagement() {
     const name = prompt('Enter category name:');
     if (!name) return;
 
-    if (branchLoading || !isReady) {
+    if (branchLoading) {
       alert('Loading branch information, please try again in a moment.');
       return;
     }
 
-    if (!currentBranch?.id) {
+    if (branchError === 'no_branches') {
+      alert(
+        'No branches found for your account.\n\n' +
+        'This usually means your account setup is incomplete.\n' +
+        'Please contact support or complete the registration process.'
+      );
+      return;
+    }
+
+    if (!isReady || !currentBranch?.id) {
       alert('No branch selected. Please select a branch first.');
       return;
     }

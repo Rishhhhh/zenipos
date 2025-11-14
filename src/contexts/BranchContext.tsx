@@ -20,6 +20,7 @@ interface BranchContextType {
   hasMultipleBranches: boolean;
   isLoading: boolean;
   isReady: boolean;
+  error: string | null;
   selectBranch: (branchId: string) => void;
 }
 
@@ -31,8 +32,10 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const { organization } = useAuth();
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [autoCreateAttempted, setAutoCreateAttempted] = useState(false);
 
-  const { data: branches = [], isLoading } = useQuery({
+  const { data: branches = [], isLoading, refetch } = useQuery({
     queryKey: ['user-branches', organization?.id],
     queryFn: async () => {
       if (!organization?.id) return [];
@@ -57,10 +60,61 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     enabled: !!organization?.id,
   });
 
+  // Auto-create branch if needed
+  useEffect(() => {
+    const autoCreateBranch = async () => {
+      if (!isLoading && branches.length === 0 && organization?.id && !autoCreateAttempted) {
+        setAutoCreateAttempted(true);
+        console.log('[BranchContext] No branches found, attempting auto-creation...');
+        
+        try {
+          const { data: newBranch, error } = await supabase
+            .from('branches')
+            .insert({
+              organization_id: organization.id,
+              name: 'Main Branch',
+              code: 'MAIN',
+              active: true,
+            })
+            .select()
+            .single();
+
+          if (!error && newBranch) {
+            console.log('[BranchContext] ✅ Auto-created Main Branch:', newBranch.id);
+            refetch();
+          } else {
+            console.error('[BranchContext] Auto-creation failed:', error);
+            setError('no_branches');
+            setIsReady(true);
+          }
+        } catch (err) {
+          console.error('[BranchContext] Auto-creation error:', err);
+          setError('no_branches');
+          setIsReady(true);
+        }
+      }
+    };
+
+    autoCreateBranch();
+  }, [isLoading, branches.length, organization?.id, autoCreateAttempted, refetch]);
+
   // Restore from localStorage or auto-select on mount
   useEffect(() => {
-    if (!branches || branches.length === 0) {
+    setError(null);
+
+    if (isLoading) {
       setIsReady(false);
+      return;
+    }
+
+    if (!branches || branches.length === 0) {
+      if (!autoCreateAttempted) {
+        setIsReady(false);
+        return;
+      }
+      // Auto-creation was attempted but failed
+      setError('no_branches');
+      setIsReady(true);
       return;
     }
 
@@ -79,7 +133,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, 'all');
       setIsReady(true);
     }
-  }, [branches]);
+  }, [branches, isLoading, autoCreateAttempted]);
 
   const selectBranch = (branchId: string) => {
     setSelectedBranchId(branchId);
@@ -98,6 +152,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
         hasMultipleBranches,
         isLoading,
         isReady,
+        error,
         selectBranch,
       }}
     >
