@@ -13,6 +13,7 @@ import { BulkImageGenerator } from '@/components/admin/BulkImageGenerator';
 import { Link } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import { toast } from 'sonner';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -95,21 +96,17 @@ export default function MenuManagement() {
 
   const handleAddCategory = async () => {
     if (branchLoading) {
-      alert('Loading branch information, please try again in a moment.');
+      toast.error('Loading branch information, please try again in a moment.');
       return;
     }
 
     if (branchError === 'no_branches') {
-      alert(
-        'No branches found for your account.\n\n' +
-        'This usually means your account setup is incomplete.\n' +
-        'Please contact support or complete the registration process.'
-      );
+      toast.error('No branches found for your account. Please contact support or create a branch first.');
       return;
     }
 
     if (!isReady || !currentBranch?.id) {
-      alert('No branch selected. Please select a branch first.');
+      toast.error('No branch selected. Please select a branch first.');
       return;
     }
 
