@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone } from "lucide-react";
+import { useBranch } from "@/contexts/BranchContext";
+import { BranchSelector } from "@/components/branch/BranchSelector";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,7 @@ interface Device {
   id: string;
   name: string;
   role: string;
+  branch_id: string;
   ip_address?: string;
   mac_address?: string;
   station_id?: string;
@@ -122,15 +125,21 @@ const DeviceCard = ({ device, onEdit, onTest }: any) => {
 };
 
 const DeviceModal = ({ device, open, onClose, onSave }: any) => {
+  const { currentBranch } = useBranch();
+  
   const { data: stations } = useQuery({
-    queryKey: ['stations'],
+    queryKey: ['stations', currentBranch?.id],
     queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
       const { data } = await supabase
         .from('stations')
         .select('*')
+        .eq('branch_id', currentBranch.id)
         .eq('active', true);
       return data;
-    }
+    },
+    enabled: !!currentBranch?.id
   });
 
   const form = useForm({
@@ -140,6 +149,7 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
       ip_address: '',
       mac_address: '',
       station_id: '',
+      branch_id: currentBranch?.id || '',
       status: 'offline',
       health_check_interval: 60,
       device_capabilities: {}
@@ -297,21 +307,26 @@ const TestPrintModal = ({ device, open, onClose }: any) => {
 
 export default function DeviceManagement() {
   const queryClient = useQueryClient();
+  const { currentBranch, hasMultipleBranches, branches, selectBranch } = useBranch();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
   const [testPrintDevice, setTestPrintDevice] = useState<Device | null>(null);
 
   const { data: devices, isLoading } = useQuery({
-    queryKey: ['devices'],
+    queryKey: ['devices', currentBranch?.id],
     queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
       const { data, error } = await supabase
         .from('devices')
         .select('*, stations(name, color)')
+        .eq('branch_id', currentBranch.id)
         .order('name');
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!currentBranch?.id
   });
 
   const saveDevice = useMutation({
@@ -363,11 +378,21 @@ export default function DeviceManagement() {
 
   return (
     <div className="p-8">
+      {hasMultipleBranches && (
+        <div className="mb-6">
+          <BranchSelector 
+            value={currentBranch?.id || null}
+            onChange={selectBranch}
+            branches={branches}
+          />
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Device Management</h1>
           <p className="text-muted-foreground">
-            Manage POS terminals, KDS displays, printers, and peripherals
+            {currentBranch?.name} - Manage POS terminals, KDS displays, printers, and peripherals
           </p>
         </div>
         <Button onClick={() => {
