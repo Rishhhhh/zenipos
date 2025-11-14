@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Flame, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { trackPerformance } from '@/lib/monitoring/sentry';
 
 interface CourseStatus {
   course_number: number;
@@ -104,9 +105,25 @@ export function ExpoStationView() {
     },
   });
 
-  // Real-time subscriptions using unified service
-  useRealtimeTable('orders', () => {
+  // Real-time subscriptions using unified service with latency tracking
+  useRealtimeTable('orders', (payload) => {
     queryClient.invalidateQueries({ queryKey: ['expo-orders'] });
+    
+    // Track KDS update latency
+    if (payload.eventType === 'INSERT' && payload.new) {
+      const orderCreatedAt = new Date((payload.new as any).created_at).getTime();
+      const receivedAt = Date.now();
+      const latency = receivedAt - orderCreatedAt;
+      
+      // Only track if order is fresh (< 10 seconds old)
+      if (latency < 10000) {
+        trackPerformance('kds_update', latency, {
+          page: 'ExpoStation',
+          order_id: (payload.new as any).id,
+          order_type: (payload.new as any).order_type,
+        });
+      }
+    }
   });
 
   useRealtimeTable('course_fires', () => {

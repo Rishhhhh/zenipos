@@ -19,8 +19,12 @@ const ALERT_THRESHOLDS = {
   cls_warning: 100,   // 0.1 * 1000
   page_load_critical: 3000,
   page_load_warning: 2000,
-  fps_critical: 30, // Below 30 FPS is critical
-  fps_warning: 45,  // Below 45 FPS is warning
+  route_change_critical: 500, // 500ms for route transitions
+  route_change_warning: 200,  // 200ms target
+  kds_update_critical: 2000, // 2s for KDS updates
+  kds_update_warning: 1000,  // 1s target
+  fps_critical: 20, // Below 20 FPS is critical (severe lag)
+  fps_warning: 30,  // Below 30 FPS is warning (noticeable lag)
 };
 
 export async function checkPerformanceAlerts(
