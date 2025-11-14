@@ -11,6 +11,8 @@ import { ShiftHistoryPanel } from '@/components/admin/ShiftHistoryPanel';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { TransferEmployeeModal } from '@/components/admin/TransferEmployeeModal';
+import { useBranch } from '@/contexts/BranchContext';
+import { BranchSelector } from '@/components/branch/BranchSelector';
 import {
   Users,
   Plus,
@@ -27,6 +29,7 @@ export default function EmployeeManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
+  const { currentBranch, hasMultipleBranches, branches, selectBranch } = useBranch();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
@@ -34,8 +37,10 @@ export default function EmployeeManagement() {
   const [employeeToTransfer, setEmployeeToTransfer] = useState<any>(null);
 
   const { data: employees } = useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', currentBranch?.id],
     queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
       const { data, error } = await supabase
         .from('employees')
         .select(`
@@ -44,10 +49,12 @@ export default function EmployeeManagement() {
             role
           )
         `)
+        .eq('branch_id', currentBranch.id)
         .order('name');
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBranch?.id,
   });
 
   const toggleActive = useMutation({
@@ -74,10 +81,22 @@ export default function EmployeeManagement() {
 
   return (
     <div className="p-8">
+      {hasMultipleBranches && (
+        <div className="mb-6">
+          <BranchSelector 
+            value={currentBranch?.id || null}
+            onChange={selectBranch}
+            branches={branches}
+          />
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Employee Management</h1>
-          <p className="text-muted-foreground">Manage staff, roles, and time tracking</p>
+          <p className="text-muted-foreground">
+            {currentBranch?.name} - Manage staff, roles, and time tracking
+          </p>
         </div>
         <Button onClick={() => openModal('employee', {})}>
           <Plus className="h-4 w-4 mr-2" />
