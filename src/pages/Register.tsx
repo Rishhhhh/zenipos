@@ -194,7 +194,7 @@ export default function Register() {
       console.log('[Registration] ✅ Organization created successfully');
       console.log('[Registration] Signup response:', signupData);
       
-      const { organizationId, slug, setupToken, defaultPin } = signupData;
+      const { organizationId, slug, email, defaultPin } = signupData;
 
       if (!organizationId || !defaultPin) {
         console.error('[Registration] ❌ Invalid signup response:', signupData);
@@ -209,6 +209,21 @@ export default function Register() {
       updateData({ organizationId, defaultPin, slug });
 
       toast.success('Organization created successfully!', { id: 'registration' });
+      
+      // Sign in the newly created user (CLIENT-SIDE)
+      console.log('[Registration] Signing in user client-side...');
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password: data.password as string
+      });
+
+      if (authError) {
+        console.error('[Registration] ⚠️ Sign-in failed:', authError);
+        throw new Error(`Account created but sign-in failed: ${authError.message}`);
+      }
+      
+      console.log('[Registration] ✅ User signed in successfully');
+      const setupToken = authData.session?.access_token;
       
       // Step 2: Additional Branches (only if more than 1 branch - first one created in Step 1)
       if (data.branches && data.branches.length > 1) {
