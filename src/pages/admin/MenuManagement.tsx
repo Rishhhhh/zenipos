@@ -136,10 +136,14 @@ export default function MenuManagement() {
               </p>
             </div>
           </div>
-          <Button onClick={handleAddItem}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleAddItem}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
+            <MenuImportExport categoryId={selectedCategoryId} />
+            <BulkImageGenerator menuItems={menuItems} onComplete={() => refetchItems()} />
+          </div>
         </div>
 
         {/* Search */}
@@ -156,14 +160,7 @@ export default function MenuManagement() {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="p-4">
-          <BulkImageGenerator 
-            menuItems={menuItems} 
-            onComplete={() => refetchItems()} 
-          />
-        </div>
-        
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Categories Sidebar */}
           <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
             <div className="h-full overflow-y-auto p-4">
