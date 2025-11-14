@@ -107,6 +107,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (orgStored) {
           const orgSession: OrgSession = JSON.parse(orgStored);
           if (Date.now() <= orgSession.expiresAt) {
+            // CRITICAL: Validate that auth.uid() exists for org session
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+              console.warn('[Auth] Organization session exists but no auth.uid() - clearing stale session');
+              localStorage.removeItem(ORG_SESSION_KEY);
+              localStorage.removeItem(EMPLOYEE_SESSION_KEY);
+              setOrganization(null);
+              setEmployee(null);
+              toast.error('Your session has expired. Please log in again.');
+              setIsLoading(false);
+              return;
+            }
+
             setOrganization({
               id: orgSession.organizationId,
               name: orgSession.organizationName,
@@ -197,6 +211,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     // Set up Supabase auth state listener
+    // Attempt to refresh auth session on mount
+    const refreshAuthSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.refreshSession();
+        
+        if (error) {
+          console.warn('[Auth] Failed to refresh session on mount:', error);
+          const orgStored = localStorage.getItem(ORG_SESSION_KEY);
+          if (orgStored) {
+            console.log('[Auth] Clearing stale sessions due to refresh failure');
+            localStorage.removeItem(ORG_SESSION_KEY);
+            localStorage.removeItem(EMPLOYEE_SESSION_KEY);
+            setOrganization(null);
+            setEmployee(null);
+            toast.error('Session expired. Please log in again.');
+          }
+        } else if (session) {
+          console.log('[Auth] ✅ Session refreshed successfully on mount');
+        }
+      } catch (err) {
+        console.error('[Auth] Session refresh error:', err);
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -216,10 +254,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Initial session restoration
-    restoreSessions();
-    checkSuperAdmin();
-    checkImpersonation();
+    // Initial session refresh then restoration
+    refreshAuthSession().then(() => {
+      restoreSessions();
+      checkSuperAdmin();
+      checkImpersonation();
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -282,7 +322,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (authError) {
         console.error('[Auth Error] Failed to sign in owner:', authError);
-        toast.error('Authentication failed: ' + authError.message);
+        // CRITICAL: Clear org session if auth fails
+        localStorage.removeItem(ORG_SESSION_KEY);
+        setOrganization(null);
+        toast.error('Authentication failed. Please try logging in again.');
         throw new Error('Failed to establish authentication session');
       }
       
