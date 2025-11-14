@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -161,6 +161,11 @@ export function CategoryDragList({
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Sync local items state with categories prop
+  useEffect(() => {
+    setItems(categories);
+  }, [categories]);
 
   // Fetch item counts per category
   const { data: itemCounts = {} } = useQuery({
