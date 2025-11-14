@@ -267,22 +267,36 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
 
   const handleDuplicate = async (item: MenuItem) => {
     try {
-      const { error } = await supabase.from('menu_items').insert({
+      // Get user's branch_id from context
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('branch_id')
+        .eq('auth_user_id', user.id)
+        .single();
+      
+      if (!employee?.branch_id) throw new Error('Branch not found');
+
+      // Insert duplicate with all required fields
+      const { error } = await supabase.from('menu_items').insert([{
+        branch_id: employee.branch_id,
         name: `${item.name} (Copy)`,
-        sku: item.sku ? `${item.sku}-COPY` : null,
         category_id: item.category_id,
         station_id: item.station_id,
         price: item.price,
         cost: item.cost,
-        image_url: item.image_url,
         in_stock: item.in_stock,
         archived: false,
-      });
+      }]);
+      
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['menuItems'] });
-      toast({ title: 'Item duplicated' });
+      toast({ title: 'Item duplicated', description: 'Menu item has been duplicated successfully' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Duplication failed' });
+      console.error('Duplicate error:', error);
+      toast({ variant: 'destructive', title: 'Duplication failed', description: error instanceof Error ? error.message : 'Failed to duplicate item' });
     }
   };
 
@@ -381,13 +395,23 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
         >
           <Edit className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleArchive(item)}
-        >
-          <Archive className="h-4 w-4" />
-        </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDuplicate(item)}
+                    disabled={item.archived}
+                    title="Duplicate item"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleArchive(item)}
+                    title={item.archived ? "Restore item" : "Archive item"}
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -404,29 +428,19 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
     <div className="space-y-4">
       {/* Bulk Actions Toolbar */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-4 p-4 bg-accent rounded-lg">
-          <span className="text-sm font-medium">
-            {selectedItems.size} item(s) selected
-          </span>
+        <div className="flex items-center gap-4 p-4 bg-accent rounded-lg flex-wrap">
+          <span className="text-sm font-medium">{selectedItems.size} item(s) selected</span>
           <Select onValueChange={handleBulkStationAssign}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Assign to station" />
-            </SelectTrigger>
-            <SelectContent>
-              {stations.map((station) => (
-                <SelectItem key={station.id} value={station.id}>
-                  {station.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Assign station" /></SelectTrigger>
+            <SelectContent>{stations.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedItems(new Set())}
-          >
-            Clear Selection
-          </Button>
+          <Select onValueChange={handleBulkCategoryChange}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Change category" /></SelectTrigger>
+            <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={handleBulkArchive}><Archive className="h-4 w-4 mr-2" />Archive</Button>
+          <Button variant="outline" size="sm" onClick={() => setPriceUpdateDialogOpen(true)}><DollarSign className="h-4 w-4 mr-2" />Update Prices</Button>
+          <Button variant="outline" size="sm" onClick={() => setSelectedItems(new Set())}>Clear</Button>
         </div>
       )}
 
