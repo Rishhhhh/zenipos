@@ -40,8 +40,26 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       if (!organization?.id) return [];
       
+      // Get auth user
+      const { data: authUser } = await supabase.auth.getUser();
+      
+      // Fallback: If no auth.uid(), fetch branches directly via organization
+      if (!authUser?.user?.id) {
+        console.warn('[BranchContext] No auth.uid() found, fetching branches via organization owner');
+        const { data: branchesData, error: branchError } = await supabase
+          .from('branches')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('active', true)
+          .order('name');
+        
+        if (branchError) throw branchError;
+        return branchesData as Branch[];
+      }
+
+      // Normal flow with auth user
       const { data: branchIds, error: rpcError } = await supabase.rpc('get_user_branches', {
-        _user_id: (await supabase.auth.getUser()).data.user?.id
+        _user_id: authUser.user.id
       });
       
       if (rpcError) throw rpcError;

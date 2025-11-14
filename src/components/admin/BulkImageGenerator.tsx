@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ImagePlus, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,7 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface BulkImageGeneratorProps {
   menuItems: Array<{ id: string; name: string; category_id: string; image_url: string | null }>;
@@ -74,115 +74,113 @@ export function BulkImageGenerator({ menuItems, onComplete }: BulkImageGenerator
   };
 
   return (
-    <Card className="p-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <ImagePlus className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Bulk Image Generation</h3>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          <div>
-            <p className="font-medium">{itemsWithoutImages.length} items without images</p>
-            <p className="text-sm text-muted-foreground">
-              {menuItems.length - itemsWithoutImages.length} items already have images
-            </p>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="default">
+          <ImagePlus className="h-4 w-4 mr-2" />
+          Generate Images
+          {itemsWithoutImages.length > 0 && (
+            <span className="ml-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
+              {itemsWithoutImages.length}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-96" align="end">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ImagePlus className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Bulk Image Generation</h3>
           </div>
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || itemsWithoutImages.length === 0}
-            size="lg"
-          >
-            <ImagePlus className="h-4 w-4 mr-2" />
-            Generate Images
-          </Button>
-        </div>
 
-        <div className="flex items-center justify-between p-3 bg-background border rounded-lg">
-          <div className="flex-1">
-            <Label htmlFor="ai-fallback" className="cursor-pointer">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="font-medium">Use Lovable AI Fallback</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Generate with AI if no stock photos found (uses credits)
-              </p>
-            </Label>
-          </div>
-          <Switch
-            id="ai-fallback"
-            checked={useLovableAIFallback}
-            onCheckedChange={setUseLovableAIFallback}
-            disabled={isGenerating}
-          />
-        </div>
-
-        {isGenerating && (
-          <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-sm text-muted-foreground text-center">
-              Generating images...
-            </p>
-          </div>
-        )}
-
-        {results && (
           <div className="space-y-3">
-            {results.success.length > 0 && (
-              <Alert>
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Success ({results.success.length}):</strong>
-                  <div className="text-xs mt-1 text-muted-foreground">
-                    {results.success.join(', ')}
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="font-medium text-sm">{itemsWithoutImages.length} items without images</p>
+              <p className="text-xs text-muted-foreground">
+                {menuItems.length - itemsWithoutImages.length} items already have images
+              </p>
+            </div>
 
-            {results.unsplashFailed.length > 0 && (
-              <Alert variant="default">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>No stock photos found ({results.unsplashFailed.length}):</strong>
-                  <div className="text-xs mt-1 text-muted-foreground">
-                    {results.unsplashFailed.join(', ')}
+            <div className="flex items-center justify-between p-3 bg-background border rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="ai-fallback" className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Use AI Fallback</span>
                   </div>
-                  <p className="text-xs mt-2">
-                    Enable "Lovable AI Fallback" above and regenerate to use AI for these items.
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Generate with AI if no stock photos found
                   </p>
-                </AlertDescription>
-              </Alert>
+                </Label>
+              </div>
+              <Switch
+                id="ai-fallback"
+                checked={useLovableAIFallback}
+                onCheckedChange={setUseLovableAIFallback}
+              />
+            </div>
+
+            {isGenerating && (
+              <div className="space-y-2">
+                <Progress value={progress} className="h-2" />
+                <p className="text-xs text-muted-foreground text-center">Generating images...</p>
+              </div>
             )}
 
-            {results.failed.length > 0 && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Failed ({results.failed.length}):</strong>
-                  <div className="text-xs mt-1">
-                    {results.failed.join(', ')}
+            {results && (
+              <div className="space-y-2 text-xs">
+                {results.success.length > 0 && (
+                  <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-900 dark:text-green-100">
+                        {results.success.length} successful
+                      </p>
+                    </div>
                   </div>
-                </AlertDescription>
-              </Alert>
+                )}
+                {results.unsplashFailed.length > 0 && (
+                  <div className="flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 rounded">
+                    <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-yellow-900 dark:text-yellow-100">
+                        {results.unsplashFailed.length} need AI generation
+                      </p>
+                      <p className="text-yellow-700 dark:text-yellow-300">Enable AI fallback to generate</p>
+                    </div>
+                  </div>
+                )}
+                {results.failed.length > 0 && (
+                  <div className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-red-900 dark:text-red-100">
+                        {results.failed.length} failed
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-xs">
-            <strong>How it works:</strong>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>First tries FREE Unsplash stock photos (no cost)</li>
-              <li>If enabled, falls back to Lovable AI for missing items (uses credits)</li>
-              <li>Images are optimized and uploaded to your storage</li>
-              <li>Menu items are automatically updated</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
-      </div>
-    </Card>
+            <Alert className="border-blue-200 dark:border-blue-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Uses Unsplash for free stock photos. Enable AI fallback for custom generation (uses credits).
+              </AlertDescription>
+            </Alert>
+
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating || itemsWithoutImages.length === 0}
+              className="w-full"
+            >
+              <ImagePlus className="h-4 w-4 mr-2" />
+              {isGenerating ? 'Generating...' : 'Generate Images'}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
