@@ -74,7 +74,102 @@ export function BulkImageGenerator({ menuItems, onComplete }: BulkImageGenerator
   };
 
   return (
-    <Card className="p-6 space-y-4">
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Sparkles className="h-4 w-4 mr-2" />
+          Generate Images
+          {itemsWithoutImages.length > 0 && (
+            <span className="ml-2 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs">
+              {itemsWithoutImages.length}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[400px]" align="end">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-semibold flex items-center gap-2">
+              <ImagePlus className="h-4 w-4" />
+              Bulk Image Generation
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              {itemsWithoutImages.length} items need images
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <div className="flex-1">
+              <Label htmlFor="ai-fallback" className="cursor-pointer text-sm">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <span className="font-medium">Use AI Fallback</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Generate with AI if no stock photos found
+                </p>
+              </Label>
+            </div>
+            <Switch
+              id="ai-fallback"
+              checked={useLovableAIFallback}
+              onCheckedChange={setUseLovableAIFallback}
+            />
+          </div>
+
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || itemsWithoutImages.length === 0}
+            className="w-full"
+          >
+            <ImagePlus className="h-4 w-4 mr-2" />
+            Generate {itemsWithoutImages.length} Images
+          </Button>
+
+          {isGenerating && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Generating...</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} />
+            </div>
+          )}
+
+          {results && (
+            <div className="space-y-2 text-sm">
+              {results.success.length > 0 && (
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{results.success.length} images generated</span>
+                </div>
+              )}
+              {results.unsplashFailed.length > 0 && (
+                <div className="flex items-center gap-2 text-amber-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{results.unsplashFailed.length} need AI fallback</span>
+                </div>
+              )}
+              {results.failed.length > 0 && (
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{results.failed.length} failed</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <Alert>
+            <AlertCircle className="h-3.5 w-3.5" />
+            <AlertDescription className="text-xs">
+              Tries stock photos first, then AI if enabled (~0.1 credit/image)
+            </AlertDescription>
+          </Alert>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
       <div className="flex items-center gap-2">
         <ImagePlus className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">Bulk Image Generation</h3>
