@@ -29,6 +29,17 @@ const BranchContext = createContext<BranchContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'pos_selected_branch';
 
+// BYPASS MODE: Default branch for auth bypass
+const DEFAULT_BRANCH: Branch = {
+  id: 'default-branch-id',
+  name: 'Main Branch',
+  code: 'MAIN',
+  organization_id: 'bypass-org-id',
+  active: true,
+  address: null,
+  phone: null,
+};
+
 export function BranchProvider({ children }: { children: ReactNode }) {
   const { organization } = useAuth();
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
@@ -83,8 +94,16 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Auto-create branch if needed or use default virtual branch
+  // BYPASS MODE: Always use default branch
   useEffect(() => {
+    setSelectedBranchId(DEFAULT_BRANCH.id);
+    setIsReady(true);
+    setError(null);
+  }, []);
+
+  // Auto-create branch if needed or use default virtual branch (DISABLED IN BYPASS MODE)
+  useEffect(() => {
+    if (true) return; // Bypass enabled
     const autoCreateBranch = async () => {
       if (!isLoading && branches.length === 0 && organization?.id && !autoCreateAttempted) {
         setAutoCreateAttempted(true);
@@ -207,16 +226,17 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     } : null);
   const hasMultipleBranches = branches.length > 1;
 
+  // BYPASS MODE: Always return default branch
   return (
     <BranchContext.Provider
       value={{
-        selectedBranchId,
-        branches,
-        currentBranch,
-        hasMultipleBranches,
-        isLoading,
-        isReady,
-        error,
+        selectedBranchId: DEFAULT_BRANCH.id,
+        branches: [DEFAULT_BRANCH],
+        currentBranch: DEFAULT_BRANCH,
+        hasMultipleBranches: false,
+        isLoading: false,
+        isReady: true,
+        error: null,
         selectBranch,
       }}
     >

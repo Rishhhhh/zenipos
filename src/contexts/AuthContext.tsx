@@ -98,8 +98,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatedOrganization, setImpersonatedOrganization] = useState<Organization | null>(null);
 
-  // Session restoration and auth state management
+  // BYPASS MODE: Always return authenticated with dummy data
   useEffect(() => {
+    setOrganization({
+      id: 'bypass-org-id',
+      name: 'Test Restaurant',
+      slug: 'test-restaurant',
+      branding: {
+        name: 'Test Restaurant',
+      }
+    });
+    
+    setEmployee({
+      id: 'bypass-employee-id',
+      name: 'Test User',
+      role: 'owner',
+    });
+    
+    setIsLoading(false);
+  }, []);
+
+  // Session restoration and auth state management (DISABLED IN BYPASS MODE)
+  useEffect(() => {
+    if (true) return; // Bypass enabled - skip session restoration
     const restoreSessions = async () => {
       try {
         // Step 1: Check organization session
@@ -566,9 +587,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isOrganizationAuthenticated = !!organization;
-  const isEmployeeAuthenticated = !!employee;
-  const isFullyAuthenticated = isOrganizationAuthenticated && isEmployeeAuthenticated;
+  // BYPASS MODE: Always return true for authentication checks
+  const isOrganizationAuthenticated = true;
+  const isEmployeeAuthenticated = true;
+  const isFullyAuthenticated = true;
 
   return (
     <AuthContext.Provider
