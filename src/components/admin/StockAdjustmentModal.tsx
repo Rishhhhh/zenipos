@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useBranch } from '@/contexts/BranchContext';
 import { Loader2 } from 'lucide-react';
 
 interface StockAdjustmentModalProps {
@@ -18,6 +19,7 @@ interface StockAdjustmentModalProps {
 
 export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: StockAdjustmentModalProps) {
   const { toast } = useToast();
+  const { currentBranch } = useBranch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adjustmentType, setAdjustmentType] = useState<'purchase' | 'adjustment' | 'wastage'>('purchase');
   const [quantity, setQuantity] = useState(0);
@@ -48,6 +50,7 @@ export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: St
         .from('stock_moves')
         .insert({
           inventory_item_id: item.id,
+          branch_id: currentBranch?.id,
           type: adjustmentType,
           quantity: finalQty,
           reason: reason || `${adjustmentType} by ${user.email}`,
@@ -60,6 +63,7 @@ export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: St
       if (adjustmentType === 'wastage') {
         await supabase.from('wastage_logs').insert({
           inventory_item_id: item.id,
+          branch_id: currentBranch?.id,
           quantity: Math.abs(quantity),
           reason: wastageReason,
           notes: reason,

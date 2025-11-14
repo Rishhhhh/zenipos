@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { TransferInventoryModal } from '@/components/admin/TransferInventoryModal';
+import { useBranch } from '@/contexts/BranchContext';
+import { BranchSelector } from '@/components/branch/BranchSelector';
 import {
   Package,
   TrendingDown,
@@ -26,28 +28,36 @@ export default function InventoryManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
+  const { currentBranch, branches, isLoading: branchLoading, selectBranch, selectedBranchId } = useBranch();
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [itemToTransfer, setItemToTransfer] = useState<any>(null);
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ['inventory-items'],
+    queryKey: ['inventory-items', currentBranch?.id],
     queryFn: async () => {
+      if (!currentBranch?.id) return [];
       const { data, error } = await supabase
         .from('inventory_items')
         .select('*, suppliers(name)')
+        .eq('branch_id', currentBranch.id)
         .order('name');
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBranch?.id,
   });
 
   const { data: lowStockItems } = useQuery({
-    queryKey: ['inventory-low-stock'],
+    queryKey: ['inventory-low-stock', currentBranch?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_low_stock_items');
+      if (!currentBranch?.id) return [];
+      const { data, error } = await supabase.rpc('get_low_stock_items', {
+        branch_id_param: currentBranch.id
+      });
       if (error) throw error;
       return data;
     },
+    enabled: !!currentBranch?.id,
     refetchInterval: 60000,
   });
 
@@ -81,6 +91,13 @@ export default function InventoryManagement() {
             <p className="text-muted-foreground">Track stock levels and manage ingredients</p>
           </div>
           <div className="flex gap-2">
+            <BranchSelector 
+              value={selectedBranchId}
+              onChange={selectBranch}
+              branches={branches}
+              isLoading={branchLoading}
+              showAll={false}
+            />
             <Button onClick={() => openModal('aiForecast', { lowStockItems: lowStockItems || [] })} variant="outline">
               <Brain className="h-4 w-4 mr-2" />
               AI Forecast

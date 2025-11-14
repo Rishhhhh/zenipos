@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import { useBranch } from '@/contexts/BranchContext';
 import { Loader2 } from 'lucide-react';
 
@@ -30,6 +31,20 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
     reorder_qty: 0,
     cost_per_unit: 0,
     category: 'dry_goods',
+    supplier_id: null as string | null,
+  });
+
+  const { data: suppliers } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('active', true)
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
   });
 
   useEffect(() => {
@@ -43,6 +58,7 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
         reorder_qty: item.reorder_qty || 0,
         cost_per_unit: item.cost_per_unit || 0,
         category: item.category || 'dry_goods',
+        supplier_id: item.supplier_id || null,
       });
     } else {
       setFormData({
@@ -54,6 +70,7 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
         reorder_qty: 0,
         cost_per_unit: 0,
         category: 'dry_goods',
+        supplier_id: null,
       });
     }
   }, [item, open]);
@@ -205,10 +222,38 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
           </div>
         </div>
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {item ? 'Update Item' : 'Create Item'}
-        </Button>
+        <div>
+          <Label htmlFor="supplier">Supplier (Optional)</Label>
+          <Select 
+            value={formData.supplier_id || 'none'} 
+            onValueChange={(val) => setFormData({ 
+              ...formData, 
+              supplier_id: val === 'none' ? null : val 
+            })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select supplier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Supplier</SelectItem>
+              {suppliers?.map((supplier) => (
+                <SelectItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {item ? 'Update Item' : 'Create Item'}
+          </Button>
+        </div>
       </form>
     </GlassModal>
   );
