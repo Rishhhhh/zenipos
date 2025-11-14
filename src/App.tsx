@@ -194,11 +194,8 @@ const App = () => (
                 </SuperAdminProtectedRoute>
               } />
               
-              {/* Public Landing Page */}
-              <Route path="/" element={<Index />} />
-              
-              {/* Fully-Protected Routes (org + employee auth) */}
-              <Route path="/dashboard" element={
+              {/* Dashboard at home route */}
+              <Route path="/" element={
                 <FullyProtectedRoute requiredRole="staff">
                   <AppHeader />
                   <Dashboard />
