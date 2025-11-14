@@ -175,11 +175,7 @@ const App = () => (
               <Route path="/customer/:sessionId" element={<CustomerScreen />} />
               
               {/* Organization-Protected Routes (org auth only) */}
-              <Route path="/login" element={
-                <OrgProtectedRoute>
-                  <Login />
-                </OrgProtectedRoute>
-              } />
+              <Route path="/login" element={<Login />} />
               
               {/* Super Admin Route */}
               <Route path="/super-admin" element={
@@ -193,50 +189,42 @@ const App = () => (
               
               {/* Fully-Protected Routes (org + employee auth) */}
               <Route path="/" element={
-                <FullyProtectedRoute requiredRole="staff">
+                <>
                   <AppHeader />
                   <Dashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
-              <Route path="/pos" element={
-                <FullyProtectedRoute requiredRole="staff">
-                  <POSWithHeader />
-                </FullyProtectedRoute>
-              } />
+              <Route path="/pos" element={<POSWithHeader />} />
               
               <Route path="/tables" element={
-                <FullyProtectedRoute requiredRole="staff">
+                <>
                   <AppHeader />
                   <TableManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/kds" element={
-                <FullyProtectedRoute requiredRole="staff">
+                <>
                   <AppHeader />
                   <KDS />
-                </FullyProtectedRoute>
+                </>
               } />
               
-              <Route path="/expo-station" element={
-                <FullyProtectedRoute requiredRole="staff">
-                  <ExpoStation />
-                </FullyProtectedRoute>
-              } />
+              <Route path="/expo-station" element={<ExpoStation />} />
               
               <Route path="/admin" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <Admin />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/menu" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <MenuManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               {/* Development shortcut - bypass auth for menu management */}
