@@ -45,21 +45,37 @@ function isValidPassword(password: string): boolean {
 }
 
 serve(async (req) => {
-  console.log('[Organization Signup] Received request:', req.method);
+  // STARTUP VERIFICATION
+  console.log('========================================');
+  console.log('[Organization Signup] FUNCTION STARTED');
+  console.log('[Organization Signup] Timestamp:', new Date().toISOString());
+  console.log('[Organization Signup] Method:', req.method);
+  console.log('[Organization Signup] URL:', req.url);
+  console.log('========================================');
   
   if (req.method === 'OPTIONS') {
+    console.log('[Organization Signup] Handling OPTIONS request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     console.log('[Organization Signup] Initializing Supabase client...');
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    
+    console.log('[Organization Signup] Supabase URL exists:', !!supabaseUrl);
+    console.log('[Organization Signup] Service key exists:', !!supabaseKey);
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('[Organization Signup] ✅ Supabase client initialized');
 
     console.log('[Organization Signup] Parsing request body...');
     const body: SignupRequest = await req.json();
+    console.log('[Organization Signup] ✅ Request body parsed');
     const { email, password, restaurantName, ownerName, phone, businessType } = body;
     
     console.log('[Organization Signup] Received data:', {
