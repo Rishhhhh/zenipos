@@ -69,6 +69,7 @@ const TabletPOS = lazy(() => import("./pages/TabletPOS"));
 const OrganizationSettings = lazy(() => import("./pages/admin/OrganizationSettings"));
 const Cashbook = lazy(() => import("./pages/admin/Cashbook"));
 const GeneralLedger = lazy(() => import("./pages/admin/GeneralLedger"));
+const CRMTestingDashboard = lazy(() => import("./pages/admin/CRMTestingDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -442,6 +443,13 @@ const App = () => (
                 <FullyProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <PendingModifications />
+                </FullyProtectedRoute>
+              } />
+              
+              <Route path="/admin/crm-testing" element={
+                <FullyProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <CRMTestingDashboard />
                 </FullyProtectedRoute>
               } />
               
