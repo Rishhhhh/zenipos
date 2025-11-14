@@ -3,6 +3,7 @@ import { lazy } from 'react';
 export const MODAL_REGISTRY = {
   payment: lazy(() => import('@/components/pos/PaymentModal').then(m => ({ default: m.PaymentModal }))),
   menuItem: lazy(() => import('@/components/admin/MenuItemModal').then(m => ({ default: m.MenuItemModal }))),
+  categoryEdit: lazy(() => import('@/components/admin/CategoryEditModal').then(m => ({ default: m.CategoryEditModal }))),
   managerPin: lazy(() => import('@/components/pos/ManagerPinModal').then(m => ({ default: m.ManagerPinModal }))),
   employeeClockIn: lazy(() => import('@/components/pos/EmployeeClockInModal').then(m => ({ default: m.EmployeeClockInModal }))),
   employeeClockOut: lazy(() => import('@/components/pos/EmployeeClockOutModal').then(m => ({ default: m.EmployeeClockOutModal }))),

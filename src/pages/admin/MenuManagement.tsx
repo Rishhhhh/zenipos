@@ -94,9 +94,6 @@ export default function MenuManagement() {
   };
 
   const handleAddCategory = async () => {
-    const name = prompt('Enter category name:');
-    if (!name) return;
-
     if (branchLoading) {
       alert('Loading branch information, please try again in a moment.');
       return;
@@ -121,15 +118,11 @@ export default function MenuManagement() {
       0
     );
 
-    const { error } = await supabase.from('menu_categories').insert({
-      branch_id: currentBranch.id,
-      name,
-      sort_order: maxSortOrder + 10,
+    openModal('categoryEdit', {
+      category: null,
+      branchId: currentBranch.id,
+      maxSortOrder,
     });
-
-    if (error) {
-      alert('Failed to create category: ' + error.message);
-    }
   };
 
   return (
