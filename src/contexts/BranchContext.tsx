@@ -58,7 +58,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       }
 
       // Normal flow with auth user
-      const { data: branchIds, error: rpcError } = await supabase.rpc('get_user_branches', {
+      const { data: branchIds, error: rpcError } = await supabase.rpc('get_accessible_branch_ids', {
         _user_id: authUser.user.id
       });
       
@@ -68,7 +68,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       const { data: branchesData, error: branchError } = await supabase
         .from('branches')
         .select('*')
-        .in('id', branchIds)
+        .in('id', branchIds.map((b: any) => b.branch_id))
         .eq('active', true)
         .order('name');
 
