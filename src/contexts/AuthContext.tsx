@@ -87,7 +87,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ORG_SESSION_KEY = 'pos_org_session';
 const EMPLOYEE_SESSION_KEY = 'pos_employee_session';
 const ORG_SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
-const EMPLOYEE_SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
+const EMPLOYEE_SESSION_DURATION = 365 * 24 * 60 * 60 * 1000; // 1 year (permanent when remember me is checked)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [organization, setOrganization] = useState<Organization | null>(null);

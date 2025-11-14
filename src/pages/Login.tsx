@@ -130,7 +130,7 @@ export default function Login() {
             htmlFor="remember"
             className="text-sm text-muted-foreground cursor-pointer"
           >
-            Remember me for 8 hours
+            Remember this device
           </Label>
         </div>
 
@@ -157,12 +157,6 @@ export default function Login() {
           >
             Not {organization?.name}? <span className="underline">Switch Organization</span>
           </button>
-        </div>
-
-        {/* Test Credentials */}
-        <div className="mt-4 text-center text-xs text-muted-foreground animate-[fade-in_1s_ease-out_0.6s_both]">
-          <p>Test PIN: <span className="font-mono font-semibold text-foreground">12345</span></p>
-          <p className="mt-1">Available roles: Staff, Manager, Owner</p>
         </div>
       </GlassLoginCard>
     </div>
