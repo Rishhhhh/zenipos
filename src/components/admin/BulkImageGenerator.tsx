@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ImagePlus, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,7 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface BulkImageGeneratorProps {
   menuItems: Array<{ id: string; name: string; category_id: string; image_url: string | null }>;

@@ -275,6 +275,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Sign in the owner via Supabase Auth to establish auth.uid()
       console.log('[Organization Login] Signing in owner via Supabase Auth...');
+      console.log('[Organization Login] Email:', email);
+      
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -282,10 +284,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (authError) {
         console.error('[Auth Error] Failed to sign in owner:', authError);
-        // Continue anyway - org session still works, just RLS might fail
-      } else {
-        console.log('[Organization Login] Owner signed in successfully, auth.uid() is now set');
+        toast.error('Authentication failed: ' + authError.message);
+        throw new Error('Failed to establish authentication session');
       }
+      
+      console.log('[Organization Login] ✅ Owner signed in successfully, auth.uid() is now set');
 
       // Create organization session
       const orgSession: OrgSession = {
