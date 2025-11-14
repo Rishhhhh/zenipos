@@ -3308,6 +3308,7 @@ export type Database = {
       }
       shifts: {
         Row: {
+          branch_id: string | null
           break_end_at: string | null
           break_minutes: number | null
           break_start_at: string | null
@@ -3338,6 +3339,7 @@ export type Database = {
           voids_count: number | null
         }
         Insert: {
+          branch_id?: string | null
           break_end_at?: string | null
           break_minutes?: number | null
           break_start_at?: string | null
@@ -3368,6 +3370,7 @@ export type Database = {
           voids_count?: number | null
         }
         Update: {
+          branch_id?: string | null
           break_end_at?: string | null
           break_minutes?: number | null
           break_start_at?: string | null
@@ -3398,6 +3401,13 @@ export type Database = {
           voids_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "shifts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shifts_employee_id_fkey"
             columns: ["employee_id"]

@@ -451,6 +451,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('shifts')
         .insert({
           employee_id: employeeData.id,
+          branch_id: employeeData.branch_id,
           user_id: data.user?.id || employeeData.id,
           clock_in_at: new Date().toISOString(),
           status: 'active',
