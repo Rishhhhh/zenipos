@@ -30,20 +30,44 @@ export function ModifierSelectionModal({
   const [groupSelections, setGroupSelections] = useState<Record<string, string[]>>({});
 
   const { data: modifierData, isLoading } = useQuery({
-    queryKey: ['menu-item-modifiers', menuItemId],
+    queryKey: ['category-modifiers', menuItemId],
     queryFn: async () => {
-      // Fetch modifier groups linked to this menu item
+      // Step 1: Get the menu item's category
+      const { data: item, error: itemError } = await supabase
+        .from('menu_items')
+        .select('category_id')
+        .eq('id', menuItemId)
+        .single();
+
+      if (itemError) {
+        console.error('Error fetching menu item:', itemError);
+        throw itemError;
+      }
+
+      if (!item?.category_id) {
+        console.warn('Menu item has no category assigned');
+        return [];
+      }
+
+      // Step 2: Fetch modifier groups linked to that category
       const { data: links, error: linksError } = await supabase
-        .from('menu_item_modifiers')
-        .select('modifier_group_id')
-        .eq('menu_item_id', menuItemId);
-      
-      if (linksError) throw linksError;
-      if (!links || links.length === 0) return [];
+        .from('category_modifier_groups')
+        .select('modifier_group_id, sort_order')
+        .eq('category_id', item.category_id)
+        .order('sort_order');
+
+      if (linksError) {
+        console.error('Error fetching category modifier links:', linksError);
+        throw linksError;
+      }
+
+      if (!links || links.length === 0) {
+        return [];
+      }
 
       const groupIds = links.map(l => l.modifier_group_id);
 
-      // Fetch modifier groups with their modifiers
+      // Step 3: Fetch full modifier groups with modifiers
       const { data: groups, error: groupsError } = await supabase
         .from('modifier_groups')
         .select(`
@@ -59,7 +83,11 @@ export function ModifierSelectionModal({
         `)
         .in('id', groupIds);
 
-      if (groupsError) throw groupsError;
+      if (groupsError) {
+        console.error('Error fetching modifier groups:', groupsError);
+        throw groupsError;
+      }
+
       return groups || [];
     },
     enabled: open && !!menuItemId,
