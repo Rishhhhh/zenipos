@@ -72,12 +72,13 @@ export default function MenuManagement() {
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', currentBranch.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('menu_categories')
         .select('*')
-        .order('sort_order');
+        .eq('branch_id', currentBranch.id)
+        .order('sort_order', { nullsFirst: true });
       if (error) throw error;
       return data;
     },
@@ -85,12 +86,13 @@ export default function MenuManagement() {
 
   // Fetch menu items with station info
   const { data: menuItems = [], isLoading: itemsLoading, refetch: refetchItems } = useQuery({
-    queryKey: ['menuItems', selectedCategoryId, debouncedSearch],
+    queryKey: ['menuItems', currentBranch.id, selectedCategoryId, debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from('menu_items')
         .select('*')
-        .eq('archived', false);
+        .eq('archived', false)
+        .eq('branch_id', currentBranch.id);
 
       if (selectedCategoryId) {
         query = query.eq('category_id', selectedCategoryId);
@@ -196,6 +198,7 @@ export default function MenuManagement() {
                 selectedCategoryId={selectedCategoryId}
                 onSelectCategory={setSelectedCategoryId}
                 onAddCategory={handleAddCategory}
+                branchId={currentBranch.id}
               />
             </div>
           </ResizablePanel>

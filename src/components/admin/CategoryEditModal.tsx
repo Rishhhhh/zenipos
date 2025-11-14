@@ -146,7 +146,7 @@ export function CategoryEditModal({
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['categories', branchId] });
       form.reset();
       onOpenChange(false);
     } catch (error) {

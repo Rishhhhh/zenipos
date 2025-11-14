@@ -62,6 +62,7 @@ interface CategoryDragListProps {
   selectedCategoryId?: string;
   onSelectCategory: (categoryId: string) => void;
   onAddCategory: () => void;
+  branchId: string;
 }
 
 interface SortableCategoryProps {
@@ -154,6 +155,7 @@ export function CategoryDragList({
   selectedCategoryId,
   onSelectCategory,
   onAddCategory,
+  branchId,
 }: CategoryDragListProps) {
   const [items, setItems] = useState(categories);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -169,12 +171,13 @@ export function CategoryDragList({
 
   // Fetch item counts per category
   const { data: itemCounts = {} } = useQuery({
-    queryKey: ['categoryItemCounts'],
+    queryKey: ['categoryItemCounts', branchId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('menu_items')
         .select('category_id')
-        .eq('archived', false);
+        .eq('archived', false)
+        .eq('branch_id', branchId);
       
       if (error) throw error;
       
@@ -218,7 +221,7 @@ export function CategoryDragList({
             .eq('id', update.id);
         }
 
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['categories', branchId] });
         toast({
           title: 'Categories reordered',
           description: 'Category order updated successfully',
@@ -258,8 +261,8 @@ export function CategoryDragList({
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['categoryItemCounts'] });
+      queryClient.invalidateQueries({ queryKey: ['categories', branchId] });
+      queryClient.invalidateQueries({ queryKey: ['categoryItemCounts', branchId] });
       toast({
         title: 'Category deleted',
         description: 'Category has been deleted successfully',
