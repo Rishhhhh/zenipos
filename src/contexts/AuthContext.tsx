@@ -107,59 +107,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (orgStored) {
           const orgSession: OrgSession = JSON.parse(orgStored);
           if (Date.now() <= orgSession.expiresAt) {
-            // CRITICAL: Validate that auth.uid() exists for org session
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (!user) {
-              console.warn('[Auth] Organization session exists but no auth.uid() - clearing stale session');
+            try {
+              // CRITICAL: Validate that auth.uid() exists for org session
+              const { data: { user }, error: userError } = await supabase.auth.getUser();
+              
+              if (userError || !user) {
+                console.warn('[Auth] Session validation failed:', userError);
+                throw new Error('No valid user session');
+              }
+              
+              setOrganization({
+                id: orgSession.organizationId,
+                name: orgSession.organizationName,
+                slug: orgSession.slug,
+                branding: {
+                  name: orgSession.organizationName,
+                }
+              });
+
+              // Step 2: Check employee session (only if org is valid)
+              const empStored = localStorage.getItem(EMPLOYEE_SESSION_KEY);
+              if (empStored) {
+                const empSession: EmployeeSession = JSON.parse(empStored);
+                // Validate employee session matches current org and not expired
+                if (
+                  Date.now() <= empSession.expiresAt &&
+                  empSession.organizationId === orgSession.organizationId
+                ) {
+                  setEmployee({
+                    id: empSession.employeeId,
+                    name: empSession.employeeName,
+                    role: empSession.role,
+                  });
+                  setShiftId(empSession.shiftId || null);
+                } else {
+                  localStorage.removeItem(EMPLOYEE_SESSION_KEY);
+                }
+              }
+            } catch (queryError) {
+              // If RLS queries fail, clear sessions and force re-login
+              console.error('[Auth] Query failed during session restore:', queryError);
               localStorage.removeItem(ORG_SESSION_KEY);
               localStorage.removeItem(EMPLOYEE_SESSION_KEY);
               setOrganization(null);
               setEmployee(null);
-              toast.error('Your session has expired. Please log in again.');
-              setIsLoading(false);
-              return;
-            }
-
-            setOrganization({
-              id: orgSession.organizationId,
-              name: orgSession.organizationName,
-              slug: orgSession.slug,
-              branding: {
-                name: orgSession.organizationName,
-              }
-            });
-
-            // Step 2: Check employee session (only if org is valid)
-            const empStored = localStorage.getItem(EMPLOYEE_SESSION_KEY);
-            if (empStored) {
-              const empSession: EmployeeSession = JSON.parse(empStored);
-              // Validate employee session matches current org and not expired
-              if (
-                Date.now() <= empSession.expiresAt &&
-                empSession.organizationId === orgSession.organizationId
-              ) {
-                setEmployee({
-                  id: empSession.employeeId,
-                  name: empSession.employeeName,
-                  role: empSession.role,
-                });
-                setShiftId(empSession.shiftId || null);
-              } else {
-                localStorage.removeItem(EMPLOYEE_SESSION_KEY);
-              }
+              toast.error('Session validation failed. Please log in again.');
             }
           } else {
             // Org session expired, clear both
+            console.log('[Auth] Organization session expired');
             localStorage.removeItem(ORG_SESSION_KEY);
             localStorage.removeItem(EMPLOYEE_SESSION_KEY);
           }
         }
       } catch (error) {
-        console.error('Failed to restore sessions:', error);
+        console.error('[Auth] Failed to restore sessions:', error);
+        // Clear potentially corrupted data
         localStorage.removeItem(ORG_SESSION_KEY);
         localStorage.removeItem(EMPLOYEE_SESSION_KEY);
+        setOrganization(null);
+        setEmployee(null);
       } finally {
+        // ALWAYS clear loading state
         setIsLoading(false);
       }
     };
@@ -236,11 +245,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await restoreSessions();
-          await checkSuperAdmin();
-          await checkImpersonation();
+          // Defer async calls to prevent deadlock
+          setTimeout(() => {
+            restoreSessions();
+            checkSuperAdmin();
+            checkImpersonation();
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
           setOrganization(null);
           setEmployee(null);
@@ -254,14 +266,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Initial session refresh then restoration
-    refreshAuthSession().then(() => {
-      restoreSessions();
-      checkSuperAdmin();
-      checkImpersonation();
-    });
+    // Initial session restoration on mount
+    restoreSessions();
+    checkSuperAdmin();
+    checkImpersonation();
 
-    return () => subscription.unsubscribe();
+    // Add safety timeout to force loading=false after 10s
+    const safetyTimeout = setTimeout(() => {
+      console.warn('[Auth] Forcing loading=false after 10s timeout');
+      setIsLoading(false);
+    }, 10000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   const organizationLogin = async (email: string, password: string) => {
