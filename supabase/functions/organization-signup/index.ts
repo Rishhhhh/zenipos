@@ -271,19 +271,6 @@ serve(async (req) => {
         throw new Error(`User role creation failed: ${roleError.message}`);
       }
 
-      // Sign in the newly created user to get a valid JWT session
-      console.log('[Organization Signup] Creating session for owner...');
-      const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (sessionError || !sessionData?.session) {
-        console.error('[Organization Signup] ⚠️ Session creation failed:', sessionError);
-        throw new Error(`Session creation failed: ${sessionError?.message || 'No session returned'}`);
-      }
-      console.log('[Organization Signup] ✅ Session created successfully');
-
       console.log('[Organization Signup] ✅ Organization signup completed successfully');
       console.log('[Organization Signup] Summary:', {
         organizationId,
@@ -302,7 +289,7 @@ serve(async (req) => {
           success: true,
           organizationId,
           slug,
-          setupToken: sessionData.session.access_token, // Return actual JWT for authenticated calls
+          email, // Frontend will use this to sign in client-side
           message: 'Organization created successfully',
           defaultPin // Return PIN for owner (should be sent via email in production)
         }),
