@@ -545,6 +545,45 @@ export type Database = {
           },
         ]
       }
+      category_modifier_groups: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          modifier_group_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          modifier_group_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          modifier_group_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_modifier_groups_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_modifier_groups_modifier_group_id_fkey"
+            columns: ["modifier_group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_display_sessions: {
         Row: {
           cart_items: Json | null
@@ -1901,6 +1940,7 @@ export type Database = {
       }
       modifier_groups: {
         Row: {
+          branch_id: string | null
           created_at: string | null
           id: string
           max_selections: number
@@ -1908,6 +1948,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string | null
           id?: string
           max_selections?: number
@@ -1915,13 +1956,22 @@ export type Database = {
           name: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string | null
           id?: string
           max_selections?: number
           min_selections?: number
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "modifier_groups_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       modifiers: {
         Row: {
