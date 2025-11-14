@@ -19,7 +19,7 @@ interface InventoryItemModalProps {
 
 export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: InventoryItemModalProps) {
   const { toast } = useToast();
-  const { currentBranch } = useBranch();
+  const { currentBranch, isReady, isLoading: branchLoading } = useBranch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -87,8 +87,12 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
           .eq('id', item.id);
         if (error) throw error;
       } else {
+        if (branchLoading || !isReady) {
+          throw new Error('Loading branch information...');
+        }
+
         if (!currentBranch?.id) {
-          throw new Error('No branch selected');
+          throw new Error('No branch selected. Please select a branch first.');
         }
         const { error } = await supabase
           .from('inventory_items')

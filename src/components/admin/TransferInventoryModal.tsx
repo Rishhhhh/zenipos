@@ -27,7 +27,7 @@ interface TransferInventoryModalProps {
 export function TransferInventoryModal({ open, onOpenChange, item }: TransferInventoryModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { branches } = useBranch();
+  const { branches, currentBranch, isReady, isLoading: branchLoading } = useBranch();
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(0);
   const [reason, setReason] = useState('');
@@ -37,6 +37,14 @@ export function TransferInventoryModal({ open, onOpenChange, item }: TransferInv
 
   const transferMutation = useMutation({
     mutationFn: async () => {
+      if (branchLoading || !isReady) {
+        throw new Error('Loading branch information...');
+      }
+
+      if (!currentBranch?.id) {
+        throw new Error('No branch selected. Please select a branch first.');
+      }
+
       if (!item || !selectedBranchId || quantity <= 0) throw new Error('Missing data');
       if (quantity > maxQuantity) throw new Error('Insufficient quantity');
 
