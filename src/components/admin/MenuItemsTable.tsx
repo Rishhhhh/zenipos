@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Archive, ImageIcon, Trash2 } from 'lucide-react';
+import { Edit, Archive, ImageIcon, Trash2, Copy, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface MenuItem {
   id: string;
@@ -50,6 +61,8 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
+  const [priceUpdateDialogOpen, setPriceUpdateDialogOpen] = useState(false);
+  const [priceAdjustment, setPriceAdjustment] = useState({ type: 'percentage', value: 0 });
 
   // Fetch stations for bulk assignment
   const { data: stations = [] } = useQuery({
@@ -59,6 +72,19 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
         .from('stations')
         .select('id, name')
         .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch categories for bulk assignment
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .select('id, name')
+        .order('sort_order');
       if (error) throw error;
       return data;
     },
@@ -186,6 +212,78 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
       newSelection.add(itemId);
     }
     setSelectedItems(newSelection);
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedItems.size === 0) return;
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .update({ archived: true })
+        .in('id', Array.from(selectedItems));
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      toast({ title: 'Items archived', description: `Archived ${selectedItems.size} item(s)` });
+      setSelectedItems(new Set());
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Archive failed' });
+    }
+  };
+
+  const handleBulkCategoryChange = async (categoryId: string) => {
+    if (selectedItems.size === 0) return;
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .update({ category_id: categoryId })
+        .in('id', Array.from(selectedItems));
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      toast({ title: 'Category updated', description: `Updated ${selectedItems.size} item(s)` });
+      setSelectedItems(new Set());
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Update failed' });
+    }
+  };
+
+  const handleBulkPriceUpdate = async () => {
+    if (selectedItems.size === 0) return;
+    try {
+      const selectedItemsData = items.filter(item => selectedItems.has(item.id));
+      for (const item of selectedItemsData) {
+        const newPrice = priceAdjustment.type === 'percentage'
+          ? item.price * (1 + priceAdjustment.value / 100)
+          : item.price + priceAdjustment.value;
+        await supabase.from('menu_items').update({ price: Math.max(0, parseFloat(newPrice.toFixed(2))) }).eq('id', item.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      toast({ title: 'Prices updated', description: `Updated ${selectedItems.size} item(s)` });
+      setSelectedItems(new Set());
+      setPriceUpdateDialogOpen(false);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Update failed' });
+    }
+  };
+
+  const handleDuplicate = async (item: MenuItem) => {
+    try {
+      const { error } = await supabase.from('menu_items').insert({
+        name: `${item.name} (Copy)`,
+        sku: item.sku ? `${item.sku}-COPY` : null,
+        category_id: item.category_id,
+        station_id: item.station_id,
+        price: item.price,
+        cost: item.cost,
+        image_url: item.image_url,
+        in_stock: item.in_stock,
+        archived: false,
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+      toast({ title: 'Item duplicated' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Duplication failed' });
+    }
   };
 
   if (items.length === 0) {

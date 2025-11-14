@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, ArrowLeft } from 'lucide-react';
 import { CategoryDragList } from '@/components/admin/CategoryDragList';
 import { MenuItemsTable } from '@/components/admin/MenuItemsTable';
+import { MenuImportExport } from '@/components/admin/MenuImportExport';
 import { BulkImageGenerator } from '@/components/admin/BulkImageGenerator';
 import { Link } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
