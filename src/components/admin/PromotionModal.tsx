@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { useBranch } from '@/contexts/BranchContext';
 import { Tables } from '@/integrations/supabase/types';
 
 type Promotion = Tables<'promotions'>;
@@ -63,6 +64,7 @@ export function PromotionModal({
 }: PromotionModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentBranch } = useBranch();
 
   const form = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionSchema),
@@ -146,7 +148,9 @@ export function PromotionModal({
           break;
       }
 
-      const data = {
+      const { currentBranch } = useBranch();
+      
+      const data: any = {
         name: values.name,
         description: values.description || null,
         type: values.type,
@@ -157,6 +161,11 @@ export function PromotionModal({
         end_date: values.end_date || null,
         rules,
       };
+
+      // Add branch_id for new promotions
+      if (!promotion && currentBranch?.id) {
+        data.branch_id = currentBranch.id;
+      }
 
       if (promotion) {
         const { error } = await supabase
