@@ -3,17 +3,17 @@ import { useSimulationStore } from '@/lib/store/simulation';
 import { SimulationConfig } from '@/lib/simulation/types';
 import { useToast } from '@/hooks/use-toast';
 
-export function useSimulation(config: SimulationConfig) {
+export function useSimulation(config: SimulationConfig, branchId: string) {
   const { toast } = useToast();
   const store = useSimulationStore();
 
   const startSimulation = useCallback(async () => {
-    await store.startSimulation(config);
+    await store.startSimulation(config, branchId);
     toast({
       title: '🎬 Simulation Started',
       description: 'Live restaurant flow is now running',
     });
-  }, [config, store, toast]);
+  }, [config, branchId, store, toast]);
 
   const pauseSimulation = useCallback(() => {
     store.pauseSimulation();

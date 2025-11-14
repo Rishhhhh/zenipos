@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useBranch } from '@/contexts/BranchContext';
 import { Loader2 } from 'lucide-react';
 
 interface InventoryItemModalProps {
@@ -17,6 +18,7 @@ interface InventoryItemModalProps {
 
 export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: InventoryItemModalProps) {
   const { toast } = useToast();
+  const { currentBranch } = useBranch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -68,9 +70,12 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
           .eq('id', item.id);
         if (error) throw error;
       } else {
+        if (!currentBranch?.id) {
+          throw new Error('No branch selected');
+        }
         const { error } = await supabase
           .from('inventory_items')
-          .insert(formData);
+          .insert({ ...formData, branch_id: currentBranch.id });
         if (error) throw error;
       }
 

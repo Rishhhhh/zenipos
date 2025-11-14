@@ -19,6 +19,7 @@ import { getVAREngine } from './varEngine';
 export class SimulationEngine {
   private activeOrders: Map<string, SimulatedOrder> = new Map();
   private config: SimulationConfig;
+  private branchId: string;
   private isRunning = false;
   private isPaused = false;
   private timers: Set<NodeJS.Timeout> = new Set();
@@ -35,8 +36,9 @@ export class SimulationEngine {
   private startTime = 0;
   private varEngine = getVAREngine();
 
-  constructor(config: SimulationConfig) {
+  constructor(config: SimulationConfig, branchId: string) {
     this.config = config;
+    this.branchId = branchId;
   }
 
   async start(): Promise<void> {
@@ -170,7 +172,7 @@ export class SimulationEngine {
       const { data: order } = await supabase
         .from('orders')
         .insert({
-          session_id: orderId,
+          branch_id: this.branchId,
           order_type: 'dine_in',
           status: 'pending',
           total,
@@ -178,7 +180,7 @@ export class SimulationEngine {
           tax: 0,
           discount: 0,
           metadata: { simulated: true, table_number: tableNumber },
-        })
+        } as any)
         .select()
         .single();
 

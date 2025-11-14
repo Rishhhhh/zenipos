@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useModalManager } from '@/hooks/useModalManager';
+import { useBranch } from '@/contexts/BranchContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ArrowLeft } from 'lucide-react';
@@ -35,6 +36,7 @@ interface MenuItem {
 export default function MenuManagement() {
   usePerformanceMonitor('MenuManagement');
   const { openModal } = useModalManager();
+  const { currentBranch } = useBranch();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -94,12 +96,18 @@ export default function MenuManagement() {
     const name = prompt('Enter category name:');
     if (!name) return;
 
+    if (!currentBranch?.id) {
+      alert('No branch selected');
+      return;
+    }
+
     const maxSortOrder = categories.reduce(
       (max, cat) => Math.max(max, cat.sort_order),
       0
     );
 
     const { error } = await supabase.from('menu_categories').insert({
+      branch_id: currentBranch.id,
       name,
       sort_order: maxSortOrder + 10,
     });
