@@ -210,20 +210,21 @@ export default function Register() {
 
       toast.success('Organization created successfully!', { id: 'registration' });
       
-      // Sign in the newly created user (CLIENT-SIDE)
-      console.log('[Registration] Signing in user client-side...');
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // Sign in the newly created user (CLIENT-SIDE) - but don't block on it
+      console.log('[Registration] Signing in user client-side (non-blocking)...');
+      supabase.auth.signInWithPassword({
         email,
         password: data.password as string
+      }).then(({ data: authData, error: authError }) => {
+        if (authError) {
+          console.warn('[Registration] ⚠️ Sign-in failed (non-critical during setup):', authError);
+        } else {
+          console.log('[Registration] ✅ User signed in successfully');
+        }
       });
-
-      if (authError) {
-        console.error('[Registration] ⚠️ Sign-in failed:', authError);
-        throw new Error(`Account created but sign-in failed: ${authError.message}`);
-      }
       
-      console.log('[Registration] ✅ User signed in successfully');
-      const setupToken = authData.session?.access_token;
+      // No longer need setupToken - edge function now allows onboarding without JWT
+      const setupToken = null;
       
       // Step 2: Additional Branches (only if more than 1 branch - first one created in Step 1)
       if (data.branches && data.branches.length > 1) {
