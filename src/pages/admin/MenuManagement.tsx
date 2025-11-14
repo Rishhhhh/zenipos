@@ -44,6 +44,32 @@ export default function MenuManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
+  // Show loading state while branch context initializes
+  if (branchLoading || !isReady) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading branch data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if branch context fails
+  if (branchError || !currentBranch) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-destructive font-semibold mb-2">Branch Error</p>
+          <p className="text-muted-foreground">
+            {branchError || 'No branch available. Please contact support.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -85,6 +111,7 @@ export default function MenuManagement() {
       item,
       categoryId: selectedCategoryId,
       categories,
+      branchId: currentBranch.id,
     });
   };
 
@@ -92,6 +119,7 @@ export default function MenuManagement() {
     openModal('menuItem', {
       categoryId: selectedCategoryId,
       categories,
+      branchId: currentBranch.id,
     });
   };
 
