@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface Branch {
   id: string;
@@ -120,48 +122,27 @@ export function BranchProvider({ children }: { children: ReactNode }) {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Auto-select first available branch when branches are loaded
+  // Single consolidated effect for branch selection
   useEffect(() => {
-    console.log('[BranchContext] 🔄 Auto-select effect triggered:', {
+    console.log('[BranchContext] 🔄 Branch selection effect triggered:', {
       isLoading,
       branchesCount: branches.length,
       selectedBranchId,
+      queryError: queryError ? 'Error present' : 'No error',
       branches: branches.map(b => ({ id: b.id, name: b.name, code: b.code }))
     });
     
-    if (!isLoading && branches.length > 0 && !selectedBranchId) {
-      // Auto-select Main Branch if available, otherwise first branch
-      const mainBranch = branches.find(b => b.code === 'MAIN') || branches[0];
-      console.log('[BranchContext] ✅ Auto-selecting branch:', {
-        id: mainBranch.id,
-        name: mainBranch.name,
-        code: mainBranch.code
-      });
-      selectBranch(mainBranch.id);
-      setIsReady(true);
-    } else if (!isLoading) {
-      console.log('[BranchContext] ✓ Setting ready without selection');
-      setIsReady(true);
-    }
-  }, [isLoading, branches.length, selectedBranchId]);
-
-  // Restore from localStorage or auto-select on mount
-  useEffect(() => {
-    console.log('[BranchContext] 💾 localStorage restore effect triggered:', {
-      isLoading,
-      branchesCount: branches.length,
-      queryError: queryError ? JSON.stringify(queryError, null, 2) : null
-    });
-    
+    // Reset error on every run
     setError(null);
 
+    // Wait for query to complete
     if (isLoading) {
       console.log('[BranchContext] ⏳ Still loading, waiting...');
       setIsReady(false);
       return;
     }
 
-    // Handle query errors
+    // Handle query errors - DON'T set ready
     if (queryError) {
       console.error('[BranchContext] ❌ Query error detected:', {
         error: queryError,
@@ -171,33 +152,65 @@ export function BranchProvider({ children }: { children: ReactNode }) {
         hint: (queryError as any)?.hint
       });
       setError('query_failed');
-      setIsReady(true);
+      setIsReady(false); // ← CRITICAL: Stay unready on error
       return;
     }
 
+    // Handle no branches case
     if (!branches || branches.length === 0) {
       console.error('[BranchContext] ⚠️ No branches available');
       setError('no_branches');
-      setIsReady(true);
+      setIsReady(true); // OK to be ready here - no data is valid state
       return;
     }
 
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && branches.some(b => b.id === stored || stored === 'all')) {
-      setSelectedBranchId(stored);
-      setIsReady(true);
-    } else if (branches.length === 1) {
-      // Auto-select if only 1 branch - immediate and ready
-      setSelectedBranchId(branches[0].id);
-      localStorage.setItem(STORAGE_KEY, branches[0].id);
-      setIsReady(true);
-    } else {
-      // Default to 'all' for multi-branch orgs
+    // Branch selection logic - only runs if we have branches
+    if (!selectedBranchId) {
+      console.log('[BranchContext] 🎯 No branch selected, determining selection...');
+      
+      // Priority 1: Main Branch (always prefer this)
+      const mainBranch = branches.find(b => b.code === 'MAIN');
+      if (mainBranch) {
+        console.log('[BranchContext] ✅ Auto-selecting Main Branch:', {
+          id: mainBranch.id,
+          name: mainBranch.name,
+          code: mainBranch.code
+        });
+        setSelectedBranchId(mainBranch.id);
+        localStorage.setItem(STORAGE_KEY, mainBranch.id);
+        setIsReady(true);
+        return;
+      }
+
+      // Priority 2: Previously stored branch (if valid)
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && (stored === 'all' || branches.some(b => b.id === stored))) {
+        console.log('[BranchContext] 📌 Restoring from localStorage:', stored);
+        setSelectedBranchId(stored);
+        setIsReady(true);
+        return;
+      }
+
+      // Priority 3: Single branch - auto-select it
+      if (branches.length === 1) {
+        console.log('[BranchContext] 🔵 Single branch, auto-selecting:', branches[0].name);
+        setSelectedBranchId(branches[0].id);
+        localStorage.setItem(STORAGE_KEY, branches[0].id);
+        setIsReady(true);
+        return;
+      }
+
+      // Priority 4: Multiple branches - default to 'all'
+      console.log('[BranchContext] 🌐 Multiple branches, defaulting to "all"');
       setSelectedBranchId('all');
       localStorage.setItem(STORAGE_KEY, 'all');
       setIsReady(true);
+    } else {
+      // Already have a selection, just mark as ready
+      console.log('[BranchContext] ✓ Branch already selected:', selectedBranchId);
+      setIsReady(true);
     }
-  }, [branches, isLoading, queryError]);
+  }, [branches, isLoading, queryError, selectedBranchId]);
 
   const selectBranch = (branchId: string) => {
     setSelectedBranchId(branchId);
@@ -207,6 +220,50 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   // Get current branch
   const currentBranch = branches.find(b => b.id === selectedBranchId) || null;
   const hasMultipleBranches = branches.length > 1;
+
+  // Add error UI for query failures
+  if (error === 'query_failed') {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Cannot Load Branches</AlertTitle>
+          <AlertDescription>
+            There was an error connecting to the database. This may be due to:
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>Database permissions issue</li>
+              <li>Network connectivity problem</li>
+              <li>Invalid authentication token</li>
+            </ul>
+            <div className="mt-4 text-sm">
+              Try <button 
+                onClick={() => window.location.href = '/login'}
+                className="underline font-medium"
+              >
+                logging out
+              </button> and back in, or contact support if the issue persists.
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Add UI for no branches case
+  if (error === 'no_branches' && !isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Alert className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No Branches Available</AlertTitle>
+          <AlertDescription>
+            Your organization doesn't have any active branches set up yet. 
+            Please contact your organization owner to create a branch.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <BranchContext.Provider
