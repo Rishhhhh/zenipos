@@ -5,6 +5,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFoo
 import { Button } from '@/components/ui/button';
 import { ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
+import { APP_CONFIG } from '@/lib/config';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -21,6 +22,12 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   const { isAuthenticated, isLoading, role } = useAuth();
   const location = useLocation();
   const [showAccessDenied, setShowAccessDenied] = useState(false);
+
+  // DEVELOPMENT MODE: Bypass all checks
+  if (APP_CONFIG.DEVELOPMENT_MODE) {
+    console.log('[ProtectedRoute] 🛠️ DEV MODE: Bypassing protection');
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && requiredRole && role) {
