@@ -213,7 +213,7 @@ export default function StationRoutingConfig() {
                     )}
                     <div className="mt-2">
                       <Badge variant="outline">
-                        Prep: {rule.prep_time_estimate || 5}min
+                        Prep: {rule.prep_time_minutes || 5}min
                       </Badge>
                     </div>
                   </div>

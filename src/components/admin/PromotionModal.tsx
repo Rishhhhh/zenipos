@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,6 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { useBranch } from '@/contexts/BranchContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PromotionPreview } from './PromotionPreview';
 import {
   Form,
   FormControl,
@@ -65,6 +67,7 @@ export function PromotionModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { selectedBranchId } = useBranch();
+  const [activeTab, setActiveTab] = useState('form');
 
   const form = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionSchema),
