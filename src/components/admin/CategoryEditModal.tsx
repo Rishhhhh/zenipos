@@ -59,12 +59,16 @@ interface CategoryEditModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category: Category | null;
+  branchId?: string | null;
+  maxSortOrder?: number;
 }
 
 export function CategoryEditModal({
   open,
   onOpenChange,
   category,
+  branchId,
+  maxSortOrder = 0,
 }: CategoryEditModalProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -89,31 +93,61 @@ export function CategoryEditModal({
   }, [category, form]);
 
   const onSubmit = async (values: CategoryFormValues) => {
-    if (!category) return;
-
     try {
-      const { error } = await supabase
-        .from('menu_categories')
-        .update({ 
-          name: values.name,
-          color: values.color,
-          icon: values.icon,
-        })
-        .eq('id', category.id);
+      if (category) {
+        // Update existing category
+        const { error } = await supabase
+          .from('menu_categories')
+          .update({ 
+            name: values.name,
+            color: values.color,
+            icon: values.icon,
+          })
+          .eq('id', category.id);
 
-      if (error) throw error;
+        if (error) throw error;
+
+        toast({
+          title: 'Category updated',
+          description: 'Category has been updated successfully',
+        });
+      } else {
+        // Create new category
+        if (!branchId) {
+          toast({
+            title: 'Error',
+            description: 'Branch ID is required to create a category',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const { error } = await supabase
+          .from('menu_categories')
+          .insert({
+            name: values.name,
+            color: values.color,
+            icon: values.icon,
+            branch_id: branchId,
+            sort_order: maxSortOrder + 1,
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: 'Category created',
+          description: 'New category has been created successfully',
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast({
-        title: 'Category updated',
-        description: 'Category name has been updated successfully',
-      });
+      form.reset();
       onOpenChange(false);
     } catch (error) {
-      console.error('Update error:', error);
+      console.error('Save error:', error);
       toast({
-        title: 'Update failed',
-        description: error instanceof Error ? error.message : 'Failed to update category',
+        title: 'Operation failed',
+        description: error instanceof Error ? error.message : 'Failed to save category',
         variant: 'destructive',
       });
     }
@@ -123,7 +157,7 @@ export function CategoryEditModal({
     <GlassModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Edit Category"
+      title={category ? "Edit Category" : "Create Category"}
       size="sm"
       variant="default"
     >
