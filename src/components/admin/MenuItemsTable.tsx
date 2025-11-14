@@ -52,17 +52,7 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
 
   // Fetch stations for bulk assignment
-  const { data: stations = [] } = useQuery({
-    queryKey: ['stations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('stations')
-        .select('id, name')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Stations removed - no longer needed
 
   const handleToggleStock = async (item: MenuItem) => {
     setUpdatingId(item.id);
@@ -142,33 +132,6 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
     }
   };
 
-  const handleBulkStationAssign = async (stationId: string) => {
-    if (selectedItems.size === 0) return;
-
-    try {
-      const itemIds = Array.from(selectedItems);
-      const { error } = await supabase
-        .from('menu_items')
-        .update({ station_id: stationId })
-        .in('id', itemIds);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['menuItems'] });
-      toast({
-        title: 'Station assigned',
-        description: `Assigned ${itemIds.length} item(s) to station`,
-      });
-      setSelectedItems(new Set());
-    } catch (error) {
-      console.error('Bulk assign error:', error);
-      toast({
-        title: 'Assignment failed',
-        description: 'Failed to assign station',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleSelectAll = () => {
     if (selectedItems.size === items.length) {
@@ -195,12 +158,6 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
       </div>
     );
   }
-
-  const getStationName = (stationId: string | null) => {
-    if (!stationId) return <Badge variant="destructive">No Station</Badge>;
-    const station = stations.find((s) => s.id === stationId);
-    return station ? <Badge variant="outline">{station.name}</Badge> : <Badge variant="secondary">Unknown</Badge>;
-  };
 
   const renderRow = (item: MenuItem) => (
     <div className="flex items-center gap-4 p-4 border-b hover:bg-accent/50 transition-colors">
@@ -247,11 +204,6 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
       {/* Cost */}
       <div className="flex-1 min-w-[100px] text-muted-foreground">
         {item.cost ? `RM ${Number(item.cost).toFixed(2)}` : '-'}
-      </div>
-
-      {/* Station */}
-      <div className="flex-1 min-w-[120px]">
-        {getStationName(item.station_id)}
       </div>
 
       {/* Status */}
@@ -310,18 +262,6 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
           <span className="text-sm font-medium">
             {selectedItems.size} item(s) selected
           </span>
-          <Select onValueChange={handleBulkStationAssign}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Assign to station" />
-            </SelectTrigger>
-            <SelectContent>
-              {stations.map((station) => (
-                <SelectItem key={station.id} value={station.id}>
-                  {station.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button
             variant="outline"
             size="sm"
