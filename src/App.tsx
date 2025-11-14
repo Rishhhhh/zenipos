@@ -16,7 +16,6 @@ import { FullyProtectedRoute } from "./components/auth/FullyProtectedRoute";
 import { SuperAdminProtectedRoute } from "./components/auth/SuperAdminProtectedRoute";
 import Login from "./pages/Login";
 import Auth from "./pages/Auth";
-import Index from "./pages/Index";
 import CustomerScreen from "./pages/CustomerScreen";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MacDock } from "./components/navigation/MacDock";
@@ -192,15 +191,11 @@ const App = () => (
                 </SuperAdminProtectedRoute>
               } />
               
-              {/* Root Landing Page - Public */}
-              <Route path="/" element={<Index />} />
-              
-              {/* Dashboard - Protected */}
-              <Route path="/dashboard" element={
+              {/* Fully-Protected Routes (org + employee auth) */}
+              <Route path="/" element={
                 <FullyProtectedRoute requiredRole="staff">
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
+                  <AppHeader />
+                  <Dashboard />
                 </FullyProtectedRoute>
               } />
               

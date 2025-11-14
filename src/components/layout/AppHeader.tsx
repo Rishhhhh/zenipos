@@ -20,7 +20,6 @@ import { ZeniPOSLogo } from './ZeniPOSLogo';
 import { QueueStatusBadge } from '@/components/offline/QueueStatusBadge';
 import { BranchSelector } from '@/components/branch/BranchSelector';
 import { useBranch } from '@/contexts/BranchContext';
-import { APP_CONFIG } from '@/lib/config';
 
 export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut }: {
   currentShiftId?: string | null;
@@ -49,14 +48,7 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
 
   return (
     <>
-      {/* Development Mode Banner */}
-      {APP_CONFIG.DEVELOPMENT_MODE && (
-        <div className="fixed top-0 left-0 right-0 bg-warning text-warning-foreground text-center py-1 text-xs font-bold z-50 shadow-md">
-          🛠️ DEVELOPMENT MODE - Authentication Bypassed
-        </div>
-      )}
-      
-      <header className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky z-40 ${APP_CONFIG.DEVELOPMENT_MODE ? 'top-6' : 'top-0'}`}>
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-3">
             <ZeniPOSLogo variant="icon" theme="color" className="h-10 w-10" />

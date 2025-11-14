@@ -14,7 +14,6 @@ import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBranch } from '@/contexts/BranchContext';
-import { APP_CONFIG } from '@/lib/config';
 
 const employeeSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -78,19 +77,12 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
 
   const saveMutation = useMutation({
     mutationFn: async (values: EmployeeFormValues) => {
-      // DEVELOPMENT MODE: Skip branch validation
-      const branchId = (APP_CONFIG.DEVELOPMENT_MODE || !APP_CONFIG.REQUIRE_BRANCHES) 
-        ? (currentBranch?.id || 'default-branch')
-        : currentBranch?.id;
+      if (branchLoading || !isReady) {
+        throw new Error('Loading branch information...');
+      }
 
-      if (!APP_CONFIG.DEVELOPMENT_MODE && !APP_CONFIG.REQUIRE_BRANCHES) {
-        if (branchLoading || !isReady) {
-          throw new Error('Loading branch information...');
-        }
-
-        if (!branchId) {
-          throw new Error('No branch selected. Please select a branch first.');
-        }
+      if (!currentBranch?.id) {
+        throw new Error('No branch selected. Please select a branch first.');
       }
       
       // Validate duplicates within branch
@@ -98,7 +90,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
         const { data: existingEmail } = await supabase
           .from('employees')
           .select('id')
-          .eq('branch_id', branchId!)
+          .eq('branch_id', currentBranch.id)
           .eq('email', values.email)
           .neq('id', employee?.id || '')
           .maybeSingle();
@@ -112,7 +104,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
         const { data: existingPhone } = await supabase
           .from('employees')
           .select('id')
-          .eq('branch_id', branchId!)
+          .eq('branch_id', currentBranch.id)
           .eq('phone', values.phone)
           .neq('id', employee?.id || '')
           .maybeSingle();
@@ -138,7 +130,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
           phone: values.phone || null,
           active: values.active,
           hire_date: values.hire_date || null,
-          branch_id: branchId,
+          branch_id: currentBranch.id,
         };
 
         // Only update PIN if provided

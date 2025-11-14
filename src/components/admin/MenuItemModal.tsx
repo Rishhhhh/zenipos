@@ -27,7 +27,6 @@ import { ImageUpload } from './ImageUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { APP_CONFIG } from '@/lib/config';
 
 const menuItemSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(100),
@@ -177,17 +176,11 @@ export function MenuItemModal({
         });
       } else {
         // Create new item
-        // DEVELOPMENT MODE: Use mock branch if needed
-        const branchId = (APP_CONFIG.DEVELOPMENT_MODE || !APP_CONFIG.REQUIRE_BRANCHES)
-          ? (currentBranch?.id || 'default-branch')
-          : currentBranch?.id;
-          
-        if (!APP_CONFIG.DEVELOPMENT_MODE && !branchId) {
+        if (!currentBranch?.id) {
           throw new Error('No branch selected');
         }
-        
         const { error } = await supabase.from('menu_items').insert({
-          branch_id: branchId,
+          branch_id: currentBranch.id,
           name: values.name,
           sku: values.sku || null,
           category_id: values.category_id,

@@ -11,7 +11,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { APP_CONFIG } from '@/lib/config';
 
 interface FullyProtectedRouteProps {
   children: React.ReactNode;
@@ -34,12 +33,6 @@ export function FullyProtectedRoute({ children, requiredRole }: FullyProtectedRo
   } = useAuth();
   const location = useLocation();
   const [showAccessDenied, setShowAccessDenied] = useState(false);
-
-  // DEVELOPMENT MODE: Bypass all checks
-  if (APP_CONFIG.DEVELOPMENT_MODE) {
-    console.log('[FullyProtectedRoute] 🛠️ DEV MODE: Bypassing protection');
-    return <>{children}</>;
-  }
 
   // Show loading state while checking authentication
   if (isLoading) {

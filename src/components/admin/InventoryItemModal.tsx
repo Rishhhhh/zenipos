@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { useBranch } from '@/contexts/BranchContext';
 import { Loader2 } from 'lucide-react';
-import { APP_CONFIG } from '@/lib/config';
 
 interface InventoryItemModalProps {
   open: boolean;
@@ -88,24 +87,16 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
           .eq('id', item.id);
         if (error) throw error;
       } else {
-        // DEVELOPMENT MODE: Use mock branch if needed
-        const branchId = (APP_CONFIG.DEVELOPMENT_MODE || !APP_CONFIG.REQUIRE_BRANCHES)
-          ? (currentBranch?.id || 'default-branch')
-          : currentBranch?.id;
-
-        if (!APP_CONFIG.DEVELOPMENT_MODE) {
-          if (branchLoading || !isReady) {
-            throw new Error('Loading branch information...');
-          }
-
-          if (!branchId) {
-            throw new Error('No branch selected. Please select a branch first.');
-          }
+        if (branchLoading || !isReady) {
+          throw new Error('Loading branch information...');
         }
-        
+
+        if (!currentBranch?.id) {
+          throw new Error('No branch selected. Please select a branch first.');
+        }
         const { error } = await supabase
           .from('inventory_items')
-          .insert({ ...formData, branch_id: branchId });
+          .insert({ ...formData, branch_id: currentBranch.id });
         if (error) throw error;
       }
 
