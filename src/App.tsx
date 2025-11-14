@@ -239,6 +239,14 @@ const App = () => (
                 </FullyProtectedRoute>
               } />
               
+              {/* Development shortcut - bypass auth for menu management */}
+              <Route path="/dev/menu" element={
+                <>
+                  <AppHeader />
+                  <MenuManagement />
+                </>
+              } />
+              
               <Route path="/admin/promotions" element={
                 <FullyProtectedRoute requiredRole="manager">
                   <AppHeader />

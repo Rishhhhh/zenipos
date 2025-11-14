@@ -5,7 +5,7 @@ import { useModalManager } from '@/hooks/useModalManager';
 import { useBranch } from '@/contexts/BranchContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Plus, Search, ArrowLeft } from 'lucide-react';
 import { CategoryDragList } from '@/components/admin/CategoryDragList';
 import { MenuItemsTable } from '@/components/admin/MenuItemsTable';
 import { MenuImportExport } from '@/components/admin/MenuImportExport';
@@ -96,21 +96,6 @@ export default function MenuManagement() {
   };
 
   const handleAddCategory = async () => {
-    if (branchLoading) {
-      toast.error('Loading branch information, please try again in a moment.');
-      return;
-    }
-
-    if (branchError === 'no_branches') {
-      toast.error('No branches found for your account. Please contact support or complete the registration process.');
-      return;
-    }
-
-    if (!isReady || !currentBranch?.id) {
-      toast.error('No branch selected. Please select a branch first.');
-      return;
-    }
-
     const maxSortOrder = categories.reduce(
       (max, cat) => Math.max(max, cat.sort_order),
       0
@@ -118,77 +103,29 @@ export default function MenuManagement() {
 
     openModal('categoryEdit', {
       category: null,
-      branchId: currentBranch.id,
+      branchId: currentBranch?.id || null, // Optional branch in dev mode
       maxSortOrder,
     });
   };
 
-  // Show loading state while branches are loading
-  if (branchLoading || !isReady) {
-    return (
-      <div className="h-screen flex flex-col bg-background">
-        <div className="border-b p-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <h1 className="text-2xl font-bold">Menu Management</h1>
-          </div>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-            <p className="text-muted-foreground">Loading branch information...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state with retry
-  if (branchError) {
-    return (
-      <div className="h-screen flex flex-col bg-background">
-        <div className="border-b p-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/admin">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-            </Button>
-            <h1 className="text-2xl font-bold">Menu Management</h1>
-          </div>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4 max-w-md px-4">
-            <div className="text-destructive text-5xl mb-4">⚠️</div>
-            <h2 className="text-xl font-semibold">Unable to Load Branch Information</h2>
-            <p className="text-muted-foreground">
-              {branchError === 'no_branches' 
-                ? 'No branches found for your organization. Please contact support.'
-                : branchError === 'query_failed'
-                ? 'Failed to load branch data. Your session may have expired.'
-                : 'An error occurred while loading branch information.'}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button onClick={() => window.location.reload()}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/auth')}>
-                Return to Login
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen flex flex-col bg-background">
+      {/* Warning banner for branch issues (non-blocking in dev mode) */}
+      {(branchError || !currentBranch || branchLoading) && (
+        <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2">
+          <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+            <span className="text-base">⚠️</span>
+            {branchLoading ? (
+              'Loading branch information...'
+            ) : branchError ? (
+              'Branch not loaded. Running in development mode - menu changes may not save correctly.'
+            ) : (
+              'No branch selected. Running in development mode.'
+            )}
+          </p>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="border-b p-4">
         <div className="flex items-center justify-between mb-4">
