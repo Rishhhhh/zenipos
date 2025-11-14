@@ -8,6 +8,7 @@ import { Clock, ChefHat, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-r
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
+import { trackPerformance } from '@/lib/monitoring/sentry';
 
 interface StationKDSViewProps {
   stationId: string;
@@ -51,11 +52,27 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
     refetchInterval: 3000, // Refresh every 3s
   });
 
-  // Real-time subscription using unified service
+  // Real-time subscription using unified service with latency tracking
   useRealtimeTable(
     'order_items',
-    () => {
+    (payload) => {
       queryClient.invalidateQueries({ queryKey: ['station-items', stationId] });
+      
+      // Track KDS update latency
+      if (payload.eventType === 'INSERT' && payload.new) {
+        const itemCreatedAt = new Date((payload.new as any).created_at).getTime();
+        const receivedAt = Date.now();
+        const latency = receivedAt - itemCreatedAt;
+        
+        // Only track if item is fresh (< 10 seconds old)
+        if (latency < 10000) {
+          trackPerformance('kds_update', latency, {
+            page: 'StationKDS',
+            station_id: stationId,
+            order_item_id: (payload.new as any).id,
+          });
+        }
+      }
     },
     { filter: `station_id=eq.${stationId}` }
   );

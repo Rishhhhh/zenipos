@@ -38,6 +38,28 @@ export function trackFPS(componentName: string): () => void {
 export function usePerformanceMonitor(pageName: string) {
   const location = useLocation();
   const fpsCleanupRef = useRef<(() => void) | null>(null);
+  const prevPathRef = useRef<string>(location.pathname);
+  const routeStartTimeRef = useRef<number>(performance.now());
+
+  useEffect(() => {
+    // Track route change when pathname changes
+    if (prevPathRef.current !== location.pathname) {
+      const duration = performance.now() - routeStartTimeRef.current;
+      
+      // Only track if previous route was visited >50ms (avoid initial load)
+      if (duration > 50 && prevPathRef.current !== location.pathname) {
+        trackPerformance('route_change', duration, {
+          from: prevPathRef.current,
+          to: location.pathname,
+          page: pageName,
+          device_type: getDeviceType()
+        });
+      }
+      
+      prevPathRef.current = location.pathname;
+      routeStartTimeRef.current = performance.now();
+    }
+  }, [location.pathname, pageName]);
 
   useEffect(() => {
     // Start FPS tracking for this page
