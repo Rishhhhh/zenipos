@@ -65,6 +65,7 @@ interface MenuItemModalProps {
   item?: MenuItem;
   categoryId?: string;
   categories: Array<{ id: string; name: string }>;
+  branchId?: string;
 }
 
 export function MenuItemModal({
@@ -73,10 +74,12 @@ export function MenuItemModal({
   item,
   categoryId,
   categories,
+  branchId,
 }: MenuItemModalProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentBranch } = useBranch();
+  const effectiveBranchId = branchId || currentBranch?.id;
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageSrcsets, setImageSrcsets] = useState<{
     srcset_webp?: string;
@@ -176,11 +179,11 @@ export function MenuItemModal({
         });
       } else {
         // Create new item
-        if (!currentBranch?.id) {
+        if (!effectiveBranchId) {
           throw new Error('No branch selected');
         }
         const { error } = await supabase.from('menu_items').insert({
-          branch_id: currentBranch.id,
+          branch_id: effectiveBranchId,
           name: values.name,
           sku: values.sku || null,
           category_id: values.category_id,
