@@ -13,6 +13,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useBranch } from '@/contexts/BranchContext';
 
 const employeeSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -35,6 +36,7 @@ interface EmployeeModalProps {
 export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentBranch } = useBranch();
 
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
@@ -75,9 +77,42 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
 
   const saveMutation = useMutation({
     mutationFn: async (values: EmployeeFormValues) => {
-      // Hash PIN via edge function
-      const { data: pinData, error: pinError } = await supabase.functions.invoke('validate-manager-pin', {
-        body: { pin: values.pin, action: 'hash' },
+      if (!currentBranch?.id) {
+        throw new Error('No branch selected');
+      }
+      
+      // Validate duplicates within branch
+      if (values.email) {
+        const { data: existingEmail } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('branch_id', currentBranch.id)
+          .eq('email', values.email)
+          .neq('id', employee?.id || '')
+          .maybeSingle();
+        
+        if (existingEmail) {
+          throw new Error('An employee with this email already exists in this branch');
+        }
+      }
+      
+      if (values.phone) {
+        const { data: existingPhone } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('branch_id', currentBranch.id)
+          .eq('phone', values.phone)
+          .neq('id', employee?.id || '')
+          .maybeSingle();
+        
+        if (existingPhone) {
+          throw new Error('An employee with this phone number already exists in this branch');
+        }
+      }
+      
+      // Hash PIN via new edge function
+      const { data: pinData, error: pinError } = await supabase.functions.invoke('hash-employee-pin', {
+        body: { pin: values.pin },
       });
 
       if (pinError) throw pinError;
@@ -91,6 +126,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
           phone: values.phone || null,
           active: values.active,
           hire_date: values.hire_date || null,
+          branch_id: currentBranch.id,
         };
 
         // Only update PIN if provided
@@ -105,15 +141,15 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
 
         if (error) throw error;
 
-        // Update role
+        // Update role in user_roles
         await supabase
           .from('user_roles')
           .delete()
           .eq('employee_id', employee.id);
 
-        if (employee.user_id) {
+        if (employee.auth_user_id) {
           await supabase.from('user_roles').insert([{
-            user_id: employee.user_id,
+            user_id: employee.auth_user_id,
             employee_id: employee.id,
             role: values.role,
           }]);
@@ -129,14 +165,53 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
             pin: hashedPin,
             active: values.active,
             hire_date: values.hire_date || null,
+            branch_id: currentBranch.id,
+            role: values.role,
           })
           .select()
           .single();
 
         if (error) throw error;
 
-        // Create user role (if needed later)
-        // For now, employees can clock in with just PIN
+        // Create auth user if email provided
+        let authUserId = null;
+        if (values.email) {
+          try {
+            // Generate temporary password
+            const tempPassword = `${values.pin}${Math.random().toString(36).slice(2, 10)}`;
+            
+            const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+              email: values.email,
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                name: values.name,
+                employee_id: newEmployee.id,
+              }
+            });
+
+            if (!authError && authData.user) {
+              authUserId = authData.user.id;
+              
+              // Link auth_user_id to employee
+              await supabase
+                .from('employees')
+                .update({ auth_user_id: authUserId })
+                .eq('id', newEmployee.id);
+            }
+          } catch (authError) {
+            console.warn('Failed to create auth user, employee will be PIN-only:', authError);
+          }
+        }
+
+        // Create user role
+        if (authUserId) {
+          await supabase.from('user_roles').insert({
+            user_id: authUserId,
+            employee_id: newEmployee.id,
+            role: values.role,
+          });
+        }
       }
     },
     onSuccess: () => {
@@ -160,7 +235,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
     <GlassModal 
       open={open} 
       onOpenChange={onOpenChange}
-      title={`${employee ? 'Edit Employee' : 'Add Employee'}`}
+      title={`${employee ? 'Edit Employee' : 'Add Employee'} - ${currentBranch?.name || 'Unknown Branch'}`}
       size="md"
       variant="default"
     >
