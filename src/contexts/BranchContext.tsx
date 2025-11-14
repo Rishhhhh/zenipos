@@ -37,14 +37,26 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const { data: branches = [], isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['user-branches', organization?.id],
     queryFn: async () => {
-      if (!organization?.id) return [];
+      console.log('[BranchContext] 🔍 Starting branch query for org:', organization?.id);
+      
+      if (!organization?.id) {
+        console.log('[BranchContext] ❌ No organization ID, returning empty array');
+        return [];
+      }
       
       // Get auth user
-      const { data: authUser } = await supabase.auth.getUser();
+      console.log('[BranchContext] 🔑 Getting auth user...');
+      const { data: authUser, error: authError } = await supabase.auth.getUser();
+      console.log('[BranchContext] Auth user response:', { 
+        userId: authUser?.user?.id, 
+        error: authError 
+      });
       
       // Fallback: If no auth.uid(), fetch branches directly via organization
       if (!authUser?.user?.id) {
-        console.warn('[BranchContext] No auth.uid() found, fetching branches via organization owner');
+        console.warn('[BranchContext] ⚠️ No auth.uid() found, fetching branches via organization owner');
+        console.log('[BranchContext] Fetching branches for org_id:', organization.id);
+        
         const { data: branchesData, error: branchError } = await supabase
           .from('branches')
           .select('*')
@@ -52,24 +64,51 @@ export function BranchProvider({ children }: { children: ReactNode }) {
           .eq('active', true)
           .order('name');
         
+        console.log('[BranchContext] Direct fetch result:', { 
+          branches: branchesData, 
+          error: branchError,
+          errorDetails: branchError ? JSON.stringify(branchError, null, 2) : null
+        });
+        
         if (branchError) throw branchError;
         return branchesData as Branch[];
       }
 
       // Normal flow with auth user
+      console.log('[BranchContext] 👤 Calling get_accessible_branch_ids for user:', authUser.user.id);
       const { data: branchIds, error: rpcError } = await supabase.rpc('get_accessible_branch_ids', {
         _user_id: authUser.user.id
       });
       
+      console.log('[BranchContext] RPC result:', { 
+        branchIds, 
+        error: rpcError,
+        errorDetails: rpcError ? JSON.stringify(rpcError, null, 2) : null
+      });
+      
       if (rpcError) throw rpcError;
-      if (!branchIds || branchIds.length === 0) return [];
+      
+      if (!branchIds || branchIds.length === 0) {
+        console.log('[BranchContext] ℹ️ No accessible branch IDs found');
+        return [];
+      }
 
+      const extractedIds = branchIds.map((b: any) => b.branch_id);
+      console.log('[BranchContext] 📋 Fetching branches with IDs:', extractedIds);
+      
       const { data: branchesData, error: branchError } = await supabase
         .from('branches')
         .select('*')
-        .in('id', branchIds.map((b: any) => b.branch_id))
+        .in('id', extractedIds)
         .eq('active', true)
         .order('name');
+
+      console.log('[BranchContext] Branches fetch result:', { 
+        branches: branchesData, 
+        count: branchesData?.length,
+        error: branchError,
+        errorDetails: branchError ? JSON.stringify(branchError, null, 2) : null
+      });
 
       if (branchError) throw branchError;
       return branchesData as Branch[];
@@ -83,35 +122,61 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   // Auto-select first available branch when branches are loaded
   useEffect(() => {
+    console.log('[BranchContext] 🔄 Auto-select effect triggered:', {
+      isLoading,
+      branchesCount: branches.length,
+      selectedBranchId,
+      branches: branches.map(b => ({ id: b.id, name: b.name, code: b.code }))
+    });
+    
     if (!isLoading && branches.length > 0 && !selectedBranchId) {
       // Auto-select Main Branch if available, otherwise first branch
       const mainBranch = branches.find(b => b.code === 'MAIN') || branches[0];
-      console.log('[BranchContext] Auto-selecting branch:', mainBranch.id);
+      console.log('[BranchContext] ✅ Auto-selecting branch:', {
+        id: mainBranch.id,
+        name: mainBranch.name,
+        code: mainBranch.code
+      });
       selectBranch(mainBranch.id);
       setIsReady(true);
     } else if (!isLoading) {
+      console.log('[BranchContext] ✓ Setting ready without selection');
       setIsReady(true);
     }
   }, [isLoading, branches.length, selectedBranchId]);
 
   // Restore from localStorage or auto-select on mount
   useEffect(() => {
+    console.log('[BranchContext] 💾 localStorage restore effect triggered:', {
+      isLoading,
+      branchesCount: branches.length,
+      queryError: queryError ? JSON.stringify(queryError, null, 2) : null
+    });
+    
     setError(null);
 
     if (isLoading) {
+      console.log('[BranchContext] ⏳ Still loading, waiting...');
       setIsReady(false);
       return;
     }
 
     // Handle query errors
     if (queryError) {
-      console.error('[BranchContext] Query error:', queryError);
+      console.error('[BranchContext] ❌ Query error detected:', {
+        error: queryError,
+        message: (queryError as any)?.message,
+        code: (queryError as any)?.code,
+        details: (queryError as any)?.details,
+        hint: (queryError as any)?.hint
+      });
       setError('query_failed');
       setIsReady(true);
       return;
     }
 
     if (!branches || branches.length === 0) {
+      console.error('[BranchContext] ⚠️ No branches available');
       setError('no_branches');
       setIsReady(true);
       return;
