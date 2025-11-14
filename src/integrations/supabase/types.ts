@@ -4467,6 +4467,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_employee_in_branch: {
+        Args: { _branch_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_impersonating: { Args: { _user_id: string }; Returns: string }
       log_nfc_scan: { Args: { card_uid_param: string }; Returns: string }
       log_performance_metric: {
