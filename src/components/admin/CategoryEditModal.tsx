@@ -116,13 +116,22 @@ export function CategoryEditModal({
         });
       } else {
         // Create new category
+        if (!branchId) {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'No branch selected. Please select a branch first.',
+          });
+          return;
+        }
+
         const { error } = await supabase
           .from('menu_categories')
           .insert({
             name: values.name,
             color: values.color,
             icon: values.icon,
-            branch_id: branchId || null,
+            branch_id: branchId,
             sort_order: maxSortOrder + 1,
           });
 

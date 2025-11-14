@@ -117,6 +117,11 @@ export function PromotionModal({
 
   const saveMutation = useMutation({
     mutationFn: async (values: PromotionFormValues) => {
+      // Validate branch selection
+      if (!selectedBranchId || selectedBranchId === 'all') {
+        throw new Error('Please select a specific branch to create a promotion');
+      }
+
       // Build rules object based on type
       let rules: any = {};
       
