@@ -105,7 +105,10 @@ export function CategoryEditModal({
           })
           .eq('id', category.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Category update error:', error);
+          throw new Error(error.message || 'Failed to update category');
+        }
 
         toast({
           title: 'Category updated',
@@ -113,26 +116,20 @@ export function CategoryEditModal({
         });
       } else {
         // Create new category
-        if (!branchId) {
-          toast({
-            title: 'Error',
-            description: 'Branch ID is required to create a category',
-            variant: 'destructive',
-          });
-          return;
-        }
-
         const { error } = await supabase
           .from('menu_categories')
           .insert({
             name: values.name,
             color: values.color,
             icon: values.icon,
-            branch_id: branchId,
+            branch_id: branchId || null,
             sort_order: maxSortOrder + 1,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Category creation error:', error);
+          throw new Error(error.message || 'Failed to create category');
+        }
 
         toast({
           title: 'Category created',
@@ -158,11 +155,12 @@ export function CategoryEditModal({
       open={open}
       onOpenChange={onOpenChange}
       title={category ? "Edit Category" : "Create Category"}
+      ariaDescribedBy={category ? "Edit an existing menu category" : "Create a new menu category with custom colors and icons"}
       size="sm"
       variant="default"
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="name"
@@ -184,20 +182,25 @@ export function CategoryEditModal({
               <FormItem>
                 <FormLabel>Category Color</FormLabel>
                 <FormControl>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-3 items-center">
                     <Input 
                       type="color" 
                       {...field} 
-                      className="w-20 h-10"
+                      className="w-24 h-12 cursor-pointer rounded-lg"
                     />
-                    <div className="flex gap-1">
+                    <div className="flex gap-2 flex-wrap">
                       {COLOR_PRESETS.map((color) => (
                         <button
                           key={color}
                           type="button"
                           onClick={() => field.onChange(color)}
-                          className="w-8 h-8 rounded border-2 border-border hover:scale-110 transition-transform"
+                          className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 ${
+                            field.value === color
+                              ? 'border-primary ring-2 ring-primary/20'
+                              : 'border-border hover:border-primary/50'
+                          }`}
                           style={{ backgroundColor: color }}
+                          aria-label={`Select color ${color}`}
                         />
                       ))}
                     </div>
@@ -215,20 +218,21 @@ export function CategoryEditModal({
               <FormItem>
                 <FormLabel>Category Icon</FormLabel>
                 <FormControl>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-5 gap-3">
                     {ICON_OPTIONS.map(({ value, label, Icon }) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => field.onChange(value)}
-                        className={`p-3 rounded border-2 flex flex-col items-center gap-1 transition-all ${
+                        className={`p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${
                           field.value === value
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-primary bg-primary/10 shadow-sm'
+                            : 'border-border hover:border-primary/50 hover:bg-accent'
                         }`}
+                        aria-label={`Select ${label} icon`}
                       >
-                        <Icon className="h-5 w-5" />
-                        <span className="text-xs">{label}</span>
+                        <Icon className="h-6 w-6" />
+                        <span className="text-xs font-medium">{label}</span>
                       </button>
                     ))}
                   </div>
@@ -238,7 +242,7 @@ export function CategoryEditModal({
             )}
           />
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end pt-2">
             <Button
               type="button"
               variant="outline"
@@ -246,7 +250,9 @@ export function CategoryEditModal({
             >
               Cancel
             </Button>
-            <Button type="submit">Update</Button>
+            <Button type="submit">
+              {category ? 'Update' : 'Create'}
+            </Button>
           </div>
         </form>
       </Form>

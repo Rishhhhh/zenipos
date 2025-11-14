@@ -1727,7 +1727,7 @@ export type Database = {
       }
       menu_categories: {
         Row: {
-          branch_id: string
+          branch_id: string | null
           color: string | null
           created_at: string | null
           icon: string | null
@@ -1736,7 +1736,7 @@ export type Database = {
           sort_order: number | null
         }
         Insert: {
-          branch_id: string
+          branch_id?: string | null
           color?: string | null
           created_at?: string | null
           icon?: string | null
@@ -1745,7 +1745,7 @@ export type Database = {
           sort_order?: number | null
         }
         Update: {
-          branch_id?: string
+          branch_id?: string | null
           color?: string | null
           created_at?: string | null
           icon?: string | null

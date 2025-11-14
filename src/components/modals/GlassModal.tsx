@@ -16,6 +16,7 @@ export interface GlassModalProps {
   showCloseButton?: boolean;
   className?: string;
   onSubmit?: () => void;
+  ariaDescribedBy?: string;
 }
 
 const sizeClasses = {
@@ -37,7 +38,8 @@ export function GlassModal({
   disableBackdropClick = false,
   showCloseButton = true,
   className,
-  onSubmit
+  onSubmit,
+  ariaDescribedBy
 }: GlassModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -125,6 +127,10 @@ export function GlassModal({
     >
       <div
         ref={contentRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="glass-modal-title"
+        aria-describedby={description || ariaDescribedBy ? "glass-modal-description" : undefined}
         className={cn(
           'glass-modal-content glass-card relative w-full shadow-2xl',
           'animate-scale-in',
@@ -141,10 +147,6 @@ export function GlassModal({
           },
           className
         )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        aria-describedby={description ? "modal-description" : undefined}
       >
         {/* Header */}
         <div className={cn(
@@ -153,18 +155,23 @@ export function GlassModal({
         )}>
           <div className="flex-1">
             <h2
-              id="modal-title"
+              id="glass-modal-title"
               className="text-xl font-semibold text-foreground"
             >
               {title}
             </h2>
             {description && (
               <p
-                id="modal-description"
+                id="glass-modal-description"
                 className="mt-1 text-sm text-muted-foreground"
               >
                 {description}
               </p>
+            )}
+            {!description && ariaDescribedBy && (
+              <span id="glass-modal-description" className="sr-only">
+                {ariaDescribedBy}
+              </span>
             )}
           </div>
           {showCloseButton && (
