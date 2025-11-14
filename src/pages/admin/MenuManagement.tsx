@@ -110,21 +110,6 @@ export default function MenuManagement() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Warning banner for branch issues (non-blocking in dev mode) */}
-      {(branchError || !currentBranch || branchLoading) && (
-        <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2">
-          <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
-            <span className="text-base">⚠️</span>
-            {branchLoading ? (
-              'Loading branch information...'
-            ) : branchError ? (
-              'Branch not loaded. Running in development mode - menu changes may not save correctly.'
-            ) : (
-              'No branch selected. Running in development mode.'
-            )}
-          </p>
-        </div>
-      )}
       
       {/* Header */}
       <div className="border-b p-4">

@@ -17,6 +17,7 @@ import { SuperAdminProtectedRoute } from "./components/auth/SuperAdminProtectedR
 import Login from "./pages/Login";
 import Auth from "./pages/Auth";
 import CustomerScreen from "./pages/CustomerScreen";
+import Index from "./pages/Index";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MacDock } from "./components/navigation/MacDock";
 import { FloatingSimulationControl } from "./components/simulation/FloatingSimulationControl";
@@ -70,6 +71,8 @@ const OrganizationSettings = lazy(() => import("./pages/admin/OrganizationSettin
 const Cashbook = lazy(() => import("./pages/admin/Cashbook"));
 const GeneralLedger = lazy(() => import("./pages/admin/GeneralLedger"));
 const CRMTestingDashboard = lazy(() => import("./pages/admin/CRMTestingDashboard"));
+const PromotionAnalytics = lazy(() => import("./pages/admin/PromotionAnalytics"));
+const RecipeManagement = lazy(() => import("./pages/admin/RecipeManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -191,8 +194,11 @@ const App = () => (
                 </SuperAdminProtectedRoute>
               } />
               
+              {/* Public Landing Page */}
+              <Route path="/" element={<Index />} />
+              
               {/* Fully-Protected Routes (org + employee auth) */}
-              <Route path="/" element={
+              <Route path="/dashboard" element={
                 <FullyProtectedRoute requiredRole="staff">
                   <AppHeader />
                   <Dashboard />
@@ -225,22 +231,15 @@ const App = () => (
                 </FullyProtectedRoute>
               } />
               
+              {/* Admin Routes - No Auth Required */}
               <Route path="/admin" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <Admin />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/menu" element={
-                <FullyProtectedRoute requiredRole="manager">
-                  <AppHeader />
-                  <MenuManagement />
-                </FullyProtectedRoute>
-              } />
-              
-              {/* Development shortcut - bypass auth for menu management */}
-              <Route path="/dev/menu" element={
                 <>
                   <AppHeader />
                   <MenuManagement />
@@ -248,226 +247,234 @@ const App = () => (
               } />
               
               <Route path="/admin/promotions" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <PromotionManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/inventory" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <InventoryManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/crm" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <CRMDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/employees" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <EmployeeManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/reports" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <ReportsDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/ai-history" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <AIHistoryDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/branches" element={
-                <FullyProtectedRoute requiredRole="owner">
+                <>
                   <AppHeader />
                   <BranchManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/organization-settings" element={
-                <FullyProtectedRoute requiredRole="owner">
+                <>
                   <AppHeader />
                   <OrganizationSettings />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/manager" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <ManagerDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/system-health" element={
-                <FullyProtectedRoute requiredRole="owner">
+                <>
                   <AppHeader />
                   <SystemHealthDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/performance" element={
-                <FullyProtectedRoute requiredRole="owner">
+                <>
                   <AppHeader />
                   <PerformanceDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/rate-limits" element={
-                <FullyProtectedRoute requiredRole="owner">
+                <>
                   <AppHeader />
                   <RateLimitMonitor />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/suppliers" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <SupplierManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/purchase-orders" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <PurchaseOrders />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/cashbook" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <Cashbook />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/general-ledger" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <GeneralLedger />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/receipt-templates" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <ReceiptTemplates />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/tables" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <TableLayout />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/modifiers" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <ModifierManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/stations" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <StationManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/devices" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <DeviceManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/station-routing/:stationId" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <StationRoutingConfig />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/nfc-cards" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <NFCCardManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/marketing-content" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <MarketingContent />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/approvals" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <Approvals />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/tip-reports" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <TipReports />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/open-tabs" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <OpenTabs />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/shift-management" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <ShiftManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/eighty-six" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <EightySixManagement />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/pending-modifications" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <PendingModifications />
-                </FullyProtectedRoute>
+                </>
               } />
               
               <Route path="/admin/crm-testing" element={
-                <FullyProtectedRoute requiredRole="manager">
+                <>
                   <AppHeader />
                   <CRMTestingDashboard />
-                </FullyProtectedRoute>
+                </>
               } />
               
-              <Route path="/admin/nfc-cards" element={
-                <FullyProtectedRoute requiredRole="manager">
+              <Route path="/admin/promotion-analytics" element={
+                <>
                   <AppHeader />
-                  <NFCCardManagement />
-                </FullyProtectedRoute>
+                  <PromotionAnalytics />
+                </>
               } />
               
+              <Route path="/admin/recipes" element={
+                <>
+                  <AppHeader />
+                  <RecipeManagement />
+                </>
+              } />
+              
+              {/* Keep KDS and Station Routes Protected */}
               <Route path="/kds/:stationId" element={
                 <FullyProtectedRoute>
                   <StationKDS />

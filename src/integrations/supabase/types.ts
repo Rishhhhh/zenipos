@@ -1802,7 +1802,7 @@ export type Database = {
       menu_items: {
         Row: {
           archived: boolean | null
-          branch_id: string
+          branch_id: string | null
           category_id: string | null
           cost: number | null
           course_sequence: number | null
@@ -1827,7 +1827,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean | null
-          branch_id: string
+          branch_id?: string | null
           category_id?: string | null
           cost?: number | null
           course_sequence?: number | null
@@ -1852,7 +1852,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean | null
-          branch_id?: string
+          branch_id?: string | null
           category_id?: string | null
           cost?: number | null
           course_sequence?: number | null
