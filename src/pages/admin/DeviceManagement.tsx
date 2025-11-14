@@ -88,6 +88,17 @@ const DeviceCard = ({ device, onEdit, onTest }: any) => {
             <span className="font-mono">{device.ip_address}</span>
           </div>
         )}
+        {device.stations && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Station:</span>
+            <Badge 
+              variant="outline" 
+              style={{ borderColor: device.stations.color }}
+            >
+              {device.stations.name}
+            </Badge>
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="text-muted-foreground">Last Seen:</span>
           <span>{formatDistanceToNow(new Date(device.last_seen))} ago</span>
@@ -111,6 +122,17 @@ const DeviceCard = ({ device, onEdit, onTest }: any) => {
 };
 
 const DeviceModal = ({ device, open, onClose, onSave }: any) => {
+  const { data: stations } = useQuery({
+    queryKey: ['stations'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('stations')
+        .select('*')
+        .eq('active', true);
+      return data;
+    }
+  });
+
   const form = useForm({
     defaultValues: device || {
       name: '',
@@ -180,6 +202,28 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
                   <FormControl>
                     <Input placeholder="192.168.1.100" {...field} />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="station_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign to Station</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select station..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stations?.map(station => (
+                        <SelectItem key={station.id} value={station.id}>
+                          {station.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />
@@ -339,7 +383,7 @@ export default function DeviceManagement() {
         {devices?.map((device) => (
           <DeviceCard
             key={device.id}
-            device={device as Device}
+            device={device}
             onEdit={() => {
               setEditingDevice(device as Device);
               setModalOpen(true);

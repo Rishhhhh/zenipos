@@ -53,7 +53,9 @@ const PurchaseOrders = lazy(() => import("./pages/admin/PurchaseOrders"));
 const ReceiptTemplates = lazy(() => import("./pages/admin/ReceiptTemplates"));
 const TableLayout = lazy(() => import("./pages/admin/TableLayout"));
 const ModifierManagement = lazy(() => import("./pages/admin/ModifierManagement"));
+const StationManagement = lazy(() => import("./pages/admin/StationManagement"));
 const DeviceManagement = lazy(() => import("./pages/admin/DeviceManagement"));
+const StationRoutingConfig = lazy(() => import("./pages/admin/StationRoutingConfig"));
 const NFCCardManagement = lazy(() => import("./pages/admin/NFCCardManagement"));
 const MarketingContent = lazy(() => import("./pages/admin/MarketingContent"));
 const Approvals = lazy(() => import("./pages/admin/Approvals"));
@@ -353,10 +355,24 @@ const App = () => (
                 </FullyProtectedRoute>
               } />
               
+              <Route path="/admin/stations" element={
+                <FullyProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <StationManagement />
+                </FullyProtectedRoute>
+              } />
+              
               <Route path="/admin/devices" element={
                 <FullyProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <DeviceManagement />
+                </FullyProtectedRoute>
+              } />
+              
+              <Route path="/admin/station-routing/:stationId" element={
+                <FullyProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <StationRoutingConfig />
                 </FullyProtectedRoute>
               } />
               

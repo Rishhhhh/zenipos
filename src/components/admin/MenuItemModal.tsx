@@ -83,6 +83,19 @@ export function MenuItemModal({
     srcset_jpeg?: string;
   }>({});
 
+  // Fetch stations
+  const { data: stations = [] } = useQuery({
+    queryKey: ['stations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stations')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<MenuItemFormValues>({
     resolver: zodResolver(menuItemSchema),
     defaultValues: {
@@ -299,6 +312,34 @@ export function MenuItemModal({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="station_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Station (for KDS routing)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || undefined}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select station" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">No Station (POS Only)</SelectItem>
+                      {stations.map((station) => (
+                        <SelectItem key={station.id} value={station.id}>
+                          {station.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           <FormField
