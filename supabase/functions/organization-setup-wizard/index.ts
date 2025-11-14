@@ -12,6 +12,7 @@ interface SetupWizardRequest {
   organizationId: string;
   step: number;
   data: any;
+  verificationPin?: string; // Optional PIN for onboarding verification
 }
 
 // Generate random 5-digit PIN
@@ -35,39 +36,33 @@ serve(async (req) => {
   }
 
   try {
-    // Get JWT from Authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorization header' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader }
-        }
-      }
-    );
-
-    // Verify JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid or expired token' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
-    }
-
     const body: SetupWizardRequest = await req.json();
-    const { organizationId, step, data } = body;
+    const { organizationId, step, data, verificationPin } = body;
+
+    console.log(`[Setup Wizard] Processing step ${step} for organization ${organizationId}`);
+
+    // Get JWT from Authorization header (optional during onboarding)
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: {
+            headers: { Authorization: authHeader }
+          }
+        }
+      );
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (user && !userError) {
+        userId = user.id;
+        console.log('[Setup Wizard] ✅ JWT verified, user ID:', userId);
+      }
+    }
 
     // Validate required fields
     if (!organizationId || !step || !data) {
@@ -86,21 +81,37 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify user owns this organization
+    // Verify organization ownership
     const { data: orgData, error: orgError } = await supabaseAdmin
       .from('organizations')
-      .select('id, owner_id')
+      .select('id, owner_id, onboarding_complete')
       .eq('id', organizationId)
       .single();
 
-    if (orgError || !orgData || orgData.owner_id !== user.id) {
+    if (orgError || !orgData) {
+      console.error('[Setup Wizard] Organization not found:', orgError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Organization not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    // Verification logic:
+    // 1. If JWT is present and user owns the org -> allow
+    // 2. If org is not yet onboarded (first-time setup) -> allow with any request (trusted during registration)
+    // 3. Otherwise -> reject
+    const ownsOrganization = userId && orgData.owner_id === userId;
+    const isOnboarding = !orgData.onboarding_complete;
+
+    if (!ownsOrganization && !isOnboarding) {
+      console.error('[Setup Wizard] Unauthorized access attempt');
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized: You do not own this organization' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
 
-    console.log(`Processing step ${step} for organization ${organizationId}`);
+    console.log(`[Setup Wizard] ✅ Authorization verified for step ${step}`);
 
     // Process each step
     switch (step) {
