@@ -67,6 +67,8 @@ const PendingModifications = lazy(() => import("./pages/admin/PendingModificatio
 const StationKDS = lazy(() => import("./pages/StationKDS"));
 const TabletPOS = lazy(() => import("./pages/TabletPOS"));
 const OrganizationSettings = lazy(() => import("./pages/admin/OrganizationSettings"));
+const Cashbook = lazy(() => import("./pages/admin/Cashbook"));
+const GeneralLedger = lazy(() => import("./pages/admin/GeneralLedger"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // POS with integrated clock in/out
@@ -331,6 +333,20 @@ const App = () => (
                 <FullyProtectedRoute requiredRole="manager">
                   <AppHeader />
                   <PurchaseOrders />
+                </FullyProtectedRoute>
+              } />
+              
+              <Route path="/admin/cashbook" element={
+                <FullyProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <Cashbook />
+                </FullyProtectedRoute>
+              } />
+              
+              <Route path="/admin/general-ledger" element={
+                <FullyProtectedRoute requiredRole="manager">
+                  <AppHeader />
+                  <GeneralLedger />
                 </FullyProtectedRoute>
               } />
               

@@ -29,7 +29,8 @@ import {
   Zap,
   Store,
   Brain,
-  CreditCard
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -218,6 +219,30 @@ export const ADMIN_MODULES = {
       icon: Store,
       path: "/admin/manager",
       description: "Multi-branch analytics and oversight",
+    },
+  ],
+
+  "Finance & Accounting": [
+    {
+      id: "cashbook",
+      name: "Cashbook",
+      icon: Wallet,
+      path: "/admin/cashbook",
+      description: "Daily cash reconciliation and till management",
+    },
+    {
+      id: "general-ledger",
+      name: "General Ledger",
+      icon: BookOpen,
+      path: "/admin/general-ledger",
+      description: "All financial transactions and accounting records",
+    },
+    {
+      id: "payments",
+      name: "Payment Methods",
+      icon: CreditCard,
+      path: "/admin/payment-methods",
+      description: "Configure payment providers and terminals",
     },
   ],
 
