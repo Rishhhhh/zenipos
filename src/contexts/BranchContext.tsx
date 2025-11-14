@@ -39,6 +39,21 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const { data: branches = [], isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['user-branches', organization?.id],
     queryFn: async () => {
+      // DEVELOPMENT MODE: Return mock branch immediately
+      if (APP_CONFIG.DEVELOPMENT_MODE || !APP_CONFIG.REQUIRE_BRANCHES) {
+        console.log('[BranchContext] 🛠️ DEV MODE: Using virtual branch');
+        return [{
+          id: 'default-branch',
+          name: 'Development Branch',
+          code: 'DEV',
+          address: 'Dev Address',
+          phone: '000-000-0000',
+          active: true,
+          organization_id: organization?.id || 'dev-org-id'
+        }];
+      }
+      
+      // PRODUCTION MODE: Fetch real branches
       if (!organization?.id) return [];
       
       // Get auth user
@@ -131,6 +146,18 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   // Restore from localStorage or auto-select on mount
   useEffect(() => {
+    // DEVELOPMENT MODE: Immediately ready with default branch
+    if (APP_CONFIG.DEVELOPMENT_MODE || !APP_CONFIG.REQUIRE_BRANCHES) {
+      console.log('[BranchContext] 🛠️ DEV MODE: Ensuring branch ready state');
+      if (!selectedBranchId) {
+        setSelectedBranchId('default-branch');
+      }
+      setIsReady(true);
+      setError(null);
+      return;
+    }
+    
+    // PRODUCTION MODE: Normal restore logic
     setError(null);
 
     if (isLoading) {

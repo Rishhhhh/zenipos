@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { APP_CONFIG } from '@/lib/config';
 
 interface Employee {
   id: string;
@@ -102,7 +103,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const restoreSessions = async () => {
       try {
-        // Step 1: Check organization session
+        // DEVELOPMENT MODE: Bypass all auth validation
+        if (APP_CONFIG.DEVELOPMENT_MODE) {
+          console.log('[Auth] 🛠️ DEVELOPMENT_MODE: Bypassing auth checks');
+          
+          // Create mock organization for development
+          setOrganization({
+            id: 'dev-org-id',
+            name: 'Development Restaurant',
+            slug: 'dev',
+            branding: { name: 'Development Restaurant' }
+          });
+          
+          // Create mock employee for development
+          setEmployee({
+            id: 'dev-emp-id',
+            name: 'Dev User',
+            role: 'owner'  // Full permissions
+          });
+          
+          setIsLoading(false);
+          return;
+        }
+        
+        // PRODUCTION MODE: Step 1: Check organization session
         const orgStored = localStorage.getItem(ORG_SESSION_KEY);
         if (orgStored) {
           const orgSession: OrgSession = JSON.parse(orgStored);
