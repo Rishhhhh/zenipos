@@ -35,7 +35,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [autoCreateAttempted, setAutoCreateAttempted] = useState(false);
 
-  const { data: branches = [], isLoading, refetch } = useQuery({
+  const { data: branches = [], isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['user-branches', organization?.id],
     queryFn: async () => {
       if (!organization?.id) return [];
@@ -76,6 +76,10 @@ export function BranchProvider({ children }: { children: ReactNode }) {
       return branchesData as Branch[];
     },
     enabled: !!organization?.id,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Auto-create branch if needed
@@ -122,6 +126,14 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
     if (isLoading) {
       setIsReady(false);
+      return;
+    }
+
+    // Handle query errors
+    if (queryError) {
+      console.error('[BranchContext] Query error:', queryError);
+      setError('query_failed');
+      setIsReady(true);
       return;
     }
 
