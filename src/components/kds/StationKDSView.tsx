@@ -105,6 +105,16 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
 
   const completeItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
+      // First, get the item's order_id
+      const { data: item } = await supabase
+        .from('order_items')
+        .select('order_id')
+        .eq('id', itemId)
+        .single();
+
+      if (!item) throw new Error('Item not found');
+
+      // Update this item to ready
       const { error } = await supabase
         .from('order_items')
         .update({
@@ -115,13 +125,48 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
 
       if (error) throw error;
 
-      // Log status change
+      // Log item status change
       await supabase.from('kds_item_status').insert({
         order_item_id: itemId,
         station_id: stationId,
         status: 'ready',
         completed_at: new Date().toISOString(),
       });
+
+      // Check if ALL items in this order are now ready
+      const { data: allOrderItems } = await supabase
+        .from('order_items')
+        .select('id, status')
+        .eq('order_id', item.order_id);
+
+      const allReady = allOrderItems?.every(i => i.status === 'ready');
+
+      if (allReady) {
+        // Update ORDER status to ready
+        await supabase
+          .from('orders')
+          .update({ 
+            status: 'ready',
+            ready_at: new Date().toISOString()
+          })
+          .eq('id', item.order_id);
+
+        // Log order status change
+        await supabase.from('audit_log').insert({
+          actor: null,
+          action: 'kds_order_ready',
+          entity: 'orders',
+          entity_id: item.order_id,
+          diff: { 
+            from: 'preparing', 
+            to: 'ready', 
+            trigger: 'all_items_ready',
+            station: stationName
+          }
+        });
+
+        console.log(`✅ All items ready for order ${item.order_id}, updated ORDER status to 'ready'`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['station-items', stationId] });
