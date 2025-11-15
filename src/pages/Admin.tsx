@@ -13,6 +13,7 @@ import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
 import { SimulationPanel } from '@/components/admin/SimulationPanel';
 import { RealtimeMonitor } from '@/components/admin/RealtimeMonitor';
+import { LiveRestaurantFlow } from '@/components/admin/LiveRestaurantFlow';
 import { useState, useEffect } from "react";
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
@@ -77,6 +78,10 @@ export default function Admin() {
         </div>
 
         <SimulationPanel />
+
+        <Card className="p-6 mb-8">
+          <LiveRestaurantFlow />
+        </Card>
 
         {isLoading ? (
           <div className="grid grid-cols-4 gap-4 mb-8">
