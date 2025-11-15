@@ -17,11 +17,11 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
 
   const handlePaymentSuccess = async () => {
     try {
-      // Update order to paid
+      // Update order to completed
       await supabase
         .from('orders')
         .update({
-          status: 'paid',
+          status: 'completed',
           paid_at: new Date().toISOString(),
         })
         .eq('id', order.id);

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPaymentProvider } from '@/lib/payments/PaymentProvider';
 import { QrCode, Banknote, Loader2, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +41,27 @@ export function PaymentModal({
   const [enableEInvoice, setEnableEInvoice] = useState(false);
 
   const change = cashReceived ? Math.max(0, parseFloat(cashReceived) - total) : 0;
+
+  // Track payment initiation
+  useEffect(() => {
+    if (open && orderId) {
+      // Set status to 'payment' when payment modal opens
+      supabase
+        .from('orders')
+        .update({ 
+          status: 'payment',
+          payment_initiated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Failed to update payment status:', error);
+          } else {
+            console.log('✅ Payment initiated for order:', orderId);
+          }
+        });
+    }
+  }, [open, orderId]);
 
   const handleGenerateQR = async () => {
     setIsProcessing(true);
@@ -139,7 +160,8 @@ export function PaymentModal({
       await supabase
         .from('orders')
         .update({ 
-          status: 'done',
+          status: 'completed',
+          paid_at: new Date().toISOString(),
           einvoice_enabled: enableEInvoice 
         })
         .eq('id', orderId);
