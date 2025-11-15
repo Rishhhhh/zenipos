@@ -198,9 +198,9 @@ export default function ModifierManagement() {
         </TabsList>
 
         <TabsContent value="modifiers" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Groups List */}
-            <Card className="p-6">
+            <Card>
               <CardHeader>
                 <CardTitle>Modifier Groups</CardTitle>
                 <CardDescription>Manage your modifier groups here.</CardDescription>
@@ -270,7 +270,7 @@ export default function ModifierManagement() {
             />
 
             {/* Right Column: Modifiers List */}
-            <Card className="p-6">
+            <Card>
               <CardHeader>
                 <CardTitle>Modifiers</CardTitle>
                 <CardDescription>Manage modifiers for the selected group.</CardDescription>

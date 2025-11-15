@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Check } from 'lucide-react';
 import { CategoryAssignmentDialog } from './CategoryAssignmentDialog';
@@ -62,15 +62,13 @@ export function CategoryAssignmentPanel({
 
   return (
     <>
-      <Card className="p-6">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold">Assigned Categories</h2>
-          <p className="text-sm text-muted-foreground">
-            Categories that will show this modifier group
-          </p>
-        </div>
-
-        <ScrollArea className="h-[400px]">
+      <Card>
+        <CardHeader>
+          <CardTitle>Assigned Categories</CardTitle>
+          <CardDescription>Categories that will show this modifier group</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[400px]">
           {isLoading ? (
             <div className="text-center text-muted-foreground py-12">
               Loading assigned categories...
@@ -99,15 +97,16 @@ export function CategoryAssignmentPanel({
               ))}
             </div>
           )}
-        </ScrollArea>
+          </ScrollArea>
 
-        <Button 
-          className="w-full mt-4" 
-          onClick={() => setDialogOpen(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Assign Categories
-        </Button>
+          <Button 
+            className="w-full mt-4" 
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Assign Categories
+          </Button>
+        </CardContent>
       </Card>
 
       <CategoryAssignmentDialog
