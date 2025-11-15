@@ -196,11 +196,8 @@ export function usePOSLogic() {
       });
       setShowPrintPreview(true);
 
-      // Update order status to 'preparing'
-      await supabase
-        .from('orders')
-        .update({ status: 'preparing' })
-        .eq('id', order.id);
+      // Orders now start as 'kitchen_queue' from RPC function
+      // Auto-progression will handle moving to 'preparing' after 2 minutes
 
       // Update table status if dine-in
       if (table_id) {
