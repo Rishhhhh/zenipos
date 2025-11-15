@@ -13,8 +13,8 @@ interface Order {
   table_id?: string | null;
   customer_id?: string | null;
   order_type: string;
-  tables?: { label: string }[] | null;
-  customers?: { name: string }[] | null;
+  tables?: { label: string } | null;
+  customers?: { name: string } | null;
 }
 
 interface RealFlowStageCardProps {
@@ -56,16 +56,16 @@ export function RealFlowStageCard({ stage, orders }: RealFlowStageCardProps) {
             {/* Order header */}
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                {order.tables && order.tables[0] && (
+                {order.tables && (
                   <div className="flex items-center gap-1 text-xs font-medium">
                     <MapPin className="h-3 w-3 text-muted-foreground" />
-                    <span>{order.tables[0].label}</span>
+                    <span>{order.tables.label}</span>
                   </div>
                 )}
-                {order.customers && order.customers[0] && (
+                {order.customers && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <User className="h-3 w-3" />
-                    <span className="truncate">{order.customers[0].name}</span>
+                    <span className="truncate">{order.customers.name}</span>
                   </div>
                 )}
                 {!order.tables && !order.customers && (

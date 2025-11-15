@@ -2460,10 +2460,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_orders_customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_orders_nfc_card"
             columns: ["nfc_card_id"]
             isOneToOne: false
             referencedRelation: "nfc_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_orders_table"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
             referencedColumns: ["id"]
           },
           {

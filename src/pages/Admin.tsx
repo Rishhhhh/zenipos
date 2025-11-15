@@ -11,7 +11,6 @@ import { ModuleDetailModal } from "@/components/admin/ModuleDetailModal";
 import { AdminSearchCommand } from "@/components/admin/AdminSearchCommand";
 import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
-import { SimulationPanel } from '@/components/admin/SimulationPanel';
 import { RealtimeMonitor } from '@/components/admin/RealtimeMonitor';
 import { LiveRestaurantFlow } from '@/components/admin/LiveRestaurantFlow';
 import { useState, useEffect } from "react";
@@ -77,11 +76,12 @@ export default function Admin() {
           </Button>
         </div>
 
-        <SimulationPanel />
-
+        {/* Live Restaurant Flow - Real-time order tracking */}
         <Card className="p-6 mb-8">
           <LiveRestaurantFlow />
         </Card>
+
+        <RealtimeMonitor />
 
         {isLoading ? (
           <div className="grid grid-cols-4 gap-4 mb-8">

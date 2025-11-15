@@ -23,9 +23,9 @@ interface Order {
   created_at: string;
   recall_requested?: boolean;
   table_id?: string;
-  tables?: Array<{
+  tables?: {
     label: string;
-  }>;
+  } | null;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -208,13 +208,13 @@ export default function KDS() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-bold text-foreground">
-                      {order.order_type === 'dine_in' && order.tables?.[0]?.label
-                        ? `Table ${order.tables[0].label}`
+                      {order.order_type === 'dine_in' && order.tables?.label
+                        ? `Table ${order.tables.label}`
                         : order.order_type.replace('_', ' ').toUpperCase()}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       Order #{order.id.slice(0, 8)}
-                      {order.tables?.[0]?.label && ` • Table ${order.tables[0].label}`}
+                      {order.tables?.label && ` • Table ${order.tables.label}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-warning">

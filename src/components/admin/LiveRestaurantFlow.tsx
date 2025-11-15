@@ -95,9 +95,9 @@ export function LiveRestaurantFlow() {
         <div className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-primary animate-pulse" />
           <div>
-            <h3 className="font-semibold">Live Restaurant Flow</h3>
-            <p className="text-xs text-muted-foreground">
-              {totalActiveOrders} active orders • Last update: {lastUpdate}
+            <h3 className="text-xl font-bold">🎬 Live Restaurant Flow</h3>
+            <p className="text-sm text-muted-foreground">
+              Real-time order tracking from cart to completion • {totalActiveOrders} active orders • Last update: {lastUpdate}
             </p>
           </div>
         </div>
