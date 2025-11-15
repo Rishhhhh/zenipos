@@ -276,16 +276,6 @@ export default function ModifierManagement() {
                 <CardDescription>Manage modifiers for the selected group.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mb-4">
-                  {selectedGroupId ? (
-                    <Button onClick={() => { setEditingModifier(null); setModifierDialogOpen(true); }}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Modifier
-                    </Button>
-                  ) : (
-                    <p className="text-muted-foreground">Select a group to add modifiers.</p>
-                  )}
-                </div>
                 <ScrollArea className="h-[400px]">
                   {!selectedGroupId ? (
                     <div className="text-center text-muted-foreground py-12">
@@ -300,7 +290,7 @@ export default function ModifierManagement() {
                       No modifiers in this group. Add your first modifier.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
                       {modifiers?.map((modifier: any) => (
                         <Card key={modifier.id} className="p-4">
                           <div className="flex items-start justify-between">
@@ -341,6 +331,15 @@ export default function ModifierManagement() {
                     </div>
                   )}
                 </ScrollArea>
+                {selectedGroupId && (
+                  <Button 
+                    className="w-full mt-4" 
+                    onClick={() => { setEditingModifier(null); setModifierDialogOpen(true); }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Modifier
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

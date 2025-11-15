@@ -62,54 +62,52 @@ export function CategoryAssignmentPanel({
 
   return (
     <>
-      <Card className="flex flex-col h-full">
-        <div className="p-6 border-b">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold">Assigned Categories</h2>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Assign Categories
-            </Button>
-          </div>
+      <Card className="p-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Assigned Categories</h2>
           <p className="text-sm text-muted-foreground">
             Categories that will show this modifier group
           </p>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="h-[400px]">
           {isLoading ? (
-            <div className="p-6 text-center text-muted-foreground">
+            <div className="text-center text-muted-foreground py-12">
               Loading assigned categories...
             </div>
           ) : assignedCategories.length === 0 ? (
-            <div className="p-6 text-center">
-              <div className="text-muted-foreground mb-4">
-                No categories assigned yet
-              </div>
-              <Button variant="outline" onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Assign Categories
-              </Button>
+            <div className="text-center text-muted-foreground py-12">
+              No categories assigned yet
             </div>
           ) : (
-            <div className="p-4 space-y-2">
+            <div className="space-y-2">
               {assignedCategories.map((category) => (
-                <div
+                <Card
                   key={category.id}
-                  className="flex items-start gap-3 p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors"
+                  className="p-4"
                 >
-                  <Check className="h-5 w-5 text-primary mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">{category.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {category.item_count} {category.item_count === 1 ? 'item' : 'items'}
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold">{category.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {category.item_count} {category.item_count === 1 ? 'item' : 'items'}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </ScrollArea>
+
+        <Button 
+          className="w-full mt-4" 
+          onClick={() => setDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Assign Categories
+        </Button>
       </Card>
 
       <CategoryAssignmentDialog
