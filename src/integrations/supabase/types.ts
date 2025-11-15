@@ -2373,6 +2373,7 @@ export type Database = {
           customer_id: string | null
           delivered_at: string | null
           delivered_by: string | null
+          dining_at: string | null
           discount: number | null
           einvoice_enabled: boolean | null
           id: string
@@ -2381,10 +2382,12 @@ export type Database = {
           open_tab_id: string | null
           order_type: Database["public"]["Enums"]["order_type"] | null
           paid_at: string | null
+          payment_initiated_at: string | null
           recall_approved: boolean | null
           recall_requested: boolean | null
           recall_requested_at: string | null
           recall_requested_by: string | null
+          serving_at: string | null
           session_id: string
           status: Database["public"]["Enums"]["order_status"] | null
           subtotal: number | null
@@ -2401,6 +2404,7 @@ export type Database = {
           customer_id?: string | null
           delivered_at?: string | null
           delivered_by?: string | null
+          dining_at?: string | null
           discount?: number | null
           einvoice_enabled?: boolean | null
           id?: string
@@ -2409,10 +2413,12 @@ export type Database = {
           open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           paid_at?: string | null
+          payment_initiated_at?: string | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
           recall_requested_at?: string | null
           recall_requested_by?: string | null
+          serving_at?: string | null
           session_id: string
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal?: number | null
@@ -2429,6 +2435,7 @@ export type Database = {
           customer_id?: string | null
           delivered_at?: string | null
           delivered_by?: string | null
+          dining_at?: string | null
           discount?: number | null
           einvoice_enabled?: boolean | null
           id?: string
@@ -2437,10 +2444,12 @@ export type Database = {
           open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
           paid_at?: string | null
+          payment_initiated_at?: string | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
           recall_requested_at?: string | null
           recall_requested_by?: string | null
+          serving_at?: string | null
           session_id?: string
           status?: Database["public"]["Enums"]["order_status"] | null
           subtotal?: number | null
@@ -4584,6 +4593,10 @@ export type Database = {
         | "completed"
         | "paid"
         | "delivered"
+        | "kitchen_queue"
+        | "serving"
+        | "dining"
+        | "payment"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
@@ -4741,6 +4754,10 @@ export const Constants = {
         "completed",
         "paid",
         "delivered",
+        "kitchen_queue",
+        "serving",
+        "dining",
+        "payment",
       ],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],
