@@ -586,16 +586,18 @@ export default function ModifierManagement() {
 
       <CategoryEditModal
         open={categoryDialogOpen}
-        setOpen={setCategoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
         category={editingCategory}
-        branchId={branchId}
+        branchId={branchId || ''}
       />
 
       <MenuItemModal
         open={menuItemDialogOpen}
-        setOpen={setMenuItemDialogOpen}
-        menuItem={editingMenuItem}
-        categoryId={selectedCategoryId}
+        onOpenChange={setMenuItemDialogOpen}
+        item={editingMenuItem}
+        categoryId={selectedCategoryId || ''}
+        categories={categories || []}
+        branchId={branchId || ''}
       />
 
       <AlertDialog open={deleteGroupDialog !== null} onOpenChange={(open) => !open && setDeleteGroupDialog(null)}>
