@@ -4597,6 +4597,7 @@ export type Database = {
         | "serving"
         | "dining"
         | "payment"
+        | "ready"
       order_type: "dine_in" | "takeaway" | "delivery"
       payment_method: "cash" | "card" | "qr" | "other"
       payment_status: "pending" | "completed" | "failed" | "refunded"
@@ -4758,6 +4759,7 @@ export const Constants = {
         "serving",
         "dining",
         "payment",
+        "ready",
       ],
       order_type: ["dine_in", "takeaway", "delivery"],
       payment_method: ["cash", "card", "qr", "other"],

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TimelineItem } from './TimelineItem';
-import { ShoppingCart, ChefHat, Truck, DollarSign } from 'lucide-react';
+import { ShoppingCart, ChefHat, Truck, DollarSign, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -20,6 +20,7 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isBumping, setIsBumping] = useState(false);
+  const [isOverriding, setIsOverriding] = useState(false);
   
   if (!table?.current_order) return null;
 
@@ -63,6 +64,66 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
     }
   };
 
+  const handleAdminOverride = async () => {
+    setIsOverriding(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Check if user is owner/manager (admin check)
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('id, role')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (!employee || !['owner', 'manager'].includes(employee.role)) {
+        throw new Error('Admin privileges required');
+      }
+
+      // Force order from 'preparing' directly to 'dining'
+      await supabase
+        .from('orders')
+        .update({
+          status: 'dining',
+          dining_at: new Date().toISOString(),
+          ready_at: new Date().toISOString(),
+          serving_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+
+      // Log admin override action
+      await supabase.from('audit_log').insert({
+        actor: user.id,
+        action: 'admin_override_to_dining',
+        entity: 'orders',
+        entity_id: order.id,
+        diff: { 
+          from: 'preparing', 
+          to: 'dining', 
+          reason: 'kitchen_forgot_ready_button',
+          override_by: employee.id
+        }
+      });
+
+      toast({
+        title: 'Order Force-Progressed',
+        description: 'Order moved directly to dining stage.',
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: ['tables-with-orders'] });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Override Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsOverriding(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -87,14 +148,22 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
               <TimelineItem
                 icon={<ChefHat />}
                 title="Kitchen Preparing"
-                timestamp={order.status === 'preparing' ? order.created_at : null}
-                status={order.status === 'preparing' ? 'active' : order.delivered_at ? 'completed' : 'pending'}
+                timestamp={['preparing', 'kitchen_queue'].includes(order.status) ? order.created_at : null}
+                status={
+                  ['preparing', 'kitchen_queue'].includes(order.status) ? 'active' : 
+                  ['ready', 'serving', 'dining', 'delivered', 'payment', 'completed'].includes(order.status) ? 'completed' : 
+                  'pending'
+                }
               />
               <TimelineItem
                 icon={<Truck />}
-                title="Delivered to Table"
-                timestamp={order.delivered_at}
-                status={order.delivered_at ? 'completed' : 'pending'}
+                title="Being Served / Dining"
+                timestamp={order.serving_at || order.dining_at || order.delivered_at}
+                status={
+                  ['serving', 'dining'].includes(order.status) ? 'active' :
+                  ['delivered', 'payment', 'completed'].includes(order.status) ? 'completed' :
+                  'pending'
+                }
               />
               <TimelineItem
                 icon={<DollarSign />}
@@ -132,18 +201,33 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
           {/* Action Buttons */}
           <div className="space-y-2">
             {order.status === 'preparing' && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleManualBump}
-                disabled={isBumping}
-              >
-                <Truck className="h-4 w-4 mr-2" />
-                Mark as Delivered (Manual)
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleManualBump}
+                  disabled={isBumping}
+                >
+                  <Truck className="h-4 w-4 mr-2" />
+                  Mark as Delivered (Normal)
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={handleAdminOverride}
+                  disabled={isOverriding}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Admin Override: Force to Dining
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  ⚠️ Use override only if kitchen forgot to click "Ready"
+                </p>
+              </>
             )}
 
-            {order.status === 'delivered' && (
+            {(['delivered', 'dining'].includes(order.status)) && (
               <Button
                 className="w-full"
                 size="lg"
