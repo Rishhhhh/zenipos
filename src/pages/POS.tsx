@@ -121,6 +121,14 @@ export default function POS() {
     }
   }, [nfc_card_id, order_type, table_id]);
 
+  // Open modifier modal when pendingItem is set (prevents race condition)
+  useEffect(() => {
+    if (pendingItem && !showModifierSelect) {
+      console.log('✅ Opening modifier modal for:', pendingItem.name, 'ID:', pendingItem.menu_item_id);
+      setShowModifierSelect(true);
+    }
+  }, [pendingItem, showModifierSelect]);
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header: Table Badge + Display Link */}
@@ -255,13 +263,21 @@ export default function POS() {
       {/* Modifier Selection Modal */}
       <ModifierSelectionModal
         open={showModifierSelect}
-        onOpenChange={setShowModifierSelect}
+        onOpenChange={(open) => {
+          setShowModifierSelect(open);
+          if (!open) {
+            console.log('🚪 Modal closed, clearing pending item');
+            setPendingItem(null);
+          }
+        }}
         menuItemId={pendingItem?.menu_item_id || ''}
         menuItemName={pendingItem?.name || ''}
         onConfirm={(modifiers) => {
           if (pendingItem) {
+            console.log('✔️ Modifiers confirmed:', modifiers);
             startTransition(() => addItem({ ...pendingItem, modifiers }));
             setPendingItem(null);
+            setShowModifierSelect(false);
           }
         }}
       />
@@ -346,6 +362,8 @@ export default function POS() {
             items={menuItems}
             isLoading={itemsLoading}
             onAddItem={(item) => {
+              console.log('🛒 Adding item:', item.name, 'ID:', item.menu_item_id);
+              
               if (!nfc_card_id) {
                 toast({
                   variant: 'destructive',
@@ -376,8 +394,9 @@ export default function POS() {
                 return;
               }
               
+              console.log('📦 Setting pending item:', item);
               setPendingItem(item);
-              setShowModifierSelect(true);
+              // Modal will open via useEffect to prevent race condition
             }}
             categoryId={selectedCategoryId}
           />

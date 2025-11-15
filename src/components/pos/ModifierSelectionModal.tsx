@@ -32,6 +32,14 @@ export function ModifierSelectionModal({
   const { data: modifierData, isLoading } = useQuery({
     queryKey: ['category-modifiers', menuItemId],
     queryFn: async () => {
+      console.log('🔍 Modifier query triggered with menuItemId:', menuItemId);
+      
+      // Defensive check for empty/invalid menuItemId
+      if (!menuItemId || menuItemId.length === 0) {
+        console.warn('⚠️ menuItemId is undefined or empty!');
+        return [];
+      }
+      
       // Step 1: Get the menu item's category
       const { data: item, error: itemError } = await supabase
         .from('menu_items')
@@ -48,6 +56,8 @@ export function ModifierSelectionModal({
         console.warn('Menu item has no category assigned');
         return [];
       }
+      
+      console.log('📂 Menu item category:', item.category_id);
 
       // Step 2: Fetch modifier groups linked to that category
       const { data: links, error: linksError } = await supabase
@@ -88,9 +98,10 @@ export function ModifierSelectionModal({
         throw groupsError;
       }
 
+      console.log('✅ Modifier groups loaded:', groups?.length || 0, 'groups');
       return groups || [];
     },
-    enabled: open && !!menuItemId,
+    enabled: open && !!menuItemId && menuItemId.length > 0,
   });
 
   // Reset selections when modal opens
