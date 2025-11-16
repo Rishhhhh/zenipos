@@ -2383,6 +2383,7 @@ export type Database = {
           order_type: Database["public"]["Enums"]["order_type"] | null
           paid_at: string | null
           payment_initiated_at: string | null
+          ready_at: string | null
           recall_approved: boolean | null
           recall_requested: boolean | null
           recall_requested_at: string | null
@@ -2414,6 +2415,7 @@ export type Database = {
           order_type?: Database["public"]["Enums"]["order_type"] | null
           paid_at?: string | null
           payment_initiated_at?: string | null
+          ready_at?: string | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
           recall_requested_at?: string | null
@@ -2445,6 +2447,7 @@ export type Database = {
           order_type?: Database["public"]["Enums"]["order_type"] | null
           paid_at?: string | null
           payment_initiated_at?: string | null
+          ready_at?: string | null
           recall_approved?: boolean | null
           recall_requested?: boolean | null
           recall_requested_at?: string | null
