@@ -90,5 +90,29 @@ verify_jwt = true
 [functions.super-admin-organizations]
 verify_jwt = true
 
+[functions.auto-start-cooking]
+verify_jwt = false
+
+[functions.auto-progress-serving]
+verify_jwt = false
+
+[functions.auto-progress-dining]
+verify_jwt = false
+
+[functions.auto-complete-payments]
+verify_jwt = false
+
 [edge_runtime.functions.jarvis-alerts]
 periodic_schedule = "*/15 * * * *"
+
+[edge_runtime.functions.auto-start-cooking]
+periodic_schedule = "*/1 * * * *"
+
+[edge_runtime.functions.auto-progress-serving]
+periodic_schedule = "*/1 * * * *"
+
+[edge_runtime.functions.auto-progress-dining]
+periodic_schedule = "*/1 * * * *"
+
+[edge_runtime.functions.auto-complete-payments]
+periodic_schedule = "*/5 * * * *"
