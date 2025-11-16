@@ -5,11 +5,26 @@ import { RealFlowStageCard } from './RealFlowStageCard';
 import { getFlowStageOrder, isActiveStage, type FlowStage } from '@/lib/orderFlow/stageCalculator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, Activity } from 'lucide-react';
+import { RefreshCw, Activity, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function LiveRestaurantFlow() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isClearing, setIsClearing] = useState(false);
 
   // Fetch orders
   const { data: orders, isLoading, error, refetch, dataUpdatedAt } = useQuery({
@@ -50,6 +65,33 @@ export function LiveRestaurantFlow() {
     console.log('🔄 Order update received:', payload.eventType);
     queryClient.invalidateQueries({ queryKey: ['live-restaurant-flow'] });
   });
+
+  // Cleanup simulated orders
+  const handleCleanupSimulated = async () => {
+    setIsClearing(true);
+    try {
+      const { data, error } = await supabase.rpc('cleanup_simulated_orders' as any);
+      
+      if (error) throw error;
+      
+      const result = Array.isArray(data) ? data[0] : data;
+      toast({
+        title: '🧹 Cleanup Complete',
+        description: `Removed ${result?.deleted_orders || 0} simulated orders, ${result?.deleted_items || 0} items, ${result?.deleted_payments || 0} payments in ${result?.execution_time_ms || 0}ms`,
+      });
+      
+      // Refresh the flow
+      refetch();
+    } catch (error) {
+      toast({
+        title: 'Cleanup Failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   // Group orders by stage
   const ordersByStage = orders?.reduce((acc, order) => {
@@ -101,15 +143,49 @@ export function LiveRestaurantFlow() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          className="gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          
+          {/* Cleanup button - only show in dev or if simulated data exists */}
+          {(import.meta.env.DEV || orders?.some(o => (o.metadata as any)?.simulated)) && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-destructive hover:text-destructive"
+                  disabled={isClearing}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {isClearing ? 'Cleaning...' : 'Clean Simulated'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove Simulated Orders?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all orders marked as simulated (metadata.simulated = true).
+                    This action cannot be undone. Real orders will not be affected.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleCleanupSimulated}>
+                    Yes, Remove Simulated Data
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </div>
 
       {/* Flow visualization */}

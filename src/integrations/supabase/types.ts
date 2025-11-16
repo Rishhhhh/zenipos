@@ -4283,6 +4283,15 @@ export type Database = {
         Returns: boolean
       }
       cleanup_inactive_displays: { Args: never; Returns: number }
+      cleanup_simulated_orders: {
+        Args: never
+        Returns: {
+          deleted_items: number
+          deleted_orders: number
+          deleted_payments: number
+          execution_time_ms: number
+        }[]
+      }
       close_expired_tabs: { Args: never; Returns: number }
       close_shift: { Args: { shift_id_param: string }; Returns: undefined }
       create_order_with_items:
