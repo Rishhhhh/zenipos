@@ -112,6 +112,17 @@ export function usePOSLogic() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Get user's branch_id from employee record
+      const { data: employee, error: empError } = await supabase
+        .from('employees')
+        .select('branch_id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (empError || !employee?.branch_id) {
+        throw new Error('User branch not found');
+      }
+
       const subtotal = getSubtotal();
       const tax = getTax();
       const discount = getDiscount();
@@ -132,7 +143,7 @@ export function usePOSLogic() {
         p_table_id: cartState.table_id,
         p_order_type: cartState.order_type,
         p_nfc_card_id: cartState.nfc_card_id,
-        p_open_tab_id: null,
+        p_branch_id: employee.branch_id,  // ADDED: Pass user's branch_id
         p_subtotal: subtotal,
         p_tax: tax,
         p_discount: discount,
