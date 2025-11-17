@@ -4318,12 +4318,12 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
+              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
               p_metadata: Json
               p_nfc_card_id: string
-              p_open_tab_id: string
               p_order_type: Database["public"]["Enums"]["order_type"]
               p_session_id: string
               p_subtotal: number

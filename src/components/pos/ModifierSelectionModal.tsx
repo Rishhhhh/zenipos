@@ -112,6 +112,17 @@ export function ModifierSelectionModal({
     }
   }, [open]);
 
+  // Auto-skip when no modifiers exist (after render, not during)
+  useEffect(() => {
+    if (open && !isLoading && modifierData?.length === 0) {
+      console.log('⏭️ No modifiers for item, auto-skipping');
+      const timer = setTimeout(() => {
+        handleSkip();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [open, isLoading, modifierData]);
+
   const handleCheckboxChange = (groupId: string, modifier: any, checked: boolean) => {
     const group = modifierData?.find(g => g.id === groupId);
     if (!group) return;
@@ -188,11 +199,8 @@ export function ModifierSelectionModal({
     return selectedModifiers.reduce((sum, mod) => sum + mod.price, 0);
   };
 
+  // Return null if no modifiers (useEffect will handle auto-skip)
   if (!modifierData || modifierData.length === 0) {
-    // No modifiers for this item, auto-confirm
-    if (open) {
-      handleSkip();
-    }
     return null;
   }
 
