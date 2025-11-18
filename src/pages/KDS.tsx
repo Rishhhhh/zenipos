@@ -72,7 +72,7 @@ export default function KDS() {
         .from('orders')
         .select(`
           *,
-          tables(label),
+          tables!orders_table_id_fkey(label),
           order_items (
             *,
             menu_items (name, sku)
@@ -82,7 +82,16 @@ export default function KDS() {
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return data as Order[];
+      
+      // Transform tables array to single object (due to explicit FK syntax)
+      const normalizedData = data?.map(order => ({
+        ...order,
+        tables: Array.isArray(order.tables) && order.tables.length > 0 
+          ? order.tables[0] 
+          : null
+      })) as Order[];
+      
+      return normalizedData;
     },
     refetchInterval: 5000, // Fallback polling every 5s
   });

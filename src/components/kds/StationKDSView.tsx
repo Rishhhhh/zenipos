@@ -37,7 +37,7 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
             table_id,
             order_type,
             created_at,
-            table:tables(label),
+            table:tables!orders_table_id_fkey(label),
             priority:order_priorities(priority_level, reason)
           ),
           menu_item:menu_items(name, description)
@@ -47,7 +47,19 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data;
+      
+      // Transform table array to single object (due to explicit FK syntax)
+      const normalizedData = data?.map(item => ({
+        ...item,
+        order: item.order ? {
+          ...item.order,
+          table: Array.isArray(item.order.table) && item.order.table.length > 0
+            ? item.order.table[0]
+            : null
+        } : null
+      }));
+      
+      return normalizedData;
     },
     refetchInterval: 3000, // Refresh every 3s
   });

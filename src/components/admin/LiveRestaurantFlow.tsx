@@ -43,7 +43,7 @@ export function LiveRestaurantFlow() {
           customer_id,
           order_type,
           metadata,
-          tables(label),
+          tables!orders_table_id_fkey(label),
           customers(name)
         `)
         .not('status', 'eq', 'cancelled')  // Exclude cancelled
@@ -54,8 +54,16 @@ export function LiveRestaurantFlow() {
 
       if (error) throw error;
 
-      console.log(`✅ Fetched ${data?.length || 0} real orders for flow visualization`);
-      return data || [];
+      // Transform tables array to single object (due to explicit FK syntax)
+      const normalizedData = data?.map(order => ({
+        ...order,
+        tables: Array.isArray(order.tables) && order.tables.length > 0 
+          ? order.tables[0] 
+          : null
+      })) || [];
+
+      console.log(`✅ Fetched ${normalizedData.length} real orders for flow visualization`);
+      return normalizedData;
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   });

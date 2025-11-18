@@ -4543,9 +4543,7 @@ export type Database = {
       generate_po_number: { Args: { branch_id_param: string }; Returns: string }
       get_accessible_branch_ids: {
         Args: { _user_id: string }
-        Returns: {
-          branch_id: string
-        }[]
+        Returns: string[]
       }
       get_active_break: {
         Args: { employee_id_param: string }
@@ -4818,6 +4816,14 @@ export type Database = {
         }[]
       }
       get_user_default_branch: { Args: { _user_id: string }; Returns: string }
+      get_user_org_and_branches: {
+        Args: { _user_id: string }
+        Returns: {
+          branch_ids: string[]
+          is_owner: boolean
+          organization_id: string
+        }[]
+      }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -4868,6 +4874,14 @@ export type Database = {
       start_break: {
         Args: { break_type_param?: string; shift_id_param: string }
         Returns: string
+      }
+      user_can_access_record: {
+        Args: {
+          _record_branch_id: string
+          _record_organization_id: string
+          _user_id: string
+        }
+        Returns: boolean
       }
       void_order_item: {
         Args: {
