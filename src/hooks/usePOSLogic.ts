@@ -209,8 +209,7 @@ export function usePOSLogic() {
 
       // Orders now start as 'kitchen_queue' from RPC function
       // Auto-progression will handle moving to 'preparing' after 2 minutes
-
-      console.log('📤 Order created with organization_id derived from branch_id:', selectedBranchId);
+      console.log('📤 Order created with organization_id derived from branch');
 
       // Update table status if dine-in
       if (table_id) {
