@@ -4819,6 +4819,7 @@ export type Database = {
       }
       get_user_default_branch: { Args: { _user_id: string }; Returns: string }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
+      get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
