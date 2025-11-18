@@ -89,10 +89,22 @@ export function MenuImportExport({ categoryId }: MenuImportExportProps) {
       
       if (!employee?.branch_id) throw new Error('Branch not found');
       
+      // Get organization_id from branch once
+      const { data: branchData } = await supabase
+        .from('branches')
+        .select('organization_id')
+        .eq('id', employee.branch_id)
+        .single();
+
+      if (!branchData?.organization_id) {
+        throw new Error('Could not determine organization');
+      }
+
       const items = rows
         .filter(row => row.trim())
         .map(row => {
           const cols = row.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+
           return {
             name: cols[0]?.replace(/"/g, '') || '',
             sku: cols[1] || null,
@@ -105,6 +117,7 @@ export function MenuImportExport({ categoryId }: MenuImportExportProps) {
             prep_time_minutes: cols[8] ? parseInt(cols[8]) : null,
             archived: cols[9] === 'true',
             branch_id: employee.branch_id,
+            organization_id: branchData.organization_id,
           };
         });
       

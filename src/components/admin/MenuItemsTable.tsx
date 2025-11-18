@@ -267,21 +267,22 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
 
   const handleDuplicate = async (item: MenuItem) => {
     try {
-      // Get user's branch_id from context
+      // Get user's branch_id and organization_id from context
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
       const { data: employee } = await supabase
         .from('employees')
-        .select('branch_id')
+        .select('branch_id, organization_id')
         .eq('auth_user_id', user.id)
         .single();
       
-      if (!employee?.branch_id) throw new Error('Branch not found');
+      if (!employee?.branch_id || !employee?.organization_id) throw new Error('Branch not found');
 
       // Insert duplicate with all required fields
       const { error } = await supabase.from('menu_items').insert([{
         branch_id: employee.branch_id,
+        organization_id: employee.organization_id,
         name: `${item.name} (Copy)`,
         category_id: item.category_id,
         station_id: item.station_id,

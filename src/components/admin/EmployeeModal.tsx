@@ -170,6 +170,7 @@ export function EmployeeModal({ open, onOpenChange, employee }: EmployeeModalPro
             active: values.active,
             hire_date: values.hire_date || null,
             branch_id: currentBranch.id,
+            organization_id: currentBranch.organization_id,
             role: values.role,
           })
           .select()

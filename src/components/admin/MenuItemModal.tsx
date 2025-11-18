@@ -182,8 +182,21 @@ export function MenuItemModal({
         if (!effectiveBranchId) {
           throw new Error('No branch selected');
         }
+        
+        // Get organization_id from branch
+        const { data: branchData } = await supabase
+          .from('branches')
+          .select('organization_id')
+          .eq('id', effectiveBranchId)
+          .single();
+
+        if (!branchData?.organization_id) {
+          throw new Error('Could not determine organization');
+        }
+
         const { error } = await supabase.from('menu_items').insert({
           branch_id: effectiveBranchId,
+          organization_id: branchData.organization_id,
           name: values.name,
           sku: values.sku || null,
           category_id: values.category_id,
