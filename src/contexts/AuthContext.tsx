@@ -373,6 +373,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         branding: data.branding || { name: data.slug },
       });
 
+      // ✅ NEW: Validate branch count
+      console.log('[Organization Login] Branch count:', data.branches?.length || 0);
+      
+      if (!data.branches || data.branches.length === 0) {
+        console.warn('[Organization Login] ⚠️ No branches found - setup required');
+        toast.warning('Branch setup required', {
+          description: 'Please set up at least one branch to continue',
+        });
+        // Let Login.tsx useEffect handle the redirect
+      }
+
       console.log('[Organization Login] Success! Organization:', data.branding?.name || data.slug);
       toast.success(`Welcome to ${data.branding?.name || data.slug}!`);
     } catch (error: any) {
