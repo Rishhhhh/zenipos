@@ -139,11 +139,23 @@ export function PaymentModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Get organization_id from order
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('organization_id')
+        .eq('id', orderId)
+        .single();
+
+      if (!orderData?.organization_id) {
+        throw new Error('Could not determine organization');
+      }
+
       // Create payment record
       const { data: payment, error } = await supabase
         .from('payments')
         .insert({
           order_id: orderId,
+          organization_id: orderData.organization_id,
           method: method === 'cash' ? 'cash' : 'qr',
           provider_ref: txnId,
           provider: method === 'cash' ? null : qrProvider,

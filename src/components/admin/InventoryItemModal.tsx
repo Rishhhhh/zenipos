@@ -96,7 +96,11 @@ export function InventoryItemModal({ open, onOpenChange, item, onSuccess }: Inve
         }
         const { error } = await supabase
           .from('inventory_items')
-          .insert({ ...formData, branch_id: currentBranch.id });
+          .insert({ 
+            ...formData, 
+            branch_id: currentBranch.id,
+            organization_id: currentBranch.organization_id,
+          });
         if (error) throw error;
       }
 

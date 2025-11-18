@@ -71,12 +71,24 @@ export function TransferInventoryModal({ open, onOpenChange, item }: TransferInv
           .update({ current_qty: Number(targetItem.current_qty) + quantity })
           .eq('id', targetItem.id);
       } else {
+        // Get organization_id from target branch
+        const { data: branchData } = await supabase
+          .from('branches')
+          .select('organization_id')
+          .eq('id', selectedBranchId)
+          .single();
+
+        if (!branchData?.organization_id) {
+          throw new Error('Could not determine organization for target branch');
+        }
+
         // Create new item in target branch
         await supabase.from('inventory_items').insert({
           name: item.name,
           sku: item.sku,
           unit: item.unit,
           branch_id: selectedBranchId,
+          organization_id: branchData.organization_id,
           current_qty: quantity,
           reorder_point: item.reorder_point,
           cost_per_unit: item.cost_per_unit,

@@ -125,6 +125,17 @@ export function CategoryEditModal({
           return;
         }
 
+        // Get organization_id from branch
+        const { data: branchData } = await supabase
+          .from('branches')
+          .select('organization_id')
+          .eq('id', branchId)
+          .single();
+
+        if (!branchData?.organization_id) {
+          throw new Error('Could not determine organization');
+        }
+
         const { error } = await supabase
           .from('menu_categories')
           .insert({
@@ -132,6 +143,7 @@ export function CategoryEditModal({
             color: values.color,
             icon: values.icon,
             branch_id: branchId,
+            organization_id: branchData.organization_id,
             sort_order: maxSortOrder + 1,
           });
 

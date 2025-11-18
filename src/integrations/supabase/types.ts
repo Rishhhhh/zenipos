@@ -648,6 +648,7 @@ export type Database = {
           last_visit: string | null
           loyalty_points: number | null
           name: string | null
+          organization_id: string | null
           phone: string | null
           total_orders: number | null
           total_spent: number | null
@@ -662,6 +663,7 @@ export type Database = {
           last_visit?: string | null
           loyalty_points?: number | null
           name?: string | null
+          organization_id?: string | null
           phone?: string | null
           total_orders?: number | null
           total_spent?: number | null
@@ -676,6 +678,7 @@ export type Database = {
           last_visit?: string | null
           loyalty_points?: number | null
           name?: string | null
+          organization_id?: string | null
           phone?: string | null
           total_orders?: number | null
           total_spent?: number | null
@@ -687,6 +690,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_customers_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1051,6 +1061,7 @@ export type Database = {
           hire_date: string | null
           id: string
           name: string
+          organization_id: string
           pay_rate: number | null
           phone: string | null
           pin: string
@@ -1068,6 +1079,7 @@ export type Database = {
           hire_date?: string | null
           id?: string
           name: string
+          organization_id: string
           pay_rate?: number | null
           phone?: string | null
           pin: string
@@ -1085,6 +1097,7 @@ export type Database = {
           hire_date?: string | null
           id?: string
           name?: string
+          organization_id?: string
           pay_rate?: number | null
           phone?: string | null
           pin?: string
@@ -1099,6 +1112,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_employees_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1234,6 +1254,7 @@ export type Database = {
           expiry_alert_days: number | null
           id: string
           name: string
+          organization_id: string
           reorder_point: number | null
           reorder_qty: number | null
           sku: string | null
@@ -1251,6 +1272,7 @@ export type Database = {
           expiry_alert_days?: number | null
           id?: string
           name: string
+          organization_id: string
           reorder_point?: number | null
           reorder_qty?: number | null
           sku?: string | null
@@ -1268,6 +1290,7 @@ export type Database = {
           expiry_alert_days?: number | null
           id?: string
           name?: string
+          organization_id?: string
           reorder_point?: number | null
           reorder_qty?: number | null
           sku?: string | null
@@ -1277,6 +1300,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_inventory_items_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_items_branch_id_fkey"
             columns: ["branch_id"]
@@ -1772,6 +1802,7 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          organization_id: string
           sort_order: number | null
         }
         Insert: {
@@ -1781,6 +1812,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          organization_id: string
           sort_order?: number | null
         }
         Update: {
@@ -1790,9 +1822,17 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          organization_id?: string
           sort_order?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_menu_categories_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menu_categories_branch_id_fkey"
             columns: ["branch_id"]
@@ -1854,6 +1894,7 @@ export type Database = {
           image_variants: Json | null
           in_stock: boolean | null
           name: string
+          organization_id: string
           prep_time_minutes: number | null
           price: number
           sku: string | null
@@ -1879,6 +1920,7 @@ export type Database = {
           image_variants?: Json | null
           in_stock?: boolean | null
           name: string
+          organization_id: string
           prep_time_minutes?: number | null
           price: number
           sku?: string | null
@@ -1904,6 +1946,7 @@ export type Database = {
           image_variants?: Json | null
           in_stock?: boolean | null
           name?: string
+          organization_id?: string
           prep_time_minutes?: number | null
           price?: number
           sku?: string | null
@@ -1915,6 +1958,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_menu_items_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menu_items_branch_id_fkey"
             columns: ["branch_id"]
@@ -2164,6 +2214,7 @@ export type Database = {
           modifiers: Json | null
           notes: string | null
           order_id: string | null
+          organization_id: string
           prep_time_actual: number | null
           prepared_at: string | null
           priority: number | null
@@ -2186,6 +2237,7 @@ export type Database = {
           modifiers?: Json | null
           notes?: string | null
           order_id?: string | null
+          organization_id: string
           prep_time_actual?: number | null
           prepared_at?: string | null
           priority?: number | null
@@ -2208,6 +2260,7 @@ export type Database = {
           modifiers?: Json | null
           notes?: string | null
           order_id?: string | null
+          organization_id?: string
           prep_time_actual?: number | null
           prepared_at?: string | null
           priority?: number | null
@@ -2219,6 +2272,13 @@ export type Database = {
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_order_items_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_items_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -2381,6 +2441,7 @@ export type Database = {
           nfc_card_id: string | null
           open_tab_id: string | null
           order_type: Database["public"]["Enums"]["order_type"] | null
+          organization_id: string
           paid_at: string | null
           payment_initiated_at: string | null
           ready_at: string | null
@@ -2413,6 +2474,7 @@ export type Database = {
           nfc_card_id?: string | null
           open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
+          organization_id: string
           paid_at?: string | null
           payment_initiated_at?: string | null
           ready_at?: string | null
@@ -2445,6 +2507,7 @@ export type Database = {
           nfc_card_id?: string | null
           open_tab_id?: string | null
           order_type?: Database["public"]["Enums"]["order_type"] | null
+          organization_id?: string
           paid_at?: string | null
           payment_initiated_at?: string | null
           ready_at?: string | null
@@ -2474,6 +2537,13 @@ export type Database = {
             columns: ["nfc_card_id"]
             isOneToOne: false
             referencedRelation: "nfc_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_orders_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -2671,6 +2741,7 @@ export type Database = {
           id: string
           method: Database["public"]["Enums"]["payment_method"]
           order_id: string | null
+          organization_id: string
           payment_device: string | null
           provider: string | null
           provider_ref: string | null
@@ -2692,6 +2763,7 @@ export type Database = {
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
           order_id?: string | null
+          organization_id: string
           payment_device?: string | null
           provider?: string | null
           provider_ref?: string | null
@@ -2713,6 +2785,7 @@ export type Database = {
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           order_id?: string | null
+          organization_id?: string
           payment_device?: string | null
           provider?: string | null
           provider_ref?: string | null
@@ -2724,6 +2797,13 @@ export type Database = {
           tip_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_payments_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_order_id_fkey"
             columns: ["order_id"]
@@ -3403,6 +3483,7 @@ export type Database = {
           nfc_card_uid: string | null
           notes: string | null
           orders_processed: number | null
+          organization_id: string
           overtime_minutes: number | null
           refunds_count: number | null
           scheduled_end: string | null
@@ -3434,6 +3515,7 @@ export type Database = {
           nfc_card_uid?: string | null
           notes?: string | null
           orders_processed?: number | null
+          organization_id: string
           overtime_minutes?: number | null
           refunds_count?: number | null
           scheduled_end?: string | null
@@ -3465,6 +3547,7 @@ export type Database = {
           nfc_card_uid?: string | null
           notes?: string | null
           orders_processed?: number | null
+          organization_id?: string
           overtime_minutes?: number | null
           refunds_count?: number | null
           scheduled_end?: string | null
@@ -3477,6 +3560,13 @@ export type Database = {
           voids_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_shifts_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shifts_branch_id_fkey"
             columns: ["branch_id"]
@@ -3907,6 +3997,7 @@ export type Database = {
           label: string
           last_order_at: string | null
           nfc_card_id: string | null
+          organization_id: string
           seated_at: string | null
           seats: number
           status: string
@@ -3919,6 +4010,7 @@ export type Database = {
           label: string
           last_order_at?: string | null
           nfc_card_id?: string | null
+          organization_id: string
           seated_at?: string | null
           seats?: number
           status?: string
@@ -3931,11 +4023,19 @@ export type Database = {
           label?: string
           last_order_at?: string | null
           nfc_card_id?: string | null
+          organization_id?: string
           seated_at?: string | null
           seats?: number
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tables_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tables_branch_id_fkey"
             columns: ["branch_id"]

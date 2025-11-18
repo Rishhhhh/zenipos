@@ -515,6 +515,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .insert({
           employee_id: employeeData.id,
           branch_id: employeeData.branch_id,
+          organization_id: organization.id, // Use organization from context
           user_id: data.user?.id || employeeData.id,
           clock_in_at: new Date().toISOString(),
           status: 'active',

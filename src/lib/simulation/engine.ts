@@ -192,9 +192,10 @@ export class SimulationEngine {
         simulatedOrder.orderId = order.id;
       }
 
-      // Insert order items
+      // Insert order items with organization_id
       const items = orderItems.map(item => ({
         order_id: order.id,
+        organization_id: order.organization_id,
         ...item,
       }));
 
@@ -283,14 +284,24 @@ export class SimulationEngine {
 
         // Create payment when reaching payment stage
         if (stage === 'payment') {
-          const method = weightedRandom(['qr', 'cash', 'card'] as const, [0.6, 0.3, 0.1]);
-          await supabase.from('payments').insert([{
-            order_id: order.orderId,
-            method,
-            amount: order.total,
-            status: 'completed' as const,
-            provider: method === 'qr' ? 'duitnow' : null,
-          }]);
+          // Get organization_id from order
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('organization_id')
+            .eq('id', order.orderId)
+            .single();
+
+          if (orderData?.organization_id) {
+            const method = weightedRandom(['qr', 'cash', 'card'] as const, [0.6, 0.3, 0.1]);
+            await supabase.from('payments').insert([{
+              order_id: order.orderId,
+              organization_id: orderData.organization_id,
+              method,
+              amount: order.total,
+              status: 'completed' as const,
+              provider: method === 'qr' ? 'duitnow' : null,
+            }]);
+          }
 
           console.log('✅ Completed simulated order:', order.orderId, `RM ${order.total.toFixed(2)}`);
           this.stats.revenue += order.total;
