@@ -4301,6 +4301,7 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
+              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
@@ -4318,7 +4319,6 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
-              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
