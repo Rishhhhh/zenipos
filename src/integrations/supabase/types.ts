@@ -4557,21 +4557,33 @@ export type Database = {
           start_at: string
         }[]
       }
-      get_active_eighty_six_items: {
-        Args: { branch_id_param?: string }
-        Returns: {
-          alternative_items: Json
-          auto_generated: boolean
-          created_at: string
-          created_by_name: string
-          estimated_return_at: string
-          id: string
-          menu_item_category: string
-          menu_item_id: string
-          menu_item_name: string
-          reason: string
-        }[]
-      }
+      get_active_eighty_six_items:
+        | {
+            Args: { _branch_id?: string; _organization_id?: string }
+            Returns: {
+              created_at: string
+              estimated_return_at: string
+              id: string
+              item_name: string
+              menu_item_id: string
+              reason: string
+            }[]
+          }
+        | {
+            Args: { branch_id_param?: string }
+            Returns: {
+              alternative_items: Json
+              auto_generated: boolean
+              created_at: string
+              created_by_name: string
+              estimated_return_at: string
+              id: string
+              menu_item_category: string
+              menu_item_id: string
+              menu_item_name: string
+              reason: string
+            }[]
+          }
       get_active_shift: { Args: { employee_id_param: string }; Returns: string }
       get_current_consciousness: {
         Args: never
@@ -4629,35 +4641,78 @@ export type Database = {
               unit: string
             }[]
           }
-      get_sales_by_category: {
-        Args: { end_date: string; start_date: string }
-        Returns: {
-          category_id: string
-          category_name: string
-          item_count: number
-          percentage_of_total: number
-          total_sales: number
-        }[]
-      }
-      get_sales_by_day_of_week: {
-        Args: { end_date: string; start_date: string }
-        Returns: {
-          avg_ticket: number
-          day_of_week: number
-          order_count: number
-          total_sales: number
-        }[]
-      }
-      get_sales_by_employee: {
-        Args: { end_date: string; start_date: string }
-        Returns: {
-          employee_id: string
-          employee_name: string
-          hours_worked: number
-          order_count: number
-          total_sales: number
-        }[]
-      }
+      get_sales_by_category:
+        | {
+            Args: { end_date: string; start_date: string }
+            Returns: {
+              category_id: string
+              category_name: string
+              item_count: number
+              percentage_of_total: number
+              total_sales: number
+            }[]
+          }
+        | {
+            Args: {
+              _branch_id?: string
+              _organization_id?: string
+              end_date: string
+              start_date: string
+            }
+            Returns: {
+              category_name: string
+              item_count: number
+              total_sales: number
+            }[]
+          }
+      get_sales_by_day_of_week:
+        | {
+            Args: {
+              _branch_id?: string
+              _organization_id?: string
+              end_date: string
+              start_date: string
+            }
+            Returns: {
+              day_name: string
+              day_of_week: number
+              order_count: number
+              total_sales: number
+            }[]
+          }
+        | {
+            Args: { end_date: string; start_date: string }
+            Returns: {
+              avg_ticket: number
+              day_of_week: number
+              order_count: number
+              total_sales: number
+            }[]
+          }
+      get_sales_by_employee:
+        | {
+            Args: {
+              _branch_id?: string
+              _organization_id?: string
+              end_date: string
+              start_date: string
+            }
+            Returns: {
+              employee_name: string
+              order_count: number
+              total_sales: number
+            }[]
+          }
+        | {
+            Args: { end_date: string; start_date: string }
+            Returns: {
+              employee_id: string
+              employee_name: string
+              hours_worked: number
+              order_count: number
+              total_sales: number
+            }[]
+          }
       get_sales_by_hour:
         | {
             Args: {
