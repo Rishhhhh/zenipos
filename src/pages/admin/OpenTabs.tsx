@@ -31,14 +31,23 @@ export default function OpenTabs() {
         .from('open_tabs')
         .select(`
           *,
-          table:tables(label),
+          table:tables!open_tabs_table_id_fkey(label),
           opened_by_employee:employees!open_tabs_opened_by_fkey(name)
         `)
         .eq('status', 'open')
         .order('opened_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      
+      // Transform table array to single object (due to explicit FK syntax)
+      const normalizedData = data?.map(tab => ({
+        ...tab,
+        table: Array.isArray(tab.table) && tab.table.length > 0
+          ? tab.table[0]
+          : null
+      }));
+      
+      return normalizedData;
     },
     refetchInterval: 10000, // Refresh every 10 seconds
   });
