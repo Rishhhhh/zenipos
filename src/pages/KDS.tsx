@@ -65,13 +65,23 @@ export default function KDS() {
   }, []);
 
   // Fetch pending orders using SECURITY DEFINER function to bypass RLS
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading, error: queryError } = useQuery({
     queryKey: ['orders', 'pending'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_kds_orders');
       
       if (error) {
-        console.error('KDS orders fetch error:', error);
+        console.error('❌ KDS RPC ERROR:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        toast({
+          title: "KDS Error",
+          description: `Failed to load orders: ${error.message}`,
+          variant: "destructive"
+        });
         throw error;
       }
       
@@ -82,6 +92,7 @@ export default function KDS() {
         order_items: order.order_items || []
       })) as Order[];
       
+      console.log('✅ KDS loaded orders:', transformedData?.length || 0);
       return transformedData;
     },
     refetchInterval: 5000, // Fallback polling every 5s
@@ -173,6 +184,29 @@ export default function KDS() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-96" />)}
         </div>
+      </div>
+    );
+  }
+
+  if (queryError) {
+    return (
+      <div className="kiosk-layout p-8">
+        <h1 className="text-3xl font-bold mb-8 text-foreground">Kitchen Display</h1>
+        <Card className="p-6 border-destructive bg-destructive/10">
+          <h2 className="text-2xl font-bold text-destructive mb-4">⚠️ KDS Loading Error</h2>
+          <div className="space-y-2 mb-4">
+            <p className="text-sm"><strong>Message:</strong> {(queryError as any)?.message || 'Unknown error'}</p>
+            <p className="text-sm"><strong>Details:</strong> {(queryError as any)?.details || 'No details'}</p>
+            <p className="text-sm"><strong>Hint:</strong> {(queryError as any)?.hint || 'No hint'}</p>
+            <p className="text-sm"><strong>Code:</strong> {(queryError as any)?.code || 'No code'}</p>
+          </div>
+          <details className="mt-4">
+            <summary className="cursor-pointer font-semibold">Raw Error (Debug)</summary>
+            <pre className="mt-2 p-4 bg-muted rounded text-xs overflow-auto">
+              {JSON.stringify(queryError, null, 2)}
+            </pre>
+          </details>
+        </Card>
       </div>
     );
   }
