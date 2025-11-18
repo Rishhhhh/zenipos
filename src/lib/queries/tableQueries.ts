@@ -59,7 +59,7 @@ export async function getTablesWithOrders() {
       )
     `)
     .in('id', currentOrderIds)
-    .in('status', ['pending', 'preparing', 'delivered']);
+    .in('status', ['kitchen_queue', 'pending', 'preparing', 'delivered']);
 
   console.log('🔍 [getTablesWithOrders] Step 3 - Orders result:', { 
     count: orders?.length, 

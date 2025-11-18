@@ -78,7 +78,7 @@ export default function KDS() {
             menu_items (name, sku)
           )
         `)
-        .in('status', ['pending', 'preparing'])
+        .in('status', ['kitchen_queue', 'pending', 'preparing'])
         .order('created_at', { ascending: true });
       
       if (error) throw error;

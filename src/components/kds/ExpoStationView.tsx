@@ -46,7 +46,7 @@ export function ExpoStationView() {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .in('status', ['pending', 'preparing'])
+        .in('status', ['kitchen_queue', 'pending', 'preparing'])
         .order('created_at', { ascending: true });
       
       if (error) throw error;
