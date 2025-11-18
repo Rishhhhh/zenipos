@@ -64,34 +64,25 @@ export default function KDS() {
     return () => rafRef.current && cancelAnimationFrame(rafRef.current);
   }, []);
 
-  // Fetch pending orders
+  // Fetch pending orders using SECURITY DEFINER function to bypass RLS
   const { data: orders, isLoading } = useQuery({
     queryKey: ['orders', 'pending'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          tables!orders_table_id_fkey(label),
-          order_items (
-            *,
-            menu_items (name, sku)
-          )
-        `)
-        .in('status', ['kitchen_queue', 'pending', 'preparing'])
-        .order('created_at', { ascending: true });
+      const { data, error } = await supabase.rpc('get_kds_orders');
       
-      if (error) throw error;
+      if (error) {
+        console.error('KDS orders fetch error:', error);
+        throw error;
+      }
       
-      // Transform tables array to single object (due to explicit FK syntax)
-      const normalizedData = data?.map(order => ({
+      // Transform the RPC result to match the expected Order interface
+      const transformedData = data?.map((order: any) => ({
         ...order,
-        tables: Array.isArray(order.tables) && order.tables.length > 0 
-          ? order.tables[0] 
-          : null
+        tables: order.table_label ? { label: order.table_label } : null,
+        order_items: order.order_items || []
       })) as Order[];
       
-      return normalizedData;
+      return transformedData;
     },
     refetchInterval: 5000, // Fallback polling every 5s
   });

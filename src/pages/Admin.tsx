@@ -5,7 +5,7 @@ import { Sparkline } from "@/components/ui/sparkline";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { batchQuery } from "@/lib/api/batcher";
-import { ShoppingCart, TrendingUp, UtensilsCrossed, LayoutDashboard, Search } from "lucide-react";
+import { ShoppingCart, TrendingUp, UtensilsCrossed, LayoutDashboard, Search, Activity, ChevronDown } from "lucide-react";
 import { CompactModuleCard } from "@/components/admin/CompactModuleCard";
 import { ModuleDetailModal } from "@/components/admin/ModuleDetailModal";
 import { AdminSearchCommand } from "@/components/admin/AdminSearchCommand";
@@ -15,6 +15,7 @@ import { RealtimeMonitor } from '@/components/admin/RealtimeMonitor';
 import { LiveRestaurantFlow } from '@/components/admin/LiveRestaurantFlow';
 import { useState, useEffect } from "react";
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
@@ -80,8 +81,6 @@ export default function Admin() {
         <Card className="p-6 mb-8">
           <LiveRestaurantFlow />
         </Card>
-
-        <RealtimeMonitor />
 
         {isLoading ? (
           <div className="grid grid-cols-4 gap-4 mb-8">
@@ -151,8 +150,6 @@ export default function Admin() {
           </div>
         )}
 
-        <RealtimeMonitor />
-
         {Object.entries(ADMIN_MODULES).map(([category, modules]) => (
           <div key={category} className="mb-8">
             <div className="flex items-center gap-2 mb-3">
@@ -167,6 +164,22 @@ export default function Admin() {
             </div>
           </div>
         ))}
+
+        {/* System Health Monitor - Collapsible at bottom */}
+        <Collapsible defaultOpen={false} className="mt-8">
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between">
+              <span className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                System Health & Realtime Monitor
+              </span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            <RealtimeMonitor />
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       <AdminSearchCommand open={commandOpen} onOpenChange={setCommandOpen} />

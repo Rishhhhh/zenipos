@@ -30,40 +30,48 @@ export function LiveRestaurantFlow() {
   const { data: orders, isLoading, error, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['live-restaurant-flow'],
     queryFn: async () => {
-      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      try {
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          status,
-          total,
-          created_at,
-          table_id,
-          customer_id,
-          order_type,
-          metadata,
-          tables!orders_table_id_fkey(label),
-          customers(name)
-        `)
-        .not('status', 'eq', 'cancelled')  // Exclude cancelled
-        .is('metadata->simulated', null)    // Exclude simulated orders
-        .gte('created_at', fourHoursAgo)    // Last 4 hours
-        .order('created_at', { ascending: false })
-        .limit(100);                        // Max 100 orders
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            id,
+            status,
+            total,
+            created_at,
+            table_id,
+            customer_id,
+            order_type,
+            metadata,
+            tables!orders_table_id_fkey(label),
+            customers(name)
+          `)
+          .not('status', 'eq', 'cancelled')  // Exclude cancelled
+          .is('metadata->simulated', null)    // Exclude simulated orders
+          .gte('created_at', fourHoursAgo)    // Last 4 hours
+          .order('created_at', { ascending: false })
+          .limit(100);                        // Max 100 orders
 
-      if (error) throw error;
+        if (error) {
+          console.error('LiveRestaurantFlow query error:', error);
+          throw error;
+        }
 
-      // Transform tables array to single object (due to explicit FK syntax)
-      const normalizedData = data?.map(order => ({
-        ...order,
-        tables: Array.isArray(order.tables) && order.tables.length > 0 
-          ? order.tables[0] 
-          : null
-      })) || [];
+        // Transform tables array to single object (due to explicit FK syntax)
+        const normalizedData = data?.map(order => ({
+          ...order,
+          tables: Array.isArray(order.tables) && order.tables.length > 0 
+            ? order.tables[0] 
+            : null
+        })) || [];
 
-      console.log(`✅ Fetched ${normalizedData.length} real orders for flow visualization`);
-      return normalizedData;
+        console.log(`✅ Fetched ${normalizedData.length} real orders for flow visualization`);
+        return normalizedData;
+      } catch (err) {
+        console.error('LiveRestaurantFlow fetch error:', err);
+        throw err;
+      }
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   });
@@ -127,8 +135,10 @@ export function LiveRestaurantFlow() {
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>
-          Failed to load restaurant flow: {(error as Error).message}
+        <AlertDescription className="space-y-2">
+          <p className="font-semibold">Failed to load live restaurant flow</p>
+          <p className="text-sm">{(error as Error).message}</p>
+          <p className="text-xs opacity-80">Check console for details or try refreshing the page</p>
         </AlertDescription>
       </Alert>
     );
