@@ -4608,6 +4608,23 @@ export type Database = {
           total_spent: number
         }[]
       }
+      get_kds_orders: {
+        Args: never
+        Returns: {
+          branch_id: string
+          created_at: string
+          id: string
+          order_items: Json
+          order_type: string
+          organization_id: string
+          recall_requested: boolean
+          session_id: string
+          status: string
+          table_id: string
+          table_label: string
+          total: number
+        }[]
+      }
       get_labor_sparkline: {
         Args: { hours_back?: number }
         Returns: {
