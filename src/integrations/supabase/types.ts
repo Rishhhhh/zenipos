@@ -4464,6 +4464,15 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      check_kds_trigger_exists: {
+        Args: never
+        Returns: {
+          enabled: boolean
+          event: string
+          function_name: string
+          trigger_name: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           p_endpoint: string
@@ -4606,6 +4615,21 @@ export type Database = {
           total_points_earned: number
           total_points_redeemed: number
           total_spent: number
+        }[]
+      }
+      get_items_by_station_debug: {
+        Args: never
+        Returns: {
+          item_count: number
+          station_id: string
+          station_name: string
+        }[]
+      }
+      get_items_by_status_debug: {
+        Args: never
+        Returns: {
+          item_count: number
+          status: string
         }[]
       }
       get_kds_orders: {

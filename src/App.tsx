@@ -76,6 +76,7 @@ const RecipeManagement = lazy(() => import("./pages/admin/RecipeManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Register = lazy(() => import("./pages/Register"));
 const BranchSetup = lazy(() => import("./pages/setup/BranchSetup"));
+const KDSDebugPanel = lazy(() => import("./pages/admin/KDSDebugPanel"));
 
 // POS with integrated clock in/out
 function POSWithHeader() {
@@ -304,6 +305,15 @@ const App = () => (
                   <>
                     <AppHeader />
                     <AIHistoryDashboard />
+                  </>
+                </FullyProtectedRoute>
+              } />
+              
+              <Route path="/admin/kds-debug" element={
+                <FullyProtectedRoute requiredRole="manager">
+                  <>
+                    <AppHeader />
+                    <KDSDebugPanel />
                   </>
                 </FullyProtectedRoute>
               } />
