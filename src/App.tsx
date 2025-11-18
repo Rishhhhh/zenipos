@@ -74,6 +74,8 @@ const CRMTestingDashboard = lazy(() => import("./pages/admin/CRMTestingDashboard
 const PromotionAnalytics = lazy(() => import("./pages/admin/PromotionAnalytics"));
 const RecipeManagement = lazy(() => import("./pages/admin/RecipeManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Register = lazy(() => import("./pages/Register"));
+const BranchSetup = lazy(() => import("./pages/setup/BranchSetup"));
 
 // POS with integrated clock in/out
 function POSWithHeader() {
@@ -169,10 +171,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/register" element={
                 <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
-                  {(() => {
-                    const Register = lazy(() => import("./pages/Register"));
-                    return <Register />;
-                  })()}
+                  <Register />
                 </Suspense>
               } />
               <Route path="/customer/:sessionId" element={<CustomerScreen />} />
@@ -181,6 +180,14 @@ const App = () => (
               <Route path="/login" element={
                 <OrgProtectedRoute>
                   <Login />
+                </OrgProtectedRoute>
+              } />
+              
+              <Route path="/setup/branches" element={
+                <OrgProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
+                    <BranchSetup />
+                  </Suspense>
                 </OrgProtectedRoute>
               } />
               

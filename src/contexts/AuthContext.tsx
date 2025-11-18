@@ -420,10 +420,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Organization session expired. Please login again.');
       }
 
+      // ✅ NEW: Get selected branch from sessionStorage
+      const selectedBranchId = sessionStorage.getItem('pos_selected_branch_for_pin');
+      
+      if (!selectedBranchId) {
+        toast.error('No branch selected', {
+          description: 'Please refresh the page and select a branch'
+        });
+        throw new Error('No branch selected. Please refresh and select a branch.');
+      }
+
+      console.log('[Employee Login] Attempting login', {
+        organizationId: organization.id,
+        branchId: selectedBranchId,
+        pin: '****' + pin.slice(-1)
+      });
+
+      // ✅ NEW: Pass branchId to edge function
       const { data, error } = await supabase.functions.invoke('employee-login', {
         body: { 
           pin,
-          organizationId: organization.id
+          organizationId: organization.id,
+          branchId: selectedBranchId // NEW PARAMETER
         },
       });
 
@@ -438,6 +456,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.organizationId && data.organizationId !== organization.id) {
         throw new Error('Access denied. Please contact your manager.');
       }
+
+      // ✅ NEW: Validate employee belongs to selected branch
+      if (employeeData.branch_id !== selectedBranchId) {
+        console.error('[Security] Employee branch mismatch', {
+          employeeBranch: employeeData.branch_id,
+          selectedBranch: selectedBranchId
+        });
+        throw new Error('Employee not found in selected branch');
+      }
+
+      console.log('[Employee Login] ✅ Validation passed', {
+        employee: employeeData.name,
+        role: employeeData.role,
+        branch: employeeData.branch_id
+      });
 
       // Set Supabase session if provided
       if (data.session) {
