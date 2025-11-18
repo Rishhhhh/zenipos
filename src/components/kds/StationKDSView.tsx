@@ -25,7 +25,12 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
     return () => clearInterval(timer);
   }, []);
 
-  const { data: stationItems = [] } = useQuery({
+  const { 
+    data: stationItems = [], 
+    error: stationError,
+    isError: stationIsError,
+    isLoading: stationLoading 
+  } = useQuery({
     queryKey: ['station-items', stationId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,7 +51,18 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
         .in('status', ['kitchen_queue', 'pending', 'preparing'])
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[StationKDS] order_items query error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          stationId
+        });
+        throw error;
+      }
+
+      console.log(`[StationKDS] Loaded ${data?.length || 0} items for station ${stationId}`);
       
       // Transform table array to single object (due to explicit FK syntax)
       const normalizedData = data?.map(item => ({
@@ -224,6 +240,50 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
     acc[orderId].items.push(item);
     return acc;
   }, {} as Record<string, { order: any; items: any[] }>);
+
+  // Loading state
+  if (stationLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading {stationName} KDS...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (stationIsError) {
+    return (
+      <div className="p-8">
+        <Card className="border-destructive bg-destructive/10 p-6">
+          <h2 className="text-2xl font-bold text-destructive mb-4 flex items-center gap-2">
+            <AlertTriangle className="h-6 w-6" />
+            Station KDS Error
+          </h2>
+          <div className="space-y-2 mb-4 text-sm">
+            <p><strong>Station:</strong> {stationName} ({stationId})</p>
+            <p><strong>Message:</strong> {(stationError as any)?.message || 'Unknown error'}</p>
+            <p><strong>Details:</strong> {(stationError as any)?.details || 'No details'}</p>
+            <p><strong>Hint:</strong> {(stationError as any)?.hint || 'No hint'}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['station-items', stationId] })}
+          >
+            Retry
+          </Button>
+          <details className="mt-4">
+            <summary className="cursor-pointer font-semibold text-sm">Raw Error (Debug)</summary>
+            <pre className="mt-2 p-3 bg-muted rounded text-xs overflow-auto max-h-60">
+              {JSON.stringify(stationError, null, 2)}
+            </pre>
+          </details>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-background p-4 overflow-auto">
