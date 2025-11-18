@@ -27,7 +27,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { pin, organizationId } = await req.json();
+    const { pin, organizationId, branchId } = await req.json();
 
     // Validate required inputs
     if (!pin || typeof pin !== 'string' || pin.length !== 5) {
@@ -41,6 +41,14 @@ serve(async (req) => {
       console.error('Missing organizationId in request');
       return new Response(
         JSON.stringify({ success: false, error: 'Organization ID is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    if (!branchId) {
+      console.error('Missing branchId in request');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Branch ID is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -68,38 +76,47 @@ serve(async (req) => {
       );
     }
 
-    // Get all active branches for the organization
-    const { data: branches, error: branchError } = await supabase
+    // Verify branch exists and belongs to organization
+    const { data: branch, error: branchError } = await supabase
       .from('branches')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('active', true);
+      .select('id, organization_id, name, active')
+      .eq('id', branchId)
+      .single();
 
-    if (branchError) {
-      console.error('Branch lookup error:', branchError);
+    if (branchError || !branch) {
+      console.error('Branch not found:', branchId);
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to retrieve branches' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
-    if (!branches || branches.length === 0) {
-      console.error('No active branches found for organization:', organizationId);
-      return new Response(
-        JSON.stringify({ success: false, error: 'No active branches found for this organization' }),
+        JSON.stringify({ success: false, error: 'Invalid branch' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
-    const branchIds = branches.map(b => b.id);
-    console.log(`Organization ${org.name} has ${branchIds.length} active branches`);
+    if (branch.organization_id !== organizationId) {
+      console.error('Branch does not belong to organization');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Branch access denied' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
 
-    // Get employees only from organization's branches
+    if (!branch.active) {
+      console.error('Branch is inactive:', branchId);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Branch is inactive' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    console.log(`Branch validated: ${branch.name} (${branchId})`);
+
+    // Get employees ONLY from selected branch
     const { data: employees, error: fetchError } = await supabase
       .from('employees')
       .select('id, name, email, pin, role, branch_id, auth_user_id')
-      .in('branch_id', branchIds)
+      .eq('branch_id', branchId)
       .eq('active', true);
+
+    console.log(`Found ${employees?.length || 0} active employees in branch ${branch.name}`);
 
     if (fetchError) {
       console.error('Employee lookup error:', fetchError);
@@ -180,13 +197,15 @@ serve(async (req) => {
           // Remove PIN from response
           const { pin: _, ...employeeData } = employee;
           
-          console.log(`Employee ${employee.name} successfully logged in to organization ${org.name}`);
+          console.log(`Employee ${employee.name} successfully logged in to branch ${branch.name} of organization ${org.name}`);
           
           return new Response(
             JSON.stringify({ 
               success: true, 
               employee: employeeData,
               organizationId: organizationId,
+              branchId: branch.id,
+              branchName: branch.name,
               authUserId: authUserId,
               setupToken: sessionData?.properties?.action_link
             }),

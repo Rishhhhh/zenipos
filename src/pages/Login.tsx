@@ -8,12 +8,16 @@ import { Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ZeniPOSLogo } from '@/components/layout/ZeniPOSLogo';
+import { BranchSelectionModal } from '@/components/auth/BranchSelectionModal';
+import { toast } from 'sonner';
 
 export default function Login() {
   const [pin, setPin] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showBranchSelector, setShowBranchSelector] = useState(false);
+  const [availableBranches, setAvailableBranches] = useState<any[]>([]);
   const { 
     employeeLogin, 
     isEmployeeAuthenticated, 
@@ -30,6 +34,45 @@ export default function Login() {
       navigate('/auth', { replace: true });
     }
   }, [isOrganizationAuthenticated, navigate]);
+
+  // Branch selection logic - runs after org authentication
+  useEffect(() => {
+    if (!isOrganizationAuthenticated || !organization) return;
+
+    // Get branches from org session
+    const orgSession = localStorage.getItem('pos_org_session');
+    if (!orgSession) return;
+
+    const session = JSON.parse(orgSession);
+    const branches = session.branches || [];
+
+    console.log('[Login] Branch check:', {
+      count: branches.length,
+      branches: branches.map((b: any) => b.name)
+    });
+
+    if (branches.length === 0) {
+      // No branches - redirect to setup wizard
+      console.log('[Login] No branches found, redirecting to setup');
+      toast.warning('Branch setup required', {
+        description: 'Please set up at least one branch to continue'
+      });
+      navigate('/setup/branches');
+    } else if (branches.length === 1) {
+      // Single branch - auto-select
+      console.log('[Login] Single branch detected, auto-selecting:', branches[0].name);
+      sessionStorage.setItem('pos_selected_branch_for_pin', branches[0].id);
+      toast.success(`Branch: ${branches[0].name}`, {
+        description: 'Automatically selected your branch'
+      });
+      // Continue to PIN entry (current flow)
+    } else {
+      // Multiple branches - show selector
+      console.log('[Login] Multiple branches detected, showing selector');
+      setAvailableBranches(branches);
+      setShowBranchSelector(true);
+    }
+  }, [isOrganizationAuthenticated, organization, navigate]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -105,7 +148,9 @@ export default function Login() {
             )}
           </h1>
           <p className="text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
-          <p className="text-muted-foreground mt-2">Enter your PIN to continue</p>
+          <p className="text-muted-foreground mt-2">
+            {showBranchSelector ? 'Select your branch' : 'Enter your PIN to continue'}
+          </p>
         </div>
 
         {/* PIN Pad */}
@@ -159,6 +204,20 @@ export default function Login() {
           </button>
         </div>
       </GlassLoginCard>
+
+      {/* Branch Selection Modal */}
+      {showBranchSelector && (
+        <BranchSelectionModal
+          branches={availableBranches}
+          open={showBranchSelector}
+          onSelect={(branchId) => {
+            sessionStorage.setItem('pos_selected_branch_for_pin', branchId);
+            const selectedBranch = availableBranches.find(b => b.id === branchId);
+            toast.success(`Branch selected: ${selectedBranch?.name}`);
+            setShowBranchSelector(false);
+          }}
+        />
+      )}
     </div>
   );
 }
