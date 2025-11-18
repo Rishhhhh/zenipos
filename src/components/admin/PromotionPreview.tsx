@@ -63,6 +63,7 @@ export function PromotionPreview({ promotion }: PromotionPreviewProps) {
       type: promotion.type as any,
       rules: promotion.rules || {},
       start_date: promotion.start_date || null,
+      organization_id: 'preview',
       end_date: promotion.end_date || null,
       active: true,
       priority: promotion.priority || 1,

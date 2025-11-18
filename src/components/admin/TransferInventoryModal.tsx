@@ -104,12 +104,14 @@ export function TransferInventoryModal({ open, onOpenChange, item }: TransferInv
       await supabase.from('stock_moves').insert([
         {
           inventory_item_id: item.id,
+          organization_id: currentBranch!.organization_id,
           type: 'transfer',
           quantity: -quantity,
           reason: `Transfer to ${targetBranch?.name}: ${reason}`,
         },
         {
           inventory_item_id: targetItem?.id,
+          organization_id: currentBranch!.organization_id,
           type: 'transfer',
           quantity: quantity,
           reason: `Transfer from ${sourceBranch?.name}: ${reason}`,

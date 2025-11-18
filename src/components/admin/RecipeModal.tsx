@@ -132,6 +132,7 @@ export function RecipeModal({ open, onOpenChange, menuItem }: RecipeModalProps) 
         menu_item_id: menuItem.id,
         inventory_item_id: ing.inventory_item_id,
         quantity_per_serving: ing.quantity_per_serving,
+        organization_id: currentBranch!.organization_id,
       }));
 
       const { error } = await supabase
