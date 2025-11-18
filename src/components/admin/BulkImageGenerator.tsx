@@ -17,14 +17,18 @@ interface BulkImageGeneratorProps {
 export function BulkImageGenerator({ menuItems, onComplete }: BulkImageGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [currentItem, setCurrentItem] = useState('');
+  const [successCount, setSuccessCount] = useState(0);
+  const [failCount, setFailCount] = useState(0);
+  const [recentItems, setRecentItems] = useState<Array<{ name: string; status: 'success' | 'failed' }>>([]);
   const [results, setResults] = useState<{
     success: string[];
-    unsplashFailed: string[];
     failed: string[];
   } | null>(null);
-  const [useLovableAIFallback, setUseLovableAIFallback] = useState(false);
 
-  const itemsWithoutImages = menuItems.filter(item => !item.image_url);
+  // Safety check for menuItems
+  const safeMenuItems = Array.isArray(menuItems) ? menuItems : [];
+  const itemsWithoutImages = safeMenuItems.filter(item => !item.image_url);
 
   const handleGenerate = async () => {
     if (itemsWithoutImages.length === 0) {
@@ -34,40 +38,99 @@ export function BulkImageGenerator({ menuItems, onComplete }: BulkImageGenerator
 
     setIsGenerating(true);
     setProgress(0);
+    setSuccessCount(0);
+    setFailCount(0);
+    setCurrentItem('');
+    setRecentItems([]);
     setResults(null);
 
+    const toastId = toast.loading(`Starting generation for ${itemsWithoutImages.length} items...`);
+
     try {
-      toast.loading(`Generating images for ${itemsWithoutImages.length} items...`);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-menu-images`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ menuItems: itemsWithoutImages }),
+        }
+      );
 
-      const { data, error } = await supabase.functions.invoke('generate-menu-images', {
-        body: {
-          menuItems: itemsWithoutImages,
-          useLovableAIFallback,
-        },
-      });
-
-      if (error) throw error;
-
-      setResults(data);
-      setProgress(100);
-
-      const successCount = data.success.length;
-      const failCount = data.failed.length + data.unsplashFailed.length;
-
-      if (successCount > 0) {
-        toast.success(`✅ Generated ${successCount} images successfully!`);
-      }
-      if (data.unsplashFailed.length > 0 && !useLovableAIFallback) {
-        toast.warning(`⚠️ ${data.unsplashFailed.length} items need AI generation (enable fallback)`);
-      }
-      if (failCount > 0) {
-        toast.error(`❌ Failed to generate ${failCount} images`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      onComplete();
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) continue;
+          
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+
+          try {
+            const event = JSON.parse(data);
+
+            if (event.type === 'progress') {
+              setCurrentItem(event.itemName);
+              setProgress((event.current / event.total) * 100);
+
+              if (event.status === 'success') {
+                setSuccessCount(prev => prev + 1);
+                setRecentItems(prev => [
+                  { name: event.itemName, status: 'success' },
+                  ...prev.slice(0, 4)
+                ]);
+              } else if (event.status === 'failed') {
+                setFailCount(prev => prev + 1);
+                setRecentItems(prev => [
+                  { name: event.itemName, status: 'failed' },
+                  ...prev.slice(0, 4)
+                ]);
+              }
+
+              toast.loading(
+                `Generating: ${event.itemName} (${event.current}/${event.total})`,
+                { id: toastId }
+              );
+            } else if (event.type === 'complete') {
+              setResults(event.results);
+              setProgress(100);
+
+              toast.success(
+                `✅ Generated ${event.results.success.length} images successfully!`,
+                { id: toastId }
+              );
+
+              if (event.results.failed.length > 0) {
+                toast.error(`❌ Failed: ${event.results.failed.length} items`);
+              }
+
+              onComplete();
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE event:', e);
+          }
+        }
+      }
     } catch (error) {
       console.error('Bulk generation error:', error);
-      toast.error('Failed to generate images');
+      toast.error('Failed to generate images', { id: toastId });
     } finally {
       setIsGenerating(false);
     }
@@ -97,76 +160,81 @@ export function BulkImageGenerator({ menuItems, onComplete }: BulkImageGenerator
             <div className="p-3 bg-muted rounded-lg">
               <p className="font-medium text-sm">{itemsWithoutImages.length} items without images</p>
               <p className="text-xs text-muted-foreground">
-                {menuItems.length - itemsWithoutImages.length} items already have images
+                {safeMenuItems.length - itemsWithoutImages.length} items already have images
               </p>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-background border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="ai-fallback" className="cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Use AI Fallback</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Generate with AI if no stock photos found
-                  </p>
-                </Label>
-              </div>
-              <Switch
-                id="ai-fallback"
-                checked={useLovableAIFallback}
-                onCheckedChange={setUseLovableAIFallback}
-              />
-            </div>
-
             {isGenerating && (
-              <div className="space-y-2">
-                <Progress value={progress} className="h-2" />
-                <p className="text-xs text-muted-foreground text-center">Generating images...</p>
-              </div>
-            )}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-medium">{Math.round(progress)}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
 
-            {results && (
-              <div className="space-y-2 text-xs">
-                {results.success.length > 0 && (
-                  <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-green-900 dark:text-green-100">
-                        {results.success.length} successful
-                      </p>
+                {currentItem && (
+                  <div className="p-2 bg-primary/5 rounded text-xs">
+                    <span className="text-muted-foreground">Generating: </span>
+                    <span className="font-medium">{currentItem}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                    <span>{successCount} success</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5 text-danger" />
+                    <span>{failCount} failed</span>
+                  </div>
+                </div>
+
+                {recentItems.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Recent:</p>
+                    <div className="space-y-1">
+                      {recentItems.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs">
+                          {item.status === 'success' ? (
+                            <CheckCircle2 className="h-3 w-3 text-success" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3 text-danger" />
+                          )}
+                          <span className="truncate">{item.name}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-                {results.unsplashFailed.length > 0 && (
-                  <div className="flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 rounded">
-                    <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-yellow-900 dark:text-yellow-100">
-                        {results.unsplashFailed.length} need AI generation
-                      </p>
-                      <p className="text-yellow-700 dark:text-yellow-300">Enable AI fallback to generate</p>
-                    </div>
+              </div>
+            )}
+
+            {results && !isGenerating && (
+              <div className="space-y-2">
+                {results.success.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-success">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>{results.success.length} images generated successfully</span>
                   </div>
                 )}
                 {results.failed.length > 0 && (
-                  <div className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded">
-                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-red-900 dark:text-red-100">
-                        {results.failed.length} failed
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2 text-xs text-danger">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{results.failed.length} items failed</span>
                   </div>
                 )}
               </div>
             )}
 
-            <Alert className="border-blue-200 dark:border-blue-800">
-              <AlertCircle className="h-4 w-4" />
+            <Alert>
+              <Sparkles className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                Uses Unsplash for free stock photos. Enable AI fallback for custom generation (uses credits).
+                Images are generated using Lovable AI for professional food photography.
+                <br /><br />
+                <strong>Note:</strong> AI generation uses credits from your Lovable workspace.
               </AlertDescription>
             </Alert>
 
