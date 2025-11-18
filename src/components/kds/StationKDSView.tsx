@@ -43,7 +43,7 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
           menu_item:menu_items(name, description)
         `)
         .eq('station_id', stationId)
-        .in('status', ['pending', 'preparing'])
+        .in('status', ['kitchen_queue', 'pending', 'preparing'])
         .order('created_at', { ascending: true });
 
       if (error) throw error;
