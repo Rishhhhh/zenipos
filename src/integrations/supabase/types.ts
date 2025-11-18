@@ -771,6 +771,7 @@ export type Database = {
           last_seen: string | null
           mac_address: string | null
           name: string
+          organization_id: string
           role: string | null
           station_id: string | null
           status: string | null
@@ -786,6 +787,7 @@ export type Database = {
           last_seen?: string | null
           mac_address?: string | null
           name: string
+          organization_id: string
           role?: string | null
           station_id?: string | null
           status?: string | null
@@ -801,6 +803,7 @@ export type Database = {
           last_seen?: string | null
           mac_address?: string | null
           name?: string
+          organization_id?: string
           role?: string | null
           station_id?: string | null
           status?: string | null
@@ -819,6 +822,13 @@ export type Database = {
             columns: ["station_id"]
             isOneToOne: false
             referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_devices_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -918,6 +928,7 @@ export type Database = {
           id: string
           menu_item_id: string
           notification_sent: boolean | null
+          organization_id: string
           reason: string
           resolved_at: string | null
           resolved_by: string | null
@@ -933,6 +944,7 @@ export type Database = {
           id?: string
           menu_item_id: string
           notification_sent?: boolean | null
+          organization_id: string
           reason: string
           resolved_at?: string | null
           resolved_by?: string | null
@@ -948,6 +960,7 @@ export type Database = {
           id?: string
           menu_item_id?: string
           notification_sent?: boolean | null
+          organization_id?: string
           reason?: string
           resolved_at?: string | null
           resolved_by?: string | null
@@ -979,6 +992,13 @@ export type Database = {
             columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_eighty_six_items_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1996,6 +2016,7 @@ export type Database = {
           max_selections: number
           min_selections: number
           name: string
+          organization_id: string
         }
         Insert: {
           branch_id?: string | null
@@ -2004,6 +2025,7 @@ export type Database = {
           max_selections?: number
           min_selections?: number
           name: string
+          organization_id: string
         }
         Update: {
           branch_id?: string | null
@@ -2012,8 +2034,16 @@ export type Database = {
           max_selections?: number
           min_selections?: number
           name?: string
+          organization_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_modifier_groups_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "modifier_groups_branch_id_fkey"
             columns: ["branch_id"]
@@ -2029,6 +2059,7 @@ export type Database = {
           group_id: string
           id: string
           name: string
+          organization_id: string
           price: number
         }
         Insert: {
@@ -2036,6 +2067,7 @@ export type Database = {
           group_id: string
           id?: string
           name: string
+          organization_id: string
           price?: number
         }
         Update: {
@@ -2043,9 +2075,17 @@ export type Database = {
           group_id?: string
           id?: string
           name?: string
+          organization_id?: string
           price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_modifiers_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "modifiers_group_id_fkey"
             columns: ["group_id"]
@@ -2987,6 +3027,7 @@ export type Database = {
           end_date: string | null
           id: string
           name: string
+          organization_id: string
           priority: number | null
           rules: Json
           stackable: boolean | null
@@ -3002,6 +3043,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           name: string
+          organization_id: string
           priority?: number | null
           rules: Json
           stackable?: boolean | null
@@ -3017,6 +3059,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           name?: string
+          organization_id?: string
           priority?: number | null
           rules?: Json
           stackable?: boolean | null
@@ -3025,6 +3068,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_promotions_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "promotions_branch_id_fkey"
             columns: ["branch_id"]
@@ -3299,6 +3349,7 @@ export type Database = {
           inventory_item_id: string
           menu_item_id: string
           notes: string | null
+          organization_id: string
           quantity_per_serving: number
         }
         Insert: {
@@ -3307,6 +3358,7 @@ export type Database = {
           inventory_item_id: string
           menu_item_id: string
           notes?: string | null
+          organization_id: string
           quantity_per_serving: number
         }
         Update: {
@@ -3315,9 +3367,17 @@ export type Database = {
           inventory_item_id?: string
           menu_item_id?: string
           notes?: string | null
+          organization_id?: string
           quantity_per_serving?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_recipes_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recipes_inventory_item_id_fkey"
             columns: ["inventory_item_id"]
@@ -3691,6 +3751,7 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          organization_id: string
           route_rules: Json | null
           settings: Json | null
           sort_order: number | null
@@ -3705,6 +3766,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          organization_id: string
           route_rules?: Json | null
           settings?: Json | null
           sort_order?: number | null
@@ -3719,6 +3781,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          organization_id?: string
           route_rules?: Json | null
           settings?: Json | null
           sort_order?: number | null
@@ -3726,6 +3789,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_stations_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stations_branch_id_fkey"
             columns: ["branch_id"]
@@ -3742,6 +3812,7 @@ export type Database = {
           created_at: string | null
           id: string
           inventory_item_id: string
+          organization_id: string
           performed_by: string | null
           quantity: number
           reason: string | null
@@ -3755,6 +3826,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           inventory_item_id: string
+          organization_id: string
           performed_by?: string | null
           quantity: number
           reason?: string | null
@@ -3768,6 +3840,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           inventory_item_id?: string
+          organization_id?: string
           performed_by?: string | null
           quantity?: number
           reason?: string | null
@@ -3776,6 +3849,13 @@ export type Database = {
           type?: Database["public"]["Enums"]["stock_move_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_stock_moves_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_moves_branch_id_fkey"
             columns: ["branch_id"]
@@ -4341,15 +4421,25 @@ export type Database = {
         Args: { pin_param: string; request_id_param: string }
         Returns: boolean
       }
-      calculate_cogs: {
-        Args: { end_date: string; start_date: string }
-        Returns: {
-          cogs_percentage: number
-          food_cost_percentage: number
-          total_cogs: number
-          total_revenue: number
-        }[]
-      }
+      calculate_cogs:
+        | {
+            Args: { end_date: string; start_date: string }
+            Returns: {
+              cogs_percentage: number
+              food_cost_percentage: number
+              total_cogs: number
+              total_revenue: number
+            }[]
+          }
+        | {
+            Args: {
+              _branch_id?: string
+              _organization_id?: string
+              end_date: string
+              start_date: string
+            }
+            Returns: number
+          }
       calculate_discount_from_points: {
         Args: { points: number }
         Returns: number
@@ -4401,7 +4491,6 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
-              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
@@ -4419,6 +4508,7 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
+              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
@@ -4568,14 +4658,28 @@ export type Database = {
           total_sales: number
         }[]
       }
-      get_sales_by_hour: {
-        Args: { end_date: string; start_date: string }
-        Returns: {
-          hour: number
-          order_count: number
-          total_sales: number
-        }[]
-      }
+      get_sales_by_hour:
+        | {
+            Args: {
+              _branch_id?: string
+              _organization_id?: string
+              end_date: string
+              start_date: string
+            }
+            Returns: {
+              hour: number
+              order_count: number
+              total_sales: number
+            }[]
+          }
+        | {
+            Args: { end_date: string; start_date: string }
+            Returns: {
+              hour: number
+              order_count: number
+              total_sales: number
+            }[]
+          }
       get_shift_summary: {
         Args: { shift_id_param: string }
         Returns: {
@@ -4623,16 +4727,31 @@ export type Database = {
           total_spent: number
         }[]
       }
-      get_top_selling_items: {
-        Args: { end_date: string; limit_count?: number; start_date: string }
-        Returns: {
-          item_id: string
-          item_name: string
-          quantity_sold: number
-          times_ordered: number
-          total_revenue: number
-        }[]
-      }
+      get_top_selling_items:
+        | {
+            Args: {
+              _branch_id?: string
+              _organization_id?: string
+              end_date: string
+              item_limit?: number
+              start_date: string
+            }
+            Returns: {
+              item_name: string
+              quantity_sold: number
+              total_revenue: number
+            }[]
+          }
+        | {
+            Args: { end_date: string; limit_count?: number; start_date: string }
+            Returns: {
+              item_id: string
+              item_name: string
+              quantity_sold: number
+              times_ordered: number
+              total_revenue: number
+            }[]
+          }
       get_user_active_display: {
         Args: { user_id_param: string }
         Returns: string

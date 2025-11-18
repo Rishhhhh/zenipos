@@ -68,7 +68,7 @@ export function StockAdjustmentModal({ open, onOpenChange, item, onSuccess }: St
         .from('stock_moves')
         .insert({
           inventory_item_id: item.id,
-          branch_id: currentBranch?.id,
+          organization_id: currentBranch!.organization_id,
           type: adjustmentType,
           quantity: finalQty,
           reason: reason || `${adjustmentType} by ${user.email}`,

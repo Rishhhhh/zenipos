@@ -66,7 +66,7 @@ export function PromotionModal({
 }: PromotionModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { selectedBranchId } = useBranch();
+  const { selectedBranchId, currentBranch } = useBranch();
   const [activeTab, setActiveTab] = useState('form');
 
   const form = useForm<PromotionFormValues>({
@@ -178,7 +178,10 @@ export function PromotionModal({
       } else {
         const { error } = await supabase
           .from('promotions')
-          .insert(data);
+          .insert({
+            ...data,
+            organization_id: currentBranch!.organization_id,
+          });
         if (error) throw error;
       }
     },
