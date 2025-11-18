@@ -4543,7 +4543,9 @@ export type Database = {
       generate_po_number: { Args: { branch_id_param: string }; Returns: string }
       get_accessible_branch_ids: {
         Args: { _user_id: string }
-        Returns: string[]
+        Returns: {
+          branch_id: string
+        }[]
       }
       get_active_break: {
         Args: { employee_id_param: string }
