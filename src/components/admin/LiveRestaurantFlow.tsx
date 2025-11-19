@@ -44,7 +44,7 @@ export function LiveRestaurantFlow() {
             customer_id,
             order_type,
             metadata,
-            tables!orders_table_id_fkey(label),
+            tables!fk_orders_table(label),
             customers(name)
           `)
           .not('status', 'eq', 'cancelled')  // Exclude cancelled

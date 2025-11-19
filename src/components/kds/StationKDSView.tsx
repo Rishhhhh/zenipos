@@ -42,7 +42,7 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
             table_id,
             order_type,
             created_at,
-            table:tables!orders_table_id_fkey(label),
+            table:tables!fk_orders_table(label),
             priority:order_priorities(priority_level, reason)
           ),
           menu_item:menu_items(name, description)
