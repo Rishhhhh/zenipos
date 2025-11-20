@@ -37,10 +37,11 @@ export default memo(function TopItems() {
           menu_item_id,
           menu_items (name),
           order_id,
-          orders!inner (created_at, status)
+          orders!inner (created_at, status, paid_at)
         `)
         .gte("orders.created_at", today.toISOString())
-        .eq("orders.status", "done");
+        .in("orders.status", ["completed", "done"])
+        .not("orders.paid_at", "is", null);
 
       if (error) throw error;
 

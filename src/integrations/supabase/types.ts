@@ -3949,6 +3949,7 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          organization_id: string
           phone: string | null
           updated_at: string | null
         }
@@ -3961,6 +3962,7 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          organization_id: string
           phone?: string | null
           updated_at?: string | null
         }
@@ -3973,6 +3975,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          organization_id?: string
           phone?: string | null
           updated_at?: string | null
         }
@@ -3982,6 +3985,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

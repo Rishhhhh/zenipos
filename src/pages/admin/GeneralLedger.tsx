@@ -19,17 +19,26 @@ export default function GeneralLedger() {
   const [filterType, setFilterType] = useState<string>("all");
 
   const { data: payments, isLoading: paymentsLoading } = useQuery({
-    queryKey: ["ledger-payments", currentBranch, startDate, endDate],
+    queryKey: ["ledger-payments", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
         .select(`
           *,
-          order:orders(order_number, created_by),
-          order_employee:orders(created_by(name:employees(name)))
+          order:orders!inner(
+            order_number, 
+            created_by, 
+            branch_id,
+            status,
+            paid_at,
+            employees(name)
+          )
         `)
+        .eq('order.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
+        .eq("status", "completed")
+        .not("order.paid_at", "is", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -40,19 +49,20 @@ export default function GeneralLedger() {
         description: `Payment for Order #${p.order?.order_number || p.order_id}`,
       }));
     },
-    enabled: !!currentBranch,
+    enabled: !!currentBranch?.id,
   });
 
   const { data: refunds, isLoading: refundsLoading } = useQuery({
-    queryKey: ["ledger-refunds", currentBranch, startDate, endDate],
+    queryKey: ["ledger-refunds", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("refunds")
         .select(`
           *,
-          order:orders(order_number),
+          order:orders!inner(order_number, branch_id),
           employee:employees(name)
         `)
+        .eq('order.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
@@ -65,19 +75,20 @@ export default function GeneralLedger() {
         description: `Refund - ${r.reason || 'No reason'}`,
       }));
     },
-    enabled: !!currentBranch,
+    enabled: !!currentBranch?.id,
   });
 
   const { data: loyaltyTransactions, isLoading: loyaltyLoading } = useQuery({
-    queryKey: ["ledger-loyalty", currentBranch, startDate, endDate],
+    queryKey: ["ledger-loyalty", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("loyalty_ledger")
         .select(`
           *,
-          customer:customers(name, phone),
+          customer:customers!inner(name, phone, branch_id),
           order:orders(order_number)
         `)
+        .eq('customer.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
@@ -87,11 +98,11 @@ export default function GeneralLedger() {
         ...l,
         type: 'loyalty',
         transaction_type: l.transaction_type,
-        amount: l.points_delta * 0.01, // Convert points to dollar equivalent
+        amount: l.points_delta * 0.01,
         description: `Loyalty ${l.transaction_type} - ${l.customer?.name || 'Unknown'}`,
       }));
     },
-    enabled: !!currentBranch,
+    enabled: !!currentBranch?.id,
   });
 
   const allTransactions = [
