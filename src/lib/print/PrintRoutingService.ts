@@ -2,22 +2,115 @@ import { supabase } from '@/integrations/supabase/client';
 import { printService } from './PrintService';
 import { generateKitchenTicket } from './kitchenTicketTemplate';
 
+/**
+ * Station icon mapping for different kitchen areas
+ */
+const STATION_ICONS: Record<string, string> = {
+  'HOT KITCHEN': '🍳',
+  'KITCHEN': '🍳',
+  'GRILL': '🔥',
+  'FRY': '🍟',
+  'BAR': '🍹',
+  'DRINKS': '🍹',
+  'SALAD': '🥗',
+  'COLD PREP': '🥗',
+  'DESSERTS': '🍰',
+  'PASTRY': '🍰',
+  'EXPO': '📋',
+  'DEFAULT': '🍽️'
+};
+
+/**
+ * Get station icon based on station name
+ */
+function getStationIcon(stationName: string): string {
+  const upperName = stationName.toUpperCase();
+  for (const [key, icon] of Object.entries(STATION_ICONS)) {
+    if (upperName.includes(key)) {
+      return icon;
+    }
+  }
+  return STATION_ICONS.DEFAULT;
+}
+
+/**
+ * Detect order priority based on order type and notes
+ */
+function detectPriority(orderType: string, notes?: string): 'normal' | 'rush' | 'urgent' {
+  const notesLower = notes?.toLowerCase() || '';
+  
+  if (notesLower.includes('urgent') || notesLower.includes('emergency')) {
+    return 'urgent';
+  }
+  
+  if (notesLower.includes('rush') || orderType.toLowerCase() === 'takeaway' || orderType.toLowerCase() === 'delivery') {
+    return 'rush';
+  }
+  
+  return 'normal';
+}
+
+/**
+ * Extract allergy warnings from order items
+ */
+function extractAllergyWarnings(items: any[]): string[] {
+  const warnings = new Set<string>();
+  
+  items.forEach(item => {
+    const notes = item.notes?.toLowerCase() || '';
+    
+    // Common allergen keywords
+    const allergens = ['allerg', 'peanut', 'nut', 'dairy', 'lactose', 'gluten', 'shellfish', 'seafood', 'egg', 'soy'];
+    
+    allergens.forEach(allergen => {
+      if (notes.includes(allergen)) {
+        // Extract the full sentence or phrase containing the allergen
+        const sentences = item.notes.split(/[.!]/);
+        sentences.forEach((sentence: string) => {
+          if (sentence.toLowerCase().includes(allergen)) {
+            warnings.add(sentence.trim());
+          }
+        });
+      }
+    });
+  });
+  
+  return Array.from(warnings);
+}
+
 export class PrintRoutingService {
   /**
    * Generate kitchen ticket HTML for browser printing
    */
   private static generateKitchenTicketHTML(ticketData: any, stationName: string): string {
     const { generate80mmKitchenTicketHTML } = require('./browserPrintTemplates');
+    
+    const stationIcon = getStationIcon(stationName);
+    const priority = detectPriority(ticketData.order_type);
+    const allergyWarnings = extractAllergyWarnings(ticketData.items);
+    
     return generate80mmKitchenTicketHTML({
       stationName,
+      stationIcon,
       orderNumber: ticketData.order_number,
       timestamp: ticketData.timestamp,
-      items: ticketData.items,
+      items: ticketData.items.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        notes: item.notes,
+        modifiers: item.modifiers?.map((mod: any) => ({
+          name: mod.name,
+          type: mod.price && mod.price < 0 ? 'remove' : 'add'
+        })),
+        prepTime: item.prepTime
+      })),
       tableLabel: ticketData.table_label,
       orderType: ticketData.order_type,
-      notes: ticketData.notes
+      priority,
+      allergyWarnings: allergyWarnings.length > 0 ? allergyWarnings : undefined
     });
   }
+  
   /**
    * Route order to appropriate stations and trigger prints
    */
@@ -54,6 +147,10 @@ export class PrintRoutingService {
     
     console.log(`🔀 Order routed to ${Object.keys(stationGroups).length} stations`);
     
+    // Detect priority and allergy warnings
+    const priority = detectPriority(order.order_type);
+    const allergyWarnings = extractAllergyWarnings(order.order_items);
+    
     // For each station, print ticket to assigned printers
     for (const [stationId, items] of Object.entries(stationGroups)) {
       await this.printToStation(stationId, {
@@ -62,7 +159,9 @@ export class PrintRoutingService {
         items: items,
         order_type: order.order_type,
         table_label: order.tables?.label,
-        timestamp: new Date(order.created_at)
+        timestamp: new Date(order.created_at),
+        priority,
+        allergyWarnings: allergyWarnings.length > 0 ? allergyWarnings : undefined
       });
     }
     
@@ -109,7 +208,8 @@ export class PrintRoutingService {
         name: item.menu_items.name,
         quantity: item.quantity,
         notes: item.notes,
-        modifiers: item.modifiers
+        modifiers: item.modifiers,
+        prepTime: item.prep_time_actual
       });
     }
     
@@ -164,16 +264,31 @@ export class PrintRoutingService {
       if (printer.ip_address) {
         try {
           // Generate ESC/POS ticket
+          const stationIcon = getStationIcon(station.name);
+          
           const ticketESCPOS = generateKitchenTicket({
             station: {
               name: station.name,
-              color: station.color || '#8B5CF6'
+              color: station.color || '#8B5CF6',
+              icon: stationIcon
             },
             order_number: ticketData.order_number,
             table_label: ticketData.table_label,
             order_type: ticketData.order_type,
-            items: ticketData.items,
-            timestamp: ticketData.timestamp
+            priority: ticketData.priority,
+            items: ticketData.items.map((item: any) => ({
+              name: item.name,
+              quantity: item.quantity,
+              notes: item.notes,
+              modifiers: item.modifiers?.map((mod: any) => ({
+                name: mod.name,
+                type: mod.price && mod.price < 0 ? 'remove' : 'add'
+              })),
+              prepTime: item.prepTime
+            })),
+            timestamp: ticketData.timestamp,
+            orderNotes: undefined, // Orders don't have general notes, only items do
+            allergyWarnings: ticketData.allergyWarnings
           });
           
           await printService.printRaw(printer.ip_address, ticketESCPOS);
@@ -187,7 +302,8 @@ export class PrintRoutingService {
             metadata: { 
               order_id: ticketData.order_id, 
               action: 'print_success',
-              method: 'network'
+              method: 'network',
+              priority: ticketData.priority
             }
           });
         } catch (networkError) {
