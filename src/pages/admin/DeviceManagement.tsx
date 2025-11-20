@@ -50,7 +50,7 @@ interface Device {
   stations?: { name: string; color: string };
 }
 
-const DeviceCard = ({ device, onEdit, onTest }: any) => {
+const DeviceCard = ({ device, onEdit, onTest, onDelete }: any) => {
   const statusColor = {
     online: 'default',
     offline: 'secondary',
@@ -120,6 +120,14 @@ const DeviceCard = ({ device, onEdit, onTest }: any) => {
             Test
           </Button>
         )}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onDelete}
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
       </div>
     </Card>
   );
@@ -425,6 +433,11 @@ export default function DeviceManagement() {
               setModalOpen(true);
             }}
             onTest={() => setTestPrintDevice(device as Device)}
+            onDelete={() => {
+              if (confirm(`Delete device "${device.name}"? This action cannot be undone.`)) {
+                deleteDevice.mutate(device.id);
+              }
+            }}
           />
         ))}
       </div>
