@@ -4,6 +4,21 @@ import { generateKitchenTicket } from './kitchenTicketTemplate';
 
 export class PrintRoutingService {
   /**
+   * Generate kitchen ticket HTML for browser printing
+   */
+  private static generateKitchenTicketHTML(ticketData: any, stationName: string): string {
+    const { generate80mmKitchenTicketHTML } = require('./browserPrintTemplates');
+    return generate80mmKitchenTicketHTML({
+      stationName,
+      orderNumber: ticketData.order_number,
+      timestamp: ticketData.timestamp,
+      items: ticketData.items,
+      tableLabel: ticketData.table_label,
+      orderType: ticketData.order_type,
+      notes: ticketData.notes
+    });
+  }
+  /**
    * Route order to appropriate stations and trigger prints
    */
   static async routeOrder(orderId: string) {
@@ -145,45 +160,63 @@ export class PrintRoutingService {
     console.log(`🖨️  Printing to ${printer.name} (${printer.ip_address || 'no IP'})`);
     
     try {
-      // Generate kitchen ticket using template
-      const ticketESCPOS = generateKitchenTicket({
-        station: {
-          name: station.name,
-          color: station.color || '#8B5CF6'
-        },
-        order_number: ticketData.order_number,
-        table_label: ticketData.table_label,
-        order_type: ticketData.order_type,
-        items: ticketData.items,
-        timestamp: ticketData.timestamp
-      });
-      
-      // Send to printer
+      // Try network print first if IP is configured
       if (printer.ip_address) {
-        await printService.printRaw(printer.ip_address, ticketESCPOS);
+        try {
+          // Generate ESC/POS ticket
+          const ticketESCPOS = generateKitchenTicket({
+            station: {
+              name: station.name,
+              color: station.color || '#8B5CF6'
+            },
+            order_number: ticketData.order_number,
+            table_label: ticketData.table_label,
+            order_type: ticketData.order_type,
+            items: ticketData.items,
+            timestamp: ticketData.timestamp
+          });
+          
+          await printService.printRaw(printer.ip_address, ticketESCPOS);
+          
+          console.log(`✅ Successfully printed to ${printer.name} (network)`);
+          
+          // Log success
+          await supabase.from('device_health_log').insert({
+            device_id: printer.id,
+            status: 'online',
+            metadata: { 
+              order_id: ticketData.order_id, 
+              action: 'print_success',
+              method: 'network'
+            }
+          });
+        } catch (networkError) {
+          console.warn('⚠️  Network print failed, falling back to browser print:', networkError);
+          
+          // Fallback to browser print
+          const { BrowserPrintService } = await import('./BrowserPrintService');
+          const html = this.generateKitchenTicketHTML(ticketData, station.name);
+          await BrowserPrintService.printHTML(html, printer.id, printer.name);
+          
+          console.log(`✅ Ticket printed via browser dialog for ${printer.name}`);
+        }
       } else {
-        // Fallback to console log if no IP
-        console.log(ticketESCPOS);
+        // No IP configured, use browser print directly
+        const { BrowserPrintService } = await import('./BrowserPrintService');
+        const html = this.generateKitchenTicketHTML(ticketData, station.name);
+        await BrowserPrintService.printHTML(html, printer.id, printer.name);
+        
+        console.log(`✅ Ticket printed via browser dialog for ${printer.name}`);
       }
-      
-      console.log(`✅ Successfully printed to ${printer.name}`);
-      
-      // Log success
-      await supabase.from('device_health_log').insert({
-        device_id: printer.id,
-        status: 'online',
-        metadata: { order_id: ticketData.order_id, action: 'print_success' }
-      });
-      
-    } catch (error: any) {
+    } catch (error) {
       console.error(`❌ Print failed for ${printer.name}:`, error);
       
-      // Log failure for monitoring
+      // Log error
       await supabase.from('device_health_log').insert({
         device_id: printer.id,
         status: 'error',
-        error_message: `Print failed: ${error.message}`,
-        metadata: { order_id: ticketData.order_id }
+        error_message: error instanceof Error ? error.message : String(error),
+        metadata: { order_id: ticketData.order_id, action: 'print_error' }
       });
     }
   }
