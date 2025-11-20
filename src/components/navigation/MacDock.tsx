@@ -55,6 +55,46 @@ export function MacDock() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [visibleApps, navigate, theme, setTheme, logout]);
 
+  // Two-finger horizontal swipe to switch modules (must be before any returns)
+  const bindSwipe = useGesture(
+    {
+      onDrag: ({ movement: [mx], last, touches, velocity: [vx] }) => {
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+        if (!isTouchDevice || touches !== 2) return;
+        
+        if (!last) {
+          setSwipeOffset(mx);
+        } else {
+          const shouldSwitch = Math.abs(mx) > 100 || Math.abs(vx) > 0.5;
+          
+          if (shouldSwitch) {
+            const currentRoute = location.pathname;
+            const routes = visibleApps.map(app => app.route);
+            const currentIndex = routes.indexOf(currentRoute);
+            
+            if (mx < 0 && currentIndex < routes.length - 1) {
+              // Swipe left: next module
+              navigate(routes[currentIndex + 1]);
+              haptics.medium();
+            } else if (mx > 0 && currentIndex > 0) {
+              // Swipe right: previous module
+              navigate(routes[currentIndex - 1]);
+              haptics.medium();
+            }
+          }
+          
+          setSwipeOffset(0);
+        }
+      }
+    },
+    {
+      drag: { 
+        axis: 'x',
+        filterTaps: true 
+      }
+    }
+  );
+
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
@@ -122,46 +162,6 @@ export function MacDock() {
       </div>
     );
   }
-
-  // Two-finger horizontal swipe to switch modules
-  const bindSwipe = useGesture(
-    {
-      onDrag: ({ movement: [mx], last, touches, velocity: [vx] }) => {
-        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-        if (!isTouchDevice || touches !== 2) return;
-        
-        if (!last) {
-          setSwipeOffset(mx);
-        } else {
-          const shouldSwitch = Math.abs(mx) > 100 || Math.abs(vx) > 0.5;
-          
-          if (shouldSwitch) {
-            const currentRoute = location.pathname;
-            const routes = visibleApps.map(app => app.route);
-            const currentIndex = routes.indexOf(currentRoute);
-            
-            if (mx < 0 && currentIndex < routes.length - 1) {
-              // Swipe left: next module
-              navigate(routes[currentIndex + 1]);
-              haptics.medium();
-            } else if (mx > 0 && currentIndex > 0) {
-              // Swipe right: previous module
-              navigate(routes[currentIndex - 1]);
-              haptics.medium();
-            }
-          }
-          
-          setSwipeOffset(0);
-        }
-      }
-    },
-    {
-      drag: { 
-        axis: 'x',
-        filterTaps: true 
-      }
-    }
-  );
 
   return (
     <div 
