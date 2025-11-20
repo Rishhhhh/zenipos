@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Plus, Edit, Trash, Settings, MoreVertical } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
-import { BranchSelector } from "@/components/branch/BranchSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -264,20 +263,33 @@ export default function StationManagement() {
     queryFn: async () => {
       if (!currentBranch?.id) return [];
       
-      const { data, error } = await supabase
+      // Fetch stations
+      const { data: stationsData, error: stationsError } = await supabase
         .from('stations')
-        .select(`
-          *,
-          station_devices(count)
-        `)
+        .select('*')
         .eq('branch_id', currentBranch.id)
         .order('sort_order');
       
-      if (error) throw error;
+      if (stationsError) throw stationsError;
       
-      return data.map((s: any) => ({
+      // Fetch device counts for each station
+      const stationIds = stationsData?.map(s => s.id) || [];
+      const { data: deviceCounts, error: devicesError } = await supabase
+        .from('devices')
+        .select('station_id')
+        .in('station_id', stationIds);
+      
+      if (devicesError) console.error('Error fetching device counts:', devicesError);
+      
+      // Count devices per station
+      const deviceCountMap = (deviceCounts || []).reduce((acc: any, device) => {
+        acc[device.station_id] = (acc[device.station_id] || 0) + 1;
+        return acc;
+      }, {});
+      
+      return (stationsData || []).map((s: any) => ({
         ...s,
-        device_count: s.station_devices?.[0]?.count || 0
+        device_count: deviceCountMap[s.id] || 0
       }));
     },
     enabled: !!currentBranch?.id
@@ -365,32 +377,58 @@ export default function StationManagement() {
             Configure kitchen stations, drinks bar, expo, and more
           </p>
         </div>
-        <Button onClick={() => {
-          setEditingStation(null);
-          setModalOpen(true);
-        }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Station
-        </Button>
+        <div className="flex items-center gap-3">
+          {branches && branches.length > 1 && currentBranch && (
+            <Badge variant="outline" className="text-sm">
+              Branch: {currentBranch.name}
+            </Badge>
+          )}
+          <Button onClick={() => {
+            setEditingStation(null);
+            setModalOpen(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Station
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stations?.map((station: any) => (
-          <StationCard
-            key={station.id}
-            station={station}
-            onEdit={() => {
-              setEditingStation(station);
+      {!stations || stations.length === 0 ? (
+        <Card className="p-12 text-center">
+          <div className="max-w-md mx-auto">
+            <div className="text-6xl mb-4">🏪</div>
+            <h3 className="text-xl font-semibold mb-2">No Stations Yet</h3>
+            <p className="text-muted-foreground mb-6">
+              Create your first station to start routing orders to kitchen, bar, or other areas
+            </p>
+            <Button onClick={() => {
+              setEditingStation(null);
               setModalOpen(true);
-            }}
-            onDelete={() => {
-              if (confirm(`Delete ${station.name}?`)) {
-                deleteStation.mutate(station.id);
-              }
-            }}
-          />
-        ))}
-      </div>
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create First Station
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {stations.map((station: any) => (
+            <StationCard
+              key={station.id}
+              station={station}
+              onEdit={() => {
+                setEditingStation(station);
+                setModalOpen(true);
+              }}
+              onDelete={() => {
+                if (confirm(`Delete ${station.name}?`)) {
+                  deleteStation.mutate(station.id);
+                }
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <StationModal
         station={editingStation}
