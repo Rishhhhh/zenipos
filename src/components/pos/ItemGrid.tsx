@@ -117,7 +117,7 @@ export function ItemGrid({
                     src={item.image_url} 
                     alt={item.name} 
                     className="w-full h-24 object-cover" 
-                    loading="lazy" 
+                    loading="lazy"
                     decoding="async"
                     width="200"
                     height="96"

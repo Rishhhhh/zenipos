@@ -5,7 +5,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, RefreshCw, LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import { lazy, Suspense } from "react";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+
+// Lazy load chart components only when needed
+const LazyChart = lazy(() => 
+  import("recharts").then((module) => ({
+    default: ({ data }: { data: any[] }) => {
+      const { ResponsiveContainer, AreaChart, Area } = module;
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              stroke="hsl(var(--primary))" 
+              fill="hsl(var(--primary) / 0.1)" 
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      );
+    }
+  }))
+);
 
 interface Module {
   id: string;
@@ -24,6 +47,7 @@ interface ModuleDetailModalProps {
 
 export function ModuleDetailModal({ module, open, onClose }: ModuleDetailModalProps) {
   const navigate = useNavigate();
+  const { isMobile } = useDeviceDetection();
 
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['module-stats', module?.id],
@@ -76,20 +100,18 @@ export function ModuleDetailModal({ module, open, onClose }: ModuleDetailModalPr
           </div>
         ) : null}
 
-        {/* Chart */}
+        {/* Chart - Only load on desktop */}
         {stats?.chartData && stats.chartData.length > 0 && (
           <div className="mb-6 h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.chartData}>
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="hsl(var(--primary))" 
-                  fill="hsl(var(--primary) / 0.1)" 
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {!isMobile ? (
+              <Suspense fallback={<Skeleton className="w-full h-full" />}>
+                <LazyChart data={stats.chartData} />
+              </Suspense>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-sm text-muted-foreground">Charts available on desktop</p>
+              </div>
+            )}
           </div>
         )}
 

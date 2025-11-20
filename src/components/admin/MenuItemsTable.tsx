@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Archive, ImageIcon, Trash2, Copy, DollarSign } from 'lucide-react';
@@ -8,6 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { FixedSizeList as List } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import {
   Select,
   SelectContent,
@@ -58,11 +61,15 @@ interface MenuItemsTableProps {
 export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { isMobile } = useDeviceDetection();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
   const [priceUpdateDialogOpen, setPriceUpdateDialogOpen] = useState(false);
   const [priceAdjustment, setPriceAdjustment] = useState({ type: 'percentage', value: 0 });
+
+  // Virtualization: Only enable if more than 50 items
+  const shouldVirtualize = useMemo(() => items.length > 50, [items.length]);
 
   // Fetch stations for bulk assignment
   const { data: stations = [] } = useQuery({
@@ -465,15 +472,37 @@ export function MenuItemsTable({ items, onEditItem }: MenuItemsTableProps) {
         </div>
 
         {/* Scrollable list */}
-        <ScrollArea className="h-[600px]">
-          <div>
-            {items.map((item) => (
-              <div key={item.id}>
-                {renderRow(item)}
-              </div>
-            ))}
+        {shouldVirtualize ? (
+          <div className="h-[600px]">
+            <AutoSizer>
+              {({ height, width }) => (
+                <List
+                  height={height}
+                  itemCount={items.length}
+                  itemSize={isMobile ? 120 : 80}
+                  width={width}
+                  overscanCount={5}
+                >
+                  {({ index, style }) => (
+                    <div key={items[index].id} style={style}>
+                      {renderRow(items[index])}
+                    </div>
+                  )}
+                </List>
+              )}
+            </AutoSizer>
           </div>
-        </ScrollArea>
+        ) : (
+          <ScrollArea className="h-[600px]">
+            <div>
+              {items.map((item) => (
+                <div key={item.id}>
+                  {renderRow(item)}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}

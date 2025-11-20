@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCartStore } from '@/lib/store/cart';
+import { useQueryConfig } from '@/hooks/useQueryConfig';
 
 /**
  * Core POS business logic and data fetching
@@ -11,6 +12,7 @@ import { useCartStore } from '@/lib/store/cart';
 export function usePOSLogic() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryConfig = useQueryConfig();
   
   // Cart store access
   const { 
@@ -64,6 +66,8 @@ export function usePOSLogic() {
       if (error) throw error;
       return data;
     },
+    refetchInterval: queryConfig.refetchInterval.fast,
+    staleTime: queryConfig.staleTime.fast,
   });
 
   // Fetch selected table
