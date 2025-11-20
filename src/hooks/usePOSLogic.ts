@@ -39,7 +39,6 @@ export function usePOSLogic() {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
   const [showNFCCardSelect, setShowNFCCardSelect] = useState(false);
-  const [showOrderTypeSelect, setShowOrderTypeSelect] = useState(false);
   const [pendingItem, setPendingItem] = useState<any>(null);
   const [previewOrderData, setPreviewOrderData] = useState<any>(null);
 
@@ -306,8 +305,6 @@ export function usePOSLogic() {
     setShowOrderConfirmation,
     showNFCCardSelect,
     setShowNFCCardSelect,
-    showOrderTypeSelect,
-    setShowOrderTypeSelect,
     pendingItem,
     setPendingItem,
     previewOrderData,

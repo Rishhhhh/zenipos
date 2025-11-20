@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useCartStore } from '@/lib/store/cart';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Payment flow management for POS
@@ -21,24 +22,36 @@ export function usePOSPayments(
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
 
-  const handlePaymentSuccess = (orderId?: string, orderData?: any) => {
+  const handlePaymentSuccess = async (orderId?: string) => {
     // Invalidate queries
     queryClient.invalidateQueries({ queryKey: ['orders'] });
     queryClient.invalidateQueries({ queryKey: ['pending-orders-nfc'] });
     queryClient.invalidateQueries({ queryKey: ['tables'] });
     
-    // NOW show customer receipt preview (after payment) - if setters provided
-    if (orderId && orderData && setPreviewOrderData && setShowPrintPreview) {
-      setPreviewOrderData({
-        orderId: orderId,
-        orderNumber: orderId.substring(0, 8),
-        items: orderData.order_items || [],
-        subtotal: orderData.subtotal,
-        tax: orderData.tax,
-        total: orderData.total,
-        timestamp: orderData.paid_at,
-      });
-      setShowPrintPreview(true);
+    // Fetch order data and show customer receipt preview (after payment) - if setters provided
+    if (orderId && setPreviewOrderData && setShowPrintPreview) {
+      try {
+        const { data: order, error } = await supabase
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('id', orderId)
+          .single();
+        
+        if (!error && order) {
+          setPreviewOrderData({
+            orderId: orderId,
+            orderNumber: orderId.substring(0, 8),
+            items: order.order_items || [],
+            subtotal: order.subtotal,
+            tax: order.tax,
+            total: order.total,
+            timestamp: order.paid_at,
+          });
+          setShowPrintPreview(true);
+        }
+      } catch (error) {
+        console.error('Failed to fetch order for preview:', error);
+      }
     }
     
     // Clear payment modal state

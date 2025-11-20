@@ -20,7 +20,7 @@ interface PaymentModalProps {
   orderId: string;
   orderNumber: string;
   total: number;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess: (orderId?: string) => void;
 }
 
 export function PaymentModal({
@@ -232,7 +232,7 @@ export function PaymentModal({
         description: `Order #${orderNumber} paid. Receipt printed.`,
       });
 
-      onPaymentSuccess();
+      onPaymentSuccess(orderId);
       onOpenChange(false);
     } catch (error: any) {
       toast({
