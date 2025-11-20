@@ -6,14 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Trash, ArrowRight } from "lucide-react";
+import { Trash, ArrowRight, CheckCircle } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function StationRoutingConfig() {
   const { stationId } = useParams();
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
   const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const { data: station } = useQuery({
     queryKey: ['stations', stationId],
@@ -73,12 +77,17 @@ export default function StationRoutingConfig() {
 
   const assignItem = useMutation({
     mutationFn: async ({ menuItemId, categoryId }: any) => {
+      if (!organization?.id) {
+        throw new Error('Organization is required');
+      }
+      
       const { error } = await supabase
         .from('station_routing_rules')
         .upsert({
           station_id: stationId,
           menu_item_id: menuItemId,
           category_id: categoryId,
+          organization_id: organization.id,
           prep_time_minutes: prepTimes[menuItemId || categoryId] || 5,
         });
       if (error) throw error;
@@ -86,6 +95,35 @@ export default function StationRoutingConfig() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['routing-rules', stationId] });
       toast.success('Routing rule added');
+    },
+    onError: (error) => {
+      toast.error(`Failed: ${error.message}`);
+    }
+  });
+  
+  const assignMultipleCategories = useMutation({
+    mutationFn: async (categoryIds: string[]) => {
+      if (!organization?.id) {
+        throw new Error('Organization is required');
+      }
+      
+      const rules = categoryIds.map(catId => ({
+        station_id: stationId,
+        category_id: catId,
+        organization_id: organization.id,
+        prep_time_minutes: prepTimes[catId] || 5,
+      }));
+      
+      const { error } = await supabase
+        .from('station_routing_rules')
+        .upsert(rules);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routing-rules', stationId] });
+      toast.success('Categories assigned successfully');
+      setSelectedCategories([]);
     },
     onError: (error) => {
       toast.error(`Failed: ${error.message}`);
@@ -132,27 +170,53 @@ export default function StationRoutingConfig() {
         <Card className="p-4">
           <h3 className="font-semibold mb-4">Available to Assign</h3>
           
-          <div className="mb-4">
-            <h4 className="text-sm font-medium mb-2">Categories (bulk assign)</h4>
-            <ScrollArea className="h-[200px]">
+          <div className="mb-6 p-4 bg-accent/50 rounded-lg border-2 border-primary/20">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="text-lg font-semibold">📋 Categories (Bulk Assign)</h4>
+                <p className="text-sm text-muted-foreground">
+                  All items in selected categories will print here
+                </p>
+              </div>
+              <Button
+                size="sm"
+                disabled={selectedCategories.length === 0}
+                onClick={() => assignMultipleCategories.mutate(selectedCategories)}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Assign {selectedCategories.length} Categories
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
               {availableCategories?.map(category => (
                 <div
                   key={category.id}
-                  className="p-3 mb-2 border rounded-lg flex items-center justify-between hover:bg-accent"
+                  className="flex items-center space-x-3 p-3 rounded-lg border bg-card hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    setSelectedCategories(prev => 
+                      prev.includes(category.id)
+                        ? prev.filter(id => id !== category.id)
+                        : [...prev, category.id]
+                    );
+                  }}
                 >
-                  <div>
+                  <Checkbox
+                    checked={selectedCategories.includes(category.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedCategories([...selectedCategories, category.id]);
+                      } else {
+                        setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                      }
+                    }}
+                  />
+                  <div className="flex-1">
                     <p className="font-medium">{category.name}</p>
-                    <p className="text-xs text-muted-foreground">Category</p>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => assignItem.mutate({ categoryId: category.id })}
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
                 </div>
               ))}
-            </ScrollArea>
+            </div>
           </div>
 
           <div>

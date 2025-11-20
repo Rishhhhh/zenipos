@@ -38,6 +38,25 @@ export class CloudPrintService implements PrintProvider {
     this.endpoint = endpoint;
   }
 
+  /**
+   * Send raw ESC/POS data to a printer via IP address
+   * For now, this is a stub - Phase 2 will implement actual network printing
+   */
+  async printRaw(ipAddress: string, escposData: string): Promise<void> {
+    console.log(`🖨️  [Raw Print to ${ipAddress}]`);
+    console.log(escposData);
+    
+    // Phase 2: Send raw data to network printer
+    // Example: Use raw TCP socket or HTTP endpoint
+    // await fetch(`http://${ipAddress}:9100/print`, {
+    //   method: 'POST',
+    //   body: escposData,
+    //   headers: { 'Content-Type': 'application/octet-stream' }
+    // });
+    
+    return Promise.resolve();
+  }
+
   async print58mm(receipt: Receipt): Promise<void> {
     console.log('🧾 [58mm Receipt]', receipt);
     
