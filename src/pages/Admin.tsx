@@ -63,7 +63,7 @@ export default function Admin() {
   }, []);
 
   return (
-    <div className="kiosk-layout p-6 pb-32 overflow-y-auto">
+    <div className="admin-container p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>

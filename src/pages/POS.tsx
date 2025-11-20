@@ -130,7 +130,7 @@ export default function POS() {
   }, [pendingItem, showModifierSelect]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="pos-container h-screen flex flex-col overflow-hidden">
       {/* Header: Table Badge + Display Link */}
       <div className="h-14 border-b flex items-center px-4 gap-3 flex-shrink-0">
         {(table_id || order_type === 'takeaway') && (

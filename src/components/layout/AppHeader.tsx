@@ -20,6 +20,7 @@ import { ZeniPOSLogo } from './ZeniPOSLogo';
 import { QueueStatusBadge } from '@/components/offline/QueueStatusBadge';
 import { BranchSelector } from '@/components/branch/BranchSelector';
 import { useBranch } from '@/contexts/BranchContext';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut }: {
   currentShiftId?: string | null;
@@ -35,6 +36,7 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
   const navigate = useNavigate();
   const { openModal } = useModalManager();
   const isPOSPage = location.pathname === '/pos';
+  const { device, isMobile } = useDeviceDetection();
 
   const handleCommand = (command: string) => {
     setPendingCommand(command);
@@ -46,6 +48,186 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
     setShowAI(true);
   };
 
+  // Mobile Header: Compact with dropdown menu
+  if (isMobile) {
+    return (
+      <>
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+          <div className="container flex h-14 items-center justify-between px-3">
+            <Link to="/" className="flex items-center gap-2">
+              <ZeniPOSLogo variant="icon" theme="color" className="h-8 w-8" />
+              <div className="flex flex-col">
+                <h1 className="text-sm font-bold leading-none">
+                  <span className="text-foreground">ZENI</span>
+                  <span className="text-primary">POS</span>
+                </h1>
+              </div>
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <QueueStatusBadge />
+
+              {employee ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{employee.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{role}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    
+                    {hasMultipleBranches && !branchesLoading && (
+                      <>
+                        <div className="px-2 py-2">
+                          <BranchSelector 
+                            value={selectedBranchId} 
+                            onChange={selectBranch}
+                            showAll={true}
+                            branches={branches}
+                            isLoading={branchesLoading}
+                          />
+                        </div>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
+                    <DropdownMenuItem onClick={handleOpenChat}>
+                      <span className="mr-2">🤖</span>
+                      AI Assistant
+                    </DropdownMenuItem>
+
+                    {isSuperAdmin && (
+                      <DropdownMenuItem onClick={() => navigate('/super-admin')}>
+                        <Shield className="mr-2 h-4 w-4" />
+                        Super Admin
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/login')}
+                >
+                  Login
+                </Button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <Sheet open={showAI} onOpenChange={setShowAI}>
+          <SheetContent side="bottom" className="h-[85vh]">
+            <AIAssistantPanel initialCommand={pendingCommand} />
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Portrait Tablet: Compact header with AI button
+  if (device === 'portrait-tablet') {
+    return (
+      <>
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+          <div className="container flex h-14 items-center justify-between px-4">
+            <Link to="/" className="flex items-center gap-2">
+              <ZeniPOSLogo variant="icon" theme="color" className="h-9 w-9" />
+              <div className="flex flex-col">
+                <h1 className="text-base font-bold leading-none">
+                  <span className="text-foreground">ZENI</span>
+                  <span className="text-primary">POS</span>
+                </h1>
+              </div>
+            </Link>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenChat}
+              className="h-9 w-9 rounded-full p-0"
+            >
+              🤖
+            </Button>
+
+            <div className="flex items-center gap-2">
+              {hasMultipleBranches && !branchesLoading && (
+                <BranchSelector 
+                  value={selectedBranchId} 
+                  onChange={selectBranch}
+                  showAll={true}
+                  branches={branches}
+                  isLoading={branchesLoading}
+                />
+              )}
+
+              <QueueStatusBadge />
+
+              {employee ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{employee.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{role}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+
+                    {isSuperAdmin && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/super-admin')}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          Super Admin
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
+                    <DropdownMenuItem onClick={logout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
+                  Login
+                </Button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <Sheet open={showAI} onOpenChange={setShowAI}>
+          <SheetContent side="right" className="w-[400px]">
+            <AIAssistantPanel initialCommand={pendingCommand} />
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Desktop & Landscape Tablet: Full header
   return (
     <>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
