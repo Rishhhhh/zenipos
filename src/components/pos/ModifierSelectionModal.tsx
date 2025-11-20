@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -205,13 +205,15 @@ export function ModifierSelectionModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Customize: {menuItemName}</DialogTitle>
-        </DialogHeader>
-
-        <ScrollArea className="max-h-[500px] pr-4">
+    <ResponsiveModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Customize: ${menuItemName}`}
+      description="Select your options"
+      side="bottom"
+      className="max-w-2xl"
+    >
+      <ScrollArea className="max-h-[500px] pr-4">
           <div className="space-y-6">
             {isLoading ? (
               <p className="text-center text-muted-foreground">Loading options...</p>
@@ -288,26 +290,26 @@ export function ModifierSelectionModal({
               ))
             )}
           </div>
-        </ScrollArea>
+      </ScrollArea>
 
-        <DialogFooter className="flex items-center justify-between">
-          <div className="text-sm">
-            {getTotalModifierPrice() > 0 && (
-              <span className="font-semibold">
-                Additional: +RM {getTotalModifierPrice().toFixed(2)}
-              </span>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSkip}>
-              Skip
-            </Button>
-            <Button onClick={handleConfirm} disabled={!canConfirm()}>
-              Add to Cart
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* Footer Actions */}
+      <div className="flex items-center justify-between pt-4 border-t mt-4">
+        <div className="text-sm">
+          {getTotalModifierPrice() > 0 && (
+            <span className="font-semibold">
+              Additional: +RM {getTotalModifierPrice().toFixed(2)}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSkip}>
+            Skip
+          </Button>
+          <Button onClick={handleConfirm} disabled={!canConfirm()}>
+            Add to Cart
+          </Button>
+        </div>
+      </div>
+    </ResponsiveModal>
   );
 }
