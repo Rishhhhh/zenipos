@@ -47,9 +47,10 @@ export default memo(function Sales() {
 
       const { data: todayOrders, error: todayError } = await supabase
         .from("orders")
-        .select("total, order_items(quantity), status")
+        .select("total, order_items(quantity), status, paid_at")
         .gte("created_at", today.toISOString())
-        .in("status", ["done", "preparing", "pending", "completed"]);
+        .in("status", ["completed", "done"])
+        .not("paid_at", "is", null);
 
       if (todayError) {
         console.error('[Sales Widget] Today query error:', todayError);
@@ -75,10 +76,11 @@ export default memo(function Sales() {
 
       const { data: comparisonOrders, error: comparisonError } = await supabase
         .from("orders")
-        .select("total")
+        .select("total, paid_at")
         .gte("created_at", comparisonDate.toISOString())
         .lt("created_at", today.toISOString())
-        .in("status", ["done"]);
+        .in("status", ["completed", "done"])
+        .not("paid_at", "is", null);
 
       if (comparisonError) {
         console.error('[Sales Widget] Comparison query error:', comparisonError);

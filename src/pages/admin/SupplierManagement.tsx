@@ -11,10 +11,14 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBranch } from '@/contexts/BranchContext';
 
 export default function SupplierManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { employee } = useAuth();
+  const { currentBranch } = useBranch();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
 
@@ -41,7 +45,11 @@ export default function SupplierManagement() {
       } else {
         const { error } = await supabase
           .from('suppliers')
-          .insert(supplier);
+          .insert({
+            ...supplier,
+            organization_id: currentBranch.organization_id,
+            branch_id: currentBranch.id,
+          });
         if (error) throw error;
       }
     },
