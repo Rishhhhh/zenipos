@@ -911,4 +911,40 @@ html, body {
   }
 }
 
+/* ============================================
+   TABLE MANAGEMENT TOUCH OPTIMIZATIONS
+   ============================================ */
+
+/* Table card touch optimizations */
+@media (pointer: coarse) {
+  /* Larger minimum heights on touch devices */
+  .table-card {
+    min-height: 160px;
+  }
+  
+  /* Disable hover animations on touch devices */
+  .table-card {
+    transition: none;
+  }
+  
+  /* Active state feedback (scale down on press) */
+  .table-card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Table grid improvements */
+.table-grid {
+  /* Prevent horizontal overflow on mobile */
+  overflow-x: hidden;
+}
+
+/* Smooth table card hover animations (desktop only) */
+@media (hover: hover) and (pointer: fine) {
+  .table-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+                0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+}
 

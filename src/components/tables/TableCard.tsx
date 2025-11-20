@@ -3,6 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Clock, CheckCircle, CreditCard, Users, NfcIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { cn } from '@/lib/utils';
 
 interface TableCardProps {
   table: any;
@@ -10,13 +12,19 @@ interface TableCardProps {
 }
 
 export function TableCard({ table, onClick }: TableCardProps) {
+  const { isMobile, isTablet } = useDeviceDetection();
+  const isTouch = isMobile || isTablet;
+
   const getTableState = () => {
     if (!table.current_order) {
       return {
         label: 'Available',
-        color: 'bg-green-500/10 border-green-500 text-green-700 dark:text-green-400',
+        // Soft mint green (muted, professional)
+        color: 'bg-emerald-50/50 border-emerald-300 dark:bg-emerald-950/20 dark:border-emerald-700',
+        textColor: 'text-emerald-700 dark:text-emerald-400',
+        badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700',
         pulse: false,
-        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+        icon: <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
       };
     }
 
@@ -26,32 +34,41 @@ export function TableCard({ table, onClick }: TableCardProps) {
     if (order.status === 'delivered') {
       return {
         label: 'Ready to Pay',
+        // Soft purple (muted primary)
         color: hasNFC 
-          ? 'bg-primary/20 border-primary text-primary ring-2 ring-primary/30' 
-          : 'bg-primary/10 border-primary text-primary',
+          ? 'bg-violet-100/60 border-violet-400 dark:bg-violet-950/30 dark:border-violet-600 ring-2 ring-violet-300 dark:ring-violet-700/50' 
+          : 'bg-violet-50/50 border-violet-300 dark:bg-violet-950/20 dark:border-violet-700',
+        textColor: 'text-violet-700 dark:text-violet-400',
+        badgeColor: 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-700',
         pulse: true,
-        icon: <CreditCard className="h-5 w-5 text-primary" />,
+        icon: <CreditCard className="h-5 w-5 text-violet-600 dark:text-violet-400" />,
       };
     }
 
     if (order.status === 'preparing') {
       return {
         label: 'Preparing',
+        // Soft amber/orange (muted, warm)
         color: hasNFC
-          ? 'bg-orange-500/20 border-orange-500 text-orange-700 dark:text-orange-400 ring-2 ring-orange-500/30'
-          : 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
+          ? 'bg-amber-100/60 border-amber-400 dark:bg-amber-950/30 dark:border-amber-600 ring-2 ring-amber-300 dark:ring-amber-700/50'
+          : 'bg-amber-50/50 border-amber-300 dark:bg-amber-950/20 dark:border-amber-700',
+        textColor: 'text-amber-700 dark:text-amber-400',
+        badgeColor: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
         pulse: false,
-        icon: <Clock className="h-5 w-5 text-orange-500" />,
+        icon: <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
       };
     }
 
     return {
       label: 'Occupied',
+      // Soft amber for occupied (same as preparing)
       color: hasNFC
-        ? 'bg-orange-500/20 border-orange-500 text-orange-700 dark:text-orange-400 ring-2 ring-orange-500/30'
-        : 'bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400',
+        ? 'bg-amber-100/60 border-amber-400 dark:bg-amber-950/30 dark:border-amber-600 ring-2 ring-amber-300 dark:ring-amber-700/50'
+        : 'bg-amber-50/50 border-amber-300 dark:bg-amber-950/20 dark:border-amber-700',
+      textColor: 'text-amber-700 dark:text-amber-400',
+      badgeColor: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
       pulse: false,
-      icon: <Clock className="h-5 w-5 text-orange-500" />,
+      icon: <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
     };
   };
 
@@ -61,28 +78,36 @@ export function TableCard({ table, onClick }: TableCardProps) {
   return (
     <Card
       onClick={onClick}
-      className={`
-        relative cursor-pointer transition-all 
-        hover:shadow-xl hover:-translate-y-1
-        ${state.color}
-        ${state.pulse ? 'animate-pulse' : ''}
-        border-2 p-6 min-h-[140px]
-      `}
+      className={cn(
+        'table-card relative cursor-pointer transition-all',
+        'hover:shadow-xl hover:-translate-y-1',
+        'border-2',
+        state.color,
+        state.pulse && 'animate-pulse',
+        // Fixed height structure
+        'flex flex-col',
+        // Responsive heights
+        isTouch ? 'h-[160px]' : 'h-[140px]',
+        // Responsive padding
+        isTouch ? 'p-4' : 'p-5'
+      )}
     >
-      <div className="flex flex-col gap-3">
-        {/* Header with Icon */}
-        <div className="flex items-start justify-between">
+      <div className="flex flex-col h-full">
+        {/* Header - Fixed height section */}
+        <div className="flex items-start justify-between mb-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             {state.icon}
-            <h3 className="text-3xl font-bold">{table.label}</h3>
+            <h3 className={cn("font-bold", isTouch ? "text-2xl" : "text-3xl")}>
+              {table.label}
+            </h3>
             
-            {/* Show NFC card icon if table has linked card */}
+            {/* NFC Card Badge */}
             {order?.nfc_card_id && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/30">
-                      <NfcIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100/60 border border-emerald-300 dark:bg-emerald-900/30 dark:border-emerald-700">
+                      <NfcIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -94,29 +119,37 @@ export function TableCard({ table, onClick }: TableCardProps) {
               </TooltipProvider>
             )}
           </div>
-          <Badge variant="secondary" className={`${state.color} font-semibold`}>
+          <Badge className={cn("font-semibold text-xs", state.badgeColor)}>
             {state.label}
           </Badge>
         </div>
 
-        {/* Seat Count */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="h-4 w-4" />
-          <span>{table.seats} seats</span>
-        </div>
+        {/* Content - Flex-grow to fill remaining space */}
+        <div className="flex-1 flex flex-col justify-between">
+          {/* Seat Count - Always visible */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <Users className="h-4 w-4" />
+            <span>{table.seats} seats</span>
+          </div>
 
-        {/* Order Info */}
-        {order && (
-          <>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+          {/* Order Info - Fixed position at bottom */}
+          {order ? (
+            <div className="space-y-1.5">
+              <div className={cn("flex items-center gap-2 text-muted-foreground", isTouch ? "text-xs" : "text-sm")}>
+                <Clock className="h-3.5 w-3.5" />
+                <span className="truncate">
+                  {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                </span>
+              </div>
+              <div className={cn("font-bold", state.textColor, isTouch ? "text-base" : "text-lg")}>
+                RM {order.total.toFixed(2)}
+              </div>
             </div>
-            <div className="text-lg font-bold">
-              RM {order.total.toFixed(2)}
-            </div>
-          </>
-        )}
+          ) : (
+            // Empty placeholder to maintain height consistency
+            <div className="h-[52px]" />
+          )}
+        </div>
       </div>
     </Card>
   );
