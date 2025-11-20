@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { BranchSelector } from "@/components/branch/BranchSelector";
 import {
@@ -307,6 +308,7 @@ const TestPrintModal = ({ device, open, onClose }: any) => {
 
 export default function DeviceManagement() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
   const { currentBranch, hasMultipleBranches, branches, selectBranch } = useBranch();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
@@ -331,16 +333,25 @@ export default function DeviceManagement() {
 
   const saveDevice = useMutation({
     mutationFn: async (device: any) => {
+      if (!organization?.id) {
+        throw new Error('Organization is required');
+      }
+      
+      const deviceData = {
+        ...device,
+        organization_id: organization.id
+      };
+      
       if (device.id) {
         const { error } = await supabase
           .from('devices')
-          .update(device)
+          .update(deviceData)
           .eq('id', device.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('devices')
-          .insert(device);
+          .insert([deviceData]);
         if (error) throw error;
       }
     },

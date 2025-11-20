@@ -6,6 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash, Settings, MoreVertical } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBranch } from "@/contexts/BranchContext";
+import { BranchSelector } from "@/components/branch/BranchSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -251,18 +254,23 @@ const StationModal = ({ station, open, onClose, onSave }: any) => {
 
 export default function StationManagement() {
   const queryClient = useQueryClient();
+  const { organization } = useAuth();
+  const { currentBranch, branches } = useBranch();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<any>(null);
 
   const { data: stations, isLoading } = useQuery({
-    queryKey: ['stations'],
+    queryKey: ['stations', currentBranch?.id],
     queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
       const { data, error } = await supabase
         .from('stations')
         .select(`
           *,
           station_devices(count)
         `)
+        .eq('branch_id', currentBranch.id)
         .order('sort_order');
       
       if (error) throw error;
@@ -271,14 +279,23 @@ export default function StationManagement() {
         ...s,
         device_count: s.station_devices?.[0]?.count || 0
       }));
-    }
+    },
+    enabled: !!currentBranch?.id
   });
 
   const createStation = useMutation({
     mutationFn: async (station: any) => {
+      if (!organization?.id || !currentBranch?.id) {
+        throw new Error('Organization and branch are required');
+      }
+      
       const { error } = await supabase
         .from('stations')
-        .insert([station]);
+        .insert([{
+          ...station,
+          branch_id: currentBranch.id,
+          organization_id: organization.id
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {

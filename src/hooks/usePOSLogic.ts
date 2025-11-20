@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCartStore } from '@/lib/store/cart';
 import { useQueryConfig } from '@/hooks/useQueryConfig';
+import { PrintRoutingService } from '@/lib/print/PrintRoutingService';
 
 /**
  * Core POS business logic and data fetching
@@ -198,6 +199,15 @@ export function usePOSLogic() {
     },
     onSuccess: async (order) => {
       console.log('✅ Order submitted successfully:', order.id);
+      
+      // AUTO-PRINT: Route order to station printers
+      try {
+        await PrintRoutingService.routeOrder(order.id);
+        console.log('✅ Order routed to printers');
+      } catch (printError) {
+        console.error('⚠️  Print routing failed:', printError);
+        // Don't fail the order, just log warning
+      }
       
       // Show print preview
       setPreviewOrderData({
