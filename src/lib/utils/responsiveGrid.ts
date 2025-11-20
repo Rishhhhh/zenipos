@@ -30,7 +30,7 @@ export const GRID_CONFIGS = {
     widgets: 'grid-cols-3'
   },
   desktop: {
-    menuItems: 'grid-cols-4 xl:grid-cols-5',
+    menuItems: 'grid-cols-3 xl:grid-cols-4',
     tables: 'grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6',
     adminModules: 'grid-cols-3 xl:grid-cols-4',
     kdsOrders: 'grid-cols-3 xl:grid-cols-4',
