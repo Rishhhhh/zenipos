@@ -94,23 +94,17 @@ export default function TableManagement() {
   const occupancyRate = totalTables > 0 ? (occupiedTables / totalTables * 100).toFixed(0) : 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div 
+      className="table-management-container flex flex-col p-4 md:p-6 gap-4"
+      style={{ height: 'var(--available-height)' }}
+    >
+      {/* Header - flex-shrink-0 */}
+      <div className="flex-shrink-0 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Table Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Table Management</h1>
           <p className="text-muted-foreground">Monitor table status and process payments</p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="default"
-            size="lg"
-            onClick={() => setShowPaymentNFCScanner(true)}
-            className="gap-2 bg-primary hover:bg-primary/90"
-          >
-            <NfcIcon className="h-5 w-5" />
-            Scan Card to Pay
-          </Button>
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -119,11 +113,19 @@ export default function TableManagement() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPaymentNFCScanner(true)}
+          >
+            <NfcIcon className="h-4 w-4 mr-2" />
+            Quick Pay
+          </Button>
         </div>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Metrics Cards - flex-shrink-0 */}
+      <div className="flex-shrink-0 grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -176,18 +178,18 @@ export default function TableManagement() {
         </Card>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <TableGrid
-            tables={tables || []}
-            isLoading={isLoading}
-            onTableClick={handleTableClick}
-          />
-        </div>
-
-        <div>
-          <TableHistoryPanel />
+      {/* Tables Grid - flex-1 overflow-auto */}
+      <div className="flex-1 overflow-auto">
+        <div className="pb-4">
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
+          ) : (
+            <TableGrid
+              tables={tables || []}
+              isLoading={isLoading}
+              onTableClick={handleTableClick}
+            />
+          )}
         </div>
       </div>
 

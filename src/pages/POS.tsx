@@ -353,8 +353,8 @@ export default function POS() {
 
       {/* MOBILE: Tabbed interface with categories drawer */}
       {isMobile && (
-        <>
-          {/* Top Status Bar */}
+        <div className="pos-container flex flex-col" style={{ height: 'var(--available-height)' }}>
+          {/* Top Status Bar - flex-shrink-0 */}
           <div className="flex-shrink-0 p-2 border-b bg-muted/30 flex items-center justify-between gap-2 flex-wrap">
             {nfc_card_id && nfcCardUid && (
               <Badge variant="outline" className="text-xs">
@@ -384,7 +384,7 @@ export default function POS() {
             </Button>
           </div>
 
-          {/* Tabs: Menu | Cart */}
+          {/* Tabs: Menu | Cart - flex-1 overflow-hidden */}
           <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as 'menu' | 'cart')} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="w-full grid grid-cols-2 flex-shrink-0">
               <TabsTrigger value="menu" className="text-sm">
@@ -479,9 +479,12 @@ export default function POS() {
             </TabsContent>
           </Tabs>
 
-          {/* Mobile Sticky Bottom Bar */}
+          {/* Mobile Sticky Bottom Bar - only show when on menu tab */}
           {mobileTab === 'menu' && items.length > 0 && (
-            <div className="flex-shrink-0 border-t bg-card/95 backdrop-blur-sm p-3 safe-area-bottom">
+            <div 
+              className="flex-shrink-0 border-t bg-card/95 backdrop-blur-sm p-3"
+              style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))' }}
+            >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -501,13 +504,13 @@ export default function POS() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* PORTRAIT TABLET: 2-column (menu with drawer | cart) */}
       {device === 'portrait-tablet' && (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Status Bar */}
+        <div className="pos-container flex flex-col" style={{ height: 'var(--available-height)' }}>
+          {/* Status Bar - flex-shrink-0 */}
           <div className="flex-shrink-0 p-2 border-b bg-muted/30 flex items-center gap-2">
             {nfc_card_id && nfcCardUid && (
               <Badge variant="outline" className="text-xs">
@@ -606,9 +609,41 @@ export default function POS() {
 
       {/* LANDSCAPE TABLET & DESKTOP: 3-column layout */}
       {!isMobile && device !== 'portrait-tablet' && (
-        <div className="flex-1 flex overflow-hidden">
-          {/* LEFT: Categories */}
-          <div className="w-60 border-r flex-shrink-0 overflow-hidden">
+        <div className="pos-container flex flex-col" style={{ height: 'var(--available-height)' }}>
+          {/* Status bar - flex-shrink-0 */}
+          <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center gap-2">
+            {nfc_card_id && nfcCardUid && (
+              <Badge variant="outline" className="text-xs">
+                <NfcIcon className="w-3 h-3 mr-1" />
+                {nfcCardUid}
+              </Badge>
+            )}
+            {order_type && (
+              <Badge variant="secondary" className="text-xs">
+                {order_type === 'dine_in' ? 'Dine In' : 'Takeaway'}
+              </Badge>
+            )}
+            {table_id && tableLabelShort && (
+              <Badge variant="default" className="text-xs">
+                <MapPin className="w-3 h-3 mr-1" />
+                {tableLabelShort}
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLinkDisplay(true)}
+              className="ml-auto h-7 px-2 text-xs"
+            >
+              <Monitor className="w-3 h-3 mr-1" />
+              {customerDisplayId ? 'Linked' : 'Link'}
+            </Button>
+          </div>
+
+          {/* 3-column layout - flex-1 overflow-hidden */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* LEFT: Categories */}
+            <div className="w-60 border-r flex-shrink-0 overflow-hidden">
             <CategoryList
               categories={categories}
               isLoading={categoriesLoading}
@@ -679,6 +714,7 @@ export default function POS() {
             />
           </div>
         </div>
+      </div>
       )}
     </div>
   );
