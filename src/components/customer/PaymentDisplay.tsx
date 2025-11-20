@@ -62,7 +62,7 @@ export function PaymentDisplay({ total, qrCodeUrl, isComplete, change }: Payment
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="text-5xl font-bold text-foreground mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-12">
           Complete Payment
         </h1>
 

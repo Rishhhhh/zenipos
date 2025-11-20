@@ -948,3 +948,132 @@ html, body {
   }
 }
 
+/* ============================================================
+   RESPONSIVE TYPOGRAPHY SCALE
+   ============================================================ */
+
+/* Mobile: 14px base (12.5% reduction) */
+@media (max-width: 767px) {
+  html {
+    font-size: 14px;
+  }
+
+  /* Fine-tune headings for mobile */
+  h1 {
+    font-size: 1.75rem !important; /* 24.5px */
+  }
+  
+  h2 {
+    font-size: 1.5rem !important; /* 21px */
+  }
+  
+  h3 {
+    font-size: 1.25rem !important; /* 17.5px */
+  }
+
+  /* Adjust utility classes */
+  .text-xs {
+    font-size: 0.7rem !important; /* 9.8px */
+  }
+  
+  .text-sm {
+    font-size: 0.8rem !important; /* 11.2px */
+  }
+}
+
+/* Portrait Tablet: 15px base (6.25% reduction) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Desktop: 16px base (standard) */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Large Desktop: 17px base (6.25% increase) */
+@media (min-width: 1440px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE SPACING UTILITIES
+   ============================================================ */
+
+/* Page Container - Responsive page padding */
+.page-container {
+  padding: 1.5rem; /* Desktop default: 24px */
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding: 0.75rem; /* Mobile: 10.5px */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .page-container {
+    padding: 1rem; /* Tablet: 15px */
+  }
+}
+
+/* Card Responsive - Adaptive card padding */
+.card-responsive {
+  padding: 1.5rem; /* Desktop: 24px */
+}
+
+@media (max-width: 767px) {
+  .card-responsive {
+    padding: 1rem; /* Mobile: 14px */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card-responsive {
+    padding: 1.25rem; /* Tablet: 18.75px */
+  }
+}
+
+/* Section Spacing - Responsive vertical spacing */
+.section-spacing {
+  margin-top: 2rem; /* Desktop: 32px */
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 767px) {
+  .section-spacing {
+    margin-top: 1rem; /* Mobile: 14px */
+    margin-bottom: 1rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .section-spacing {
+    margin-top: 1.5rem; /* Tablet: 22.5px */
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Grid Responsive Gap - Adaptive grid spacing */
+.grid-responsive-gap {
+  gap: 1.5rem; /* Desktop: 24px */
+}
+
+@media (max-width: 767px) {
+  .grid-responsive-gap {
+    gap: 0.75rem; /* Mobile: 10.5px */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .grid-responsive-gap {
+    gap: 1rem; /* Tablet: 15px */
+  }
+}
+
