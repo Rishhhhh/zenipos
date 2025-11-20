@@ -16,10 +16,14 @@ import { LiveRestaurantFlow } from '@/components/admin/LiveRestaurantFlow';
 import { useState, useEffect } from "react";
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { getGridClasses, getGapClasses, getPaddingClasses } from '@/lib/utils/responsiveGrid';
+import { cn } from '@/lib/utils';
 
 export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<any>(null);
+  const { device, isMobile } = useDeviceDetection();
 
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['admin-stats-enhanced'],
@@ -62,32 +66,51 @@ export default function Admin() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
+  // Responsive classes
+  const statsGridClass = getGridClasses('statsCards', device);
+  const moduleGridClass = getGridClasses('adminModules', device);
+  const gapClass = getGapClasses(device);
+  const paddingClass = getPaddingClasses(device);
+
   return (
-    <div className="admin-container p-6">
+    <div className={cn("admin-container", paddingClass)}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2 text-foreground">Admin Center</h1>
-            <p className="text-sm text-muted-foreground">Manage operations • Press ⌘K to search</p>
+            <h1 className={cn("font-bold mb-1 text-foreground", isMobile ? "text-xl" : "text-3xl")}>
+              Admin Center
+            </h1>
+            {!isMobile && (
+              <p className="text-sm text-muted-foreground">Manage operations • Press ⌘K to search</p>
+            )}
           </div>
-          <Button variant="outline" onClick={() => setCommandOpen(true)} className="glass">
-            <Search className="mr-2 h-4 w-4" />
-            Quick Search
-            <kbd className="ml-2 px-2 py-1 text-xs bg-muted rounded">⌘K</kbd>
+          <Button 
+            variant="outline" 
+            onClick={() => setCommandOpen(true)} 
+            size={isMobile ? "icon" : "default"}
+            className="glass"
+          >
+            <Search className={cn(isMobile ? "h-4 w-4" : "mr-2 h-4 w-4")} />
+            {!isMobile && (
+              <>
+                Quick Search
+                <kbd className="ml-2 px-2 py-1 text-xs bg-muted rounded">⌘K</kbd>
+              </>
+            )}
           </Button>
         </div>
 
         {/* Live Restaurant Flow - Real-time order tracking */}
-        <Card className="p-6 mb-8">
+        <Card className={cn(isMobile ? "p-3 mb-4" : "p-6 mb-8")}>
           <LiveRestaurantFlow />
         </Card>
 
         {isLoading ? (
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className={cn("grid mb-6", statsGridClass, gapClass)}>
             {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className={cn("grid mb-6", statsGridClass, gapClass)}>
             <Card className="p-4 glass-card">
               <div className="flex items-start justify-between">
                 <div>
@@ -151,13 +174,15 @@ export default function Admin() {
         )}
 
         {Object.entries(ADMIN_MODULES).map(([category, modules]) => (
-          <div key={category} className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-1 w-8 bg-primary rounded" />
-              <h2 className="text-lg font-semibold text-foreground">{category}</h2>
+          <div key={category} className={cn(isMobile ? "mb-4" : "mb-8")}>
+            <div className={cn("flex items-center gap-2", isMobile ? "mb-2" : "mb-3")}>
+              <div className={cn("h-1 bg-primary rounded", isMobile ? "w-4" : "w-8")} />
+              <h2 className={cn("font-semibold text-foreground", isMobile ? "text-sm" : "text-lg")}>
+                {category}
+              </h2>
               <span className="text-xs text-muted-foreground">({modules.length})</span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className={cn("grid", moduleGridClass, gapClass)}>
               {modules.map((module) => (
                 <CompactModuleCard key={module.id} module={module} onClick={() => setSelectedModule(module)} />
               ))}
