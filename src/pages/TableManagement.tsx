@@ -12,12 +12,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import { PaymentNFCScannerModal } from '@/components/pos/PaymentNFCScannerModal';
 import { useToast } from '@/hooks/use-toast';
+import { useBranch } from '@/contexts/BranchContext';
 
 export default function TableManagement() {
   useOrderRealtime(); // Enable real-time sync
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { currentBranch } = useBranch();
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [showPaymentNFCScanner, setShowPaymentNFCScanner] = useState(false);
@@ -33,8 +35,9 @@ export default function TableManagement() {
 
   // Query today's metrics
   const { data: metrics } = useQuery({
-    queryKey: ['today-metrics'],
-    queryFn: getTodayMetrics,
+    queryKey: ['today-metrics', currentBranch?.id],
+    queryFn: () => getTodayMetrics(currentBranch!.id),
+    enabled: !!currentBranch?.id,
     refetchInterval: 30000, // Refresh every 30s
   });
 
@@ -78,37 +81,40 @@ export default function TableManagement() {
 
   return (
     <div 
-      className="table-management-container flex flex-col p-4 md:p-6 gap-4"
-      style={{ height: 'var(--available-height)' }}
+      className="h-full flex flex-col overflow-hidden"
+      style={{ height: 'calc(100vh - 60px)' }}
     >
-      {/* Header - flex-shrink-0 */}
-      <div className="flex-shrink-0 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Table Management</h1>
-          <p className="text-muted-foreground">Monitor table status and process payments</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['tables'] })}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPaymentNFCScanner(true)}
-          >
-            <NfcIcon className="h-4 w-4 mr-2" />
-            Quick Pay
-          </Button>
+      {/* Header - fixed */}
+      <div className="flex-shrink-0 p-4 md:p-6 border-b">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Table Management</h1>
+            <p className="text-muted-foreground">Monitor table status and process payments</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['tables'] })}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPaymentNFCScanner(true)}
+            >
+              <NfcIcon className="h-4 w-4 mr-2" />
+              Quick Pay
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Metrics Cards - flex-shrink-0 */}
-      <div className="flex-shrink-0 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Metrics Cards - fixed */}
+      <div className="flex-shrink-0 px-4 md:px-6 py-4 border-b">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -159,21 +165,20 @@ export default function TableManagement() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
 
-      {/* Tables Grid - flex-1 overflow-auto */}
-      <div className="flex-1 overflow-auto">
-        <div className="pb-4">
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
-          ) : (
-            <TableGrid
-              tables={tables || []}
-              isLoading={isLoading}
-              onTableClick={handleTableClick}
-            />
-          )}
-        </div>
+      {/* Tables Grid - scrollable */}
+      <div className="flex-1 overflow-auto px-4 md:px-6 py-4">
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
+        ) : (
+          <TableGrid
+            tables={tables || []}
+            isLoading={isLoading}
+            onTableClick={handleTableClick}
+          />
+        )}
       </div>
 
       {/* Modals */}
