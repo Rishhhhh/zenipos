@@ -113,33 +113,33 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-radial from-danger/10 via-transparent to-transparent" />
       
       {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
         <ThemeToggle />
       </div>
 
       {/* Login Card */}
       <GlassLoginCard>
-        {/* Logo & Branding */}
-        <div className="text-center mb-8 animate-[fade-in_0.8s_ease-out]">
+        {/* Logo & Branding - Responsive sizing */}
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 animate-[fade-in_0.8s_ease-out]">
           {organization?.logoUrl ? (
-            <div className="inline-flex items-center justify-center mb-4">
+            <div className="inline-flex items-center justify-center mb-2 sm:mb-4">
               <img 
                 src={organization.logoUrl} 
                 alt={organization.name} 
-                className="h-20 object-contain"
+                className="h-12 sm:h-16 md:h-20 object-contain"
               />
             </div>
           ) : (
-            <div className="inline-flex items-center justify-center mb-4">
-              <ZeniPOSLogo variant="full" theme="auto" className="h-20" />
+            <div className="inline-flex items-center justify-center mb-2 sm:mb-4">
+              <ZeniPOSLogo variant="full" theme="auto" className="h-12 sm:h-16 md:h-20" />
             </div>
           )}
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
             {organization?.name || (
               <>
                 <span className="text-foreground">ZENI</span>
@@ -147,13 +147,13 @@ export default function Login() {
               </>
             )}
           </h1>
-          <p className="text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
+          <p className="text-sm text-muted-foreground mt-2">
             {showBranchSelector ? 'Select your branch' : 'Enter your PIN to continue'}
           </p>
         </div>
 
-        {/* PIN Pad */}
+        {/* PIN Pad - Responsive spacing */}
         <div className="animate-[fade-in_1s_ease-out_0.2s_both]">
           <AnimatedPinPad
             value={pin}
@@ -163,8 +163,8 @@ export default function Login() {
           />
         </div>
 
-        {/* Remember Me */}
-        <div className="flex items-center gap-2 mt-6 justify-center animate-[fade-in_1s_ease-out_0.4s_both]">
+        {/* Remember Me - Responsive spacing */}
+        <div className="flex items-center gap-2 mt-4 sm:mt-6 justify-center animate-[fade-in_1s_ease-out_0.4s_both]">
           <Checkbox
             id="remember"
             checked={rememberMe}

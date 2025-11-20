@@ -2,6 +2,7 @@ import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 interface ResponsiveModalProps {
   open: boolean;
@@ -10,6 +11,7 @@ interface ResponsiveModalProps {
   description?: string;
   children: ReactNode;
   side?: 'top' | 'right' | 'bottom' | 'left';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   className?: string;
 }
 
@@ -25,14 +27,31 @@ export function ResponsiveModal({
   description,
   children,
   side = 'bottom',
+  size = 'md',
   className = ''
 }: ResponsiveModalProps) {
   const { isMobile } = useDeviceDetection();
 
+  // Size mappings for desktop Dialog
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
+    xl: 'max-w-6xl',
+    full: 'max-w-[95vw]'
+  };
+
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side={side} className={`overflow-y-auto ${className}`}>
+        <SheetContent 
+          side={side} 
+          className={cn(
+            'overflow-y-auto',
+            size === 'full' ? 'w-full' : '',
+            className
+          )}
+        >
           <SheetHeader>
             <SheetTitle>{title}</SheetTitle>
             {description && <SheetDescription>{description}</SheetDescription>}
@@ -45,7 +64,13 @@ export function ResponsiveModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`max-w-2xl overflow-y-auto max-h-[90vh] ${className}`}>
+      <DialogContent 
+        className={cn(
+          sizeClasses[size],
+          'overflow-y-auto max-h-[90vh]',
+          className
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

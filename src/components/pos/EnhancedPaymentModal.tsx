@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -166,12 +166,12 @@ export function EnhancedPaymentModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Process Payment</DialogTitle>
-        </DialogHeader>
-
+    <ResponsiveModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title="Complete Payment"
+      size="lg"
+    >
         <div className="space-y-6">
           {/* Payment Type Selection */}
           <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
@@ -452,7 +452,6 @@ export function EnhancedPaymentModal({
             </TabsContent>
           </Tabs>
         </div>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveModal>
   );
 }

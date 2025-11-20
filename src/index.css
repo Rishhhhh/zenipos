@@ -911,6 +911,33 @@ html, body {
   }
 }
 
+/* Login/Auth Page Mobile Optimizations */
+@media (max-width: 640px) {
+  /* Ensure login page fits in viewport */
+  .glass-card {
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    font-size: 16px !important;
+  }
+
+  /* Compact login headings */
+  .glass-card h1 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  /* Reduce vertical spacing in login forms */
+  .glass-card .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+}
+
 /* ============================================
    TABLE MANAGEMENT TOUCH OPTIMIZATIONS
    ============================================ */
