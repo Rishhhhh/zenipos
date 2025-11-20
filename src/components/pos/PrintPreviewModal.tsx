@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ResponsiveModal } from "@/components/pos/ResponsiveModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Printer, Download, Code, AlertTriangle } from "lucide-react";
@@ -169,17 +169,15 @@ export function PrintPreviewModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Printer className="h-5 w-5" />
-            Print Preview - Order #{orderData.orderNumber}
-          </DialogTitle>
-          <DialogDescription>
-            Review receipts and tickets before sending to printer
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Print Preview - Order #${orderData.orderNumber}`}
+      description="Review receipts and tickets before sending to printer"
+      side="bottom"
+      size="xl"
+      className="max-h-[90vh]"
+    >
 
         {unroutedItems.length > 0 && (
           <Alert variant="destructive" className="mb-4">
@@ -242,7 +240,7 @@ export function PrintPreviewModal({
           </ScrollArea>
         </Tabs>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-4 border-t">
           <Button
             onClick={handleSendToPrinter}
             className="flex-1"
@@ -264,7 +262,6 @@ export function PrintPreviewModal({
             Close
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveModal>
   );
 }

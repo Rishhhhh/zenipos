@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,13 +86,15 @@ export function OpenTabModal({ open, onOpenChange }: OpenTabModalProps) {
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Open Tab</DialogTitle>
-          <DialogDescription>Pre-authorize a customer's card to open a tab</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
+    <ResponsiveModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Open Tab"
+      description="Pre-authorize a customer's card to open a tab"
+      side="bottom"
+      size="md"
+    >
+      <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="customer-name">Customer Name</Label>
             <Input id="customer-name" placeholder="Enter customer name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} disabled={processing} />
@@ -114,14 +116,16 @@ export function OpenTabModal({ open, onOpenChange }: OpenTabModalProps) {
             <Input id="amount" type="number" placeholder="Or enter custom amount" value={preAuthAmount} onChange={(e) => setPreAuthAmount(e.target.value)} disabled={processing} />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={processing}>Cancel</Button>
-          <Button onClick={() => createTab.mutate()} disabled={processing || !customerName || !tableId || !preAuthAmount}>
+        
+        <div className="flex gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={processing} className="flex-1">
+            Cancel
+          </Button>
+          <Button onClick={() => createTab.mutate()} disabled={processing || !customerName || !tableId || !preAuthAmount} className="flex-1">
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {processing ? 'Processing...' : 'Open Tab'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+    </ResponsiveModal>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GlassModal } from '@/components/modals/GlassModal';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -67,13 +67,13 @@ export function ManagerPinModal({ open, onOpenChange, onSuccess, action }: Manag
   };
 
   return (
-    <GlassModal
+    <ResponsiveModal
       open={open}
       onOpenChange={onOpenChange}
       title="Manager Authorization"
       description={`Enter manager PIN to authorize: ${action}`}
+      side="bottom"
       size="sm"
-      variant="default"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -138,6 +138,6 @@ export function ManagerPinModal({ open, onOpenChange, onSuccess, action }: Manag
           Authorize
         </Button>
       </form>
-    </GlassModal>
+    </ResponsiveModal>
   );
 }
