@@ -52,32 +52,32 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-radial from-primary/10 via-transparent to-transparent" />
       
       {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
         <ThemeToggle />
       </div>
 
       {/* Login Card */}
       <GlassLoginCard>
-        {/* Logo & Branding */}
-        <div className="text-center mb-8 animate-[fade-in_0.8s_ease-out]">
-          <div className="inline-flex items-center justify-center mb-4">
-            <ZeniPOSLogo variant="full" theme="auto" className="h-20" />
+        {/* Logo & Branding - Responsive sizing */}
+        <div className="text-center mb-4 sm:mb-6 md:mb-8 animate-[fade-in_0.8s_ease-out]">
+          <div className="inline-flex items-center justify-center mb-2 sm:mb-4">
+            <ZeniPOSLogo variant="full" theme="auto" className="h-12 sm:h-16 md:h-20" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">
             <span className="text-foreground">ZENI</span>
             <span className="text-primary">POS</span>
           </h1>
-          <p className="text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
-          <p className="text-muted-foreground mt-4">Organization Login</p>
+          <p className="text-xs sm:text-sm text-muted-foreground tracking-widest">ZERO ERROR</p>
+          <p className="text-sm text-muted-foreground mt-2 sm:mt-4">Organization Login</p>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 animate-[fade-in_1s_ease-out_0.2s_both]">
+        {/* Login Form - Responsive spacing */}
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 animate-[fade-in_1s_ease-out_0.2s_both]">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

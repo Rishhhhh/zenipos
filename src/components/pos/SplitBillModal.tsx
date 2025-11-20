@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -118,11 +118,12 @@ export function SplitBillModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Split Bill</DialogTitle>
-        </DialogHeader>
+    <ResponsiveModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title="Split Bill"
+      size="lg"
+    >
 
         <Tabs value={splitMethod} onValueChange={(v) => setSplitMethod(v as any)}>
           <TabsList className="grid w-full grid-cols-4">
@@ -328,7 +329,6 @@ export function SplitBillModal({
             Confirm Split
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveModal>
   );
 }

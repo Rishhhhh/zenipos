@@ -35,14 +35,15 @@ export function AnimatedPinPad({
   ];
 
   return (
-    <div className="space-y-6">
-      {/* PIN Display */}
-      <div className="flex justify-center items-center gap-3 min-h-[60px]">
+    <div className="space-y-4 sm:space-y-6">
+      {/* PIN Display - Responsive sizing */}
+      <div className="flex justify-center items-center gap-2 sm:gap-3 min-h-[40px] sm:min-h-[60px]">
         {Array.from({ length: maxLength }).map((_, i) => (
           <div
             key={i}
             className={cn(
-              'w-4 h-4 rounded-full border-2 transition-all duration-200',
+              // Responsive dot size: smaller on mobile
+              'w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-200',
               i < value.length
                 ? 'bg-danger border-danger shadow-[0_0_12px_rgba(239,68,68,0.5)] animate-[pin-dot-pulse_0.3s_ease]'
                 : 'bg-transparent border-border/30'
@@ -51,8 +52,8 @@ export function AnimatedPinPad({
         ))}
       </div>
 
-      {/* Number Pad */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Number Pad - Responsive gaps and button height */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {keys.map((row, rowIndex) =>
           row.map((key) => {
             const isSpecial = key === 'clear' || key === 'backspace';
@@ -64,7 +65,9 @@ export function AnimatedPinPad({
                 onClick={() => handleKeyPress(key)}
                 disabled={disabled}
                 className={cn(
-                  'h-20 text-2xl font-semibold transition-all duration-150',
+                  // Responsive button height: 56px mobile, 64px tablet, 80px desktop
+                  'h-14 sm:h-16 md:h-20',
+                  'text-xl sm:text-2xl font-semibold transition-all duration-150',
                   'glass border border-border/20',
                   'hover:bg-danger/20 hover:border-danger/50 hover:scale-105',
                   'active:scale-95 active:animate-[dock-bounce_0.4s_ease]',
@@ -73,9 +76,9 @@ export function AnimatedPinPad({
                 )}
               >
                 {key === 'clear' ? (
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
                 ) : key === 'backspace' ? (
-                  <Delete className="h-6 w-6" />
+                  <Delete className="h-5 w-5 sm:h-6 sm:w-6" />
                 ) : (
                   key
                 )}
