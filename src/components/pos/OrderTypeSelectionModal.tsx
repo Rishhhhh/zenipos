@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NfcIcon, UtensilsCrossed, ShoppingBag } from 'lucide-react';
@@ -19,11 +19,13 @@ export function OrderTypeSelectionModal({
   onSelectTakeaway,
 }: OrderTypeSelectionModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Select Order Type</DialogTitle>
-        </DialogHeader>
+    <ResponsiveModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Select Order Type"
+      side="bottom"
+      size="md"
+    >
 
         {/* Display Selected NFC Card */}
         <div className="flex items-center justify-center mb-6">
@@ -63,7 +65,6 @@ export function OrderTypeSelectionModal({
             </div>
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveModal>
   );
 }
