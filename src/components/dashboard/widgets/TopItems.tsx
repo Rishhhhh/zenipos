@@ -10,11 +10,13 @@ import { TopItemsConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { useWidgetRefresh } from "@/contexts/WidgetRefreshContext";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 export default memo(function TopItems() {
   const queryClient = useQueryClient();
   const { config } = useWidgetConfig<TopItemsConfig>('top-items');
   const { registerRefresh } = useWidgetRefresh();
+  const { isMobile } = useDeviceDetection();
   
   // Real-time subscription for order items
   useRealtimeTable('order_items', () => {
