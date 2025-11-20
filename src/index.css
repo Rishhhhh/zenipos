@@ -1003,6 +1003,113 @@ html, body {
 }
 
 /* ============================================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ============================================================ */
+
+/* Mobile: Disable expensive animations and effects */
+@media (max-width: 767px) {
+  /* Disable all animations */
+  .animate-fade-in,
+  .animate-fade-out,
+  .animate-scale-in,
+  .animate-scale-out,
+  .animate-slide-in-right,
+  .animate-slide-out-right,
+  .animate-enter,
+  .animate-exit,
+  .animate-pulse,
+  .pulse {
+    animation: none !important;
+    transition: opacity 0.1s ease !important;
+  }
+
+  /* Disable Bento widget glow effects (expensive) */
+  .bento-widget::after,
+  .bento-spotlight {
+    display: none !important;
+  }
+
+  .bento-widget {
+    backdrop-filter: none !important;
+    transition: none !important;
+  }
+
+  /* Disable all glassmorphism effects (backdrop-filter is expensive) */
+  .glass,
+  .glass-card,
+  .glass-dock,
+  .glass-backdrop,
+  .glass-modal-backdrop {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: hsl(var(--card)) !important;
+  }
+
+  /* Reduce shadows to minimal */
+  .shadow-lg,
+  .shadow-xl,
+  [class*="shadow-"] {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Disable hover effects on mobile */
+  *:hover {
+    transform: none !important;
+  }
+
+  /* Disable will-change for better scroll performance */
+  * {
+    will-change: auto !important;
+  }
+
+  /* Disable complex gradients */
+  .bg-gradient-to-br,
+  .bg-gradient-to-r,
+  .bg-gradient-to-b {
+    background: hsl(var(--background)) !important;
+  }
+
+  /* Simplify modal animations */
+  .glass-modal-content {
+    animation: none !important;
+    transition: opacity 0.15s ease !important;
+  }
+
+  /* Disable table card animations */
+  .table-card:hover {
+    transform: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Disable chart animations (recharts) */
+  .recharts-wrapper {
+    animation: none !important;
+  }
+}
+
+/* Portrait Tablet: Keep some effects but disable expensive ones */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Disable Bento glow (still expensive on tablets) */
+  .bento-widget::after,
+  .bento-spotlight {
+    display: none !important;
+  }
+
+  /* Reduce glassmorphism blur */
+  .glass,
+  .glass-card,
+  .glass-dock {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Simplify shadows */
+  .shadow-xl {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+/* ============================================================
    RESPONSIVE SPACING UTILITIES
    ============================================================ */
 

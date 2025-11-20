@@ -16,6 +16,7 @@ import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { getGridClasses, getGapClasses } from "@/lib/utils/responsiveGrid";
 import { cn } from "@/lib/utils";
+import { useQueryConfig } from "@/hooks/useQueryConfig";
 
 interface Order {
   id: string;
@@ -55,6 +56,7 @@ export default function KDS() {
   
   // Device detection for responsive layouts
   const { device, isMobile } = useDeviceDetection();
+  const queryConfig = useQueryConfig();
   const kdsGridClass = getGridClasses('kdsOrders', device);
   const kdsGapClass = getGapClasses(device);
 
@@ -103,7 +105,8 @@ export default function KDS() {
       console.log('✅ KDS loaded orders:', transformedData?.length || 0);
       return transformedData;
     },
-    refetchInterval: 5000, // Fallback polling every 5s
+    refetchInterval: queryConfig.refetchInterval.fast,
+    staleTime: queryConfig.staleTime.fast,
   });
 
   // Real-time subscription using unified service

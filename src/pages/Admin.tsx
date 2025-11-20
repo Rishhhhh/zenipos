@@ -19,11 +19,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { getGridClasses, getGapClasses, getPaddingClasses } from '@/lib/utils/responsiveGrid';
 import { cn } from '@/lib/utils';
+import { useQueryConfig } from '@/hooks/useQueryConfig';
 
 export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const { device, isMobile } = useDeviceDetection();
+  const queryConfig = useQueryConfig();
 
   const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['admin-stats-enhanced'],
@@ -46,6 +48,8 @@ export default function Admin() {
         sparklineData,
       };
     },
+    refetchInterval: queryConfig.refetchInterval.normal,
+    staleTime: queryConfig.staleTime.normal,
   });
 
   // Real-time subscription using unified service
