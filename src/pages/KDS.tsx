@@ -13,6 +13,9 @@ import { RecallOrderModal } from "@/components/pos/RecallOrderModal";
 import { ModifyOrderModal } from "@/components/pos/ModifyOrderModal";
 import { Badge } from "@/components/ui/badge";
 import { useOrderRealtime } from "@/hooks/useOrderRealtime";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import { getGridClasses, getGapClasses } from "@/lib/utils/responsiveGrid";
+import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
@@ -49,6 +52,11 @@ export default function KDS() {
   const lastUpdateRef = useRef(Date.now());
   const [selectedOrderForRecall, setSelectedOrderForRecall] = useState<string | null>(null);
   const [selectedOrderForModify, setSelectedOrderForModify] = useState<string | null>(null);
+  
+  // Device detection for responsive layouts
+  const { device, isMobile } = useDeviceDetection();
+  const kdsGridClass = getGridClasses('kdsOrders', device);
+  const kdsGapClass = getGapClasses(device);
 
   // Optimized RAF timer (updates every 500ms)
   useEffect(() => {
@@ -228,7 +236,7 @@ export default function KDS() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={cn("grid", kdsGridClass, kdsGapClass)}>
           {orders?.map(order => {
             const elapsedTime = formatDistanceToNow(new Date(order.created_at), { addSuffix: false });
             
