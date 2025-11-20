@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -8,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface TableOrderDetailsProps {
   open: boolean;
@@ -17,6 +19,7 @@ interface TableOrderDetailsProps {
 }
 
 export function TableOrderDetails({ open, onOpenChange, table, onPayment }: TableOrderDetailsProps) {
+  const { isMobile } = useDeviceDetection();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isBumping, setIsBumping] = useState(false);
@@ -124,6 +127,132 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
     }
   };
 
+  // Shared content component
+  const DetailsContent = () => (
+    <>
+      {/* Order Timeline */}
+      <div>
+        <h4 className="text-sm font-semibold mb-4">Order Progress</h4>
+        <div className="space-y-0">
+          <TimelineItem
+            icon={<ShoppingCart />}
+            title="Order Placed"
+            timestamp={order.created_at}
+            status="completed"
+          />
+          <TimelineItem
+            icon={<ChefHat />}
+            title="Kitchen Preparing"
+            timestamp={['preparing', 'kitchen_queue'].includes(order.status) ? order.created_at : null}
+            status={
+              ['preparing', 'kitchen_queue'].includes(order.status) ? 'active' : 
+              ['ready', 'serving', 'dining', 'delivered', 'payment', 'completed'].includes(order.status) ? 'completed' : 
+              'pending'
+            }
+          />
+          <TimelineItem
+            icon={<Truck />}
+            title="Being Served / Dining"
+            timestamp={order.serving_at || order.dining_at || order.delivered_at}
+            status={
+              ['serving', 'dining'].includes(order.status) ? 'active' :
+              ['delivered', 'payment', 'completed'].includes(order.status) ? 'completed' :
+              'pending'
+            }
+          />
+          <TimelineItem
+            icon={<DollarSign />}
+            title="Payment Complete"
+            timestamp={order.paid_at}
+            status={order.paid_at ? 'completed' : 'pending'}
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Order Items */}
+      <div>
+        <h4 className="text-sm font-semibold mb-2">Items</h4>
+        <div className="space-y-1">
+          {order.order_items?.map((item: any) => (
+            <div key={item.id} className="flex justify-between text-sm">
+              <span>
+                {item.quantity}x {item.menu_items?.name}
+              </span>
+              <span className="font-medium">
+                RM {(item.quantity * item.unit_price).toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <Separator className="my-2" />
+        <div className="flex justify-between font-bold">
+          <span>Total</span>
+          <span>RM {order.total.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        {order.status === 'preparing' && (
+          <>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleManualBump}
+              disabled={isBumping}
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              Mark as Delivered (Normal)
+            </Button>
+
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={handleAdminOverride}
+              disabled={isOverriding}
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Admin Override: Force to Dining
+            </Button>
+          </>
+        )}
+
+        {(order.status === 'delivered' || order.status === 'dining') && (
+          <Button
+            onClick={onPayment}
+            className="w-full"
+            size="lg"
+          >
+            <DollarSign className="h-5 w-5 mr-2" />
+            Process Payment
+          </Button>
+        )}
+      </div>
+    </>
+  );
+
+  // Mobile: Use Sheet (slides from bottom)
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center justify-between">
+              <span>Table {table.label}</span>
+              <Badge variant="outline">Order #{order.id.slice(0, 8)}</Badge>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            <DetailsContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop/Tablet: Use Dialog (centered modal)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -133,111 +262,8 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
             <Badge variant="outline">Order #{order.id.slice(0, 8)}</Badge>
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-6">
-          {/* Order Timeline */}
-          <div>
-            <h4 className="text-sm font-semibold mb-4">Order Progress</h4>
-            <div className="space-y-0">
-              <TimelineItem
-                icon={<ShoppingCart />}
-                title="Order Placed"
-                timestamp={order.created_at}
-                status="completed"
-              />
-              <TimelineItem
-                icon={<ChefHat />}
-                title="Kitchen Preparing"
-                timestamp={['preparing', 'kitchen_queue'].includes(order.status) ? order.created_at : null}
-                status={
-                  ['preparing', 'kitchen_queue'].includes(order.status) ? 'active' : 
-                  ['ready', 'serving', 'dining', 'delivered', 'payment', 'completed'].includes(order.status) ? 'completed' : 
-                  'pending'
-                }
-              />
-              <TimelineItem
-                icon={<Truck />}
-                title="Being Served / Dining"
-                timestamp={order.serving_at || order.dining_at || order.delivered_at}
-                status={
-                  ['serving', 'dining'].includes(order.status) ? 'active' :
-                  ['delivered', 'payment', 'completed'].includes(order.status) ? 'completed' :
-                  'pending'
-                }
-              />
-              <TimelineItem
-                icon={<DollarSign />}
-                title="Payment Complete"
-                timestamp={order.paid_at}
-                status={order.paid_at ? 'completed' : 'pending'}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Order Items */}
-          <div>
-            <h4 className="text-sm font-semibold mb-2">Items</h4>
-            <div className="space-y-1">
-              {order.order_items?.map((item: any) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span>
-                    {item.quantity}x {item.menu_items?.name}
-                  </span>
-                  <span className="font-medium">
-                    RM {(item.quantity * item.unit_price).toFixed(2)}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <Separator className="my-2" />
-            <div className="flex justify-between font-bold">
-              <span>Total</span>
-              <span>RM {order.total.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            {order.status === 'preparing' && (
-              <>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleManualBump}
-                  disabled={isBumping}
-                >
-                  <Truck className="h-4 w-4 mr-2" />
-                  Mark as Delivered (Normal)
-                </Button>
-
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={handleAdminOverride}
-                  disabled={isOverriding}
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Admin Override: Force to Dining
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  ⚠️ Use override only if kitchen forgot to click "Ready"
-                </p>
-              </>
-            )}
-
-            {(['delivered', 'dining'].includes(order.status)) && (
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={onPayment}
-              >
-                <DollarSign className="h-4 w-4 mr-2" />
-                Process Payment - RM {order.total.toFixed(2)}
-              </Button>
-            )}
-          </div>
+          <DetailsContent />
         </div>
       </DialogContent>
     </Dialog>

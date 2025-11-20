@@ -1,5 +1,8 @@
 import { TableCard } from './TableCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { getGridClasses, getGapClasses } from '@/lib/utils/responsiveGrid';
+import { cn } from '@/lib/utils';
 
 interface TableGridProps {
   tables: any[];
@@ -8,11 +11,15 @@ interface TableGridProps {
 }
 
 export function TableGrid({ tables, isLoading, onTableClick }: TableGridProps) {
+  const { device } = useDeviceDetection();
+  const gridClasses = getGridClasses('tables', device);
+  const gapClasses = getGapClasses(device);
+
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+      <div className={cn("grid", gridClasses, gapClasses)}>
         {Array.from({ length: 12 }).map((_, i) => (
-          <Skeleton key={i} className="h-32" />
+          <Skeleton key={i} className="h-40" />
         ))}
       </div>
     );
@@ -27,7 +34,7 @@ export function TableGrid({ tables, isLoading, onTableClick }: TableGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+    <div className={cn("table-grid grid", gridClasses, gapClasses)}>
       {tables.map((table) => (
         <TableCard
           key={table.id}
