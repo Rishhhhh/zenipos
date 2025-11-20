@@ -94,8 +94,8 @@ export const STAFF_MOBILE_LAYOUT: BentoLayout = {
   role: 'staff',
   gridTemplate: {
     columns: '1fr',
-    rows: 'repeat(3, minmax(200px, auto))',
-    gap: '0.75rem',
+    rows: 'auto',
+    gap: '0.5rem',
     minHeight: 'auto',
     areas: [
       ['pos'],
@@ -256,15 +256,13 @@ export const MANAGER_MOBILE_LAYOUT: BentoLayout = {
   role: 'manager',
   gridTemplate: {
     columns: '1fr',
-    rows: 'repeat(6, minmax(200px, auto))',
-    gap: '0.75rem',
+    rows: 'auto',
+    gap: '0.5rem',
     minHeight: 'auto',
     areas: [
       ['sales'],
       ['orders'],
       ['revenue'],
-      ['shifts'],
-      ['labor'],
       ['top-items']
     ]
   },
@@ -286,20 +284,6 @@ export const MANAGER_MOBILE_LAYOUT: BentoLayout = {
     {
       id: 'revenue-chart',
       area: 'revenue',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'active-shifts',
-      area: 'shifts',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'labor-cost',
-      area: 'labor',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false
@@ -486,19 +470,15 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
   role: 'owner',
   gridTemplate: {
     columns: '1fr',
-    rows: 'repeat(9, minmax(200px, auto))',
-    gap: '0.75rem',
+    rows: 'auto',
+    gap: '0.5rem',
     minHeight: 'auto',
     areas: [
       ['sales'],
       ['revenue'],
       ['orders'],
-      ['shifts'],
-      ['labor'],
       ['top-items'],
-      ['low-stock'],
-      ['loyalty'],
-      ['web-vitals']
+      ['loyalty']
     ]
   },
   widgets: [
@@ -524,20 +504,6 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'active-shifts',
-      area: 'shifts',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'labor-cost',
-      area: 'labor',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'top-items',
       area: 'top-items',
       colSpan: 1,
@@ -545,22 +511,8 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'low-stock',
-      area: 'low-stock',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'loyalty-stats',
       area: 'loyalty',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'web-vitals',
-      area: 'web-vitals',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false

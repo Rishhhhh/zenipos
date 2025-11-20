@@ -10,6 +10,7 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { SalesWidgetConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 export default memo(function Sales() {
   const queryClient = useQueryClient();

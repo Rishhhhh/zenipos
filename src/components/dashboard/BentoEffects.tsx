@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { detectBreakpoint } from '@/lib/widgets/bentoGrid';
+import { usePerformanceMode } from '@/hooks/usePerformanceMode';
 
 const SPOTLIGHT_RADIUS = 300;
 const PROXIMITY_THRESHOLD = 150;
@@ -31,11 +31,11 @@ export function BentoEffects() {
   const spotlightRef = useRef<HTMLDivElement>(null);
   const [isInsideDashboard, setIsInsideDashboard] = useState(false);
   const rafRef = useRef<number | null>(null);
-  const isMobile = detectBreakpoint() === 'mobile';
+  const { disableHeavyEffects } = usePerformanceMode();
 
   useEffect(() => {
-    // Disable effects on mobile for performance
-    if (isMobile || !spotlightRef.current) return;
+    // Disable effects on mobile/low-power devices for performance
+    if (disableHeavyEffects || !spotlightRef.current) return;
 
     let lastX = 0;
     let lastY = 0;
@@ -129,10 +129,10 @@ export function BentoEffects() {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [isMobile]);
+  }, [disableHeavyEffects]);
 
-  // Don't render on mobile
-  if (isMobile) return null;
+  // Don't render on mobile/low-power devices
+  if (disableHeavyEffects) return null;
 
   return (
     <div

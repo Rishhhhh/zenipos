@@ -9,6 +9,7 @@ import { useWidgetConfig } from '@/hooks/useWidgetConfig';
 import { WebVitalsConfig } from '@/types/widgetConfigs';
 import { cn } from '@/lib/utils';
 import { useWidgetRefresh } from '@/contexts/WidgetRefreshContext';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface MetricCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -52,6 +53,7 @@ function MetricCard({ icon: Icon, name, value, unit, threshold, compactMode }: M
 export default memo(function WebVitals() {
   const { config } = useWidgetConfig<WebVitalsConfig>('web-vitals');
   const { registerRefresh } = useWidgetRefresh();
+  const { isMobile } = useDeviceDetection();
   
   const { data: vitals, isLoading, refetch } = useQuery({
     queryKey: ['web-vitals-widget'],

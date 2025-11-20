@@ -6,6 +6,8 @@ import { useBentoLayout } from '@/lib/widgets/useBentoLayout';
 import { BentoWidget } from './BentoWidget';
 import { BentoEffects } from './BentoEffects';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { usePerformanceMode } from '@/hooks/usePerformanceMode';
 import './bento.css';
 
 interface BentoDashboardProps {
@@ -19,17 +21,30 @@ export default function BentoDashboard({
 }: BentoDashboardProps) {
   const { employee } = useAuth();
   const role = (employee?.role || 'staff') as 'staff' | 'manager' | 'owner';
-  const [breakpoint, setBreakpoint] = useState<BentoBreakpoint>(() => detectBreakpoint());
+  const { device } = useDeviceDetection();
+  const { disableHeavyEffects } = usePerformanceMode();
+  
+  // Map device type to BentoBreakpoint
+  const mapDeviceToBentoBreakpoint = (deviceType: string): BentoBreakpoint => {
+    switch (deviceType) {
+      case 'mobile':
+      case 'portrait-tablet':
+        return 'mobile';
+      case 'landscape-tablet':
+        return 'tablet';
+      default:
+        return 'desktop';
+    }
+  };
+  
+  const [breakpoint, setBreakpoint] = useState<BentoBreakpoint>(() => 
+    mapDeviceToBentoBreakpoint(device)
+  );
 
-  // Detect breakpoint on mount and window resize
+  // Update breakpoint when device changes
   useEffect(() => {
-    const handleResize = () => {
-      setBreakpoint(detectBreakpoint());
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    setBreakpoint(mapDeviceToBentoBreakpoint(device));
+  }, [device]);
 
   const { widgetStates, toggleMinimize } = useBentoLayout(role, breakpoint);
 
@@ -52,7 +67,7 @@ export default function BentoDashboard({
 
   return (
     <div className="bento-container" style={gridStyles}>
-      {enableEffects && <BentoEffects />}
+      {!disableHeavyEffects && enableEffects && <BentoEffects />}
       
       {layout.widgets.map(widget => (
         <BentoWidget

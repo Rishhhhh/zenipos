@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { ActiveOrdersConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 export default memo(function ActiveOrders() {
   const navigate = useNavigate();
   const { config } = useWidgetConfig<ActiveOrdersConfig>('active-orders');
+  const { isMobile } = useDeviceDetection();
 
   const { data: orders, refetch } = useQuery({
     queryKey: ["active-orders"],
