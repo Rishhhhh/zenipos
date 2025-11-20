@@ -810,3 +810,52 @@ html, body {
   }
 }
 
+/* ============================================
+   POS TOUCH OPTIMIZATIONS
+   ============================================ */
+
+/* Mobile POS: Larger touch targets */
+@media (max-width: 767px) {
+  .pos-container button {
+    min-height: 44px; /* Apple touch target guidelines */
+    min-width: 44px;
+  }
+  
+  /* Prevent text selection during interactions */
+  .pos-container {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Allow text selection in cart item names */
+  .pos-container .cart-item-name {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* Smooth momentum scrolling */
+  .pos-container .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Hide scrollbars on mobile for cleaner look */
+  .pos-container .overflow-y-auto::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Increase button padding for better touch */
+  .pos-container .grid button {
+    padding: 0.75rem;
+  }
+}
+
+/* Portrait Tablet POS adjustments */
+@media (min-width: 768px) and (max-width: 833px) {
+  .pos-container button {
+    min-height: 40px;
+  }
+}
+
+

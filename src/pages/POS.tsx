@@ -1,4 +1,4 @@
-import { useEffect, startTransition } from 'react';
+import { useEffect, startTransition, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '@/lib/store/cart';
 import { useToast } from '@/hooks/use-toast';
@@ -6,9 +6,12 @@ import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { usePOSLogic } from '@/hooks/usePOSLogic';
 import { usePOSRealtime } from '@/hooks/usePOSRealtime';
 import { usePOSPayments } from '@/hooks/usePOSPayments';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Monitor, NfcIcon } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { MapPin, Monitor, NfcIcon, ChevronRight, ShoppingCart } from 'lucide-react';
 
 // Import extracted components
 import { CategoryList } from '@/components/pos/CategoryList';
@@ -28,6 +31,10 @@ import { PaymentModal } from '@/components/pos/PaymentModal';
 export default function POS() {
   // Track performance
   usePerformanceMonitor('POS');
+  
+  // Device detection
+  const { device, isMobile, isTablet } = useDeviceDetection();
+  const [mobileTab, setMobileTab] = useState<'menu' | 'cart'>('menu');
   
   // Cart store
   const { 
@@ -344,81 +351,335 @@ export default function POS() {
         />
       )}
 
-      {/* Main Content: Categories + Items + Cart */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* LEFT: Categories */}
-        <div className="w-60 border-r flex-shrink-0 overflow-hidden">
-          <CategoryList
-            categories={categories}
-            isLoading={categoriesLoading}
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={setSelectedCategoryId}
-          />
-        </div>
+      {/* MOBILE: Tabbed interface with categories drawer */}
+      {isMobile && (
+        <>
+          {/* Top Status Bar */}
+          <div className="flex-shrink-0 p-2 border-b bg-muted/30 flex items-center justify-between gap-2 flex-wrap">
+            {nfc_card_id && nfcCardUid && (
+              <Badge variant="outline" className="text-xs">
+                <NfcIcon className="w-3 h-3 mr-1" />
+                {nfcCardUid}
+              </Badge>
+            )}
+            {order_type && (
+              <Badge variant="secondary" className="text-xs">
+                {order_type === 'dine_in' ? 'Dine In' : 'Takeaway'}
+              </Badge>
+            )}
+            {table_id && tableLabelShort && (
+              <Badge variant="default" className="text-xs">
+                <MapPin className="w-3 h-3 mr-1" />
+                {tableLabelShort}
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLinkDisplay(true)}
+              className="ml-auto h-7 px-2 text-xs"
+            >
+              <Monitor className="w-3 h-3 mr-1" />
+              {customerDisplayId ? 'Linked' : 'Link'}
+            </Button>
+          </div>
 
-        {/* MIDDLE: Items */}
-        <div className="flex-1 bg-background overflow-hidden">
-          <ItemGrid
-            items={menuItems}
-            isLoading={itemsLoading}
-            onAddItem={(item) => {
-              console.log('🛒 Adding item:', item.name, 'ID:', item.menu_item_id);
-              
-              if (!nfc_card_id) {
-                toast({
-                  variant: 'destructive',
-                  title: 'Scan Card First',
-                  description: 'Please scan your NFC card before ordering',
-                });
-                setShowNFCCardSelect(true);
-                return;
-              }
+          {/* Tabs: Menu | Cart */}
+          <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as 'menu' | 'cart')} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="w-full grid grid-cols-2 flex-shrink-0">
+              <TabsTrigger value="menu" className="text-sm">
+                Menu
+              </TabsTrigger>
+              <TabsTrigger value="cart" className="text-sm relative">
+                Cart
+                {items.length > 0 && (
+                  <Badge variant="destructive" className="ml-2 h-5 min-w-[20px] px-1 text-xs">
+                    {items.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-              if (!order_type) {
-                toast({
-                  variant: 'destructive',
-                  title: 'Select Order Type',
-                  description: 'Please choose Dine In or Takeaway',
-                });
-                setShowOrderTypeSelect(true);
-                return;
-              }
-              
-              if (order_type === 'dine_in' && !table_id) {
-                toast({
-                  variant: 'destructive',
-                  title: 'Select Table First',
-                  description: 'Please select a table before adding items',
-                });
-                setShowTableSelect(true);
-                return;
-              }
-              
-              console.log('📦 Setting pending item:', item);
-              setPendingItem(item);
-              // Modal will open via useEffect to prevent race condition
-            }}
-            categoryId={selectedCategoryId}
-          />
-        </div>
+            <TabsContent value="menu" className="flex-1 overflow-hidden mt-0 data-[state=inactive]:hidden">
+              <div className="flex h-full relative">
+                {/* Categories Sheet */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="absolute top-2 left-2 z-10 h-8 px-2">
+                      <ChevronRight className="w-4 h-4 mr-1" />
+                      Categories
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[280px] p-0">
+                    <CategoryList
+                      categories={categories}
+                      isLoading={categoriesLoading}
+                      selectedCategoryId={selectedCategoryId}
+                      onSelectCategory={(id) => setSelectedCategoryId(id)}
+                    />
+                  </SheetContent>
+                </Sheet>
 
-        {/* RIGHT: Cart */}
-        <div className="w-96 border-l flex-shrink-0 overflow-hidden">
-          <CartSummary
-            items={items}
-            subtotal={getSubtotal()}
-            tax={getTax()}
-            total={getTotal()}
-            discount={getDiscount()}
-            appliedPromotions={appliedPromotions}
-            onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
-            onVoidItem={(id) => voidItem(id)}
-            onSendToKDS={() => setShowOrderConfirmation(true)}
-            onSplitBill={() => setShowSplitBill(true)}
-            isSending={confirmAndSendOrder.isPending}
-          />
+                {/* Items Grid */}
+                <div className="flex-1 overflow-hidden">
+                  <ItemGrid
+                    items={menuItems}
+                    isLoading={itemsLoading}
+                    onAddItem={(item) => {
+                      if (!nfc_card_id) {
+                        toast({
+                          variant: 'destructive',
+                          title: 'Scan Card First',
+                          description: 'Please scan your NFC card before ordering',
+                        });
+                        setShowNFCCardSelect(true);
+                        return;
+                      }
+                      if (!order_type) {
+                        toast({
+                          variant: 'destructive',
+                          title: 'Select Order Type',
+                          description: 'Please choose Dine In or Takeaway',
+                        });
+                        setShowOrderTypeSelect(true);
+                        return;
+                      }
+                      if (order_type === 'dine_in' && !table_id) {
+                        toast({
+                          variant: 'destructive',
+                          title: 'Select Table First',
+                          description: 'Please select a table before adding items',
+                        });
+                        setShowTableSelect(true);
+                        return;
+                      }
+                      setPendingItem(item);
+                      setMobileTab('cart');
+                    }}
+                    categoryId={selectedCategoryId}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="cart" className="flex-1 overflow-hidden mt-0 data-[state=inactive]:hidden">
+              <CartSummary
+                items={items}
+                subtotal={getSubtotal()}
+                tax={getTax()}
+                total={getTotal()}
+                discount={getDiscount()}
+                appliedPromotions={appliedPromotions}
+                onUpdateQuantity={updateQuantity}
+                onVoidItem={voidItem}
+                onSendToKDS={() => setShowOrderConfirmation(true)}
+                onSplitBill={items.length > 0 ? () => setShowSplitBill(true) : undefined}
+                isSending={confirmAndSendOrder.isPending}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Mobile Sticky Bottom Bar */}
+          {mobileTab === 'menu' && items.length > 0 && (
+            <div className="flex-shrink-0 border-t bg-card/95 backdrop-blur-sm p-3 safe-area-bottom">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {items.length} items
+                  </p>
+                  <p className="text-lg font-bold text-primary">
+                    RM {getTotal().toFixed(2)}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setMobileTab('cart')}
+                  className="h-12 px-6"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  View Cart
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* PORTRAIT TABLET: 2-column (menu with drawer | cart) */}
+      {device === 'portrait-tablet' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Status Bar */}
+          <div className="flex-shrink-0 p-2 border-b bg-muted/30 flex items-center gap-2">
+            {nfc_card_id && nfcCardUid && (
+              <Badge variant="outline" className="text-xs">
+                <NfcIcon className="w-3 h-3 mr-1" />
+                {nfcCardUid}
+              </Badge>
+            )}
+            {order_type && (
+              <Badge variant="secondary" className="text-xs">
+                {order_type === 'dine_in' ? 'Dine In' : 'Takeaway'}
+              </Badge>
+            )}
+            {table_id && tableLabelShort && (
+              <Badge variant="default" className="text-xs">
+                <MapPin className="w-3 h-3 mr-1" />
+                {tableLabelShort}
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLinkDisplay(true)}
+              className="ml-auto h-7 px-2 text-xs"
+            >
+              <Monitor className="w-3 h-3 mr-1" />
+              {customerDisplayId ? 'Linked' : 'Link'}
+            </Button>
+          </div>
+
+          {/* 2-Column Layout */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* LEFT: Menu */}
+            <div className="flex-1 relative overflow-hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="absolute top-2 left-2 z-10 h-8 px-2">
+                    Categories
+                    {selectedCategoryId && categories && (
+                      <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
+                        {categories.find(c => c.id === selectedCategoryId)?.name?.slice(0, 3)}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] p-0">
+                  <CategoryList
+                    categories={categories}
+                    isLoading={categoriesLoading}
+                    selectedCategoryId={selectedCategoryId}
+                    onSelectCategory={setSelectedCategoryId}
+                  />
+                </SheetContent>
+              </Sheet>
+
+              <ItemGrid
+                items={menuItems}
+                isLoading={itemsLoading}
+                onAddItem={(item) => {
+                  if (!nfc_card_id) {
+                    setShowNFCCardSelect(true);
+                    return;
+                  }
+                  if (!order_type) {
+                    setShowOrderTypeSelect(true);
+                    return;
+                  }
+                  if (order_type === 'dine_in' && !table_id) {
+                    setShowTableSelect(true);
+                    return;
+                  }
+                  setPendingItem(item);
+                }}
+                categoryId={selectedCategoryId}
+              />
+            </div>
+
+            {/* RIGHT: Cart */}
+            <div className="w-80 border-l flex-shrink-0 overflow-hidden">
+              <CartSummary
+                items={items}
+                subtotal={getSubtotal()}
+                tax={getTax()}
+                total={getTotal()}
+                discount={getDiscount()}
+                appliedPromotions={appliedPromotions}
+                onUpdateQuantity={updateQuantity}
+                onVoidItem={voidItem}
+                onSendToKDS={() => setShowOrderConfirmation(true)}
+                onSplitBill={items.length > 0 ? () => setShowSplitBill(true) : undefined}
+                isSending={confirmAndSendOrder.isPending}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* LANDSCAPE TABLET & DESKTOP: 3-column layout */}
+      {!isMobile && device !== 'portrait-tablet' && (
+        <div className="flex-1 flex overflow-hidden">
+          {/* LEFT: Categories */}
+          <div className="w-60 border-r flex-shrink-0 overflow-hidden">
+            <CategoryList
+              categories={categories}
+              isLoading={categoriesLoading}
+              selectedCategoryId={selectedCategoryId}
+              onSelectCategory={setSelectedCategoryId}
+            />
+          </div>
+
+          {/* MIDDLE: Items */}
+          <div className="flex-1 bg-background overflow-hidden">
+            <ItemGrid
+              items={menuItems}
+              isLoading={itemsLoading}
+              onAddItem={(item) => {
+                console.log('🛒 Adding item:', item.name, 'ID:', item.menu_item_id);
+                
+                if (!nfc_card_id) {
+                  toast({
+                    variant: 'destructive',
+                    title: 'Scan Card First',
+                    description: 'Please scan your NFC card before ordering',
+                  });
+                  setShowNFCCardSelect(true);
+                  return;
+                }
+
+                if (!order_type) {
+                  toast({
+                    variant: 'destructive',
+                    title: 'Select Order Type',
+                    description: 'Please choose Dine In or Takeaway',
+                  });
+                  setShowOrderTypeSelect(true);
+                  return;
+                }
+                
+                if (order_type === 'dine_in' && !table_id) {
+                  toast({
+                    variant: 'destructive',
+                    title: 'Select Table First',
+                    description: 'Please select a table before adding items',
+                  });
+                  setShowTableSelect(true);
+                  return;
+                }
+                
+                console.log('📦 Setting pending item:', item);
+                setPendingItem(item);
+              }}
+              categoryId={selectedCategoryId}
+            />
+          </div>
+
+          {/* RIGHT: Cart */}
+          <div className="w-96 border-l flex-shrink-0 overflow-hidden">
+            <CartSummary
+              items={items}
+              subtotal={getSubtotal()}
+              tax={getTax()}
+              total={getTotal()}
+              discount={getDiscount()}
+              appliedPromotions={appliedPromotions}
+              onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
+              onVoidItem={(id) => voidItem(id)}
+              onSendToKDS={() => setShowOrderConfirmation(true)}
+              onSplitBill={() => setShowSplitBill(true)}
+              isSending={confirmAndSendOrder.isPending}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

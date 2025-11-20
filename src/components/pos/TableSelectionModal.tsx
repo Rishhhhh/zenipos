@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,21 +89,17 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Select Table or Order Type</DialogTitle>
-          {isChangingTable && !pendingSelection && (
-            <DialogDescription>
-              <Alert variant="destructive" className="mt-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Warning: Changing table will clear your current cart ({items.length} items)
-                </AlertDescription>
-              </Alert>
-            </DialogDescription>
-          )}
-        </DialogHeader>
+    <ResponsiveModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Select Table or Order Type"
+      description={isChangingTable && !pendingSelection ? 
+        `Warning: Changing table will clear your current cart (${items.length} items)` : 
+        undefined
+      }
+      side="bottom"
+      className="max-w-4xl"
+    >
         
         {pendingSelection && (
           <Alert variant="destructive">
@@ -191,7 +187,6 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModal>
   );
 }

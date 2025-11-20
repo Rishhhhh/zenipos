@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
 import { useCallback, useMemo } from "react";
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { getGridClasses } from '@/lib/utils/responsiveGrid';
+import { cn } from '@/lib/utils';
+
 interface MenuItem {
   id: string;
   category_id: string | null;
@@ -46,6 +50,10 @@ export function ItemGrid({
     staleTime: 60000
   });
 
+  // Device detection for responsive grid
+  const { device } = useDeviceDetection();
+  const gridClasses = getGridClasses('menuItems', device);
+
   // Check for 86'd items
   const {
     isEightySixed,
@@ -81,7 +89,7 @@ export function ItemGrid({
         <h2 className="text-lg font-semibold text-foreground">Menu Items</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className={cn(gridClasses, "gap-4")}>
           {filteredItems.map(item => {
             const is86d = isEightySixed(item.id);
             const eightySixInfo = is86d ? getEightySixInfo(item.id) : null;

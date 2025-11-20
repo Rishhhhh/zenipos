@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ResponsiveModal } from "@/components/pos/ResponsiveModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -47,17 +47,14 @@ export function OrderConfirmationModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <ShoppingCart className="h-6 w-6" />
-            Confirm Order
-          </DialogTitle>
-          <DialogDescription>
-            Review your order before sending to the kitchen
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Confirm Order"
+      description="Review your order before sending to the kitchen"
+      side="bottom"
+      className="max-w-2xl"
+    >
 
         {/* Order Info Header */}
         <div className="flex items-center gap-3 py-3 border-b">
@@ -187,7 +184,6 @@ export function OrderConfirmationModal({
             Confirm & Send to Kitchen
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveModal>
   );
 }
