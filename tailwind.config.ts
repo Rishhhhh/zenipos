@@ -13,6 +13,12 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '475px',
+        'portrait-tablet': '768px',
+        'landscape-tablet': '834px',
+        // existing breakpoints continue...
+      },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
