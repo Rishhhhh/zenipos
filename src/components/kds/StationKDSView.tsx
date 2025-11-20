@@ -310,7 +310,7 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
           </p>
         </div>
         <div className="text-right">
-          <div className="text-5xl font-bold text-foreground">
+          <div className="text-4xl md:text-5xl font-bold text-foreground">
             {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>

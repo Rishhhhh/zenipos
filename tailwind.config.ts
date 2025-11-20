@@ -103,6 +103,21 @@ export default {
         'touch': '44px',
         'touch-lg': '48px',
       },
+      spacing: {
+        'mobile-sm': '0.75rem',  // 10.5px on mobile (14px base)
+        'mobile-md': '1rem',     // 14px on mobile
+        'mobile-lg': '1.5rem',   // 21px on mobile
+        'tablet-sm': '1rem',     // 15px on tablet
+        'tablet-md': '1.25rem',  // 18.75px on tablet
+        'tablet-lg': '1.5rem',   // 22.5px on tablet
+      },
+      fontSize: {
+        'mobile-xs': '0.7rem',   // 9.8px on mobile
+        'mobile-sm': '0.8rem',   // 11.2px on mobile
+        'mobile-base': '1rem',   // 14px on mobile
+        'mobile-lg': '1.125rem', // 15.75px on mobile
+        'mobile-xl': '1.25rem',  // 17.5px on mobile
+      },
       keyframes: {
         "accordion-down": {
           from: {
