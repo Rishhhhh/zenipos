@@ -45,7 +45,7 @@ interface ModuleDetailModalProps {
   onClose: () => void;
 }
 
-export function ModuleDetailModal({ module, open, onClose }: ModuleDetailModalProps) {
+function ModuleDetailModal({ module, open, onClose }: ModuleDetailModalProps) {
   const navigate = useNavigate();
   const { isMobile } = useDeviceDetection();
 
@@ -131,3 +131,5 @@ export function ModuleDetailModal({ module, open, onClose }: ModuleDetailModalPr
     </Dialog>
   );
 }
+
+export default ModuleDetailModal;

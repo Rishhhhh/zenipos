@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,7 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { batchQuery } from "@/lib/api/batcher";
 import { ShoppingCart, TrendingUp, UtensilsCrossed, LayoutDashboard, Search, Activity, ChevronDown } from "lucide-react";
 import { CompactModuleCard } from "@/components/admin/CompactModuleCard";
-import { ModuleDetailModal } from "@/components/admin/ModuleDetailModal";
 import { AdminSearchCommand } from "@/components/admin/AdminSearchCommand";
 import { ADMIN_MODULES } from '@/lib/admin/moduleRegistry';
 import { useCountUp } from "@/hooks/useCountUp";
@@ -20,6 +20,9 @@ import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { getGridClasses, getGapClasses, getPaddingClasses } from '@/lib/utils/responsiveGrid';
 import { cn } from '@/lib/utils';
 import { useQueryConfig } from '@/hooks/useQueryConfig';
+
+// LAZY LOAD: Heavy modals
+const ModuleDetailModal = lazy(() => import("@/components/admin/ModuleDetailModal"));
 
 export default function Admin() {
   const [commandOpen, setCommandOpen] = useState(false);
@@ -212,7 +215,9 @@ export default function Admin() {
       </div>
 
       <AdminSearchCommand open={commandOpen} onOpenChange={setCommandOpen} />
-      <ModuleDetailModal module={selectedModule} open={!!selectedModule} onClose={() => setSelectedModule(null)} />
+      <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+        <ModuleDetailModal module={selectedModule} open={!!selectedModule} onClose={() => setSelectedModule(null)} />
+      </Suspense>
     </div>
   );
 }
