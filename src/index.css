@@ -682,3 +682,131 @@ button, a, input, textarea, select,
 .animate-fade-in-content {
   animation: fade-in-content 0.3s ease-out forwards;
 }
+
+/* ============================
+   RESPONSIVE LAYOUT FIXES
+   ============================ */
+
+/* Safe Area Support (iOS) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent body scroll when header/dock are fixed */
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Dashboard Container Fix */
+.dashboard-container {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Admin Container Fix */
+.admin-container {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* POS Container - maintain existing structure */
+.pos-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Bento Grid Fix */
+.bento-container {
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* Widget Content - Prevent overflow */
+.bento-widget__content {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+/* Ensure widgets have max height */
+.bento-widget {
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Fix for specific widgets with charts */
+.bento-widget .recharts-wrapper {
+  max-width: 100% !important;
+}
+
+/* ============================
+   MOBILE SPECIFIC
+   ============================ */
+@media (max-width: 767px) {
+  /* Hide MacDock on mobile */
+  .dock-container {
+    display: none !important;
+  }
+  
+  /* Reduce padding on mobile */
+  .dashboard-container {
+    padding: 0.75rem;
+  }
+  
+  .admin-container {
+    padding: 0.75rem;
+  }
+  
+  .bento-container {
+    padding: 0.75rem;
+  }
+}
+
+/* ============================
+   PORTRAIT TABLET
+   ============================ */
+@media (min-width: 768px) and (max-width: 833px) {
+  /* Compact dock styling */
+  .glass-dock {
+    padding: 0.375rem 0.5rem;
+  }
+  
+  .dashboard-container,
+  .admin-container {
+    padding: 1rem;
+  }
+}
+
+/* ============================
+   PERFORMANCE OPTIMIZATIONS
+   ============================ */
+
+/* Smooth scrolling on touch devices */
+@media (pointer: coarse) {
+  .dashboard-container,
+  .admin-container,
+  .bento-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-container,
+  .admin-container,
+  .bento-container {
+    scroll-behavior: auto;
+  }
+}
+

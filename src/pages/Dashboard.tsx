@@ -14,7 +14,7 @@ export default function Dashboard() {
   const { activeWidgets } = useBentoLayout(userRole, 'desktop');
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-background via-accent/5 to-secondary/5 overflow-hidden">
+    <div className="dashboard-container bg-gradient-to-br from-background via-accent/5 to-secondary/5">
       {/* Header with max-width constraint */}
       <div className="flex-none max-w-7xl mx-auto w-full px-4 md:px-6 pt-4 md:pt-6 pb-4">
         <div className="flex items-start justify-between">

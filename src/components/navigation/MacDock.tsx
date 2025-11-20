@@ -8,6 +8,9 @@ import { DockIcon } from './DockIcon';
 import { DockSeparator } from './DockSeparator';
 import { getVisibleApps, DOCK_UTILITIES } from './dockConfig';
 import type { AppRole } from './dockConfig';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { MobileBottomNav } from './MobileBottomNav';
+import { cn } from '@/lib/utils';
 
 export function MacDock() {
   const navigate = useNavigate();
@@ -15,6 +18,7 @@ export function MacDock() {
   const { theme, setTheme } = useTheme();
   const { role, logout } = useAuth();
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const { device, isMobile } = useDeviceDetection();
 
   const visibleApps = getVisibleApps(role as AppRole);
 
@@ -72,6 +76,52 @@ export function MacDock() {
     
     return false;
   };
+
+  // Mobile: Use bottom nav instead of dock
+  if (isMobile) {
+    return <MobileBottomNav />;
+  }
+
+  // Portrait Tablet: Compact dock (icon-only)
+  if (device === 'portrait-tablet') {
+    return (
+      <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[10002]">
+        <div className="glass-dock rounded-xl px-2 py-1.5 flex items-center gap-0.5 shadow-lg border border-primary/10">
+          {visibleApps.map((app) => (
+            <button
+              key={app.id}
+              onClick={() => navigate(app.route)}
+              className={cn(
+                'w-10 h-10 rounded-lg flex items-center justify-center transition-colors',
+                'hover:bg-primary/10',
+                isActive(app.route) && 'bg-primary/20'
+              )}
+              aria-label={app.label}
+            >
+              <app.icon className={cn(
+                "w-5 h-5",
+                isActive(app.route) ? "text-primary" : "text-foreground"
+              )} />
+            </button>
+          ))}
+          <div className="w-px h-6 bg-border/50 mx-1" />
+          {DOCK_UTILITIES.map((utility) => {
+            const Icon = theme === 'dark' && utility.iconDark ? utility.iconDark : utility.icon;
+            return (
+              <button
+                key={utility.id}
+                onClick={utility.action === 'theme' ? handleThemeToggle : handleLogout}
+                className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors hover:bg-primary/10"
+                aria-label={utility.label}
+              >
+                <Icon className="w-5 h-5 text-foreground" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   // Two-finger horizontal swipe to switch modules
   const bindSwipe = useGesture(
