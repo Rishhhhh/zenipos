@@ -56,7 +56,7 @@ export function usePOSLogic() {
     },
   });
 
-  // Fetch menu items
+  // Fetch menu items with modifier prefetching
   const menuItemsQuery = useQuery({
     queryKey: ['menu_items'],
     queryFn: async () => {
@@ -65,6 +65,41 @@ export function usePOSLogic() {
         .select('*')
         .eq('in_stock', true);
       if (error) throw error;
+      
+      // PREFETCH: Load modifiers for all items in background
+      if (data && data.length > 0) {
+        data.forEach((item) => {
+          queryClient.prefetchQuery({
+            queryKey: ['category-modifiers', item.id],
+            queryFn: async () => {
+              const { data: itemData } = await supabase
+                .from('menu_items')
+                .select(`
+                  category_id,
+                  menu_categories!inner (
+                    category_modifier_groups (
+                      sort_order,
+                      modifier_groups (
+                        id, name, min_selections, max_selections,
+                        modifiers (id, name, price)
+                      )
+                    )
+                  )
+                `)
+                .eq('id', item.id)
+                .single();
+              
+              const groups = itemData?.menu_categories?.category_modifier_groups
+                ?.map((cmg: any) => cmg.modifier_groups)
+                ?.filter((g: any) => g !== null) || [];
+              
+              return groups;
+            },
+            staleTime: 5 * 60 * 1000,
+          });
+        });
+      }
+      
       return data;
     },
     refetchInterval: queryConfig.refetchInterval.fast,

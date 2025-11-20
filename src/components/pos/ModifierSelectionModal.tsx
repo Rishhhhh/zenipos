@@ -40,10 +40,28 @@ export function ModifierSelectionModal({
         return [];
       }
       
-      // Step 1: Get the menu item's category
+      // OPTIMIZED: Single eager-loaded query combining all 3 steps
       const { data: item, error: itemError } = await supabase
         .from('menu_items')
-        .select('category_id')
+        .select(`
+          category_id,
+          menu_categories!inner (
+            category_modifier_groups (
+              sort_order,
+              modifier_groups (
+                id,
+                name,
+                min_selections,
+                max_selections,
+                modifiers (
+                  id,
+                  name,
+                  price
+                )
+              )
+            )
+          )
+        `)
         .eq('id', menuItemId)
         .single();
 
@@ -52,56 +70,22 @@ export function ModifierSelectionModal({
         throw itemError;
       }
 
-      if (!item?.category_id) {
-        console.warn('Menu item has no category assigned');
-        return [];
-      }
-      
-      console.log('📂 Menu item category:', item.category_id);
-
-      // Step 2: Fetch modifier groups linked to that category
-      const { data: links, error: linksError } = await supabase
-        .from('category_modifier_groups')
-        .select('modifier_group_id, sort_order')
-        .eq('category_id', item.category_id)
-        .order('sort_order');
-
-      if (linksError) {
-        console.error('Error fetching category modifier links:', linksError);
-        throw linksError;
-      }
-
-      if (!links || links.length === 0) {
+      if (!item?.category_id || !item.menu_categories?.category_modifier_groups) {
+        console.warn('Menu item has no category or modifiers assigned');
         return [];
       }
 
-      const groupIds = links.map(l => l.modifier_group_id);
-
-      // Step 3: Fetch full modifier groups with modifiers
-      const { data: groups, error: groupsError } = await supabase
-        .from('modifier_groups')
-        .select(`
-          id,
-          name,
-          min_selections,
-          max_selections,
-          modifiers (
-            id,
-            name,
-            price
-          )
-        `)
-        .in('id', groupIds);
-
-      if (groupsError) {
-        console.error('Error fetching modifier groups:', groupsError);
-        throw groupsError;
-      }
+      // Extract and flatten modifier groups
+      const groups = item.menu_categories.category_modifier_groups
+        .map((cmg: any) => cmg.modifier_groups)
+        .filter((group: any) => group !== null);
 
       console.log('✅ Modifier groups loaded:', groups?.length || 0, 'groups');
       return groups || [];
     },
     enabled: open && !!menuItemId && menuItemId.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes - cache modifiers
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in memory
   });
 
   // Reset selections when modal opens

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import { usePromotions } from '@/lib/hooks/usePromotions';
 import { useBroadcastToCustomerDisplay } from '@/hooks/useCustomerDisplaySync';
@@ -7,6 +7,7 @@ import { useCartStore } from '@/lib/store/cart';
 /**
  * Real-time synchronization for POS
  * Handles order updates, customer display broadcasting, and promotions
+ * OPTIMIZED: Debounced cart broadcast to reduce updates
  */
 export function usePOSRealtime(customerDisplayId: string | null) {
   const { items } = useCartStore();
@@ -21,14 +22,23 @@ export function usePOSRealtime(customerDisplayId: string | null) {
   const { broadcastOrderUpdate, broadcastPayment, broadcastComplete, broadcastIdle } = 
     useBroadcastToCustomerDisplay();
 
-  // Broadcast cart updates to customer display
+  // DEBOUNCE: Broadcast cart updates (avoid spam on rapid add/remove)
+  const debouncedBroadcast = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (callback: () => void) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(callback, 300); // 300ms debounce
+    };
+  }, []);
+
+  // Broadcast cart updates to customer display with debouncing
   useEffect(() => {
     if (customerDisplayId && items.length > 0) {
-      broadcastOrderUpdate(customerDisplayId);
+      debouncedBroadcast(() => broadcastOrderUpdate(customerDisplayId));
     } else if (customerDisplayId && items.length === 0) {
-      broadcastIdle(customerDisplayId);
+      debouncedBroadcast(() => broadcastIdle(customerDisplayId));
     }
-  }, [items, customerDisplayId, broadcastOrderUpdate, broadcastIdle]);
+  }, [items, customerDisplayId, broadcastOrderUpdate, broadcastIdle, debouncedBroadcast]);
 
   // Debug logging
   useEffect(() => {

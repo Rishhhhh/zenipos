@@ -38,40 +38,23 @@ export default function TableManagement() {
     refetchInterval: 30000, // Refresh every 30s
   });
 
-  // Realtime subscriptions
+  // OPTIMIZED: Combined single-channel realtime subscription
   useEffect(() => {
-    const tablesChannel = supabase
-      .channel('tables-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tables' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['tables'] });
-        }
-      )
-      .subscribe();
+    const handleChange = () => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-completed-orders'] });
+    };
 
-    const ordersChannel = supabase
-      .channel('orders-changes')
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'orders',
-          filter: 'status=in.(delivered,paid)'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['tables'] });
-          queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
-          queryClient.invalidateQueries({ queryKey: ['recent-completed-orders'] });
-        }
-      )
+    // Single channel for both tables and orders updates
+    const channel = supabase
+      .channel('table-management-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, handleChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, handleChange)
       .subscribe();
 
     return () => {
-      supabase.removeChannel(tablesChannel);
-      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(channel);
     };
   }, [queryClient]);
 

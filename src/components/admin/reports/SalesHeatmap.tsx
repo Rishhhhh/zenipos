@@ -9,7 +9,7 @@ interface SalesHeatmapProps {
   }>;
 }
 
-export function SalesHeatmap({ data }: SalesHeatmapProps) {
+function SalesHeatmap({ data }: SalesHeatmapProps) {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -86,3 +86,5 @@ export function SalesHeatmap({ data }: SalesHeatmapProps) {
     </Card>
   );
 }
+
+export default SalesHeatmap;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -9,10 +9,13 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { KPICards } from "@/components/admin/reports/KPICards";
-import { SalesHeatmap } from "@/components/admin/reports/SalesHeatmap";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useModalManager } from "@/hooks/useModalManager";
 import { Link } from "react-router-dom";
+
+// LAZY LOAD: Heavy chart components
+const SalesHeatmap = lazy(() => import("@/components/admin/reports/SalesHeatmap"));
 
 export default function ReportsDashboard() {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -261,7 +264,11 @@ export default function ReportsDashboard() {
           </div> */}
 
           {/* Heatmap */}
-          {heatmapData && <SalesHeatmap data={heatmapData} />}
+          {heatmapData && (
+            <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+              <SalesHeatmap data={heatmapData} />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>
