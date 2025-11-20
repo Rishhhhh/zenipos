@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -9,6 +9,9 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 import { trackPerformance } from '@/lib/monitoring/sentry';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { getGridClasses, getGapClasses } from '@/lib/utils/responsiveGrid';
+import { cn } from '@/lib/utils';
 
 interface StationKDSViewProps {
   stationId: string;
@@ -18,6 +21,15 @@ interface StationKDSViewProps {
 export function StationKDSView({ stationId, stationName }: StationKDSViewProps) {
   const queryClient = useQueryClient();
   const [now, setNow] = useState(new Date());
+  
+  // Device detection for responsive layouts
+  const { device, isMobile, orientation } = useDeviceDetection();
+  const itemGridClass = getGridClasses('kdsOrders', device);
+  const itemGapClass = getGapClasses(device);
+  
+  // Portrait tablet specific: prefer vertical stacking
+  const isPortraitTablet = device === 'portrait-tablet' || 
+    (device === 'landscape-tablet' && orientation === 'portrait');
 
   // Update timer every second
   useEffect(() => {
@@ -304,7 +316,10 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={cn(
+        "grid overflow-y-auto",
+        isPortraitTablet ? "grid-cols-1 gap-3" : cn(itemGridClass, itemGapClass)
+      )}>
         <AnimatePresence>
           {Object.values(groupedOrders).map(({ order, items }) => {
             const priority = order.priority?.[0]?.priority_level || 0;
@@ -313,118 +328,26 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
             return (
               <motion.div
                 key={order.id}
-                initial={{ opacity: 0, scale: 0.95 }}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="will-change-transform"
               >
-                <Card className={`p-6 border-2 ${priority > 0 ? 'border-primary' : ''}`}>
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-3xl font-bold text-foreground">
-                        {order.order_type === 'dine_in' && order.table?.label
-                          ? `Table ${order.table.label}`
-                          : `Order #${order.id.slice(0, 8)}`}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.created_at).toLocaleTimeString()}
-                      </p>
-                    </div>
-                    {priority > 0 && (
-                      <Badge className={getPriorityColor(priority)}>
-                        {getPriorityLabel(priority)}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {priorityReason && (
-                    <div className="mb-4 p-2 bg-yellow-500/10 border border-yellow-500 rounded flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                        {priorityReason}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-4 rounded-lg border-2 ${
-                          item.status === 'preparing'
-                            ? 'bg-primary/10 border-primary'
-                            : 'bg-card border-border'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-2xl font-bold text-primary">
-                                {item.quantity}×
-                              </span>
-                              <span className="text-xl font-semibold text-foreground">
-                                {item.menu_item.name}
-                              </span>
-                            </div>
-                            {item.notes && (
-                              <p className="text-sm text-muted-foreground italic">
-                                Note: {item.notes}
-                              </p>
-                            )}
-                            {item.dietary_alerts && item.dietary_alerts.length > 0 && (
-                              <div className="flex gap-1 mt-2">
-                                {item.dietary_alerts.map((alert, i) => (
-                                  <Badge key={i} variant="destructive" className="text-xs">
-                                    {alert}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                            {item.modifiers && item.modifiers.length > 0 && (
-                              <div className="mt-2 space-y-1">
-                                {item.modifiers.map((mod: any, i: number) => (
-                                  <p key={i} className="text-sm text-muted-foreground">
-                                    + {mod.name}
-                                  </p>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <div className="flex items-center gap-2 text-xl font-mono text-foreground">
-                              <Clock className="w-5 h-5" />
-                              {getElapsedTime(item.created_at, item.started_at)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 mt-3">
-                          {item.status === 'pending' && (
-                            <Button
-                              onClick={() => startItemMutation.mutate(item.id)}
-                              className="flex-1"
-                              size="lg"
-                            >
-                              <ChefHat className="w-4 h-4 mr-2" />
-                              Start
-                            </Button>
-                          )}
-                          {item.status === 'preparing' && (
-                            <Button
-                              onClick={() => completeItemMutation.mutate(item.id)}
-                              className="flex-1"
-                              variant="default"
-                              size="lg"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Ready
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
+                <StationOrderCard
+                  order={order}
+                  items={items}
+                  priority={priority}
+                  priorityReason={priorityReason}
+                  now={now}
+                  isMobile={isMobile}
+                  isPortraitTablet={isPortraitTablet}
+                  onStart={(itemId) => startItemMutation.mutate(itemId)}
+                  onComplete={(itemId) => completeItemMutation.mutate(itemId)}
+                  getElapsedTime={getElapsedTime}
+                  getPriorityColor={getPriorityColor}
+                  getPriorityLabel={getPriorityLabel}
+                />
               </motion.div>
             );
           })}
@@ -441,5 +364,145 @@ export function StationKDSView({ stationId, stationName }: StationKDSViewProps) 
         </div>
       )}
     </div>
+  );
+}
+
+// Station Order Card Component with responsive variants
+interface StationOrderCardProps {
+  order: any;
+  items: any[];
+  priority: number;
+  priorityReason?: string;
+  now: Date;
+  isMobile: boolean;
+  isPortraitTablet: boolean;
+  onStart: (itemId: string) => void;
+  onComplete: (itemId: string) => void;
+  getElapsedTime: (createdAt: string, startedAt?: string) => string;
+  getPriorityColor: (priority: number) => string;
+  getPriorityLabel: (priority: number) => string;
+}
+
+function StationOrderCard({
+  order,
+  items,
+  priority,
+  priorityReason,
+  now,
+  isMobile,
+  isPortraitTablet,
+  onStart,
+  onComplete,
+  getElapsedTime,
+  getPriorityColor,
+  getPriorityLabel,
+}: StationOrderCardProps) {
+  const compact = isMobile || isPortraitTablet;
+
+  return (
+    <Card className={cn("border-2", priority > 0 ? 'border-primary' : '', compact ? 'p-3' : 'p-6')}>
+      {/* Order Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h3 className={cn("font-bold text-foreground", compact ? "text-2xl" : "text-3xl")}>
+            {order.order_type === 'dine_in' && order.table?.label
+              ? `Table ${order.table.label}`
+              : `Order #${order.id.slice(0, 8)}`}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {new Date(order.created_at).toLocaleTimeString()}
+          </p>
+        </div>
+        {priority > 0 && (
+          <Badge className={getPriorityColor(priority)}>
+            {getPriorityLabel(priority)}
+          </Badge>
+        )}
+      </div>
+
+      {priorityReason && (
+        <div className="mb-4 p-2 bg-yellow-500/10 border border-yellow-500 rounded flex items-start gap-2">
+          <AlertTriangle className={cn("text-yellow-600 mt-0.5", compact ? "w-3 h-3" : "w-4 h-4")} />
+          <p className={cn("text-yellow-700 dark:text-yellow-300", compact ? "text-xs" : "text-sm")}>
+            {priorityReason}
+          </p>
+        </div>
+      )}
+
+      {/* Items */}
+      <div className={cn("space-y-3", compact && "space-y-2")}>
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className={cn(
+              "rounded-lg border-2",
+              item.status === 'preparing' ? 'bg-primary/10 border-primary' : 'bg-card border-border',
+              compact ? 'p-2' : 'p-4'
+            )}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={cn("font-bold text-primary", compact ? "text-xl" : "text-2xl")}>
+                    {item.quantity}×
+                  </span>
+                  <span className={cn("font-semibold text-foreground", compact ? "text-base" : "text-xl")}>
+                    {item.menu_item?.name || 'Unknown'}
+                  </span>
+                </div>
+                {item.menu_item?.description && !compact && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {item.menu_item.description}
+                  </p>
+                )}
+                {item.notes && (
+                  <div className={cn("rounded p-2 bg-yellow-500/10 border border-yellow-500", compact && "p-1")}>
+                    <p className={cn("text-yellow-700 dark:text-yellow-300", compact ? "text-xs" : "text-sm")}>
+                      <strong>Note:</strong> {item.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="text-right ml-4">
+                <div className={cn(
+                  "font-bold tabular-nums",
+                  compact ? "text-base" : "text-xl",
+                  item.status === 'preparing' ? "text-primary" : "text-warning"
+                )}>
+                  {getElapsedTime(item.created_at, item.started_at)}
+                </div>
+                <Badge variant={item.status === 'preparing' ? 'default' : 'outline'} className={compact ? "text-xs" : ""}>
+                  {item.status === 'preparing' ? 'Cooking' : 'Queue'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Action Buttons - Larger for touch */}
+            <div className="flex gap-2 mt-2">
+              {item.status === 'kitchen_queue' || item.status === 'pending' ? (
+                <Button
+                  onClick={() => onStart(item.id)}
+                  className={cn("flex-1 font-semibold", compact ? "h-12" : "h-14")}
+                  size="lg"
+                >
+                  <ChefHat className={cn("mr-2", compact ? "w-4 h-4" : "w-5 h-5")} />
+                  Start
+                </Button>
+              ) : item.status === 'preparing' ? (
+                <Button
+                  onClick={() => onComplete(item.id)}
+                  className={cn("flex-1 font-semibold", compact ? "h-12" : "h-14")}
+                  variant="default"
+                  size="lg"
+                >
+                  <CheckCircle className={cn("mr-2", compact ? "w-4 h-4" : "w-5 h-5")} />
+                  Ready
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
