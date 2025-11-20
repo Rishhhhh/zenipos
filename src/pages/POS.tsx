@@ -190,8 +190,8 @@ export default function POS() {
     
     // OPTIMIZED: If order type already set, skip to table selection
     if (nfc_card_id && order_type === 'dine_in' && !table_id) {
-      setShowTableSelect(true);
-      return;
+      const timer = setTimeout(() => setShowTableSelect(true), 100);
+      return () => clearTimeout(timer);
     }
     
     // Only show order type if not set yet
@@ -301,7 +301,14 @@ export default function POS() {
         onSelect={(cardId, cardUid) => {
           setNFCCardId(cardId, cardUid);
           setShowNFCCardSelect(false);
-          setShowOrderTypeSelect(true);
+          
+          // Only show order type modal if not already set
+          if (!order_type) {
+            setShowOrderTypeSelect(true);
+          } else if (order_type === 'dine_in' && !table_id) {
+            // If dine-in but no table, show table selection directly
+            setShowTableSelect(true);
+          }
         }}
       />
 
@@ -345,15 +352,22 @@ export default function POS() {
         open={showTableSelect}
         onOpenChange={setShowTableSelect}
         onSelect={(tableId, orderType, tableLabel, nfcCardId) => {
+          // Close table modal first
+          setShowTableSelect(false);
+          
+          // Update cart state
           if (nfcCardId) {
             useCartStore.getState().setTableWithNFC(tableId, nfcCardId);
           } else {
             setTableId(tableId);
-            setOrderType(orderType);
+            setOrderType(orderType); // Auto-set 'dine_in' when table is selected
           }
+          
           if (tableLabel) {
             setTableLabel(tableLabel);
           }
+          
+          // Don't show order type modal - already determined by table selection
         }}
       />
 
@@ -444,36 +458,6 @@ export default function POS() {
       {/* MOBILE: Tabbed interface with categories drawer */}
       {isMobile && (
         <div className="pos-container flex flex-col" style={{ height: 'var(--available-height)' }}>
-          {/* Top Status Bar - flex-shrink-0 */}
-          <div className="flex-shrink-0 p-2 border-b bg-muted/30 flex items-center justify-between gap-2 flex-wrap">
-            {nfc_card_id && nfcCardUid && (
-              <Badge variant="outline" className="text-xs">
-                <NfcIcon className="w-3 h-3 mr-1" />
-                {nfcCardUid}
-              </Badge>
-            )}
-            {order_type && (
-              <Badge variant="secondary" className="text-xs">
-                {order_type === 'dine_in' ? 'Dine In' : 'Takeaway'}
-              </Badge>
-            )}
-            {table_id && tableLabelShort && (
-              <Badge variant="default" className="text-xs">
-                <MapPin className="w-3 h-3 mr-1" />
-                {tableLabelShort}
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLinkDisplay(true)}
-              className="ml-auto h-7 px-2 text-xs"
-            >
-              <Monitor className="w-3 h-3 mr-1" />
-              {customerDisplayId ? 'Linked' : 'Link'}
-            </Button>
-          </div>
-
           {/* Tabs: Menu | Cart - flex-1 overflow-hidden */}
           <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as 'menu' | 'cart')} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="w-full grid grid-cols-2 flex-shrink-0">
