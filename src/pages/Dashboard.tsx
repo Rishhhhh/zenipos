@@ -16,7 +16,10 @@ export default function Dashboard() {
   const { activeWidgets } = useBentoLayout(userRole, 'desktop');
 
   return (
-    <div className="dashboard-container bg-gradient-to-br from-background via-accent/5 to-secondary/5">
+    <div 
+      className="dashboard-container flex flex-col bg-gradient-to-br from-background via-accent/5 to-secondary/5"
+      style={{ height: 'var(--available-height)' }}
+    >
       {/* Header with max-width constraint */}
       {!isMobile && (
         <div className="flex-none max-w-7xl mx-auto w-full px-4 md:px-6 pt-4 md:pt-6 pb-4">
@@ -33,9 +36,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Canvas spans full viewport width */}
-      <div className="flex-1 px-4 md:px-6 overflow-hidden">
-        <div className="h-full">
+      {/* Bento Dashboard - scrollable content */}
+      <div className="flex-1 px-4 md:px-6 overflow-auto">
+        <div className="h-full pb-4">
           <Suspense fallback={<Skeleton className="w-full h-full rounded-lg" />}>
             <BentoDashboard onConfigure={setConfigModalWidget} />
           </Suspense>

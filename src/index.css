@@ -9,6 +9,18 @@ macOS-inspired black/red/white theme with glass morphism
 
 @layer base {
   :root {
+    /* Viewport height calculations accounting for fixed header and dock */
+    --header-height: 64px; /* Desktop header height */
+    --dock-height: 70px;   /* Dock height including margin */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    
+    /* Available height for content (desktop) */
+    --available-height: calc(100vh - var(--header-height) - var(--dock-height) - var(--safe-area-bottom));
+    
+    /* Available height without dock (for pages that don't show dock) */
+    --available-height-no-dock: calc(100vh - var(--header-height) - var(--safe-area-bottom));
+
     /* ZeniPOS Light - Zero Error Design System */
     --background: 0 0% 98%; /* Off-white #FAFAFA */
     --foreground: 225 22% 5%; /* Deep Black #090A0E - Logo */
@@ -126,6 +138,47 @@ macOS-inspired black/red/white theme with glass morphism
     --glass-border: 255 193 0 / 0.1; /* Gold border glow */
     --glass-shadow: 0 8px 32px 0 rgba(255, 193, 0, 0.15);
   }
+}
+
+/* Mobile adjustments for viewport height */
+@media (max-width: 767px) {
+  :root {
+    --header-height: 56px;
+    --dock-height: 80px;
+  }
+}
+
+/* Portrait tablet adjustments */
+@media (min-width: 768px) and (max-width: 833px) {
+  :root {
+    --header-height: 60px;
+    --dock-height: 70px;
+  }
+}
+
+/* Utility classes for content areas */
+.content-height {
+  height: var(--available-height);
+  max-height: var(--available-height);
+}
+
+.content-height-no-dock {
+  height: var(--available-height-no-dock);
+  max-height: var(--available-height-no-dock);
+}
+
+/* Smooth scrolling for content areas */
+.overflow-auto,
+.overflow-y-auto {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent bounce effect on iOS for full-height containers */
+.pos-container,
+.dashboard-container,
+.table-management-container {
+  overscroll-behavior: contain;
 }
 
 /* Glass Morphism Utilities */

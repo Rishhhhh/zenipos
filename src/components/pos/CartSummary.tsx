@@ -104,9 +104,12 @@ export function CartSummary({
           )}
         </div>
 
-        {/* Sticky Checkout Footer */}
+        {/* Sticky Checkout Footer - with safe area */}
         {items.length > 0 && (
-          <div className="border-t p-3 space-y-2 flex-shrink-0 bg-card/95 backdrop-blur-sm safe-area-bottom">
+          <div 
+            className="border-t p-3 space-y-2 flex-shrink-0 bg-card/95 backdrop-blur-sm"
+            style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))' }}
+          >
             {/* Promotions */}
             {appliedPromotions.length > 0 && (
               <div className="text-xs">
@@ -171,11 +174,14 @@ export function CartSummary({
 
   // PORTRAIT TABLET & DESKTOP: Full sidebar layout
   return (
-    <div className="h-full flex flex-col p-4">
-      <h2 className="text-lg font-semibold mb-4 text-foreground">Cart</h2>
+    <div className="h-full flex flex-col">
+      {/* Header - flex-shrink-0 */}
+      <div className="flex-shrink-0 p-4 border-b">
+        <h2 className="text-xl font-semibold text-foreground">Cart</h2>
+      </div>
       
-      {/* Scrollable Cart Items */}
-      <ScrollArea className="flex-1 mb-4">
+      {/* Scrollable Cart Items - flex-1 overflow-y-auto */}
+      <div className="flex-1 overflow-y-auto p-4">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <ShoppingCart className="h-16 w-16 mb-4 opacity-50" />
@@ -229,10 +235,10 @@ export function CartSummary({
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
-      {/* STICKY CHECKOUT - Always Visible */}
-      <div className="border-t pt-4 space-y-2 flex-shrink-0 bg-card/95 backdrop-blur-sm">
+      {/* STICKY CHECKOUT - Always Visible - flex-shrink-0 */}
+      <div className="flex-shrink-0 border-t p-4 space-y-2 bg-card/95 backdrop-blur-sm">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-medium">RM {subtotal.toFixed(2)}</span>
