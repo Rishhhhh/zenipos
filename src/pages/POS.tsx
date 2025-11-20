@@ -26,7 +26,6 @@ import { LinkDisplayModal } from '@/components/pos/LinkDisplayModal';
 import { PrintPreviewModal } from '@/components/pos/PrintPreviewModal';
 import { OrderConfirmationModal } from '@/components/pos/OrderConfirmationModal';
 import { NFCCardSelectionModal } from '@/components/pos/NFCCardSelectionModal';
-import { OrderTypeSelectionModal } from '@/components/pos/OrderTypeSelectionModal';
 import { PaymentNFCScannerModal } from '@/components/pos/PaymentNFCScannerModal';
 import { PaymentModal } from '@/components/pos/PaymentModal';
 
@@ -159,8 +158,6 @@ export default function POS() {
     setShowOrderConfirmation,
     showNFCCardSelect,
     setShowNFCCardSelect,
-    showOrderTypeSelect,
-    setShowOrderTypeSelect,
     pendingItem,
     setPendingItem,
     previewOrderData,
@@ -181,23 +178,28 @@ export default function POS() {
     handleOrderFound,
   } = usePOSPayments(broadcastIdle, customerDisplayId, setPreviewOrderData, setShowPrintPreview);
 
-  // NFC-first flow: OPTIMIZED for direct table selection
+  // NFC-first flow: Direct to table selection after card scan
   useEffect(() => {
+    console.log('🔍 POS Flow Check:', { nfc_card_id, order_type, table_id });
+    
+    // EXIT EARLY: If everything is set, don't show any modals
+    if (nfc_card_id && order_type && (order_type === 'takeaway' || table_id)) {
+      console.log('✅ All values set, no modal needed');
+      return;
+    }
+    
+    // Step 1: No card? Show NFC selection
     if (!nfc_card_id) {
+      console.log('📱 Opening NFC card selection');
       setShowNFCCardSelect(true);
       return;
     }
     
-    // OPTIMIZED: If order type already set, skip to table selection
-    if (nfc_card_id && order_type === 'dine_in' && !table_id) {
-      const timer = setTimeout(() => setShowTableSelect(true), 100);
+    // Step 2: Card set but no order type or table? Show table selection (which includes order type choice)
+    if (nfc_card_id && (!order_type || (order_type === 'dine_in' && !table_id))) {
+      console.log('🪑 Opening table selection');
+      const timer = setTimeout(() => setShowTableSelect(true), 50);
       return () => clearTimeout(timer);
-    }
-    
-    // Only show order type if not set yet
-    if (nfc_card_id && !order_type) {
-      setShowOrderTypeSelect(true);
-      return;
     }
   }, [nfc_card_id, order_type, table_id]);
 
@@ -301,30 +303,8 @@ export default function POS() {
         onSelect={(cardId, cardUid) => {
           setNFCCardId(cardId, cardUid);
           setShowNFCCardSelect(false);
-          
-          // Only show order type modal if not already set
-          if (!order_type) {
-            setShowOrderTypeSelect(true);
-          } else if (order_type === 'dine_in' && !table_id) {
-            // If dine-in but no table, show table selection directly
-            setShowTableSelect(true);
-          }
-        }}
-      />
-
-      {/* Order Type Selection Modal */}
-      <OrderTypeSelectionModal
-        open={showOrderTypeSelect}
-        onOpenChange={setShowOrderTypeSelect}
-        nfcCardUid={nfcCardUid || 'Unknown'}
-        onSelectDineIn={() => {
-          setOrderType('dine_in');
-          setShowOrderTypeSelect(false);
+          // Always open table selection after NFC card scan
           setShowTableSelect(true);
-        }}
-        onSelectTakeaway={() => {
-          setOrderType('takeaway');
-          setShowOrderTypeSelect(false);
         }}
       />
 
@@ -513,9 +493,9 @@ export default function POS() {
                         toast({
                           variant: 'destructive',
                           title: 'Select Order Type',
-                          description: 'Please choose Dine In or Takeaway',
+                          description: 'Please scan NFC card and select table first',
                         });
-                        setShowOrderTypeSelect(true);
+                        setShowTableSelect(true);
                         return;
                       }
                       if (order_type === 'dine_in' && !table_id) {
@@ -647,8 +627,8 @@ export default function POS() {
                     setShowNFCCardSelect(true);
                     return;
                   }
-                  if (!order_type) {
-                    setShowOrderTypeSelect(true);
+                  if (!order_type || (order_type === 'dine_in' && !table_id)) {
+                    setShowTableSelect(true);
                     return;
                   }
                   if (order_type === 'dine_in' && !table_id) {
@@ -748,9 +728,9 @@ export default function POS() {
                   toast({
                     variant: 'destructive',
                     title: 'Select Order Type',
-                    description: 'Please choose Dine In or Takeaway',
+                    description: 'Please scan NFC card and select table first',
                   });
-                  setShowOrderTypeSelect(true);
+                  setShowTableSelect(true);
                   return;
                 }
                 
