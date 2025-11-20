@@ -4103,11 +4103,18 @@ export type Database = {
           branch_id: string | null
           created_at: string | null
           current_order_id: string | null
+          custom_name: string | null
+          grid_x: number | null
+          grid_y: number | null
           id: string
           label: string
           last_order_at: string | null
           nfc_card_id: string | null
+          notes: string | null
           organization_id: string
+          reservation_contact: string | null
+          reservation_name: string | null
+          reservation_time: string | null
           seated_at: string | null
           seats: number
           status: string
@@ -4116,11 +4123,18 @@ export type Database = {
           branch_id?: string | null
           created_at?: string | null
           current_order_id?: string | null
+          custom_name?: string | null
+          grid_x?: number | null
+          grid_y?: number | null
           id?: string
           label: string
           last_order_at?: string | null
           nfc_card_id?: string | null
+          notes?: string | null
           organization_id: string
+          reservation_contact?: string | null
+          reservation_name?: string | null
+          reservation_time?: string | null
           seated_at?: string | null
           seats?: number
           status?: string
@@ -4129,11 +4143,18 @@ export type Database = {
           branch_id?: string | null
           created_at?: string | null
           current_order_id?: string | null
+          custom_name?: string | null
+          grid_x?: number | null
+          grid_y?: number | null
           id?: string
           label?: string
           last_order_at?: string | null
           nfc_card_id?: string | null
+          notes?: string | null
           organization_id?: string
+          reservation_contact?: string | null
+          reservation_name?: string | null
+          reservation_time?: string | null
           seated_at?: string | null
           seats?: number
           status?: string

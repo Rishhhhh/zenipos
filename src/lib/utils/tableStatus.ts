@@ -56,3 +56,50 @@ export function getStatusColorClasses(status: 'available' | 'occupied' | 'reserv
   const statusObj = getTableStatus({ status, current_order: null });
   return `${statusObj.bgColor} ${statusObj.textColor} ${statusObj.borderColor}`;
 }
+
+export function getTableStatusColor(table: any): string {
+  if (!table.current_order) {
+    return 'bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-700 dark:text-emerald-400';
+  }
+
+  const status = table.current_order.status;
+
+  switch (status) {
+    case 'pending':
+    case 'kitchen_queue':
+      return 'bg-blue-500/20 border-blue-500 text-blue-700 dark:bg-blue-950/20 dark:border-blue-700 dark:text-blue-400';
+    
+    case 'preparing':
+    case 'cooking':
+      return 'bg-amber-500/20 border-amber-500 text-amber-700 dark:bg-amber-950/20 dark:border-amber-700 dark:text-amber-400';
+    
+    case 'ready':
+    case 'delivered':
+      return 'bg-red-500/20 border-red-500 text-red-700 dark:bg-red-950/20 dark:border-red-700 dark:text-red-400';
+    
+    case 'completed':
+    case 'paid':
+      return 'bg-violet-500/20 border-violet-500 text-violet-700 dark:bg-violet-950/20 dark:border-violet-700 dark:text-violet-400';
+    
+    default:
+      return 'bg-muted border-border text-muted-foreground';
+  }
+}
+
+export function getTableStatusLabel(table: any): string {
+  if (!table.current_order) return 'Available';
+  
+  const status = table.current_order.status;
+  const statusMap: Record<string, string> = {
+    'pending': 'Ordered',
+    'kitchen_queue': 'In Queue',
+    'preparing': 'Cooking',
+    'cooking': 'Cooking',
+    'ready': 'Ready to Pay',
+    'delivered': 'Ready to Pay',
+    'completed': 'Completed',
+    'paid': 'Paid',
+  };
+  
+  return statusMap[status] || status;
+}

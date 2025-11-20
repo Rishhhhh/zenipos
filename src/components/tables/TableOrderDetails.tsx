@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TimelineItem } from './TimelineItem';
-import { ShoppingCart, ChefHat, Truck, DollarSign, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, ChefHat, Truck, DollarSign, AlertTriangle, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { useNavigate } from 'react-router-dom';
 
 interface TableOrderDetailsProps {
   open: boolean;
@@ -22,12 +23,24 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
   const { isMobile } = useDeviceDetection();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isBumping, setIsBumping] = useState(false);
   const [isOverriding, setIsOverriding] = useState(false);
   
   if (!table?.current_order) return null;
 
   const order = table.current_order;
+
+  const handleAddMoreItems = () => {
+    navigate('/pos', {
+      state: {
+        tableId: table.id,
+        existingOrderId: order.id,
+        returnTo: '/tables',
+      }
+    });
+    onOpenChange(false);
+  };
 
   const handleManualBump = async () => {
     setIsBumping(true);
@@ -195,6 +208,18 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
 
       {/* Action Buttons */}
       <div className="space-y-2">
+        {/* Add More Items Button - Always visible for active orders */}
+        {['preparing', 'delivered', 'dining'].includes(order.status) && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleAddMoreItems}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add More Items
+          </Button>
+        )}
+
         {order.status === 'preparing' && (
           <>
             <Button

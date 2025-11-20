@@ -1,5 +1,6 @@
 import { useEffect, startTransition, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/lib/store/cart';
 import { useToast } from '@/hooks/use-toast';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
@@ -12,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { MapPin, Monitor, NfcIcon, ChevronRight, ShoppingCart } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import extracted components
 import { CategoryList } from '@/components/pos/CategoryList';
@@ -35,6 +37,12 @@ export default function POS() {
   // Device detection
   const { device, isMobile, isTablet } = useDeviceDetection();
   const [mobileTab, setMobileTab] = useState<'menu' | 'cart'>('menu');
+  
+  // Router hooks
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Cart store
   const { 
@@ -60,9 +68,72 @@ export default function POS() {
     setNFCCardId
   } = useCartStore();
   
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
+  // Handle loading existing order from table management
+  useEffect(() => {
+    const { tableId, existingOrderId, returnTo } = location.state || {};
+    
+    if (existingOrderId && tableId) {
+      // Load existing order items
+      const loadExistingOrder = async () => {
+        try {
+          const { data: order, error } = await supabase
+            .from('orders')
+            .select(`
+              *,
+              order_items (
+                id,
+                quantity,
+                unit_price,
+                notes,
+                modifiers,
+                menu_items (id, name, price)
+              )
+            `)
+            .eq('id', existingOrderId)
+            .single();
+          
+          if (error) throw error;
+          
+          if (order) {
+            // Set table
+            setTableId(tableId);
+            setOrderType('dine_in');
+            
+            // Add existing items to cart
+            order.order_items?.forEach((item: any) => {
+              // Add item multiple times based on quantity
+              for (let i = 0; i < item.quantity; i++) {
+                addItem({
+                  menu_item_id: item.menu_items.id,
+                  name: item.menu_items.name,
+                  price: item.unit_price,
+                  notes: item.notes,
+                  modifiers: item.modifiers || [],
+                });
+              }
+            });
+            
+            toast({
+              title: 'Order Loaded',
+              description: 'Existing order items loaded. Add more items below.',
+            });
+          }
+          
+          // Clear location state
+          navigate(location.pathname, { replace: true, state: {} });
+        } catch (error: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Failed to load order',
+            description: error.message,
+          });
+        }
+      };
+      
+      loadExistingOrder();
+    }
+  }, [location.state]);
+  
   // Business logic hook
   const {
     categories,

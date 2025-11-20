@@ -105,52 +105,46 @@ export async function getRecentCompletedOrders(limit = 10) {
   return data;
 }
 
-export async function getTodayMetrics() {
+export async function getTodayMetrics(branchId: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Get today's orders
-  const { data: orders, error: ordersError } = await supabase
+  // Get completed orders with timestamps
+  const { data: completedOrders, error: completedError } = await supabase
     .from('orders')
-    .select('id, status, total, created_at, delivered_at, paid_at, table_id')
-    .gte('created_at', today.toISOString());
+    .select('total, created_at, paid_at, table_id')
+    .eq('branch_id', branchId)
+    .gte('created_at', today.toISOString())
+    .in('status', ['completed', 'done'])
+    .not('paid_at', 'is', null);
 
-  if (ordersError) throw ordersError;
+  if (completedError) throw completedError;
 
-  // Get current table assignments to validate awaiting payment
-  const { data: tables, error: tablesError } = await supabase
-    .from('tables')
-    .select('current_order_id')
-    .not('current_order_id', 'is', null);
+  const totalRevenue = completedOrders?.reduce((sum, o) => sum + o.total, 0) || 0;
 
-  if (tablesError) throw tablesError;
+  // Awaiting payment (delivered but not paid)
+  const { data: deliveredOrders, error: deliveredError } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('branch_id', branchId)
+    .eq('status', 'delivered');
 
-  const currentOrderIds = new Set(tables?.map(t => t.current_order_id) || []);
+  if (deliveredError) throw deliveredError;
 
-  const paidOrders = orders?.filter(o => o.status === 'paid') || [];
-  const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-  
-  // Only count delivered orders that are currently on tables
-  const awaitingPayment = orders?.filter(o => 
-    o.status === 'delivered' && currentOrderIds.has(o.id)
-  ).length || 0;
-  
-  const turnovers = paidOrders
-    .filter(o => o.created_at && o.paid_at)
-    .map(o => {
-      const created = new Date(o.created_at!).getTime();
-      const paid = new Date(o.paid_at!).getTime();
-      return (paid - created) / 1000 / 60; // minutes
-    });
+  const awaitingPayment = deliveredOrders?.length || 0;
 
-  const avgTurnover = turnovers.length > 0
-    ? turnovers.reduce((sum, t) => sum + t, 0) / turnovers.length
+  // Average turnover time (creation to payment)
+  const avgTurnoverMinutes = completedOrders && completedOrders.length > 0
+    ? completedOrders.reduce((sum, o) => {
+        const diff = new Date(o.paid_at!).getTime() - new Date(o.created_at).getTime();
+        return sum + (diff / 60000);
+      }, 0) / completedOrders.length
     : 0;
 
   return {
     totalRevenue,
-    ordersDelivered: orders?.filter(o => ['delivered', 'paid'].includes(o.status)).length || 0,
+    ordersDelivered: completedOrders?.length || 0,
     awaitingPayment,
-    avgTurnoverMinutes: Math.round(avgTurnover),
+    avgTurnoverMinutes: Math.round(avgTurnoverMinutes),
   };
 }
