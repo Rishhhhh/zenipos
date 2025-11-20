@@ -235,30 +235,13 @@ export function usePOSLogic() {
     onSuccess: async (order) => {
       console.log('✅ Order submitted successfully:', order.id);
       
-      // AUTO-PRINT: Route order to station printers
+      // AUTO-PRINT: Route order to station printers (SILENT)
       try {
         await PrintRoutingService.routeOrder(order.id);
-        console.log('✅ Order routed to printers');
+        console.log('✅ Kitchen tickets auto-printed silently');
       } catch (printError) {
-        console.error('⚠️  Print routing failed:', printError);
-        // Don't fail the order, just log warning
+        console.error('⚠️ Print routing failed:', printError);
       }
-      
-      // Show print preview
-      setPreviewOrderData({
-        orderId: order.id,
-        orderNumber: order.id.substring(0, 8),
-        items: items,
-        subtotal: getSubtotal(),
-        tax: getTax(),
-        total: getTotal(),
-        timestamp: new Date(),
-      });
-      setShowPrintPreview(true);
-
-      // Orders now start as 'kitchen_queue' from RPC function
-      // Auto-progression will handle moving to 'preparing' after 2 minutes
-      console.log('📤 Order created with organization_id derived from branch');
 
       // Update table status if dine-in
       if (table_id) {
@@ -278,6 +261,9 @@ export function usePOSLogic() {
         description: `Order #${order.id.substring(0, 8)} - ${items.length} items`,
       });
 
+      // Close confirmation modal
+      setShowOrderConfirmation(false);
+      
       clearCartItems();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },

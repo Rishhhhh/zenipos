@@ -29,6 +29,8 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
     queryKey: ['tables-with-orders'],
     queryFn: getTablesWithOrders,
     enabled: open,
+    staleTime: 30 * 1000, // Cache for 30 seconds
+    gcTime: 60 * 1000, // Keep in cache for 1 minute
   });
 
   const handleTableSelect = (table: any, label: string) => {
@@ -148,7 +150,11 @@ export function TableSelectionModal({ open, onOpenChange, onSelect }: TableSelec
           <div>
             <h3 className="font-semibold mb-3">Available Tables</h3>
             {isLoading ? (
-              <p className="text-muted-foreground text-center py-8">Loading tables...</p>
+              <div className="grid grid-cols-5 md:grid-cols-6 gap-4">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <Card key={i} className="h-32 animate-pulse bg-muted" />
+                ))}
+              </div>
             ) : tables?.length === 0 ? (
               <Card className="p-8 text-center">
                 <p className="text-muted-foreground">No tables configured. Contact your manager.</p>

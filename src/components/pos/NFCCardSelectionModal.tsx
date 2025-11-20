@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -27,6 +27,7 @@ interface NFCCard {
 
 export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardSelectionModalProps) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: nfcCards, isLoading } = useQuery({
     queryKey: ['nfc-cards', 'active'],
@@ -41,6 +42,8 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
       return data as NFCCard[];
     },
     enabled: open,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (cards don't change often)
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   const handleCardSelect = async (cardId: string, cardUid: string) => {
@@ -57,6 +60,19 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
         .eq('id', cardId);
       
       if (error) throw error;
+      
+      // PERFORMANCE BOOST: Prefetch tables in background
+      queryClient.prefetchQuery({
+        queryKey: ['tables'],
+        queryFn: async () => {
+          const { data } = await supabase
+            .from('tables')
+            .select('*, current_order:orders(*)')
+            .order('label');
+          return data;
+        },
+        staleTime: 30 * 1000, // Cache for 30 seconds
+      });
       
       // Call parent callback
       onSelect(cardId, cardUid);

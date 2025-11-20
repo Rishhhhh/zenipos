@@ -8,20 +8,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWidgetConfig } from "@/hooks/useWidgetConfig";
 import { RevenueChartConfig } from "@/types/widgetConfigs";
 import { cn } from "@/lib/utils";
+import { useBranch } from "@/contexts/BranchContext";
 
 export default memo(function RevenueChart() {
   const { config } = useWidgetConfig<RevenueChartConfig>('revenue-chart');
+  const { currentBranch } = useBranch();
+  
   const { data: revenueData, isLoading } = useQuery({
-    queryKey: ["revenue-chart"],
+    queryKey: ["revenue-chart", currentBranch?.id],
     queryFn: async () => {
+      if (!currentBranch?.id) {
+        console.warn('⚠️ No branch selected, skipping revenue query');
+        return [];
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       const { data, error } = await supabase
         .from("orders")
-        .select("created_at, total")
+        .select("created_at, total, paid_at")
+        .eq("branch_id", currentBranch.id)
         .gte("created_at", today.toISOString())
-        .eq("status", "done");
+        .in("status", ["completed", "done"])
+        .not("paid_at", "is", null);
 
       if (error) throw error;
 
@@ -42,6 +52,7 @@ export default memo(function RevenueChart() {
 
       return filteredData;
     },
+    enabled: !!currentBranch?.id,
     refetchInterval: 5 * 60 * 1000,
   });
 
