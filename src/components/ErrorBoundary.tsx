@@ -24,24 +24,33 @@ export class ErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('❌ React Error Boundary caught:', error, errorInfo);
     
-    // Log to console for debugging
+    // Enhanced error details
     console.group('🔍 Error Details');
     console.error('Error:', error.message);
     console.error('Stack:', error.stack);
+    console.error('Device Info:', {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      device: window.innerWidth < 768 ? 'mobile' : 
+              window.innerWidth < 834 ? 'portrait-tablet' :
+              window.innerWidth < 1024 ? 'landscape-tablet' : 'desktop',
+      userAgent: navigator.userAgent
+    });
     console.error('Component Stack:', errorInfo.componentStack);
     console.groupEnd();
     
     // Clear potentially corrupted state
     try {
-      // Clear widget layouts (might be corrupted)
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('dashboard-layout-')) {
-          localStorage.removeItem(key);
-          console.log('🧹 Cleared layout:', key);
-        }
-      });
-      localStorage.removeItem('supabase.auth.token');
-      localStorage.removeItem('pos_session');
+      if (typeof localStorage !== 'undefined') {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('dashboard-layout-') || 
+              key.startsWith('pos_') ||
+              key.includes('device')) {
+            localStorage.removeItem(key);
+            console.log('🧹 Cleared:', key);
+          }
+        });
+      }
     } catch (e) {
       console.error('Failed to clear localStorage:', e);
     }
