@@ -179,22 +179,24 @@ export default function POS() {
     pendingPaymentOrder,
     handlePaymentSuccess,
     handleOrderFound,
-  } = usePOSPayments(broadcastIdle, customerDisplayId);
+  } = usePOSPayments(broadcastIdle, customerDisplayId, setPreviewOrderData, setShowPrintPreview);
 
-  // NFC-first flow: enforce card -> order type -> table selection
+  // NFC-first flow: OPTIMIZED for direct table selection
   useEffect(() => {
     if (!nfc_card_id) {
       setShowNFCCardSelect(true);
       return;
     }
     
-    if (nfc_card_id && !order_type) {
-      setShowOrderTypeSelect(true);
+    // OPTIMIZED: If order type already set, skip to table selection
+    if (nfc_card_id && order_type === 'dine_in' && !table_id) {
+      setShowTableSelect(true);
       return;
     }
     
-    if (order_type === 'dine_in' && !table_id) {
-      setShowTableSelect(true);
+    // Only show order type if not set yet
+    if (nfc_card_id && !order_type) {
+      setShowOrderTypeSelect(true);
       return;
     }
   }, [nfc_card_id, order_type, table_id]);
@@ -209,70 +211,87 @@ export default function POS() {
 
   return (
     <div className="pos-container h-screen flex flex-col overflow-hidden">
-      {/* Header: Table Badge + Display Link */}
-      <div className="h-14 border-b flex items-center px-4 gap-3 flex-shrink-0">
-        {(table_id || order_type === 'takeaway') && (
-          <Badge
-            variant="secondary"
-            className="text-base px-4 py-2 cursor-pointer hover:bg-secondary/80"
-            onClick={() => setShowTableSelect(true)}
-          >
-            <MapPin className="h-4 w-4 mr-2" />
-            {order_type === 'takeaway' ? 'Takeaway' : `Table ${tableLabelShort || selectedTable?.label || '...'}`}
-          </Badge>
-        )}
-
-        {nfc_card_id && (
-          <Badge
-            variant="outline"
-            className="text-base px-4 py-2 bg-green-500/10 border-green-500 cursor-pointer hover:bg-green-500/20 transition-colors"
-            onClick={() => {
-              if (items.length > 0) {
-                if (confirm('Changing NFC card will clear the current cart. Continue?')) {
-                  clearCart();
+      {/* Header: Consolidated Status Badges + Actions */}
+      <div className="h-14 border-b flex items-center justify-between px-4 gap-3 flex-shrink-0">
+        {/* LEFT: Status Badges */}
+        <div className="flex items-center gap-2">
+          {/* NFC Card Badge */}
+          {nfc_card_id && (
+            <Badge
+              variant="outline"
+              className="text-sm px-3 py-1.5 bg-emerald-500/10 border-emerald-500 cursor-pointer hover:bg-emerald-500/20 transition-colors"
+              onClick={() => {
+                // OPTIMIZED: Direct to table selection if order type already set
+                if (order_type === 'dine_in') {
+                  setShowTableSelect(true);
+                  return;
+                }
+                
+                // Otherwise, start from NFC selection
+                if (items.length > 0) {
+                  if (confirm('Changing NFC card will clear the current cart. Continue?')) {
+                    clearCart();
+                    setShowNFCCardSelect(true);
+                  }
+                } else {
+                  clearNFCCard();
                   setShowNFCCardSelect(true);
                 }
-              } else {
-                clearNFCCard();
-                setShowNFCCardSelect(true);
-              }
-            }}
-          >
-            <NfcIcon className="h-4 w-4 mr-2" />
-            Card: {nfcCardUid || nfc_card_id.slice(0, 8)}
-          </Badge>
-        )}
-        
-        {customerDisplayId ? (
-          <Badge
-            variant="outline"
-            className="text-base px-4 py-2 cursor-pointer hover:bg-accent"
-            onClick={() => setShowLinkDisplay(true)}
-          >
-            <Monitor className="h-4 w-4 mr-2" />
-            Display Linked
-          </Badge>
-        ) : (
+              }}
+            >
+              <NfcIcon className="h-3.5 w-3.5 mr-1.5" />
+              {nfcCardUid || nfc_card_id.slice(0, 8)}
+            </Badge>
+          )}
+
+          {/* Order Type Badge (Dine In / Takeaway) */}
+          {order_type && (
+            <Badge
+              variant={order_type === 'takeaway' ? 'secondary' : 'default'}
+              className="text-sm px-3 py-1.5"
+            >
+              {order_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine In'}
+            </Badge>
+          )}
+
+          {/* Table Badge (only for dine-in) */}
+          {order_type === 'dine_in' && table_id && (
+            <Badge
+              variant="outline"
+              className="text-sm px-3 py-1.5 bg-amber-500/10 border-amber-500 cursor-pointer hover:bg-amber-500/20"
+              onClick={() => setShowTableSelect(true)}
+            >
+              <MapPin className="h-3.5 w-3.5 mr-1.5" />
+              {tableLabelShort || selectedTable?.label || 'Select Table'}
+            </Badge>
+          )}
+        </div>
+
+        {/* RIGHT: Action Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Scan Card to Pay Button */}
           <Button
             variant="outline"
-            size="lg"
-            className="h-10 px-6"
-            onClick={() => setShowLinkDisplay(true)}
+            size="sm"
+            className="text-sm px-4 py-2 bg-primary/10 border-primary hover:bg-primary/20"
+            onClick={() => setShowPaymentNFCScanner(true)}
           >
-            <Monitor className="h-5 w-5 mr-2" />
-            Link Display
+            <NfcIcon className="h-4 w-4 mr-2" />
+            Scan Card to Pay
           </Button>
-        )}
 
-        <Button
-          variant="default"
-          size="lg"
-          className="h-10 px-6 ml-auto"
-          onClick={() => setShowPaymentNFCScanner(true)}
-        >
-          <NfcIcon className="h-5 w-5 mr-2" />
-          Scan Card to Pay
-        </Button>
+          {/* Customer Display Link (if active) */}
+          {customerDisplayId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLinkDisplay(true)}
+            >
+              <Monitor className="h-4 w-4 mr-2" />
+              Display
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* NFC Card Selection Modal */}
