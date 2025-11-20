@@ -3687,10 +3687,12 @@ export type Database = {
       station_routing_rules: {
         Row: {
           active: boolean | null
+          branch_id: string | null
           category_id: string | null
           created_at: string | null
           id: string
           menu_item_id: string | null
+          organization_id: string
           prep_time_minutes: number | null
           priority: number | null
           station_id: string
@@ -3698,10 +3700,12 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          branch_id?: string | null
           category_id?: string | null
           created_at?: string | null
           id?: string
           menu_item_id?: string | null
+          organization_id: string
           prep_time_minutes?: number | null
           priority?: number | null
           station_id: string
@@ -3709,16 +3713,25 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          branch_id?: string | null
           category_id?: string | null
           created_at?: string | null
           id?: string
           menu_item_id?: string | null
+          organization_id?: string
           prep_time_minutes?: number | null
           priority?: number | null
           station_id?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "station_routing_rules_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "station_routing_rules_category_id_fkey"
             columns: ["category_id"]
@@ -3731,6 +3744,13 @@ export type Database = {
             columns: ["menu_item_id"]
             isOneToOne: false
             referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "station_routing_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
