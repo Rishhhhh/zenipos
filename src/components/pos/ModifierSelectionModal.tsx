@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { CartModifier } from '@/lib/store/cart';
 
 interface ModifierSelectionModalProps {
@@ -84,8 +85,8 @@ export function ModifierSelectionModal({
       return groups || [];
     },
     enabled: open && !!menuItemId && menuItemId.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes - cache modifiers
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in memory
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache modifiers
+    gcTime: 15 * 60 * 1000, // 15 minutes - keep in memory
   });
 
   // Reset selections when modal opens
@@ -200,7 +201,19 @@ export function ModifierSelectionModal({
       <ScrollArea className="max-h-[500px] pr-4">
           <div className="space-y-6">
             {isLoading ? (
-              <p className="text-center text-muted-foreground">Loading options...</p>
+              <div className="space-y-4">
+                <Card className="p-4">
+                  <Skeleton className="h-6 w-48 mb-3" />
+                  <Skeleton className="h-10 w-full mb-2" />
+                  <Skeleton className="h-10 w-full mb-2" />
+                  <Skeleton className="h-10 w-full" />
+                </Card>
+                <Card className="p-4">
+                  <Skeleton className="h-6 w-40 mb-3" />
+                  <Skeleton className="h-10 w-full mb-2" />
+                  <Skeleton className="h-10 w-full" />
+                </Card>
+              </div>
             ) : (
               modifierData?.map((group: any) => (
                 <Card key={group.id} className="p-4">

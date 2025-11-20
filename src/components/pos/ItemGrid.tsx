@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ImageIcon, Tag } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EightySixBadge } from "@/components/ui/eighty-six-badge";
 import { useEightySixItems } from "@/hooks/useEightySixItems";
@@ -34,6 +34,8 @@ export function ItemGrid({
   onAddItem,
   categoryId
 }: ItemGridProps) {
+  const queryClient = useQueryClient();
+  
   // Fetch active promotions
   const {
     data: promotions
@@ -59,6 +61,52 @@ export function ItemGrid({
     isEightySixed,
     getEightySixInfo
   } = useEightySixItems();
+
+  // PREFETCH: Load modifiers on hover for instant modal open
+  const handleItemHover = useCallback((menuItemId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ['category-modifiers', menuItemId],
+      queryFn: async () => {
+        const { data: item, error: itemError } = await supabase
+          .from('menu_items')
+          .select(`
+            category_id,
+            menu_categories!inner (
+              category_modifier_groups (
+                sort_order,
+                modifier_groups (
+                  id,
+                  name,
+                  min_selections,
+                  max_selections,
+                  modifiers (
+                    id,
+                    name,
+                    price
+                  )
+                )
+              )
+            )
+          `)
+          .eq('id', menuItemId)
+          .single();
+
+        if (itemError) throw itemError;
+
+        if (!item?.category_id || !item.menu_categories?.category_modifier_groups) {
+          return [];
+        }
+
+        // Extract and flatten modifier groups
+        const groups = item.menu_categories.category_modifier_groups
+          .map((cmg: any) => cmg.modifier_groups)
+          .filter((group: any) => group !== null);
+
+        return groups || [];
+      },
+      staleTime: 10 * 60 * 1000, // 10 min cache
+    });
+  }, [queryClient]);
 
   // Filter items by category if specified - memoized to prevent re-renders
   const filteredItems = useMemo(() => items?.filter(item => !categoryId || item.category_id === categoryId) || [], [items, categoryId]);
@@ -100,6 +148,7 @@ export function ItemGrid({
               key={item.id} 
               className={`cursor-pointer hover:bg-accent transition-colors relative ${!isAvailable ? 'opacity-60 cursor-not-allowed' : ''}`} 
               onClick={() => isAvailable && handleItemClick(item)}
+              onMouseEnter={() => isAvailable && handleItemHover(item.id)}
               title={is86d ? `86'd: ${eightySixInfo?.reason}` : ''}
             >
               {item.image_url ? (
