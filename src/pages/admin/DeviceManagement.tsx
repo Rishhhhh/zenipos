@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone } from "lucide-react";
+import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { BranchSelector } from "@/components/branch/BranchSelector";
@@ -50,12 +50,20 @@ interface Device {
   stations?: { name: string; color: string };
 }
 
-const DeviceCard = ({ device, onEdit, onTest, onDelete }: any) => {
+const DeviceCard = ({ device, onEdit, onTest, onDelete, printerStatus }: any) => {
   const statusColor = {
     online: 'default',
     offline: 'secondary',
     error: 'destructive'
   }[device.status];
+  
+  // Printer-specific status indicators
+  const printerStatusConfig = {
+    ready: { color: 'default', icon: '🟢', label: 'Ready' },
+    idle: { color: 'secondary', icon: '🟡', label: 'Idle' },
+    offline: { color: 'destructive', icon: '🔴', label: 'Offline' },
+    unknown: { color: 'secondary', icon: '⚪', label: 'Unknown' }
+  };
   
   const roleIcons: any = {
     'POS': Tablet,
@@ -67,6 +75,8 @@ const DeviceCard = ({ device, onEdit, onTest, onDelete }: any) => {
   };
   
   const Icon = roleIcons[device.role] || Monitor;
+  const isPrinter = device.role === 'PRINTER';
+  const statusInfo = isPrinter && printerStatus ? printerStatusConfig[printerStatus.status] : null;
   
   return (
     <Card className="p-4">
@@ -82,7 +92,14 @@ const DeviceCard = ({ device, onEdit, onTest, onDelete }: any) => {
             </p>
           </div>
         </div>
-        <Badge variant={statusColor as any}>{device.status}</Badge>
+        <div className="flex flex-col gap-1 items-end">
+          <Badge variant={statusColor as any}>{device.status}</Badge>
+          {statusInfo && (
+            <Badge variant={statusInfo.color as any} className="text-xs">
+              {statusInfo.icon} {statusInfo.label}
+            </Badge>
+          )}
+        </div>
       </div>
       
       <div className="space-y-2 text-sm mb-3">
@@ -90,6 +107,12 @@ const DeviceCard = ({ device, onEdit, onTest, onDelete }: any) => {
           <div className="flex justify-between">
             <span className="text-muted-foreground">IP:</span>
             <span className="font-mono">{device.ip_address}</span>
+          </div>
+        )}
+        {device.device_capabilities?.system_printer_name && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Printer:</span>
+            <span className="font-mono text-xs">{device.device_capabilities.system_printer_name}</span>
           </div>
         )}
         {device.stations && (
@@ -107,6 +130,12 @@ const DeviceCard = ({ device, onEdit, onTest, onDelete }: any) => {
           <span className="text-muted-foreground">Last Seen:</span>
           <span>{formatDistanceToNow(new Date(device.last_seen))} ago</span>
         </div>
+        {isPrinter && printerStatus?.lastSeen && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Last Print:</span>
+            <span className="text-xs">{formatDistanceToNow(printerStatus.lastSeen)} ago</span>
+          </div>
+        )}
       </div>
       
       <div className="flex gap-2">
@@ -161,13 +190,20 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
       branch_id: currentBranch?.id || '',
       status: 'offline',
       health_check_interval: 60,
-      device_capabilities: {}
+      device_capabilities: { system_printer_name: '' }
     }
   });
   
+  const isPrinter = form.watch('role') === 'PRINTER';
+  
+  const handleOpenPrinterSettings = () => {
+    window.open('ms-settings:printers', '_blank');
+    toast.info('Opening Windows printer settings...');
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {device ? 'Edit Device' : 'Add Device'}
@@ -217,10 +253,13 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
               name="ip_address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>IP Address</FormLabel>
+                  <FormLabel>IP Address {!isPrinter && '(Optional)'}</FormLabel>
                   <FormControl>
                     <Input placeholder="192.168.1.100" {...field} />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank for Windows system printers
+                  </p>
                 </FormItem>
               )}
             />
@@ -247,6 +286,39 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
               )}
             />
             
+            {isPrinter && (
+              <FormField
+                control={form.control}
+                name="device_capabilities.system_printer_name"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Windows System Printer Name</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., EPSON TM-T88V, HP LaserJet 1200" 
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="icon"
+                        onClick={handleOpenPrinterSettings}
+                        title="Open Windows Printer Settings"
+                      >
+                        <Activity className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Enter the exact printer name as shown in Windows Settings. Click the icon to open your system printer settings.
+                    </p>
+                  </FormItem>
+                )}
+              />
+            )}
+            
             <FormField
               control={form.control}
               name="health_check_interval"
@@ -261,6 +333,22 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
             />
           </div>
           
+          {isPrinter && (
+            <Alert className="mt-4">
+              <Printer className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>💡 Printer Setup Guide:</strong>
+                <ol className="list-decimal list-inside mt-2 space-y-1">
+                  <li>Click the <Activity className="h-3 w-3 inline" /> icon above to open Windows Printer Settings</li>
+                  <li>Find your printer and note its exact name</li>
+                  <li>Enter that name in the "System Printer Name" field above</li>
+                  <li>Save and use "Test Print" to verify</li>
+                </ol>
+                <p className="mt-2">The printer dialog will open when printing - select your printer there.</p>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={onClose}>Cancel</Button>
             <Button onClick={form.handleSubmit(onSave)}>
@@ -274,19 +362,68 @@ const DeviceModal = ({ device, open, onClose, onSave }: any) => {
 };
 
 const TestPrintModal = ({ device, open, onClose }: any) => {
+  const [printerStatus, setPrinterStatus] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load printer status when modal opens
+  useEffect(() => {
+    if (open && device) {
+      loadPrinterStatus();
+    }
+  }, [open, device]);
+  
+  const loadPrinterStatus = async () => {
+    setIsLoading(true);
+    try {
+      const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+      const status = await BrowserPrintService.getPrinterStatus(device.id);
+      setPrinterStatus(status);
+    } catch (error) {
+      console.error('Failed to load printer status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const testPrint = useMutation({
     mutationFn: async () => {
-      // TODO: Implement actual print test
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+      
+      const testData = {
+        id: device.id,
+        deviceName: device.name,
+        role: device.role,
+        station: device.stations?.name,
+        ipAddress: device.ip_address,
+        printerName: device.device_capabilities?.system_printer_name
+      };
+      
+      const success = await BrowserPrintService.printTestPage(testData);
+      if (!success) {
+        throw new Error('Print dialog failed to open');
+      }
+      
+      // Reload status after print
+      await loadPrinterStatus();
+      
       return { success: true };
     },
     onSuccess: () => {
-      toast.success('Test print sent successfully');
+      toast.success('Test print sent! Select your printer in the dialog.');
     },
     onError: (error: any) => {
       toast.error(`Test print failed: ${error.message}`);
     }
   });
+  
+  const statusConfig = {
+    ready: { color: 'bg-green-500', label: '🟢 Ready', description: 'Printer has printed recently' },
+    idle: { color: 'bg-yellow-500', label: '🟡 Idle', description: 'No recent print activity' },
+    offline: { color: 'bg-red-500', label: '🔴 Offline', description: 'Not seen recently or errors detected' },
+    unknown: { color: 'bg-gray-500', label: '⚪ Unknown', description: 'No print history available' }
+  };
+  
+  const currentStatus = printerStatus ? statusConfig[printerStatus.status] : null;
   
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -298,16 +435,75 @@ const TestPrintModal = ({ device, open, onClose }: any) => {
           <Alert>
             <Printer className="h-4 w-4" />
             <AlertDescription>
-              A test page will be printed to verify connectivity and configuration.
+              A test page will be printed using Windows print dialog. Make sure your printer is connected and powered on.
             </AlertDescription>
           </Alert>
+          
+          {/* Printer Status */}
+          {!isLoading && currentStatus && (
+            <div className="border rounded-lg p-4 space-y-3">
+              <h4 className="font-semibold text-sm">Printer Status</h4>
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${currentStatus.color}`} />
+                <span className="font-medium">{currentStatus.label}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{currentStatus.description}</p>
+              
+              {printerStatus.lastSeen && (
+                <div className="text-xs text-muted-foreground">
+                  Last print: {formatDistanceToNow(printerStatus.lastSeen)} ago
+                </div>
+              )}
+              
+              {printerStatus.lastError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertDescription className="text-xs">
+                    <strong>Last Error:</strong> {printerStatus.lastError}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+          
+          {/* Debug Info */}
+          <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+            <h4 className="font-semibold text-sm">Connection Info</h4>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Browser Print:</span>
+                <span className="font-mono">✓ Available</span>
+              </div>
+              {device?.ip_address && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Network IP:</span>
+                  <span className="font-mono">{device.ip_address}</span>
+                </div>
+              )}
+              {device?.device_capabilities?.system_printer_name && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">System Printer:</span>
+                  <span className="font-mono text-xs">{device.device_capabilities.system_printer_name}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Device Type:</span>
+                <span>Thermal Printer</span>
+              </div>
+            </div>
+          </div>
+          
           <Button 
             onClick={() => testPrint.mutate()} 
             disabled={testPrint.isPending}
             className="w-full"
           >
-            {testPrint.isPending ? 'Printing...' : 'Send Test Print'}
+            <Printer className="h-4 w-4 mr-2" />
+            {testPrint.isPending ? 'Opening print dialog...' : 'Send Test Print'}
           </Button>
+          
+          <p className="text-xs text-center text-muted-foreground">
+            The Windows print dialog will open. Select your printer and click Print.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
@@ -321,6 +517,7 @@ export default function DeviceManagement() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
   const [testPrintDevice, setTestPrintDevice] = useState<Device | null>(null);
+  const [printerStatuses, setPrinterStatuses] = useState<Record<string, any>>({});
 
   const { data: devices, isLoading } = useQuery({
     queryKey: ['devices', currentBranch?.id],
@@ -338,6 +535,34 @@ export default function DeviceManagement() {
     },
     enabled: !!currentBranch?.id
   });
+  
+  // Fetch printer statuses for all printer devices
+  useEffect(() => {
+    const loadPrinterStatuses = async () => {
+      if (!devices) return;
+      
+      const printers = devices.filter(d => d.role === 'PRINTER');
+      if (printers.length === 0) return;
+      
+      try {
+        const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+        const statuses: Record<string, any> = {};
+        
+        await Promise.all(
+          printers.map(async (printer) => {
+            const status = await BrowserPrintService.getPrinterStatus(printer.id);
+            statuses[printer.id] = status;
+          })
+        );
+        
+        setPrinterStatuses(statuses);
+      } catch (error) {
+        console.error('Failed to load printer statuses:', error);
+      }
+    };
+    
+    loadPrinterStatuses();
+  }, [devices]);
 
   const saveDevice = useMutation({
     mutationFn: async (device: any) => {
@@ -422,12 +647,31 @@ export default function DeviceManagement() {
           Add Device
         </Button>
       </div>
+      
+      {/* Printer Setup Guide */}
+      <Alert className="mb-6">
+        <Printer className="h-4 w-4" />
+        <AlertDescription>
+          <strong className="block mb-2">🖨️ Windows Printer Setup Guide:</strong>
+          <ol className="list-decimal list-inside space-y-1 text-sm">
+            <li>When adding a printer, click "Open Windows Printer Settings" button in the config</li>
+            <li>In Windows Settings, note your printer's exact name (e.g., "EPSON TM-T88V")</li>
+            <li>Return here and enter that exact name in the "System Printer Name" field</li>
+            <li>Click "Test Print" to verify - the Windows print dialog will open</li>
+            <li>Select your printer from the dialog and confirm the test page prints correctly</li>
+          </ol>
+          <p className="text-xs mt-2 text-muted-foreground">
+            💡 Tip: If network printing fails, the system will automatically fall back to Windows print dialog
+          </p>
+        </AlertDescription>
+      </Alert>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {devices?.map((device) => (
           <DeviceCard
             key={device.id}
             device={device}
+            printerStatus={device.role === 'PRINTER' ? printerStatuses[device.id] : null}
             onEdit={() => {
               setEditingDevice(device as Device);
               setModalOpen(true);
