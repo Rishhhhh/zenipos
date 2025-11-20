@@ -1,4 +1,4 @@
-import { GlassModal } from '@/components/modals/GlassModal';
+import { ResponsiveModal } from '@/components/pos/ResponsiveModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -246,12 +246,13 @@ export function PaymentModal({
   };
 
   return (
-    <GlassModal 
+    <ResponsiveModal 
       open={open} 
       onOpenChange={onOpenChange}
       title={`Payment - RM ${total.toFixed(2)}`}
+      description="Select payment method and complete transaction"
+      side="bottom"
       size="lg"
-      variant="default"
     >
       {/* E-Invoice Toggle */}
       <div className="flex items-center space-x-2 mb-4 p-3 bg-muted/30 rounded-lg">
@@ -367,6 +368,6 @@ export function PaymentModal({
           </Button>
         </TabsContent>
       </Tabs>
-    </GlassModal>
+    </ResponsiveModal>
   );
 }

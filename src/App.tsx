@@ -20,12 +20,14 @@ import CustomerScreen from "./pages/CustomerScreen";
 import Index from "./pages/Index";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MacDock } from "./components/navigation/MacDock";
+import { MobileBottomNav } from "./components/navigation/MobileBottomNav";
 import { FloatingSimulationControl } from "./components/simulation/FloatingSimulationControl";
 import { AIFloatingButton } from "./components/ai/AIFloatingButton";
 import { useAuth } from "./contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useSimulationStore } from "./lib/store/simulation";
 import { useRealtimeStore } from "./lib/store/realtimeStore";
+import { useDeviceDetection } from "./hooks/useDeviceDetection";
 
 // Lazy load routes for code splitting and faster initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -113,6 +115,7 @@ function POSWithHeader() {
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { employee } = useAuth();
   const location = useLocation();
+  const { isMobile } = useDeviceDetection();
   const stopSimulation = useSimulationStore(state => state.stopSimulation);
   const subscribeAll = useRealtimeStore(state => state.subscribeAll);
   const isLoginPage = location.pathname === '/login';
@@ -139,7 +142,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       {children}
       {employee && !isLoginPage && !isCustomerScreen && (
         <>
-          <MacDock />
+          {isMobile ? <MobileBottomNav /> : <MacDock />}
           <FloatingSimulationControl />
         </>
       )}
