@@ -42,15 +42,9 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
         })
         .eq('id', table.id);
 
-      // Trigger automatic printing via routing service (with browser fallback)
+      // Fetch order data and organization settings for customer receipt
       if (orderId) {
-        const { PrintRoutingService } = await import('@/lib/print/PrintRoutingService');
-        await PrintRoutingService.routeOrder(orderId);
-      }
-
-      // Fetch order data for print preview
-      if (orderId) {
-        const { data: orderData, error } = await supabase
+        const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .select(`
             *,
@@ -63,7 +57,43 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
           .eq('id', orderId)
           .single();
         
-        if (!error && orderData) {
+        if (!orderError && orderData) {
+          // Fetch organization details
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('name, address, phone')
+            .eq('id', orderData.organization_id)
+            .single();
+          
+          // Prepare 80mm customer receipt data
+          const receiptData = {
+            restaurantName: orgData?.name || 'Restaurant',
+            address: orgData?.address || '',
+            phone: orgData?.phone || '',
+            orderNumber: orderId.substring(0, 8).toUpperCase(),
+            tableLabel: orderData.tables?.label || undefined,
+            orderType: orderData.order_type?.replace('_', ' ').toUpperCase() || 'DINE IN',
+            timestamp: new Date(orderData.paid_at || new Date()),
+            items: (orderData.order_items || []).map((item: any) => ({
+              name: item.menu_items?.name || 'Unknown Item',
+              quantity: item.quantity,
+              price: item.price * item.quantity,
+              modifiers: item.modifiers ? Object.keys(item.modifiers) : []
+            })),
+            subtotal: orderData.subtotal || 0,
+            tax: orderData.tax || 0,
+            total: orderData.total || 0,
+            paymentMethod: 'Cash', // TODO: get from payment modal
+            cashReceived: undefined, // TODO: get from payment modal
+            changeGiven: undefined, // TODO: get from payment modal
+            cashier: 'Cashier' // TODO: get from employee session
+          };
+          
+          // Print customer receipt (browser fallback)
+          const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+          await BrowserPrintService.print80mmReceipt(receiptData);
+          
+          // Also set preview data for modal
           console.log('✅ Setting preview data for table payment:', orderData);
           setPreviewOrderData({
             orderId: orderId,
@@ -75,9 +105,8 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
             timestamp: orderData.paid_at,
           });
           setShowPrintPreview(true);
-          console.log('✅ Print preview modal should now open');
         } else {
-          console.error('❌ Failed to fetch order for preview:', error);
+          console.error('❌ Failed to fetch order for receipt:', orderError);
         }
       }
 
