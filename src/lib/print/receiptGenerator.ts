@@ -66,38 +66,141 @@ export function generate58mmReceipt(receipt: Receipt & { einvoice_enabled?: bool
 }
 
 /**
- * Generate 80mm kitchen ticket HTML
+ * Generate 80mm kitchen ticket HTML - SIMPLIFIED FOR THERMAL PRINTERS
  */
 export function generate80mmKitchenTicket(ticket: KitchenTicket): string {
+  const totalItems = ticket.items.reduce((sum, item) => sum + item.quantity, 0);
+  const timestamp = new Date(ticket.timestamp);
+  
   const template = `
-    <div style="width: 80mm; font-family: monospace; font-size: 16px;">
-      <h1 style="text-align: center; margin: 15px 0; font-size: 24px;">${ticket.station.toUpperCase()}</h1>
-      <h2 style="text-align: center; margin: 10px 0; font-size: 20px;">Order #${ticket.order_number}</h2>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        @media print {
+          body { margin: 0; padding: 0; }
+          @page { margin: 5mm; size: 80mm auto; }
+        }
+        body {
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          line-height: 1.3;
+          max-width: 80mm;
+          margin: 0 auto;
+          padding: 5mm;
+        }
+        .station-header {
+          text-align: center;
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 8px;
+        }
+        .order-number {
+          font-size: 20px;
+          font-weight: bold;
+          text-align: center;
+          border: 2px solid #000;
+          padding: 6px;
+          margin: 8px 0;
+        }
+        .order-info {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 8px 0;
+          font-size: 11px;
+        }
+        .order-info td {
+          padding: 4px 6px;
+          border: 1px solid #000;
+          text-align: center;
+        }
+        .order-info strong {
+          display: block;
+          font-size: 10px;
+        }
+        hr {
+          border: none;
+          border-top: 1px dashed #000;
+          margin: 8px 0;
+        }
+        .item {
+          margin: 10px 0;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #ddd;
+        }
+        .item:last-child { border-bottom: none; }
+        .item-name {
+          font-size: 14px;
+          font-weight: bold;
+          margin-bottom: 4px;
+        }
+        .quantity {
+          font-size: 11px;
+          margin: 4px 0;
+        }
+        .prep-time {
+          font-size: 10px;
+          color: #666;
+          margin-top: 4px;
+        }
+        .notes {
+          background: #f0f0f0;
+          border: 1px solid #000;
+          padding: 6px;
+          margin: 4px 0;
+          font-size: 11px;
+        }
+        .footer {
+          text-align: center;
+          font-size: 14px;
+          font-weight: bold;
+          margin: 12px 0 8px 0;
+          padding: 8px;
+          border: 2px solid #000;
+        }
+        .print-time {
+          text-align: center;
+          font-size: 10px;
+          margin-top: 8px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="station-header">🍳 ${ticket.station.toUpperCase()}</div>
       
-      <p style="margin: 10px 0;">Time: ${new Date(ticket.timestamp).toLocaleTimeString()}</p>
+      <div class="order-number">ORDER #${ticket.order_number}</div>
       
-      <hr style="border: 2px solid #000;">
+      <table class="order-info">
+        <tr>
+          <td><strong>Time</strong>${timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</td>
+          <td><strong>Table</strong>T19</td>
+          <td><strong>Type</strong>DINE_IN</td>
+        </tr>
+      </table>
+      
+      <hr/>
       
       ${ticket.items.map(item => `
-        <div style="margin: 15px 0;">
-          <p style="font-size: 22px; font-weight: bold; margin: 5px 0;">
-            ${item.quantity}x ${item.name.toUpperCase()}
-          </p>
+        <div class="item">
+          <div class="item-name">${item.quantity}X ${item.name.toUpperCase()}</div>
+          <div class="quantity">QTY: ${Array.from({ length: item.quantity }, () => '[ ]').join(' ')}</div>
+          <div class="prep-time">⏱️ Prep Time: ~600 min</div>
         </div>
       `).join('')}
       
-      <hr style="border: 2px solid #000;">
-      
       ${ticket.notes ? `
-        <p style="font-style: italic; margin: 10px 0; font-size: 14px;">
-          Note: ${ticket.notes}
-        </p>
+        <hr/>
+        <div class="notes">📝 ${ticket.notes.toUpperCase()}</div>
       ` : ''}
       
-      <p style="margin: 15px 0; font-size: 18px;">
-        Total Items: ${ticket.items.reduce((sum, item) => sum + item.quantity, 0)}
-      </p>
-    </div>
+      <hr/>
+      
+      <div class="footer">TOTAL ITEMS: ${totalItems}</div>
+      
+      <div class="print-time">Printed: ${timestamp.toLocaleString()}</div>
+    </body>
+    </html>
   `;
   
   return template;
