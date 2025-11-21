@@ -33,6 +33,31 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${reservations?.length || 0} upcoming reservations`);
 
+    // Get expired reservations (1 hour past reservation time)
+    const oneHourAgo = new Date(now.getTime() - 60 * 60000);
+    const { data: expiredReservations } = await supabase
+      .from('tables')
+      .select('*')
+      .not('reservation_time', 'is', null)
+      .lt('reservation_time', oneHourAgo.toISOString());
+
+    // Clear expired reservations
+    if (expiredReservations && expiredReservations.length > 0) {
+      console.log(`Clearing ${expiredReservations.length} expired reservations`);
+      for (const table of expiredReservations) {
+        await supabase
+          .from('tables')
+          .update({
+            status: 'available',
+            reservation_time: null,
+            reservation_name: null,
+            reservation_contact: null,
+            reservation_notes: null,
+          })
+          .eq('id', table.id);
+      }
+    }
+
     // Send notifications for upcoming reservations
     for (const table of reservations || []) {
       const reservationTime = new Date(table.reservation_time);
