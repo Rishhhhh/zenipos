@@ -145,7 +145,7 @@ export default memo(function Sales() {
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin max-h-[320px]">
         {isLoading ? (
           <div className="space-y-2.5">
             {[1, 2, 3].map((i) => (
@@ -159,7 +159,7 @@ export default memo(function Sales() {
             ))}
           </div>
         ) : config.displayType === 'table' ? (
-          <div className="space-y-2.5 animate-fade-in">
+          <div className="space-y-2.5 animate-fade-in max-h-[320px]">
           <div className={cn(
             "flex items-center justify-between bg-accent/30 rounded-lg",
             config.compactMode ? "p-2.5" : "p-3.5"

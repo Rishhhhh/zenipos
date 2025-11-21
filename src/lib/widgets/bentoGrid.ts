@@ -33,9 +33,9 @@ export interface BentoWidgetPosition {
  */
 export const DESKTOP_GRID_TEMPLATE: BentoGridTemplate = {
   columns: 'repeat(4, 1fr)',
-  rows: 'repeat(auto-fit, minmax(280px, 1fr))',
+  rows: 'repeat(auto-fit, minmax(340px, 1fr))',
   gap: '1rem',
-  minHeight: '800px',
+  minHeight: '900px',
   areas: [
     ['hero', 'hero', 'sales', 'orders'],
     ['hero', 'hero', 'revenue', 'orders'],

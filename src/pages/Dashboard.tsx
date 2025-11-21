@@ -20,18 +20,13 @@ export default function Dashboard() {
       className="dashboard-container flex flex-col bg-gradient-to-br from-background via-accent/5 to-secondary/5"
       style={{ height: 'var(--available-height)' }}
     >
-      {/* Header with max-width constraint */}
+      {/* Compact Header - Horizontal Layout */}
       {!isMobile && (
-        <div className="flex-none max-w-7xl mx-auto w-full px-4 md:px-6 pt-4 md:pt-6 pb-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Welcome back, {employee?.name || "User"} • {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-              </p>
-            </div>
+        <div className="flex-none max-w-7xl mx-auto w-full px-4 md:px-6 pt-3 pb-2">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              Dashboard <span className="text-muted-foreground text-base font-normal">• Welcome back, {employee?.name || "User"} ({userRole.charAt(0).toUpperCase() + userRole.slice(1)})</span>
+            </h1>
           </div>
         </div>
       )}
@@ -44,13 +39,6 @@ export default function Dashboard() {
           </Suspense>
         </div>
       </div>
-
-      {/* Help Text */}
-      {!isMobile && (
-        <div className="flex-none px-4 md:px-6 pb-4 text-center text-sm text-muted-foreground">
-          <p>Fixed role-based layout • Click configure to customize widget settings</p>
-        </div>
-      )}
 
       {/* Widget Configuration Modal */}
       <WidgetConfigModal

@@ -34,14 +34,14 @@ export function TableCard({ table, onClick }: TableCardProps) {
     if (order.status === 'delivered') {
       return {
         label: 'Ready to Pay',
-        // Soft purple (muted primary)
+        // RED (destructive/alert color for ready to pay)
         color: hasNFC 
-          ? 'bg-violet-100/60 border-violet-400 dark:bg-violet-950/30 dark:border-violet-600 ring-2 ring-violet-300 dark:ring-violet-700/50' 
-          : 'bg-violet-50/50 border-violet-300 dark:bg-violet-950/20 dark:border-violet-700',
-        textColor: 'text-violet-700 dark:text-violet-400',
-        badgeColor: 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-700',
+          ? 'bg-red-100/60 border-red-400 dark:bg-red-950/30 dark:border-red-600 ring-2 ring-red-300 dark:ring-red-700/50' 
+          : 'bg-red-50/50 border-red-300 dark:bg-red-950/20 dark:border-red-700',
+        textColor: 'text-red-700 dark:text-red-400',
+        badgeColor: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700',
         pulse: true,
-        icon: <CreditCard className="h-5 w-5 text-violet-600 dark:text-violet-400" />,
+        icon: <CreditCard className="h-5 w-5 text-red-600 dark:text-red-400" />,
       };
     }
 
