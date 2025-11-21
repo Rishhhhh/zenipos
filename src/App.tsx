@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BranchProvider } from "./contexts/BranchContext";
+import { TillSessionProvider } from "./contexts/TillSessionContext";
 import { ModalProvider } from "./contexts/ModalContext";
 import { WidgetRefreshProvider } from "./contexts/WidgetRefreshContext";
 import { OrgProtectedRoute } from "./components/auth/OrgProtectedRoute";
@@ -155,9 +156,10 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
         <BranchProvider>
-          <WidgetRefreshProvider>
-            <ModalProvider>
-              <TooltipProvider>
+          <TillSessionProvider>
+            <WidgetRefreshProvider>
+              <ModalProvider>
+                <TooltipProvider>
             <Suspense fallback={
               <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
@@ -579,13 +581,14 @@ const App = () => (
                 </AppLayout>
               </BrowserRouter>
             </Suspense>
-            </TooltipProvider>
-          </ModalProvider>
-        </WidgetRefreshProvider>
+              </TooltipProvider>
+            </ModalProvider>
+          </WidgetRefreshProvider>
+        </TillSessionProvider>
       </BranchProvider>
     </AuthProvider>
   </ThemeProvider>
-</QueryClientProvider>
+  </QueryClientProvider>
 );
 
 export default App;

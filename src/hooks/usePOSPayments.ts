@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useCartStore } from '@/lib/store/cart';
 import { supabase } from '@/integrations/supabase/client';
+import { useTillSession } from '@/contexts/TillSessionContext';
 
 /**
  * Payment flow management for POS
@@ -17,16 +18,41 @@ export function usePOSPayments(
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { clearCart } = useCartStore();
+  const { recordCashTransaction } = useTillSession();
   
   const [showPaymentNFCScanner, setShowPaymentNFCScanner] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
 
-  const handlePaymentSuccess = async (orderId?: string) => {
+  const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, totalAmount?: number, changeGiven?: number) => {
+    // Record cash transactions in till_ledger if payment was cash
+    if (paymentMethod === 'cash' && orderId && totalAmount) {
+      try {
+        // Get payment record to link
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('id')
+          .eq('order_id', orderId)
+          .single();
+
+        // Record cash sale
+        await recordCashTransaction(totalAmount, 'sale', orderId, payment?.id);
+
+        // Record change given if any
+        if (changeGiven && changeGiven > 0) {
+          await recordCashTransaction(changeGiven, 'change_given', orderId, payment?.id);
+        }
+      } catch (error) {
+        console.error('Failed to record cash transaction in till:', error);
+        // Don't block payment success, just log the error
+      }
+    }
+
     // Invalidate queries
     queryClient.invalidateQueries({ queryKey: ['orders'] });
     queryClient.invalidateQueries({ queryKey: ['pending-orders-nfc'] });
     queryClient.invalidateQueries({ queryKey: ['tables'] });
+    queryClient.invalidateQueries({ queryKey: ['active-till-session'] });
     
     // Fetch order data with station assignments for print preview (after payment)
     if (orderId && setPreviewOrderData && setShowPrintPreview) {

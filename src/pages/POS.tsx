@@ -8,11 +8,12 @@ import { usePOSLogic } from '@/hooks/usePOSLogic';
 import { usePOSRealtime } from '@/hooks/usePOSRealtime';
 import { usePOSPayments } from '@/hooks/usePOSPayments';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { useTillSession } from '@/contexts/TillSessionContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { MapPin, Monitor, NfcIcon, ChevronRight, ShoppingCart } from 'lucide-react';
+import { MapPin, Monitor, NfcIcon, ChevronRight, ShoppingCart, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Import extracted components
@@ -32,6 +33,9 @@ import { PaymentModal } from '@/components/pos/PaymentModal';
 export default function POS() {
   // Track performance
   usePerformanceMonitor('POS');
+  
+  // Till session management
+  const { activeTillSession, getCurrentCashPosition } = useTillSession();
   
   // Device detection
   const { device, isMobile, isTablet } = useDeviceDetection();
@@ -285,8 +289,19 @@ export default function POS() {
           )}
         </div>
 
-        {/* RIGHT: Action Buttons */}
-        <div className="flex items-center gap-2">
+        {/* RIGHT: Till Widget + Action Buttons */}
+        <div className="flex items-center gap-3">
+          {/* Till Widget */}
+          {activeTillSession && activeTillSession.status === 'open' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500 rounded-md">
+              <Wallet className="h-4 w-4 text-green-600" />
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Till:</span>
+                <span className="text-sm font-semibold">RM {getCurrentCashPosition().toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
           {/* Scan Card to Pay Button */}
           <Button
             variant="outline"
