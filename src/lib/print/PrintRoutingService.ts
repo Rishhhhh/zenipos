@@ -82,8 +82,8 @@ export class PrintRoutingService {
   /**
    * Generate kitchen ticket HTML for browser printing
    */
-  private static generateKitchenTicketHTML(ticketData: any, stationName: string): string {
-    const { generate80mmKitchenTicketHTML } = require('./browserPrintTemplates');
+  private static async generateKitchenTicketHTML(ticketData: any, stationName: string): Promise<string> {
+    const { generate80mmKitchenTicketHTML } = await import('./browserPrintTemplates');
     
     const stationIcon = getStationIcon(stationName);
     const priority = detectPriority(ticketData.order_type);
@@ -255,7 +255,7 @@ export class PrintRoutingService {
       
       // ✅ FALLBACK: Use browser print even if offline
       const { BrowserPrintService } = await import('./BrowserPrintService');
-      const html = this.generateKitchenTicketHTML(ticketData, station.name);
+      const html = await this.generateKitchenTicketHTML(ticketData, station.name);
       await BrowserPrintService.printHTML(html, devices[0].id, devices[0].name);
       
       console.log(`✅ Browser print fallback triggered for ${devices[0].name}`);
@@ -319,7 +319,7 @@ export class PrintRoutingService {
           
           // Fallback to browser print
           const { BrowserPrintService } = await import('./BrowserPrintService');
-          const html = this.generateKitchenTicketHTML(ticketData, station.name);
+          const html = await this.generateKitchenTicketHTML(ticketData, station.name);
           await BrowserPrintService.printHTML(html, printer.id, printer.name);
           
           console.log(`✅ Ticket printed via browser dialog for ${printer.name}`);
@@ -327,7 +327,7 @@ export class PrintRoutingService {
       } else {
         // No IP configured, use browser print directly
         const { BrowserPrintService } = await import('./BrowserPrintService');
-        const html = this.generateKitchenTicketHTML(ticketData, station.name);
+        const html = await this.generateKitchenTicketHTML(ticketData, station.name);
         await BrowserPrintService.printHTML(html, printer.id, printer.name);
         
         console.log(`✅ Ticket printed via browser dialog for ${printer.name}`);
