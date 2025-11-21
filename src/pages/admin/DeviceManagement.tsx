@@ -745,7 +745,7 @@ export default function DeviceManagement() {
           <p className="text-sm"><strong>Step 1:</strong> Set up your Windows printer as default</p>
           <p className="text-sm"><strong>Step 2:</strong> Add printer device below (System Printer Name = exact Windows printer name)</p>
           <p className="text-sm"><strong>Step 3:</strong> Assign printer to a station in <Link to="/admin/stations" className="text-primary underline">Station Management</Link></p>
-          <p className="text-sm"><strong>Step 4:</strong> Configure routing rules in <Link to="/admin/station-routing-config" className="text-primary underline">Station Routing</Link></p>
+          <p className="text-sm"><strong>Step 4:</strong> Configure routing rules in <Link to="/admin/stations" className="text-primary underline">Station Management</Link></p>
           <p className="text-sm"><strong>Step 5:</strong> Use "Test Print" to verify connection</p>
           
           <div className="flex gap-2 mt-3">
@@ -765,9 +765,9 @@ export default function DeviceManagement() {
               size="sm"
               asChild
             >
-              <Link to="/admin/station-routing-config">
+              <Link to="/admin/stations">
                 <Route className="h-4 w-4 mr-2" />
-                Configure Station Routing
+                Manage Stations & Routing
               </Link>
             </Button>
           </div>

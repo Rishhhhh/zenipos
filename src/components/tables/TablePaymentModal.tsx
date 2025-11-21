@@ -57,6 +57,7 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
           .single();
         
         if (!error && orderData) {
+          console.log('✅ Setting preview data for table payment:', orderData);
           setPreviewOrderData({
             orderId: orderId,
             orderNumber: orderId.substring(0, 8),
@@ -67,6 +68,9 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
             timestamp: orderData.paid_at,
           });
           setShowPrintPreview(true);
+          console.log('✅ Print preview modal should now open');
+        } else {
+          console.error('❌ Failed to fetch order for preview:', error);
         }
       }
 
