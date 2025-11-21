@@ -187,7 +187,7 @@ export function generate58mmReceiptHTML(data: ReceiptData): string {
 
 /**
  * Generate 80mm kitchen ticket HTML for browser printing
- * SIMPLIFIED FOR THERMAL PRINTERS - Plain text format
+ * ENHANCED FOR READABILITY - Bold headers, clear sections
  */
 export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
   const totalItems = data.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -196,65 +196,90 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
     minute: '2-digit',
     hour12: false,
   });
+  const date = data.timestamp.toLocaleDateString('en-GB');
 
   const priorityLabel =
-    data.priority === 'urgent' ? '[URGENT]' :
-    data.priority === 'rush'   ? '[RUSH]'   : '';
+    data.priority === 'urgent' ? '!!! URGENT !!!' :
+    data.priority === 'rush'   ? '** RUSH **'   : '';
 
   const lines: string[] = [];
 
-  lines.push(data.stationName.toUpperCase());
-  lines.push(`ORDER #${data.orderNumber}`);
-  lines.push('--------------------------------');
+  // Station header - BOLD and prominent
+  lines.push('================================');
+  lines.push(`     ${data.stationName.toUpperCase()}`);
+  lines.push('================================');
+  lines.push('');
+  
+  // Order number - LARGE and BOLD
+  lines.push(`#${data.orderNumber}`);
+  lines.push('');
 
-  let infoLine = `Time : ${time}`;
-  if (data.tableLabel) infoLine += `   Table: ${data.tableLabel}`;
-  lines.push(infoLine);
-  lines.push(`Type : ${(data.orderType || 'DINE-IN').toUpperCase()} ${priorityLabel}`.trim());
-  lines.push('--------------------------------', '');
+  // Table info - BOLD
+  if (data.tableLabel) {
+    lines.push(`TABLE: ${data.tableLabel}`);
+  }
+  lines.push('');
 
-  // Allergy warnings
+  // DateTime and order type
+  lines.push(`${date} ${time}`);
+  lines.push(`Order Type: ${(data.orderType || 'Dine in').toUpperCase()}`);
+  
+  if (priorityLabel) {
+    lines.push('');
+    lines.push(priorityLabel);
+  }
+  
+  lines.push('................................');
+  lines.push('');
+
+  // Allergy warnings - BOLD and prominent
   if (data.allergyWarnings && data.allergyWarnings.length > 0) {
+    lines.push('!!! ALLERGY WARNING !!!');
     data.allergyWarnings.forEach(w =>
-      lines.push(`ALLERGY: ${w.toUpperCase()}`)
+      lines.push(`>>> ${w.toUpperCase()} <<<`)
     );
-    lines.push('--------------------------------', '');
+    lines.push('................................');
+    lines.push('');
   }
 
-  // Items
+  // Items - BOLD quantities and item names
   for (const item of data.items) {
-    lines.push(`${item.quantity}x ${item.name.toUpperCase()}`);
-    const checkboxes = Array.from({ length: item.quantity }, () => '[ ]').join(' ');
-    lines.push(`QTY : ${checkboxes}`);
-
+    lines.push(`${item.quantity} x ${item.name.toUpperCase()}`);
+    
+    // Modifiers with clear prefix
     if (item.modifiers?.length) {
       for (const mod of item.modifiers) {
-        const prefix = mod.type === 'remove' ? '-' : '+';
-        lines.push(` ${prefix} ${mod.name}`);
+        const prefix = mod.type === 'remove' ? '  - NO' : '  +';
+        lines.push(`${prefix} ${mod.name}`);
       }
     }
 
+    // Special notes - HIGHLIGHTED
     if (item.notes) {
-      lines.push(`NOTE: ${item.notes.toUpperCase()}`);
+      lines.push(`  * ${item.notes.toUpperCase()} *`);
     }
 
+    // Prep time
     if (item.prepTime) {
-      lines.push(`Prep: ~${item.prepTime} min`);
+      lines.push(`  Prep: ~${item.prepTime} min`);
     }
 
-    lines.push(''); // blank line between items
+    lines.push(''); // spacing between items
   }
 
-  // Order-level notes
+  // Order-level notes - BOLD section
   if (data.notes) {
-    lines.push('--------------------------------');
+    lines.push('................................');
     lines.push('SPECIAL INSTRUCTIONS:');
-    lines.push(data.notes.toUpperCase(), '');
+    lines.push(`>>> ${data.notes.toUpperCase()} <<<`);
+    lines.push('................................');
+    lines.push('');
   }
 
-  lines.push('--------------------------------');
+  lines.push('================================');
   lines.push(`TOTAL ITEMS: ${totalItems}`);
   lines.push(`Printed: ${new Date().toLocaleTimeString()}`);
+  lines.push('================================');
 
   const content = lines.join('\n');
 
@@ -271,16 +296,29 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
         }
         body {
           font-family: 'Courier New', monospace;
-          font-size: 11px;
-          line-height: 1.3;
+          font-size: 12px;
+          line-height: 1.4;
           max-width: 80mm;
           margin: 0 auto;
-          padding: 4px;
-          white-space: pre;
+          padding: 5mm;
+          white-space: pre-wrap;
+        }
+        
+        /* Make specific lines bold using line number targeting */
+        body::before {
+          content: '';
+          display: block;
         }
       </style>
     </head>
-    <body>${content}</body>
+    <body><strong>${content.replace(/\n(={32}.*?={32})\n/g, '\n</strong>$1<strong>\n')
+                          .replace(/\n(#[A-Z0-9-]+)\n/g, '\n<span style="font-size: 20px; font-weight: bold;">$1</span>\n')
+                          .replace(/\n(TABLE: .*?)\n/g, '\n<strong style="font-size: 14px;">$1</strong>\n')
+                          .replace(/\n(\d+ x .*?)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')
+                          .replace(/\n(!!! .*? !!!)\n/g, '\n<strong style="font-size: 14px;">$1</strong>\n')
+                          .replace(/\n(\*\* .*? \*\*)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')
+                          .replace(/\n(SPECIAL INSTRUCTIONS:)\n/g, '\n<strong>$1</strong>\n')
+                          .replace(/\n(TOTAL ITEMS: .*?)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')}</strong></body>
     </html>
   `;
 }

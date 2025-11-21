@@ -66,12 +66,58 @@ export function generate58mmReceipt(receipt: Receipt & { einvoice_enabled?: bool
 }
 
 /**
- * Generate 80mm kitchen ticket HTML - SIMPLIFIED FOR THERMAL PRINTERS
+ * Generate 80mm kitchen ticket HTML - ENHANCED FOR READABILITY
  */
 export function generate80mmKitchenTicket(ticket: KitchenTicket): string {
   const totalItems = ticket.items.reduce((sum, item) => sum + item.quantity, 0);
   const timestamp = new Date(ticket.timestamp);
+  const time = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const date = timestamp.toLocaleDateString('en-GB');
   
+  const lines: string[] = [];
+
+  // Station header - BOLD and prominent
+  lines.push('================================');
+  lines.push(`     ${ticket.station.toUpperCase()}`);
+  lines.push('================================');
+  lines.push('');
+  
+  // Order number - LARGE and BOLD
+  lines.push(`#${ticket.order_number}`);
+  lines.push('');
+
+  // Table info - BOLD (if available from context)
+  lines.push(`TABLE: (from order)`);
+  lines.push('');
+
+  // DateTime and order type
+  lines.push(`${date} ${time}`);
+  lines.push(`Order Type: DINE IN`);
+  lines.push('................................');
+  lines.push('');
+
+  // Items - BOLD quantities and item names
+  for (const item of ticket.items) {
+    lines.push(`${item.quantity} x ${item.name.toUpperCase()}`);
+    lines.push(''); // spacing between items
+  }
+
+  // Order notes if any
+  if (ticket.notes) {
+    lines.push('................................');
+    lines.push('SPECIAL INSTRUCTIONS:');
+    lines.push(`>>> ${ticket.notes.toUpperCase()} <<<`);
+    lines.push('................................');
+    lines.push('');
+  }
+
+  lines.push('================================');
+  lines.push(`TOTAL ITEMS: ${totalItems}`);
+  lines.push(`Printed: ${timestamp.toLocaleTimeString()}`);
+  lines.push('================================');
+
+  const content = lines.join('\n');
+
   const template = `
     <!DOCTYPE html>
     <html>
@@ -85,121 +131,20 @@ export function generate80mmKitchenTicket(ticket: KitchenTicket): string {
         body {
           font-family: 'Courier New', monospace;
           font-size: 12px;
-          line-height: 1.3;
+          line-height: 1.4;
           max-width: 80mm;
           margin: 0 auto;
           padding: 5mm;
-        }
-        .station-header {
-          text-align: center;
-          font-size: 16px;
-          font-weight: bold;
-          margin-bottom: 8px;
-        }
-        .order-number {
-          font-size: 20px;
-          font-weight: bold;
-          text-align: center;
-          border: 2px solid #000;
-          padding: 6px;
-          margin: 8px 0;
-        }
-        .order-info {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 8px 0;
-          font-size: 11px;
-        }
-        .order-info td {
-          padding: 4px 6px;
-          border: 1px solid #000;
-          text-align: center;
-        }
-        .order-info strong {
-          display: block;
-          font-size: 10px;
-        }
-        hr {
-          border: none;
-          border-top: 1px dashed #000;
-          margin: 8px 0;
-        }
-        .item {
-          margin: 10px 0;
-          padding-bottom: 8px;
-          border-bottom: 1px solid #ddd;
-        }
-        .item:last-child { border-bottom: none; }
-        .item-name {
-          font-size: 14px;
-          font-weight: bold;
-          margin-bottom: 4px;
-        }
-        .quantity {
-          font-size: 11px;
-          margin: 4px 0;
-        }
-        .prep-time {
-          font-size: 10px;
-          color: #666;
-          margin-top: 4px;
-        }
-        .notes {
-          background: #f0f0f0;
-          border: 1px solid #000;
-          padding: 6px;
-          margin: 4px 0;
-          font-size: 11px;
-        }
-        .footer {
-          text-align: center;
-          font-size: 14px;
-          font-weight: bold;
-          margin: 12px 0 8px 0;
-          padding: 8px;
-          border: 2px solid #000;
-        }
-        .print-time {
-          text-align: center;
-          font-size: 10px;
-          margin-top: 8px;
+          white-space: pre-wrap;
         }
       </style>
     </head>
-    <body>
-      <div class="station-header">🍳 ${ticket.station.toUpperCase()}</div>
-      
-      <div class="order-number">ORDER #${ticket.order_number}</div>
-      
-      <table class="order-info">
-        <tr>
-          <td><strong>Time</strong>${timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</td>
-          <td><strong>Table</strong>T19</td>
-          <td><strong>Type</strong>DINE_IN</td>
-        </tr>
-      </table>
-      
-      <hr/>
-      
-      ${ticket.items.map(item => `
-        <div class="item">
-          <div class="item-name">${item.quantity}X ${item.name.toUpperCase()}</div>
-          <div class="quantity">QTY: ${Array.from({ length: item.quantity }, () => '[ ]').join(' ')}</div>
-          <div class="prep-time">⏱️ Prep Time: ~600 min</div>
-        </div>
-      `).join('')}
-      
-      ${ticket.notes ? `
-        <hr/>
-        <div class="notes">📝 ${ticket.notes.toUpperCase()}</div>
-      ` : ''}
-      
-      <hr/>
-      
-      <div class="footer">TOTAL ITEMS: ${totalItems}</div>
-      
-      <div class="print-time">Printed: ${timestamp.toLocaleString()}</div>
-    </body>
+    <body><strong>${content.replace(/\n(={32}.*?={32})\n/g, '\n</strong>$1<strong>\n')
+                          .replace(/\n(#[A-Z0-9-]+)\n/g, '\n<span style="font-size: 20px; font-weight: bold;">$1</span>\n')
+                          .replace(/\n(TABLE: .*?)\n/g, '\n<strong style="font-size: 14px;">$1</strong>\n')
+                          .replace(/\n(\d+ x .*?)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')
+                          .replace(/\n(SPECIAL INSTRUCTIONS:)\n/g, '\n<strong>$1</strong>\n')
+                          .replace(/\n(TOTAL ITEMS: .*?)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')}</strong></body>
     </html>
   `;
   
