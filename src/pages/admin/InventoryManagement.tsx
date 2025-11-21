@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { TransferInventoryModal } from '@/components/admin/TransferInventoryModal';
+import { RecipeModal } from '@/components/admin/RecipeModal';
 import { useBranch } from '@/contexts/BranchContext';
 import { BranchSelector } from '@/components/branch/BranchSelector';
 import {
@@ -20,6 +21,8 @@ import {
   Brain,
   ArrowLeft,
   ArrowRight,
+  Link2,
+  ChefHat,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -31,6 +34,8 @@ export default function InventoryManagement() {
   const { currentBranch, branches, isLoading: branchLoading, selectBranch, selectedBranchId, hasMultipleBranches } = useBranch();
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [itemToTransfer, setItemToTransfer] = useState<any>(null);
+  const [recipeModalOpen, setRecipeModalOpen] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['inventory-items', currentBranch?.id],
@@ -74,8 +79,52 @@ export default function InventoryManagement() {
     },
   });
 
+  const { data: menuItemsWithRecipes, isLoading: menuItemsLoading } = useQuery({
+    queryKey: ['menu-items-with-recipes', currentBranch?.id],
+    queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
+      const { data: items, error: itemsError } = await supabase
+        .from('menu_items')
+        .select('*, menu_categories(name)')
+        .eq('branch_id', currentBranch.id)
+        .order('name');
+      
+      if (itemsError) throw itemsError;
+
+      const { data: recipes, error: recipesError } = await supabase
+        .from('recipes')
+        .select('menu_item_id, inventory_items(name, unit, cost_per_unit), quantity_per_serving')
+        .in('menu_item_id', items?.map(i => i.id) || []);
+      
+      if (recipesError) throw recipesError;
+
+      const recipeMap = recipes?.reduce((acc: any, r: any) => {
+        if (!acc[r.menu_item_id]) {
+          acc[r.menu_item_id] = [];
+        }
+        acc[r.menu_item_id].push(r);
+        return acc;
+      }, {});
+
+      return items?.map(item => ({
+        ...item,
+        recipeCount: recipeMap?.[item.id]?.length || 0,
+        recipeCost: recipeMap?.[item.id]?.reduce((sum: number, r: any) => 
+          sum + (r.quantity_per_serving * (r.inventory_items?.cost_per_unit || 0)), 0) || 0,
+      }));
+    },
+    enabled: !!currentBranch?.id,
+  });
+
   const lowStockCount = lowStockItems?.length || 0;
   const criticalCount = lowStockItems?.filter(item => item.days_until_stockout < 3).length || 0;
+
+  const getMarginColor = (margin: number) => {
+    if (margin >= 60) return 'text-success';
+    if (margin >= 40) return 'text-warning';
+    return 'text-destructive';
+  };
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -156,6 +205,10 @@ export default function InventoryManagement() {
             <TabsTrigger value="movements">
               <RefreshCw className="h-4 w-4 mr-2" />
               Stock Movements
+            </TabsTrigger>
+            <TabsTrigger value="linking">
+              <Link2 className="h-4 w-4 mr-2" />
+              Menu Item Linking
             </TabsTrigger>
           </TabsList>
 
@@ -276,12 +329,121 @@ export default function InventoryManagement() {
               </div>
             </Card>
           </TabsContent>
+
+          <TabsContent value="linking">
+            <Card className="p-6">
+              {menuItemsLoading ? (
+                <div className="text-center text-muted-foreground py-8">
+                  Loading menu items...
+                </div>
+              ) : menuItemsWithRecipes?.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No menu items found in this branch
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3">Menu Item</th>
+                        <th className="text-left p-3">Category</th>
+                        <th className="text-right p-3">Price</th>
+                        <th className="text-right p-3">Recipe Cost (COGS)</th>
+                        <th className="text-right p-3">Margin %</th>
+                        <th className="text-left p-3">Status</th>
+                        <th className="text-right p-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {menuItemsWithRecipes?.map(item => {
+                        const margin = item.price > 0 ? 
+                          ((item.price - item.recipeCost) / item.price * 100) : 0;
+                        const hasRecipe = item.recipeCount > 0;
+                        
+                        return (
+                          <tr key={item.id} className="border-b hover:bg-muted/50">
+                            <td className="p-3">
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-xs text-muted-foreground">{item.sku}</p>
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <Badge variant="outline">
+                                {item.menu_categories?.name}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-right font-medium">
+                              RM {item.price.toFixed(2)}
+                            </td>
+                            <td className="p-3 text-right">
+                              {hasRecipe ? (
+                                <span className="font-medium">
+                                  RM {item.recipeCost.toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">
+                              {hasRecipe ? (
+                                <span className={`font-medium ${getMarginColor(margin)}`}>
+                                  {margin.toFixed(1)}%
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              {hasRecipe ? (
+                                <Badge variant="secondary">
+                                  <ChefHat className="h-3 w-3 mr-1" />
+                                  {item.recipeCount} ingredient{item.recipeCount !== 1 ? 's' : ''}
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">No Recipe</Badge>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">
+                              <Button
+                                size="sm"
+                                variant={hasRecipe ? 'outline' : 'default'}
+                                onClick={() => {
+                                  setSelectedMenuItem(item);
+                                  setRecipeModalOpen(true);
+                                }}
+                              >
+                                {hasRecipe ? 'Edit Recipe' : 'Link Ingredients'}
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
         </Tabs>
 
         <TransferInventoryModal
           open={transferModalOpen}
           onOpenChange={setTransferModalOpen}
           item={itemToTransfer}
+        />
+
+        <RecipeModal
+          open={recipeModalOpen}
+          onOpenChange={(open) => {
+            setRecipeModalOpen(open);
+            if (!open) {
+              queryClient.invalidateQueries({ 
+                queryKey: ['menu-items-with-recipes'] 
+              });
+            }
+          }}
+          menuItem={selectedMenuItem}
         />
       </div>
     </div>
