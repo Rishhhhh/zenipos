@@ -86,11 +86,6 @@ export function usePOSPayments(
                 id,
                 name,
                 station_id
-              ),
-              stations(
-                id,
-                name,
-                color
               )
             )
           `)
