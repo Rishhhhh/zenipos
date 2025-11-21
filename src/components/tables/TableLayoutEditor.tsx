@@ -47,6 +47,23 @@ export function TableLayoutEditor({ tables, onExit, onSave }: TableLayoutEditorP
     });
   };
 
+  const handleReset = () => {
+    const newPositions = tables.reduce((acc, table, index) => {
+      const gridX = (index % 6) * 2;
+      const gridY = Math.floor(index / 6) * 2;
+      return {
+        ...acc,
+        [table.id]: { x: gridX, y: gridY }
+      };
+    }, {} as Record<string, { x: number; y: number }>);
+    
+    setPositions(newPositions);
+    toast({
+      title: 'Layout Reset',
+      description: 'Tables arranged in neat 6-column grid',
+    });
+  };
+
   const handleSave = async () => {
     const updates = tables.map(table => {
       const pos = positions[table.id];
@@ -97,6 +114,10 @@ export function TableLayoutEditor({ tables, onExit, onSave }: TableLayoutEditorP
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
+            <Button variant="outline" onClick={handleReset}>
+              <Grid3x3 className="h-4 w-4 mr-2" />
+              Reset Layout
+            </Button>
             <Button onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               Save Layout
@@ -107,7 +128,16 @@ export function TableLayoutEditor({ tables, onExit, onSave }: TableLayoutEditorP
         {/* Canvas */}
         <div className="flex-1 overflow-auto p-8 bg-muted/20">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div className="relative min-h-[800px] min-w-[1200px]">
+            <div 
+              className="relative min-h-[800px] min-w-[1200px]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+                  linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
+                `,
+                backgroundSize: '100px 100px'
+              }}
+            >
               {tables.map(table => {
                 const pos = positions[table.id];
                 return (

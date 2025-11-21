@@ -49,6 +49,7 @@ export function ReservationModal({ open, onOpenChange, tables }: ReservationModa
           reservation_name: formData.reservation_name,
           reservation_contact: formData.reservation_contact,
           notes: formData.notes,
+          status: 'reserved', // Auto-set status to reserved
         })
         .eq('id', formData.table_id);
 

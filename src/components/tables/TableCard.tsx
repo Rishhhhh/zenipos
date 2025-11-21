@@ -115,9 +115,16 @@ export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) 
         {/* TOP ROW */}
         <div className="flex items-start justify-between">
           {/* Top-left: Table name */}
-          <h3 className={cn("font-bold truncate", isTouch ? "text-2xl" : "text-3xl", state.textColor)}>
-            {table.label}
-          </h3>
+          <div className="space-y-0.5">
+            <h3 className={cn("font-bold truncate", isTouch ? "text-2xl" : "text-3xl", state.textColor)}>
+              {table.custom_name || table.label}
+            </h3>
+            {table.custom_name && (
+              <div className="text-xs text-muted-foreground">
+                ({table.label})
+              </div>
+            )}
+          </div>
           
           {/* Top-right: Badge + 3-dot Menu */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -163,9 +170,30 @@ export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) 
                 <div className="text-xs text-muted-foreground truncate max-w-[120px]">
                   {table.reservation_name}
                 </div>
-                <div className={cn("text-xs font-medium", state.textColor)}>
-                  {new Date(table.reservation_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={cn("text-xs font-medium", state.textColor)}>
+                        {(() => {
+                          const reservationTime = new Date(table.reservation_time);
+                          const now = new Date();
+                          const minutesDiff = Math.round((reservationTime.getTime() - now.getTime()) / (1000 * 60));
+                          
+                          if (minutesDiff > 0) {
+                            return `In ${minutesDiff} min`;
+                          } else if (minutesDiff >= -15) {
+                            return 'Arriving now';
+                          } else {
+                            return reservationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          }
+                        })()}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {new Date(table.reservation_time).toLocaleString()}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
           </div>

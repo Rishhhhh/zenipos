@@ -63,10 +63,18 @@ export default function TableLayout() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Calculate default grid position
+    const existingCount = tables?.length || 0;
+    const gridX = (existingCount % 6) * 2;
+    const gridY = Math.floor(existingCount / 6) * 2;
+    
     saveMutation.mutate({
       label: formData.get('label'),
       seats: parseInt(formData.get('seats') as string),
       status: 'available',
+      grid_x: gridX,
+      grid_y: gridY,
     });
   };
 
