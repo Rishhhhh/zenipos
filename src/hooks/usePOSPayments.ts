@@ -28,12 +28,28 @@ export function usePOSPayments(
     queryClient.invalidateQueries({ queryKey: ['pending-orders-nfc'] });
     queryClient.invalidateQueries({ queryKey: ['tables'] });
     
-    // Fetch order data and show customer receipt preview (after payment) - if setters provided
+    // Fetch order data with station assignments for print preview (after payment)
     if (orderId && setPreviewOrderData && setShowPrintPreview) {
       try {
         const { data: order, error } = await supabase
           .from('orders')
-          .select('*, order_items(*)')
+          .select(`
+            *,
+            tables(label),
+            order_items(
+              *,
+              menu_items(
+                id,
+                name,
+                station_id
+              ),
+              stations(
+                id,
+                name,
+                color
+              )
+            )
+          `)
           .eq('id', orderId)
           .single();
         
