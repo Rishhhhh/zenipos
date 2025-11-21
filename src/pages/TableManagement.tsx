@@ -5,9 +5,11 @@ import { TableGrid } from '@/components/tables/TableGrid';
 import { TableOrderDetails } from '@/components/tables/TableOrderDetails';
 import { TablePaymentModal } from '@/components/tables/TablePaymentModal';
 import { TableHistoryPanel } from '@/components/tables/TableHistoryPanel';
+import { TableConfigModal } from '@/components/tables/TableConfigModal';
+import { TableLayoutEditor } from '@/components/tables/TableLayoutEditor';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, TrendingUp, DollarSign, Clock, Users, NfcIcon } from 'lucide-react';
+import { RefreshCw, TrendingUp, DollarSign, Clock, Users, NfcIcon, Grid3x3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import { PaymentNFCScannerModal } from '@/components/pos/PaymentNFCScannerModal';
@@ -25,6 +27,8 @@ export default function TableManagement() {
   const [showPaymentNFCScanner, setShowPaymentNFCScanner] = useState(false);
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [configTable, setConfigTable] = useState<any>(null);
+  const [layoutMode, setLayoutMode] = useState(false);
 
   // Query tables with orders
   const { data: tables, isLoading } = useQuery({
@@ -70,6 +74,33 @@ export default function TableManagement() {
     setShowPayment(true);
   };
 
+  const handleSaveConfig = async (updates: any) => {
+    if (!configTable) return;
+    
+    const { error } = await supabase
+      .from('tables')
+      .update(updates)
+      .eq('id', configTable.id);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save table configuration',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Success',
+      description: 'Table configuration saved',
+    });
+
+    // Refresh tables
+    queryClient.invalidateQueries({ queryKey: ['tables'] });
+    setConfigTable(null);
+  };
+
   const totalTables = tables?.length || 0;
   const occupiedTables = tables?.filter((t: any) => {
     // Only count tables with active orders (not paid/cancelled)
@@ -99,6 +130,14 @@ export default function TableManagement() {
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
+            </Button>
+            <Button
+              variant={layoutMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setLayoutMode(!layoutMode)}
+            >
+              <Grid3x3 className="h-4 w-4 mr-2" />
+              {layoutMode ? 'Exit Layout' : 'Edit Layout'}
             </Button>
             <Button
               variant="outline"
@@ -170,17 +209,29 @@ export default function TableManagement() {
 
       {/* Tables Grid - scrollable */}
       <div className="flex-1 overflow-auto px-4 md:px-6 py-4">
-        <div className="max-w-[1600px] mx-auto">
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
-          ) : (
-            <TableGrid
-              tables={tables || []}
-              isLoading={isLoading}
-              onTableClick={handleTableClick}
-            />
-          )}
-        </div>
+        {layoutMode ? (
+          <TableLayoutEditor
+            tables={tables || []}
+            onExit={() => setLayoutMode(false)}
+            onSave={() => {
+              setLayoutMode(false);
+              queryClient.invalidateQueries({ queryKey: ['tables'] });
+            }}
+          />
+        ) : (
+          <div className="max-w-[1600px] mx-auto">
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
+            ) : (
+              <TableGrid
+                tables={tables || []}
+                isLoading={isLoading}
+                onTableClick={handleTableClick}
+                onConfigureTable={setConfigTable}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -253,6 +304,16 @@ export default function TableManagement() {
               description: 'Order paid successfully',
             });
           }}
+        />
+      )}
+
+      {/* Table Configuration Modal */}
+      {configTable && (
+        <TableConfigModal
+          open={!!configTable}
+          onOpenChange={(open) => !open && setConfigTable(null)}
+          table={configTable}
+          onSave={handleSaveConfig}
         />
       )}
     </div>

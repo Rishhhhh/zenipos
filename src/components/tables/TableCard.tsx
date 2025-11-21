@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Clock, CheckCircle, CreditCard, Users, NfcIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, CheckCircle, CreditCard, Users, NfcIcon, Settings } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
@@ -9,9 +10,10 @@ import { cn } from '@/lib/utils';
 interface TableCardProps {
   table: any;
   onClick: () => void;
+  onConfigureTable?: (tableId: string) => void;
 }
 
-export function TableCard({ table, onClick }: TableCardProps) {
+export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) {
   const { isMobile, isTablet } = useDeviceDetection();
   const isTouch = isMobile || isTablet;
 
@@ -117,6 +119,21 @@ export function TableCard({ table, onClick }: TableCardProps) {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            )}
+            
+            {/* Settings Button */}
+            {onConfigureTable && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onConfigureTable(table.id);
+                }}
+                className="h-7 w-7"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             )}
           </div>
           <Badge className={cn("font-semibold text-xs", state.badgeColor)}>
