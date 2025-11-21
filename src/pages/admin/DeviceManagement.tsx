@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone, Settings } from "lucide-react";
+import { Plus, Edit, Trash, TestTube, Activity, Tablet, Monitor, Printer, CreditCard, Nfc, MonitorSmartphone, Settings, RefreshCw, Loader2, Info, Route } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
+import { Link } from "react-router-dom";
 import { BranchSelector } from "@/components/branch/BranchSelector";
 import {
   Dialog,
@@ -33,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { formatDistanceToNow } from "date-fns";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Device {
   id: string;
@@ -50,7 +51,7 @@ interface Device {
   stations?: { name: string; color: string };
 }
 
-const DeviceCard = ({ device, onEdit, onTest, onDelete, printerStatus }: any) => {
+const DeviceCard = ({ device, onEdit, onTest, onDelete, onReconnect, reconnecting, printerStatus }: any) => {
   const statusColor = {
     online: 'default',
     offline: 'secondary',
@@ -144,10 +145,30 @@ const DeviceCard = ({ device, onEdit, onTest, onDelete, printerStatus }: any) =>
           Configure
         </Button>
         {device.role === 'PRINTER' && (
-          <Button variant="outline" size="sm" onClick={onTest}>
-            <TestTube className="h-4 w-4 mr-1" />
-            Test
-          </Button>
+          <>
+            <Button variant="outline" size="sm" onClick={onTest}>
+              <TestTube className="h-4 w-4 mr-1" />
+              Test
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onReconnect}
+              disabled={device.status === 'online' || reconnecting}
+            >
+              {reconnecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Reconnecting
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Reconnect
+                </>
+              )}
+            </Button>
+          </>
         )}
         <Button 
           variant="outline" 
@@ -518,6 +539,7 @@ export default function DeviceManagement() {
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
   const [testPrintDevice, setTestPrintDevice] = useState<Device | null>(null);
   const [printerStatuses, setPrinterStatuses] = useState<Record<string, any>>({});
+  const [reconnectingDevice, setReconnectingDevice] = useState<string | null>(null);
 
   const { data: devices, isLoading } = useQuery({
     queryKey: ['devices', currentBranch?.id],
@@ -563,6 +585,44 @@ export default function DeviceManagement() {
     
     loadPrinterStatuses();
   }, [devices]);
+  
+  // Auto-reconnect printers on page load
+  useEffect(() => {
+    const autoReconnectPrinters = async () => {
+      if (!currentBranch?.id) return;
+      
+      console.log('🔄 Auto-reconnecting printers...');
+      
+      const { data: offlineDevices } = await supabase
+        .from('devices')
+        .select('*')
+        .eq('branch_id', currentBranch.id)
+        .eq('role', 'PRINTER')
+        .eq('status', 'offline');
+      
+      if (!offlineDevices || offlineDevices.length === 0) return;
+      
+      for (const device of offlineDevices) {
+        try {
+          // For browser-only printers (no IP), check if window.print exists
+          if (!device.ip_address && typeof window.print === 'function') {
+            await supabase
+              .from('devices')
+              .update({ status: 'online', last_seen: new Date().toISOString() })
+              .eq('id', device.id);
+            
+            console.log(`✅ Auto-reconnected browser printer: ${device.name}`);
+          }
+        } catch (error) {
+          console.error(`Failed to auto-reconnect ${device.name}:`, error);
+        }
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+    };
+    
+    autoReconnectPrinters();
+  }, [currentBranch?.id, queryClient]);
 
   const saveDevice = useMutation({
     mutationFn: async (device: any) => {
@@ -615,6 +675,35 @@ export default function DeviceManagement() {
       toast.error(`Failed to delete device: ${error.message}`);
     }
   });
+  
+  const handleReconnect = async (deviceId: string, deviceName: string) => {
+    try {
+      setReconnectingDevice(deviceId);
+      
+      // Attempt test print
+      const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+      await BrowserPrintService.printHTML(
+        `<html><body><h1>Reconnect Test</h1><p>Device: ${deviceName}</p><p>Time: ${new Date().toLocaleString()}</p></body></html>`,
+        deviceId,
+        deviceName
+      );
+      
+      // Update status to online
+      await supabase
+        .from('devices')
+        .update({ status: 'online', last_seen: new Date().toISOString() })
+        .eq('id', deviceId);
+      
+      queryClient.invalidateQueries({ queryKey: ['devices'] });
+      
+      toast.success(`${deviceName} reconnected successfully`);
+    } catch (error) {
+      toast.error(`Failed to reconnect ${deviceName}`);
+      console.error('Reconnect error:', error);
+    } finally {
+      setReconnectingDevice(null);
+    }
+  };
 
   if (isLoading) {
     return <div className="p-8">Loading...</div>;
@@ -650,19 +739,38 @@ export default function DeviceManagement() {
       
       {/* Printer Setup Guide */}
       <Alert className="mb-6">
-        <Printer className="h-4 w-4" />
-        <AlertDescription>
-          <strong className="block mb-2">🖨️ Windows Printer Setup Guide:</strong>
-          <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>When adding a printer, click "Open Windows Printer Settings" button in the config</li>
-            <li>In Windows Settings, note your printer's exact name (e.g., "EPSON TM-T88V")</li>
-            <li>Return here and enter that exact name in the "System Printer Name" field</li>
-            <li>Click "Test Print" to verify - the Windows print dialog will open</li>
-            <li>Select your printer from the dialog and confirm the test page prints correctly</li>
-          </ol>
-          <p className="text-xs mt-2 text-muted-foreground">
-            💡 Tip: If network printing fails, the system will automatically fall back to Windows print dialog
-          </p>
+        <Info className="h-4 w-4" />
+        <AlertTitle>🖨️ Printing Setup Guide</AlertTitle>
+        <AlertDescription className="space-y-2">
+          <p className="text-sm"><strong>Step 1:</strong> Set up your Windows printer as default</p>
+          <p className="text-sm"><strong>Step 2:</strong> Add printer device below (System Printer Name = exact Windows printer name)</p>
+          <p className="text-sm"><strong>Step 3:</strong> Assign printer to a station in <Link to="/admin/stations" className="text-primary underline">Station Management</Link></p>
+          <p className="text-sm"><strong>Step 4:</strong> Configure routing rules in <Link to="/admin/station-routing-config" className="text-primary underline">Station Routing</Link></p>
+          <p className="text-sm"><strong>Step 5:</strong> Use "Test Print" to verify connection</p>
+          
+          <div className="flex gap-2 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.open('ms-settings:printers', '_blank');
+                toast.info('Opening Windows printer settings...');
+              }}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Open Windows Printer Settings
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+            >
+              <Link to="/admin/station-routing-config">
+                <Route className="h-4 w-4 mr-2" />
+                Configure Station Routing
+              </Link>
+            </Button>
+          </div>
         </AlertDescription>
       </Alert>
 
@@ -677,6 +785,8 @@ export default function DeviceManagement() {
               setModalOpen(true);
             }}
             onTest={() => setTestPrintDevice(device as Device)}
+            onReconnect={() => handleReconnect(device.id, device.name)}
+            reconnecting={reconnectingDevice === device.id}
             onDelete={() => {
               if (confirm(`Delete device "${device.name}"? This action cannot be undone.`)) {
                 deleteDevice.mutate(device.id);

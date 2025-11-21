@@ -25,6 +25,15 @@ export function usePOSPayments(
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
 
   const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, totalAmount?: number, changeGiven?: number) => {
+    console.log('💰 Payment Success Handler Called:', {
+      orderId,
+      paymentMethod,
+      totalAmount,
+      changeGiven,
+      hasSetPreviewOrderData: !!setPreviewOrderData,
+      hasSetShowPrintPreview: !!setShowPrintPreview
+    });
+    
     // Record cash transactions in till_ledger if payment was cash
     if (paymentMethod === 'cash' && orderId && totalAmount) {
       try {
@@ -55,13 +64,22 @@ export function usePOSPayments(
     queryClient.invalidateQueries({ queryKey: ['active-till-session'] });
     
     // Fetch order data with station assignments for print preview (after payment)
+    console.log('🔍 Checking preview conditions:', {
+      hasOrderId: !!orderId,
+      hasSetPreviewOrderData: !!setPreviewOrderData,
+      hasSetShowPrintPreview: !!setShowPrintPreview,
+      willShowPreview: !!(orderId && setPreviewOrderData && setShowPrintPreview)
+    });
+    
     if (orderId && setPreviewOrderData && setShowPrintPreview) {
+      console.log('📄 Fetching order data for preview...');
+      
       try {
         const { data: order, error } = await supabase
           .from('orders')
           .select(`
             *,
-            tables(label),
+            tables!table_id(label),
             order_items(
               *,
               menu_items(
@@ -79,7 +97,10 @@ export function usePOSPayments(
           .eq('id', orderId)
           .single();
         
+        console.log('📄 Order fetch result:', { order, error });
+        
         if (!error && order) {
+          console.log('✅ Setting preview data and showing modal');
           setPreviewOrderData({
             orderId: orderId,
             orderNumber: orderId.substring(0, 8),
@@ -90,10 +111,15 @@ export function usePOSPayments(
             timestamp: order.paid_at,
           });
           setShowPrintPreview(true);
+          console.log('✅ Preview modal should now be visible');
+        } else {
+          console.error('❌ Failed to fetch order:', error);
         }
       } catch (error) {
-        console.error('Failed to fetch order for preview:', error);
+        console.error('❌ Exception fetching order for preview:', error);
       }
+    } else {
+      console.warn('⚠️ Preview conditions not met, skipping preview');
     }
     
     // Clear payment modal state

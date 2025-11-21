@@ -122,7 +122,7 @@ export class PrintRoutingService {
       .from('orders')
       .select(`
         *,
-        tables (
+        tables!table_id (
           label
         ),
         order_items (
@@ -137,8 +137,10 @@ export class PrintRoutingService {
       .eq('id', orderId)
       .single();
     
+    console.log('📋 Order fetch result:', { order, error: orderError });
+    
     if (orderError || !order) {
-      console.error('❌ Order not found:', orderError);
+      console.error('❌ Order fetch failed:', orderError);
       return;
     }
     
@@ -249,8 +251,14 @@ export class PrintRoutingService {
     );
     
     if (onlinePrinters.length === 0) {
-      console.warn(`⚠️  No online printers for station ${station.name}`);
-      console.log(`   Offline printers: ${devices.map(d => d.name).join(', ')}`);
+      console.warn(`⚠️  No online printers for station ${station.name}, attempting browser fallback...`);
+      
+      // ✅ FALLBACK: Use browser print even if offline
+      const { BrowserPrintService } = await import('./BrowserPrintService');
+      const html = this.generateKitchenTicketHTML(ticketData, station.name);
+      await BrowserPrintService.printHTML(html, devices[0].id, devices[0].name);
+      
+      console.log(`✅ Browser print fallback triggered for ${devices[0].name}`);
       return;
     }
     
