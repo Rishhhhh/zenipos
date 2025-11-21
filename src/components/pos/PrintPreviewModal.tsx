@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BrowserPrintService } from "@/lib/print/BrowserPrintService";
 
 interface PrintPreviewModalProps {
   open: boolean;
@@ -148,13 +149,21 @@ export function PrintPreviewModal({
     cashier: 'Cashier 01',
   });
 
-  const handleSendToPrinter = () => {
+  const handleSendToPrinter = async () => {
     console.log('📄 Sending to printer - Customer Receipt:', customerReceipt);
-    stationTickets.forEach((ticket) => {
-      console.log(`🍳 Sending to ${ticket.stationName} Station:`, ticket.ticket);
-    });
     
-    toast.success(`Printed receipt + ${stationTickets.length} station ticket(s)`);
+    // Print customer receipt via browser dialog
+    await BrowserPrintService.printHTML(customerReceipt);
+    
+    // Print station tickets if mode is 'both' or 'station'
+    if (mode !== 'customer') {
+      for (const ticket of stationTickets) {
+        console.log(`🍳 Printing ${ticket.stationName} ticket...`);
+        await BrowserPrintService.printHTML(ticket.ticket);
+      }
+    }
+    
+    toast.success('Print dialog opened!');
     onSendToPrinter?.();
     onOpenChange(false);
   };
