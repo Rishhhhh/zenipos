@@ -168,7 +168,85 @@ export function usePOSLogic() {
       const total = getTotal();
 
       const cartState = useCartStore.getState();
-      
+
+      // Check for existing active order on table (add-on functionality)
+      if (cartState.table_id && cartState.order_type === 'dine_in') {
+        const { data: existingOrder, error: checkError } = await supabase
+          .from('orders')
+          .select('id, subtotal, tax, total, status, organization_id, branch_id')
+          .eq('table_id', cartState.table_id)
+          .in('status', ['pending', 'preparing', 'delivered'])
+          .maybeSingle();
+
+        if (!checkError && existingOrder) {
+          console.log('🔄 Found existing order, adding items:', existingOrder.id);
+
+          // Insert new items into existing order
+          const newOrderItems = items.map((item) => ({
+            order_id: existingOrder.id,
+            menu_item_id: item.menu_item_id,
+            quantity: item.quantity,
+            unit_price: item.price,
+            notes: item.notes || null,
+            modifiers: item.modifiers as any || [],
+            status: 'kitchen_queue',
+            organization_id: existingOrder.organization_id,
+            branch_id: existingOrder.branch_id,
+          }));
+
+          const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(newOrderItems);
+
+          if (itemsError) throw itemsError;
+
+          // Recalculate order totals
+          const newSubtotal = existingOrder.subtotal + subtotal;
+          const newTax = existingOrder.tax + tax;
+          const newTotal = existingOrder.total + total;
+
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({
+              subtotal: newSubtotal,
+              tax: newTax,
+              total: newTotal,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingOrder.id);
+
+          if (updateError) throw updateError;
+
+          // Fetch updated order for return
+          const { data: updatedOrder, error: fetchError } = await supabase
+            .from('orders')
+            .select()
+            .eq('id', existingOrder.id)
+            .single();
+
+          if (fetchError || !updatedOrder) {
+            throw fetchError || new Error('Order not found after update');
+          }
+
+          // Log add-on to audit
+          await supabase.from('audit_log').insert({
+            actor: user.id,
+            action: 'add_items_to_order',
+            entity: 'orders',
+            entity_id: existingOrder.id,
+            diff: { 
+              added_items: items.length, 
+              new_total: newTotal,
+              previous_total: existingOrder.total,
+            },
+          });
+
+          console.log('✅ Items added to existing order:', existingOrder.id);
+          return updatedOrder;
+        }
+      }
+
+      // Create new order (existing logic)
       const orderItems = items.map((item) => ({
         menu_item_id: item.menu_item_id,
         quantity: item.quantity,
@@ -182,7 +260,7 @@ export function usePOSLogic() {
         p_table_id: cartState.table_id,
         p_order_type: cartState.order_type,
         p_nfc_card_id: cartState.nfc_card_id,
-        p_branch_id: employee.branch_id,  // ADDED: Pass user's branch_id
+        p_branch_id: employee.branch_id,
         p_subtotal: subtotal,
         p_tax: tax,
         p_discount: discount,
@@ -197,7 +275,7 @@ export function usePOSLogic() {
         p_items: orderItems,
       };
 
-      console.log('📤 Creating order via RPC function:', rpcParams);
+      console.log('📤 Creating NEW order via RPC:', rpcParams);
 
       const { data: result, error: orderError } = await supabase.rpc('create_order_with_items', rpcParams as any);
 
