@@ -49,13 +49,13 @@ export default memo(function PendingMods() {
 
   return (
     <Card className={cn("glass-card flex flex-col w-[360px] h-[300px]", config.compactMode ? "p-3" : "p-4")}>
-      <div className={cn("flex items-center justify-between", config.compactMode ? "mb-2" : "mb-3")}>
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-warning" />
           <h3 className={cn("font-semibold", config.compactMode ? "text-sm" : "text-base")}>Pending Approvals</h3>
           {pendingMods.length > 0 && <Badge variant="destructive" className="text-xs">{pendingMods.length}</Badge>}
         </div>
-        <Button onClick={handleRefetch} variant="ghost" size="sm" className="h-8 w-8 p-0"><RefreshCw className="h-4 w-4" /></Button>
+        <Button onClick={handleRefetch} variant="ghost" size="sm" className="h-8 w-8 p-0"><RefreshCw className="h-3.5 w-3.5" /></Button>
       </div>
 
       <div className={cn("flex-1 overflow-y-auto min-h-0", config.compactMode ? "space-y-1.5" : "space-y-2")}>

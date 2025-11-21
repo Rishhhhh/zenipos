@@ -240,13 +240,13 @@ export default memo(function ActiveShifts() {
             size="sm"
             className="h-8 w-8 p-0"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
 
       {config.showLaborCost && (
-        <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent rounded-lg mb-3 border border-primary/20">
+        <div className="p-3 bg-gradient-to-r from-primary/10 to-transparent rounded-lg mb-2 border border-primary/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
