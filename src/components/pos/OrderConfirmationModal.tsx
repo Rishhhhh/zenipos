@@ -53,11 +53,12 @@ export function OrderConfirmationModal({
       title="Confirm Order"
       description="Review your order before sending to the kitchen"
       side="bottom"
-      className="max-w-2xl"
+      size="lg"
+      className="max-h-[90vh]"
     >
-
-        {/* Order Info Header */}
-        <div className="flex items-center gap-3 py-3 border-b">
+      <div className="flex flex-col max-h-[calc(90vh-140px)]">
+        {/* Order Info Header - Fixed */}
+        <div className="flex-shrink-0 flex items-center gap-3 py-3 border-b">
           <Badge variant="secondary" className="text-base px-3 py-1.5">
             {orderType === 'takeaway' ? (
               <>
@@ -76,10 +77,10 @@ export function OrderConfirmationModal({
           </span>
         </div>
 
-        {/* Items List - Scrollable */}
-      <ScrollArea className="flex-1 max-h-[400px]">
-        <div className="space-y-2 pr-4">
-          {items.map((item) => (
+        {/* Items List - Scrollable with constrained height */}
+        <ScrollArea className="flex-1 max-h-[35vh] min-h-[200px]">
+          <div className="space-y-2 pr-4 py-3">
+            {items.map((item) => (
               <Card key={item.id} className="p-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -118,8 +119,8 @@ export function OrderConfirmationModal({
           </div>
         </ScrollArea>
 
-        {/* Order Notes */}
-        <div className="space-y-2">
+        {/* Order Notes - Fixed */}
+        <div className="flex-shrink-0 py-3 border-t">
           <Label htmlFor="order-notes">Special Instructions (Optional)</Label>
           <Textarea
             id="order-notes"
@@ -131,8 +132,8 @@ export function OrderConfirmationModal({
           />
         </div>
 
-        {/* Price Summary */}
-        <div className="space-y-2 border-t pt-4">
+        {/* Price Summary - Fixed */}
+        <div className="flex-shrink-0 space-y-2 py-3 border-t">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
             <span className="font-medium">RM {subtotal.toFixed(2)}</span>
@@ -165,8 +166,8 @@ export function OrderConfirmationModal({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        {/* Action Buttons - Fixed */}
+        <div className="flex-shrink-0 flex gap-2 pt-2">
           <Button
             variant="outline"
             onClick={onEdit}
@@ -184,6 +185,7 @@ export function OrderConfirmationModal({
             Confirm & Send to Kitchen
           </Button>
         </div>
-      </ResponsiveModal>
+      </div>
+    </ResponsiveModal>
   );
 }

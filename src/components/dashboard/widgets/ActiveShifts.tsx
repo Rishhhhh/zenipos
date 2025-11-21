@@ -144,8 +144,8 @@ export default memo(function ActiveShifts() {
   if (isGridMode) {
     return (
       <Card className="glass-card p-4 w-full h-full flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">Active Shifts</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-semibold">Active Shifts</h3>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs">
               {activeShifts?.length || 0} Active
@@ -220,8 +220,8 @@ export default memo(function ActiveShifts() {
 
   return (
     <Card className="glass-card p-4 w-full h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold">Active Shifts</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-base font-semibold">Active Shifts</h3>
         <div className="flex items-center gap-2">
           {config.showLaborCost && totalLaborCost > 0 && (
             <div className="text-right">

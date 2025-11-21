@@ -454,11 +454,12 @@ export default function POS() {
         onEdit={() => setShowOrderConfirmation(false)}
       />
 
-      {/* Print Preview Modal */}
+      {/* Print Preview Modal - Customer Receipt Only */}
       {previewOrderData && (
         <PrintPreviewModal
           open={showPrintPreview}
           onOpenChange={setShowPrintPreview}
+          mode="customer"
           orderData={previewOrderData}
           onSendToPrinter={() => {
             setShowPrintPreview(false);
