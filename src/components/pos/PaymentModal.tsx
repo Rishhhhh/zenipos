@@ -20,7 +20,7 @@ interface PaymentModalProps {
   orderId: string;
   orderNumber: string;
   total: number;
-  onPaymentSuccess: (orderId?: string, method?: string, total?: number, change?: number) => void;
+  onPaymentSuccess: (orderId?: string, method?: string, total?: number, change?: number) => Promise<void>;
 }
 
 export function PaymentModal({
@@ -227,12 +227,22 @@ export function PaymentModal({
       
       console.log('📄 Printing receipt:', receiptHtml);
 
+      console.log('💳 Payment completed, calling onPaymentSuccess with:', {
+        orderId,
+        method,
+        total,
+        changeGiven
+      });
+
       toast({
         title: 'Payment Successful',
         description: `Order #${orderNumber} paid. Receipt printed.`,
       });
 
-      onPaymentSuccess(orderId, method, total, changeGiven);
+      // First trigger the success handler (which will show print preview) and wait for it
+      await onPaymentSuccess(orderId, method, total, changeGiven);
+      
+      // Then close this modal
       onOpenChange(false);
     } catch (error: any) {
       toast({
