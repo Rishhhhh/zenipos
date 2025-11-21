@@ -48,6 +48,12 @@ verify_jwt = true
 [functions.inventory-forecast]
 verify_jwt = true
 
+[functions.check-reservations]
+verify_jwt = false
+
+[[functions.check-reservations.schedule]]
+cron = "*/15 * * * *"
+
 [functions.loyalty-insights]
 verify_jwt = true
 

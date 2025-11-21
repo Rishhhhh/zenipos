@@ -8,9 +8,10 @@ interface TableGridProps {
   tables: any[];
   isLoading: boolean;
   onTableClick: (tableId: string) => void;
+  onConfigureTable?: (tableId: string) => void;
 }
 
-export function TableGrid({ tables, isLoading, onTableClick }: TableGridProps) {
+export function TableGrid({ tables, isLoading, onTableClick, onConfigureTable }: TableGridProps) {
   const { device } = useDeviceDetection();
   const gridClasses = getGridClasses('tables', device);
   const gapClasses = getGapClasses(device);
@@ -40,6 +41,7 @@ export function TableGrid({ tables, isLoading, onTableClick }: TableGridProps) {
           key={table.id}
           table={table}
           onClick={() => onTableClick(table.id)}
+          onConfigureTable={onConfigureTable}
         />
       ))}
     </div>
