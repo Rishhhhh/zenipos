@@ -87,6 +87,39 @@ export default function POS() {
     });
   }, [queryClient]);
   
+  // Auto-reconnect printers on POS mount
+  useEffect(() => {
+    const autoReconnectPrinters = async () => {
+      console.log('🔄 [POS] Auto-reconnecting printers...');
+      
+      const { data: offlineDevices } = await supabase
+        .from('devices')
+        .select('*')
+        .eq('role', 'PRINTER')
+        .eq('status', 'offline');
+      
+      if (!offlineDevices || offlineDevices.length === 0) return;
+      
+      for (const device of offlineDevices) {
+        try {
+          // For browser-only printers (no IP), check if window.print exists
+          if (!device.ip_address && typeof window.print === 'function') {
+            await supabase
+              .from('devices')
+              .update({ status: 'online', last_seen: new Date().toISOString() })
+              .eq('id', device.id);
+            
+            console.log(`✅ [POS] Auto-reconnected printer: ${device.name}`);
+          }
+        } catch (error) {
+          console.error(`Failed to auto-reconnect ${device.name}:`, error);
+        }
+      }
+    };
+    
+    autoReconnectPrinters();
+  }, []);
+  
   // Handle loading existing order from table management
   useEffect(() => {
     const { tableId, existingOrderId, returnTo } = location.state || {};
