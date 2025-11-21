@@ -42,6 +42,12 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
         })
         .eq('id', table.id);
 
+      // Trigger automatic printing via routing service (with browser fallback)
+      if (orderId) {
+        const { PrintRoutingService } = await import('@/lib/print/PrintRoutingService');
+        await PrintRoutingService.routeOrder(orderId);
+      }
+
       // Fetch order data for print preview
       if (orderId) {
         const { data: orderData, error } = await supabase
