@@ -21,6 +21,8 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
 
   const handlePaymentSuccess = async (orderId?: string) => {
     try {
+      console.log('💰 Table Payment Success:', { orderId });
+      
       // Update order to completed
       await supabase
         .from('orders')

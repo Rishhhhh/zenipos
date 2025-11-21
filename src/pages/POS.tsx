@@ -491,11 +491,17 @@ export default function POS() {
       {previewOrderData && (
         <PrintPreviewModal
           open={showPrintPreview}
-          onOpenChange={setShowPrintPreview}
+          onOpenChange={(open) => {
+            setShowPrintPreview(open);
+            if (!open) {
+              setPreviewOrderData(null); // Clear data when modal closes
+            }
+          }}
           mode="customer"
           orderData={previewOrderData}
           onSendToPrinter={() => {
             setShowPrintPreview(false);
+            setPreviewOrderData(null); // Clear data after printing
           }}
         />
       )}

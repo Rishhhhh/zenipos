@@ -24,7 +24,7 @@ export function usePOSPayments(
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
 
-  const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, totalAmount?: number, changeGiven?: number) => {
+  const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, totalAmount?: number, changeGiven?: number): Promise<void> => {
     console.log('💰 Payment Success Handler Called:', {
       orderId,
       paymentMethod,
@@ -122,9 +122,8 @@ export function usePOSPayments(
       console.warn('⚠️ Preview conditions not met, skipping preview');
     }
     
-    // Clear payment modal state
+    // Clear pending payment order (payment modal state will be closed by PaymentModal itself after await)
     setPendingPaymentOrder(null);
-    setShowPaymentModal(false);
     setShowPaymentNFCScanner(false);
     
     // Clear ALL cart data including NFC card
