@@ -25,7 +25,7 @@ function MetricCard({ icon: Icon, name, value, unit, threshold, compactMode }: M
   return (
     <div className={cn(
       "flex flex-col items-center justify-center rounded-lg bg-muted/30 border border-border/50",
-      compactMode ? "p-3 min-h-[90px]" : "p-4 min-h-[100px]"
+      compactMode ? "p-2.5 min-h-[85px]" : "p-3.5 min-h-[95px]"
     )}>
       <Icon className={cn("text-muted-foreground mb-2", compactMode ? "h-5 w-5" : "h-6 w-6")} />
       <p className={cn("font-medium text-muted-foreground mb-1", compactMode ? "text-xs" : "text-sm")}>
@@ -104,15 +104,15 @@ export default memo(function WebVitals() {
         )}
       </div>
 
-      <div className="flex-1 flex items-center justify-center min-h-[220px]">
+      <div className="flex-1 flex items-center justify-center min-h-[120px]">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3 w-full">
+          <div className="grid grid-cols-4 gap-3 w-full max-w-[900px]">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="w-full h-[100px] rounded-lg" />
+              <Skeleton key={i} className="w-full h-[95px] rounded-lg" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 w-full max-w-[420px]">
+          <div className="grid grid-cols-4 gap-3 w-full max-w-[900px]">
             <MetricCard
               icon={Activity}
               name="LCP"

@@ -170,15 +170,17 @@ export default function TableManagement() {
 
       {/* Tables Grid - scrollable */}
       <div className="flex-1 overflow-auto px-4 md:px-6 py-4">
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
-        ) : (
-          <TableGrid
-            tables={tables || []}
-            isLoading={isLoading}
-            onTableClick={handleTableClick}
-          />
-        )}
+        <div className="max-w-[1600px] mx-auto">
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
+          ) : (
+            <TableGrid
+              tables={tables || []}
+              isLoading={isLoading}
+              onTableClick={handleTableClick}
+            />
+          )}
+        </div>
       </div>
 
       {/* Modals */}
