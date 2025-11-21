@@ -71,20 +71,33 @@ export default function POS() {
     setNFCCardId
   } = useCartStore();
   
-  // PERFORMANCE: Prefetch NFC cards immediately on POS mount
+  // PERFORMANCE: Prefetch NFC cards AND tables immediately on POS mount
   useEffect(() => {
-    queryClient.prefetchQuery({
-      queryKey: ['nfc-cards', 'active'],
-      queryFn: async () => {
-        const { data } = await supabase
-          .from('nfc_cards')
-          .select('id, card_uid, status, notes, last_scanned_at, scan_count')
-          .eq('status', 'active')
-          .order('card_uid');
-        return data;
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    });
+    const prefetchData = async () => {
+      // Prefetch NFC cards
+      queryClient.prefetchQuery({
+        queryKey: ['nfc-cards', 'active'],
+        queryFn: async () => {
+          const { data } = await supabase
+            .from('nfc_cards')
+            .select('id, card_uid, status, notes, last_scanned_at, scan_count')
+            .eq('status', 'active')
+            .order('card_uid');
+          return data;
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+      });
+      
+      // Prefetch tables with orders using the exact query TableSelectionModal uses
+      const { getTablesWithOrders } = await import('@/lib/queries/tableQueries');
+      queryClient.prefetchQuery({
+        queryKey: ['tables-with-orders'],
+        queryFn: getTablesWithOrders,
+        staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+      });
+    };
+    
+    prefetchData();
   }, [queryClient]);
   
   // Auto-reconnect printers on POS mount
@@ -276,13 +289,7 @@ export default function POS() {
               variant="outline"
               className="text-sm px-3 py-1.5 bg-emerald-500/10 border-emerald-500 cursor-pointer hover:bg-emerald-500/20 transition-colors"
               onClick={() => {
-                // OPTIMIZED: Direct to table selection if order type already set
-                if (order_type === 'dine_in') {
-                  setShowTableSelect(true);
-                  return;
-                }
-                
-                // Otherwise, start from NFC selection
+                // Always open card selection when badge is clicked
                 if (items.length > 0) {
                   if (confirm('Changing NFC card will clear the current cart. Continue?')) {
                     clearCart();

@@ -143,7 +143,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       {children}
       {employee && !isLoginPage && !isCustomerScreen && (
         <>
-          {isMobile ? <MobileBottomNav /> : <MacDock />}
+          <MacDock />
           <FloatingSimulationControl />
         </>
       )}

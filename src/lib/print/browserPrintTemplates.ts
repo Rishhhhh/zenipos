@@ -78,14 +78,25 @@ export function generateTestPageHTML(data: TestPageData): string {
       <meta charset="UTF-8">
       <title>Printer Test</title>
       <style>
-        @media print {
-          body { margin: 0; padding: 0; }
-          @page { margin: 3mm; size: 80mm auto; }
+        @page {
+          size: 80mm auto;
+          margin: 0;
         }
+        
+        @media print {
+          body { 
+            margin: 0; 
+            padding: 0;
+            width: 80mm;
+            max-width: 80mm;
+          }
+        }
+        
         body {
           font-family: 'Courier New', monospace;
           font-size: 11px;
           line-height: 1.3;
+          width: 80mm;
           max-width: 80mm;
           margin: 0 auto;
           padding: 4px;
@@ -109,14 +120,25 @@ export function generate58mmReceiptHTML(data: ReceiptData): string {
       <meta charset="UTF-8">
       <title>Receipt ${data.orderNumber}</title>
       <style>
-        @media print {
-          body { margin: 0; padding: 0; }
-          @page { margin: 5mm; size: 58mm auto; }
+        @page {
+          size: 58mm auto;
+          margin: 0;
         }
+        
+        @media print {
+          body { 
+            margin: 0; 
+            padding: 0;
+            width: 58mm;
+            max-width: 58mm;
+          }
+        }
+        
         body {
           font-family: 'Courier New', monospace;
           font-size: 11px;
           line-height: 1.3;
+          width: 58mm;
           max-width: 58mm;
           margin: 0 auto;
           padding: 5px;
@@ -285,14 +307,25 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
       <meta charset="UTF-8">
       <title>Kitchen Ticket ${data.orderNumber}</title>
       <style>
-        @media print {
-          body { margin: 0; padding: 0; }
-          @page { margin: 3mm; size: 80mm auto; }
+        @page {
+          size: 80mm auto;
+          margin: 0;
         }
+        
+        @media print {
+          body { 
+            margin: 0; 
+            padding: 0;
+            width: 80mm;
+            max-width: 80mm;
+          }
+        }
+        
         body {
           font-family: 'Courier New', monospace;
           font-size: 12px;
           line-height: 1.4;
+          width: 80mm;
           max-width: 80mm;
           margin: 0 auto;
           padding: 5mm;
