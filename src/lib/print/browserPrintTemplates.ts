@@ -56,7 +56,7 @@ export function generateTestPageHTML(data: TestPageData): string {
       <style>
         @media print {
           body { margin: 0; padding: 0; }
-          @page { margin: 10mm; size: 80mm auto; }
+          @page { margin: 5mm; size: 80mm auto; }
         }
         body {
           font-family: 'Courier New', monospace;
@@ -64,61 +64,103 @@ export function generateTestPageHTML(data: TestPageData): string {
           line-height: 1.4;
           max-width: 80mm;
           margin: 0 auto;
-          padding: 10px;
+          padding: 8px;
         }
-        h1, h2 { text-align: center; margin: 10px 0; }
-        h1 { font-size: 18px; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; }
-        h2 { font-size: 14px; }
-        .info { margin: 8px 0; }
-        .info strong { display: inline-block; width: 100px; }
+        h1 { 
+          text-align: center; 
+          font-size: 16px; 
+          border-top: 2px solid #000; 
+          border-bottom: 2px solid #000; 
+          padding: 6px 0; 
+          margin: 8px 0;
+        }
+        .info-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+        }
+        .info-table td { 
+          padding: 4px 8px; 
+          border-bottom: 1px solid #ddd; 
+          font-size: 11px;
+        }
+        .info-table td:first-child { 
+          font-weight: bold; 
+          width: 40%;
+        }
         hr { border: 1px dashed #000; margin: 10px 0; }
-        .pattern { text-align: center; font-size: 16px; line-height: 1.2; margin: 15px 0; }
-        .success { text-align: center; font-weight: bold; margin: 15px 0; padding: 10px; border: 2px solid #000; }
-        .footer { text-align: center; font-size: 10px; margin-top: 20px; color: #666; }
+        .success { 
+          text-align: center; 
+          font-weight: bold; 
+          margin: 12px 0; 
+          padding: 8px; 
+          border: 2px solid #000; 
+          font-size: 12px;
+        }
+        .pattern { 
+          text-align: center; 
+          font-size: 14px; 
+          line-height: 1.2; 
+          margin: 10px 0; 
+          letter-spacing: 0;
+        }
+        .footer { 
+          text-align: center; 
+          font-size: 10px; 
+          margin-top: 15px; 
+          color: #666; 
+        }
       </style>
     </head>
     <body>
-      <h1>🖨️ PRINTER TEST PAGE</h1>
+      <h1>PRINTER TEST PAGE</h1>
       
-      <div class="info">
-        <strong>Device:</strong> ${data.deviceName}
-      </div>
-      <div class="info">
-        <strong>Role:</strong> ${data.role}
-      </div>
-      ${data.station ? `<div class="info"><strong>Station:</strong> ${data.station}</div>` : ''}
-      ${data.ipAddress ? `<div class="info"><strong>IP Address:</strong> ${data.ipAddress}</div>` : ''}
-      ${data.printerName ? `<div class="info"><strong>Printer Name:</strong> ${data.printerName}</div>` : ''}
+      <table class="info-table">
+        <tr>
+          <td>Device:</td>
+          <td>${data.deviceName}</td>
+        </tr>
+        <tr>
+          <td>Role:</td>
+          <td>${data.role}</td>
+        </tr>
+        ${data.station ? `<tr><td>Station:</td><td>${data.station}</td></tr>` : ''}
+        ${data.ipAddress ? `<tr><td>IP Address:</td><td>${data.ipAddress}</td></tr>` : ''}
+        ${data.printerName ? `<tr><td>Printer Name:</td><td>${data.printerName}</td></tr>` : ''}
+      </table>
       
       <hr/>
       
       <div class="success">
-        ✅ If you can read this clearly,<br/>
+        ✓ If you can read this clearly,<br/>
         your printer is working correctly!
       </div>
       
       <hr/>
       
-      <h2>Print Quality Test Pattern</h2>
+      <div style="text-align: center; font-size: 12px; margin: 8px 0;">
+        <strong>Print Quality Test</strong>
+      </div>
       
       <div class="pattern">
         ████████████████████████████████<br/>
         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓<br/>
         ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒<br/>
         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░<br/>
-        ││││││││││││││││││││││││││││││││<br/>
         ════════════════════════════════
       </div>
       
       <hr/>
       
-      <div class="info">
-        <strong>Test Time:</strong> ${new Date().toLocaleString()}
-      </div>
+      <table class="info-table">
+        <tr>
+          <td>Test Time:</td>
+          <td>${new Date().toLocaleString()}</td>
+        </tr>
+      </table>
       
       <div class="footer">
-        Powered by ZeniPOS<br/>
-        Device Management System
+        Powered by ZeniPOS
       </div>
     </body>
     </html>
@@ -214,15 +256,15 @@ export function generate58mmReceiptHTML(data: ReceiptData): string {
 
 /**
  * Generate 80mm kitchen ticket HTML for browser printing
- * OPTIMIZED FOR KITCHEN STAFF - Large text, bold items, NO PRICES
+ * SIMPLIFIED FOR THERMAL PRINTERS - Clean, compact layout
  */
 export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
   const totalItems = data.items.reduce((sum, item) => sum + item.quantity, 0);
   const stationIcon = data.stationIcon || '🍳';
   const priorityConfig = {
-    urgent: { icon: '🔴', color: '#ff0000', label: 'RUSH' },
-    rush: { icon: '🟡', color: '#ff9800', label: 'RUSH' },
-    normal: { icon: '⚪', color: '#666', label: 'NORMAL' }
+    urgent: { label: 'RUSH', marker: '🔴' },
+    rush: { label: 'RUSH', marker: '🟡' },
+    normal: { label: 'NORMAL', marker: '' }
   };
   const priority = priorityConfig[data.priority || 'normal'];
   
@@ -238,230 +280,186 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
           @page { margin: 5mm; size: 80mm auto; }
         }
         body {
-          font-family: 'Arial Black', 'Arial', sans-serif;
-          font-size: 14px;
-          line-height: 1.4;
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          line-height: 1.3;
           max-width: 80mm;
           margin: 0 auto;
-          padding: 8px;
+          padding: 5mm;
           color: #000;
         }
         
-        /* STATION HEADER - BLACK BANNER */
+        /* Station Header */
         .station-header {
-          background: #000;
-          color: #fff;
-          font-size: 28px;
-          font-weight: bold;
           text-align: center;
-          padding: 15px 10px;
-          margin: -8px -8px 15px -8px;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-        }
-        
-        /* ORDER NUMBER - GIANT BOX */
-        .order-number {
-          font-size: 36px;
-          font-weight: bold;
-          text-align: center;
-          border: 4px solid #000;
-          padding: 12px;
-          margin: 15px 0;
-          background: #fff;
-          letter-spacing: 3px;
-        }
-        
-        /* ORDER INFO */
-        .order-info {
-          display: flex;
-          justify-content: space-between;
-          margin: 10px 0;
-          padding: 8px;
-          background: #f5f5f5;
-          border: 2px solid #000;
-          font-size: 14px;
-          font-weight: bold;
-        }
-        .order-info-item {
-          flex: 1;
-        }
-        .order-info-label {
-          font-size: 11px;
-          color: #666;
-          font-weight: normal;
-        }
-        
-        /* PRIORITY BADGE */
-        .priority-badge {
-          display: inline-block;
-          padding: 4px 12px;
-          border-radius: 4px;
-          font-weight: bold;
-          font-size: 12px;
-          margin-left: 8px;
-        }
-        
-        /* ALLERGY WARNING - RED ALERT */
-        .allergy-warning {
-          background: #ff0000;
-          color: #fff;
-          padding: 15px;
-          margin: 15px 0;
-          border: 4px solid #cc0000;
           font-size: 16px;
           font-weight: bold;
-          text-align: center;
-          animation: blink 1s infinite;
+          margin-bottom: 8px;
+          text-transform: uppercase;
         }
-        @keyframes blink {
-          0%, 50%, 100% { opacity: 1; }
-          25%, 75% { opacity: 0.7; }
+        
+        /* Order Number Box */
+        .order-number {
+          font-size: 20px;
+          font-weight: bold;
+          text-align: center;
+          border: 2px solid #000;
+          padding: 6px;
+          margin: 8px 0;
+        }
+        
+        /* Order Info Table */
+        .order-info {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 8px 0;
+          font-size: 11px;
+        }
+        .order-info td {
+          padding: 4px 6px;
+          border: 1px solid #000;
+          text-align: center;
+        }
+        .order-info td strong {
+          display: block;
+          font-size: 10px;
+          color: #666;
         }
         
         hr {
           border: none;
-          border-top: 3px solid #000;
-          margin: 15px 0;
+          border-top: 1px dashed #000;
+          margin: 8px 0;
         }
         
-        /* ITEM BOX */
-        .item-box {
-          border: 3px solid #000;
-          padding: 12px;
-          margin: 15px 0;
-          background: #fff;
-          page-break-inside: avoid;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        /* ITEM NAME - HUGE & BOLD */
-        .item-name {
-          font-size: 24px;
-          font-weight: bold;
-          text-transform: uppercase;
-          margin: 0 0 8px 0;
-          letter-spacing: 1px;
-        }
-        
-        /* QUANTITY CHECKBOXES */
-        .quantity-boxes {
-          display: flex;
-          gap: 8px;
+        /* Item Display */
+        .item {
           margin: 10px 0;
-          padding: 10px;
-          background: #f9f9f9;
-          border: 2px dashed #666;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #ddd;
+          page-break-inside: avoid;
         }
-        .checkbox {
-          display: inline-block;
-          width: 30px;
-          height: 30px;
-          border: 3px solid #000;
-          background: #fff;
-          text-align: center;
-          line-height: 24px;
-          font-size: 18px;
+        .item:last-child {
+          border-bottom: none;
+        }
+        .item-name {
+          font-size: 14px;
+          font-weight: bold;
+          margin-bottom: 4px;
         }
         
-        /* MODIFIERS */
+        /* Quantity Display */
+        .quantity {
+          font-size: 11px;
+          margin: 4px 0;
+        }
+        .quantity span {
+          font-family: monospace;
+          letter-spacing: 2px;
+        }
+        
+        /* Modifiers */
         .modifiers {
-          margin: 10px 0 10px 20px;
-          font-size: 15px;
-          font-weight: 600;
+          margin: 4px 0 4px 12px;
+          font-size: 11px;
         }
         .modifier-item {
-          margin: 5px 0;
-          padding: 5px 0;
+          margin: 2px 0;
         }
-        .modifier-add { color: #2e7d32; }
-        .modifier-remove { color: #c62828; }
+        .modifier-add { color: #000; }
+        .modifier-add:before { content: '+ '; }
+        .modifier-remove { color: #000; }
+        .modifier-remove:before { content: '- '; }
         
-        /* SPECIAL NOTES - RED BOX */
+        /* Special Notes */
         .special-note {
-          background: #ffebee;
-          border: 3px solid #ff0000;
-          color: #000;
-          padding: 12px;
-          margin: 10px 0;
+          background: #f0f0f0;
+          border: 1px solid #000;
+          padding: 6px;
+          margin: 4px 0;
+          font-size: 11px;
           font-weight: bold;
-          font-size: 14px;
         }
         
-        /* PREP TIME */
+        /* Prep Time */
         .prep-time {
-          display: inline-block;
-          padding: 4px 10px;
-          background: #e3f2fd;
-          border: 2px solid #1976d2;
-          border-radius: 4px;
-          font-size: 12px;
-          margin-top: 8px;
+          font-size: 10px;
+          color: #666;
+          margin-top: 4px;
         }
         
-        /* ORDER NOTES - SPECIAL INSTRUCTIONS */
+        /* Order Notes */
         .order-notes {
-          background: #fff3e0;
-          border: 4px solid #ff9800;
-          padding: 15px;
-          margin: 15px 0;
+          background: #f0f0f0;
+          border: 2px solid #000;
+          padding: 8px;
+          margin: 8px 0;
+          font-size: 11px;
           font-weight: bold;
-          font-size: 15px;
         }
         
-        /* FOOTER - TOTAL ITEMS */
-        .footer {
-          text-align: center;
-          font-size: 20px;
-          font-weight: bold;
-          margin: 20px 0 10px 0;
-          padding: 15px;
+        /* Allergy Warning */
+        .allergy-warning {
           background: #000;
           color: #fff;
-          border-radius: 8px;
+          padding: 8px;
+          margin: 8px 0;
+          font-size: 12px;
+          font-weight: bold;
+          text-align: center;
+        }
+        
+        /* Footer */
+        .footer {
+          text-align: center;
+          font-size: 14px;
+          font-weight: bold;
+          margin: 12px 0 8px 0;
+          padding: 8px;
+          border: 2px solid #000;
         }
         
         .print-time {
           text-align: center;
-          font-size: 11px;
+          font-size: 10px;
           color: #666;
-          margin-top: 10px;
+          margin-top: 8px;
         }
       </style>
     </head>
     <body>
-      <!-- STATION HEADER -->
+      <!-- Station Header -->
       <div class="station-header">
         ${stationIcon} ${data.stationName}
       </div>
       
-      <!-- ORDER NUMBER -->
+      <!-- Order Number -->
       <div class="order-number">
         ORDER #${data.orderNumber}
       </div>
       
-      <!-- ORDER INFO -->
-      <div class="order-info">
-        <div class="order-info-item">
-          <div class="order-info-label">Time</div>
-          <div>${data.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
-        </div>
-        ${data.tableLabel ? `
-          <div class="order-info-item">
-            <div class="order-info-label">Table</div>
-            <div>${data.tableLabel}</div>
-          </div>
-        ` : ''}
-        <div class="order-info-item">
-          <div class="order-info-label">Type</div>
-          <div>
+      <!-- Order Info Table -->
+      <table class="order-info">
+        <tr>
+          <td>
+            <strong>Time</strong>
+            ${data.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+          </td>
+          ${data.tableLabel ? `
+            <td>
+              <strong>Table</strong>
+              ${data.tableLabel}
+            </td>
+          ` : ''}
+          <td>
+            <strong>Type</strong>
             ${data.orderType?.toUpperCase() || 'DINE-IN'}
-            ${data.priority !== 'normal' ? `<span class="priority-badge" style="background: ${priority.color}; color: #fff;">${priority.icon} ${priority.label}</span>` : ''}
-          </div>
-        </div>
-      </div>
+            ${priority.marker ? ` ${priority.marker}` : ''}
+          </td>
+        </tr>
+      </table>
       
-      <!-- ALLERGY WARNINGS -->
+      <!-- Allergy Warnings -->
       ${data.allergyWarnings && data.allergyWarnings.length > 0 ? `
         ${data.allergyWarnings.map(warning => `
           <div class="allergy-warning">
@@ -472,38 +470,33 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
       
       <hr/>
       
-      <!-- ITEMS -->
+      <!-- Items -->
       ${data.items.map(item => `
-        <div class="item-box">
+        <div class="item">
           <div class="item-name">
-            ${item.quantity}x ${item.name}
+            ${item.quantity}X ${item.name.toUpperCase()}
           </div>
           
-          <!-- Quantity Checkboxes -->
-          <div class="quantity-boxes">
-            <strong style="margin-right: 10px;">QTY:</strong>
-            ${Array.from({ length: item.quantity }, (_, i) => `<div class="checkbox">☐</div>`).join('')}
+          <div class="quantity">
+            QTY: <span>${Array.from({ length: item.quantity }, () => '[ ]').join(' ')}</span>
           </div>
           
-          <!-- Modifiers -->
           ${item.modifiers && item.modifiers.length > 0 ? `
             <div class="modifiers">
               ${item.modifiers.map(mod => `
                 <div class="modifier-item ${mod.type === 'remove' ? 'modifier-remove' : 'modifier-add'}">
-                  ${mod.type === 'remove' ? '➖' : '➕'} ${mod.name}
+                  ${mod.name}
                 </div>
               `).join('')}
             </div>
           ` : ''}
           
-          <!-- Special Notes -->
           ${item.notes ? `
             <div class="special-note">
               ⚠️ ${item.notes.toUpperCase()}
             </div>
           ` : ''}
           
-          <!-- Prep Time -->
           ${item.prepTime ? `
             <div class="prep-time">
               ⏱️ Prep Time: ~${item.prepTime} min
@@ -512,18 +505,17 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
         </div>
       `).join('')}
       
-      <!-- ORDER NOTES -->
       ${data.notes ? `
         <hr/>
         <div class="order-notes">
-          📝 <strong>SPECIAL INSTRUCTIONS:</strong><br/>
+          📝 SPECIAL INSTRUCTIONS:<br/>
           ${data.notes.toUpperCase()}
         </div>
       ` : ''}
       
       <hr/>
       
-      <!-- FOOTER -->
+      <!-- Footer -->
       <div class="footer">
         TOTAL ITEMS: ${totalItems}
       </div>
