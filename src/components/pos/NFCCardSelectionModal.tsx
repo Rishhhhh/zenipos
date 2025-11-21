@@ -61,17 +61,12 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
       
       if (error) throw error;
       
-      // PERFORMANCE BOOST: Prefetch tables in background
+      // PERFORMANCE BOOST: Prefetch tables with orders using correct query
+      const { getTablesWithOrders } = await import('@/lib/queries/tableQueries');
       queryClient.prefetchQuery({
-        queryKey: ['tables'],
-        queryFn: async () => {
-          const { data } = await supabase
-            .from('tables')
-            .select('*, current_order:orders(*)')
-            .order('label');
-          return data;
-        },
-        staleTime: 30 * 1000, // Cache for 30 seconds
+        queryKey: ['tables-with-orders'],
+        queryFn: getTablesWithOrders,
+        staleTime: 2 * 60 * 1000, // Cache for 2 minutes
       });
       
       // Call parent callback

@@ -240,6 +240,25 @@ export class PrintRoutingService {
       .eq('station_id', stationId)
       .eq('role', 'PRINTER');
     
+    // AUTO-DETECT: Try to reconnect offline browser-only printers
+    if (devices && devices.length > 0) {
+      for (const device of devices) {
+        if (device.status === 'offline' && !device.ip_address && typeof window.print === 'function') {
+          // Browser printer is accessible, update status
+          await supabase
+            .from('devices')
+            .update({ 
+              status: 'online', 
+              last_seen: new Date().toISOString() 
+            })
+            .eq('id', device.id);
+          
+          device.status = 'online'; // Update local copy
+          console.log(`✅ Auto-reconnected browser printer: ${device.name}`);
+        }
+      }
+    }
+    
     if (!devices || devices.length === 0) {
       console.warn(`⚠️  No printers configured for station ${station.name}`);
       return;
@@ -303,6 +322,12 @@ export class PrintRoutingService {
           
           console.log(`✅ Successfully printed to ${printer.name} (network)`);
           
+          // Update last_seen timestamp on successful print
+          await supabase
+            .from('devices')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', printer.id);
+          
           // Log success
           await supabase.from('device_health_log').insert({
             device_id: printer.id,
@@ -329,6 +354,12 @@ export class PrintRoutingService {
         const { BrowserPrintService } = await import('./BrowserPrintService');
         const html = await this.generateKitchenTicketHTML(ticketData, station.name);
         await BrowserPrintService.printHTML(html, printer.id, printer.name);
+        
+        // Update last_seen timestamp on successful browser print
+        await supabase
+          .from('devices')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('id', printer.id);
         
         console.log(`✅ Ticket printed via browser dialog for ${printer.name}`);
       }
