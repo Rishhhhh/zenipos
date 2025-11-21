@@ -8,17 +8,57 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, TrendingUp, AlertCircle, DollarSign, Download } from "lucide-react";
-import { format } from "date-fns";
+import { Wallet, TrendingUp, AlertCircle, DollarSign, Download, Clock } from "lucide-react";
+import { format, formatDistance } from "date-fns";
+import { TillReconciliationDialog } from "@/components/admin/TillReconciliationDialog";
 
 export default function Cashbook() {
   const { currentBranch } = useBranch();
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
+  // Fetch active (open) till sessions
+  const { data: activeSessions, isLoading: activeLoading } = useQuery({
+    queryKey: ["active-till-sessions", currentBranch?.id],
+    queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("till_sessions")
+        .select(`
+          *,
+          employee:employees(name)
+        `)
+        .eq("branch_id", currentBranch.id)
+        .eq("status", "open")
+        .order("opened_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Get transaction counts for each session
+      const sessionsWithCounts = await Promise.all(
+        (data || []).map(async (session) => {
+          const { count } = await supabase
+            .from("till_ledger")
+            .select("*", { count: "exact", head: true })
+            .eq("till_session_id", session.id);
+
+          return { ...session, transaction_count: count || 0 };
+        })
+      );
+
+      return sessionsWithCounts;
+    },
+    enabled: !!currentBranch?.id,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   const { data: tillSessions, isLoading: sessionsLoading } = useQuery({
-    queryKey: ["till-sessions", currentBranch, startDate, endDate],
+    queryKey: ["till-sessions", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
+      if (!currentBranch?.id) return [];
+      
       const { data, error } = await supabase
         .from("till_sessions")
         .select(`
@@ -26,7 +66,7 @@ export default function Cashbook() {
           employee:employees(name),
           shift:shifts(*)
         `)
-        .eq("branch_id", currentBranch)
+        .eq("branch_id", currentBranch.id)
         .gte("opened_at", `${startDate}T00:00:00`)
         .lte("opened_at", `${endDate}T23:59:59`)
         .order("opened_at", { ascending: false });
@@ -34,7 +74,7 @@ export default function Cashbook() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!currentBranch,
+    enabled: !!currentBranch?.id,
   });
 
   const { data: floatEvents, isLoading: eventsLoading } = useQuery({
@@ -139,6 +179,58 @@ export default function Cashbook() {
         </div>
       </div>
 
+      {/* Active Till Sessions */}
+      {activeSessions && activeSessions.length > 0 && (
+        <Card className="border-2 border-green-500/30 bg-green-500/5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
+                Active Till Sessions
+              </CardTitle>
+              <Badge variant="default" className="bg-green-500">
+                {activeSessions.length} Open
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {activeSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="p-4 bg-background/50 rounded-lg border border-green-500/20 hover:border-green-500/40 transition-colors cursor-pointer"
+                  onClick={() => setSelectedSessionId(session.id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold">{session.employee?.name || "N/A"}</span>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Opened:</span>
+                      <span>{formatDistance(new Date(session.opened_at), new Date(), { addSuffix: true })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Expected Cash:</span>
+                      <span className="font-semibold text-primary">
+                        RM {Number(session.expected_cash || 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Transactions:</span>
+                      <span>{session.transaction_count || 0}</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full mt-3">
+                    View Details
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -217,7 +309,11 @@ export default function Cashbook() {
                   const hasVariance = Math.abs(variance) > 5;
                   
                   return (
-                    <TableRow key={session.id} className={hasVariance ? 'bg-destructive/5' : ''}>
+                    <TableRow 
+                      key={session.id} 
+                      className={`${hasVariance ? 'bg-destructive/5' : ''} cursor-pointer hover:bg-muted/50`}
+                      onClick={() => setSelectedSessionId(session.id)}
+                    >
                       <TableCell>
                         {format(new Date(session.opened_at), "MMM dd, yyyy HH:mm")}
                       </TableCell>
@@ -233,9 +329,9 @@ export default function Cashbook() {
                       <TableCell>
                         <Badge variant={
                           session.status === 'open' ? 'default' : 
-                          session.status === 'reconciled' ? 'success' : 
+                          session.status === 'reconciled' ? 'default' : 
                           'secondary'
-                        }>
+                        } className={session.status === 'reconciled' ? 'bg-green-500 hover:bg-green-600' : ''}>
                           {session.status}
                         </Badge>
                       </TableCell>
@@ -284,6 +380,14 @@ export default function Cashbook() {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {selectedSessionId && (
+        <TillReconciliationDialog
+          open={!!selectedSessionId}
+          onOpenChange={(open) => !open && setSelectedSessionId(null)}
+          sessionId={selectedSessionId}
+        />
       )}
     </div>
   );

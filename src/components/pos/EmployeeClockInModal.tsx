@@ -7,6 +7,8 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { OpenTillModal } from './OpenTillModal';
+import { useTillSession } from '@/contexts/TillSessionContext';
 
 interface EmployeeClockInModalProps {
   open: boolean;
@@ -17,7 +19,10 @@ interface EmployeeClockInModalProps {
 export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: EmployeeClockInModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openTillSession } = useTillSession();
   const [pin, setPin] = useState('');
+  const [showOpenTill, setShowOpenTill] = useState(false);
+  const [clockedInData, setClockedInData] = useState<{ employee: any; shift: any } | null>(null);
 
   const clockIn = useMutation({
     mutationFn: async (enteredPin: string) => {
@@ -73,14 +78,10 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
       return { employee, shift };
     },
     onSuccess: ({ employee, shift }) => {
-      toast({
-        title: 'Clocked In',
-        description: `Welcome, ${employee.name}!`,
-      });
+      // Don't show success toast yet - wait for till open
+      setClockedInData({ employee, shift });
+      setShowOpenTill(true);
       queryClient.invalidateQueries({ queryKey: ['active-shift'] });
-      onSuccess(employee, shift.id);
-      setPin('');
-      onOpenChange(false);
     },
     onError: (error: any) => {
       toast({
@@ -98,15 +99,30 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
     }
   };
 
+  const handleTillOpened = (tillSessionId: string) => {
+    if (clockedInData) {
+      toast({
+        title: 'Clocked In & Till Opened',
+        description: `Welcome, ${clockedInData.employee.name}!`,
+      });
+      onSuccess(clockedInData.employee, clockedInData.shift.id);
+      setPin('');
+      setClockedInData(null);
+      setShowOpenTill(false);
+      onOpenChange(false);
+    }
+  };
+
   return (
-    <GlassModal
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Clock In"
-      description="Enter your employee PIN to start your shift"
-      size="md"
-      variant="default"
-    >
+    <>
+      <GlassModal
+        open={open && !showOpenTill}
+        onOpenChange={onOpenChange}
+        title="Clock In"
+        description="Enter your employee PIN to start your shift"
+        size="md"
+        variant="default"
+      >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="pin">Employee PIN</Label>
@@ -167,5 +183,18 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
         </Button>
       </form>
     </GlassModal>
+
+    {clockedInData && (
+      <OpenTillModal
+        open={showOpenTill}
+        onOpenChange={setShowOpenTill}
+        employeeName={clockedInData.employee.name}
+        employeeId={clockedInData.employee.id}
+        shiftId={clockedInData.shift.id}
+        onSuccess={handleTillOpened}
+        onOpenTill={openTillSession}
+      />
+    )}
+  </>
   );
 }
