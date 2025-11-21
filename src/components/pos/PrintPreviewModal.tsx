@@ -47,6 +47,7 @@ export function PrintPreviewModal({
     const fetchOrderItemsWithStations = async () => {
       if (!orderData.orderId) return;
 
+      // Step 1: Fetch order items with menu items (no stations join)
       const { data: orderItems, error } = await supabase
         .from('order_items')
         .select(`
@@ -55,11 +56,6 @@ export function PrintPreviewModal({
             id,
             name,
             station_id
-          ),
-          stations (
-            id,
-            name,
-            color
           )
         `)
         .eq('order_id', orderData.orderId);
@@ -69,13 +65,37 @@ export function PrintPreviewModal({
         return;
       }
 
+      // Step 2: Collect unique station IDs
+      const stationIds = Array.from(
+        new Set(
+          orderItems
+            ?.map((item: any) => item.menu_items?.station_id)
+            .filter(Boolean)
+        )
+      );
+
+      // Step 3: Fetch stations separately
+      let stationsById: Record<string, { id: string; name: string; color?: string }> = {};
+
+      if (stationIds.length > 0) {
+        const { data: stations } = await supabase
+          .from('stations')
+          .select('id, name, color')
+          .in('id', stationIds);
+
+        stationsById = Object.fromEntries(
+          (stations || []).map(s => [s.id, s])
+        );
+      }
+
       // Group items by station
       const stationGroups = new Map<string, any>();
       const unrouted: any[] = [];
 
       orderItems?.forEach((item: any) => {
-        const stationId = item.station_id;
-        const stationName = item.stations?.name || 'UNASSIGNED';
+        const stationId = item.menu_items?.station_id;
+        const stationInfo = stationId ? stationsById[stationId] : undefined;
+        const stationName = stationInfo?.name || 'UNASSIGNED';
 
         if (!stationId) {
           unrouted.push({

@@ -51,8 +51,7 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
             tables!table_id(label),
             order_items(
               *,
-              menu_items(id, name, station_id),
-              stations(id, name, color)
+              menu_items(id, name, station_id)
             )
           `)
           .eq('id', orderId)
