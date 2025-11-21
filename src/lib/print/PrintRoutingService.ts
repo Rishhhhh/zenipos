@@ -240,21 +240,47 @@ export class PrintRoutingService {
       .eq('station_id', stationId)
       .eq('role', 'PRINTER');
     
-    // AUTO-DETECT: Try to reconnect offline browser-only printers
+    // AUTO-DETECT: Try to reconnect offline browser-only printers with health check
     if (devices && devices.length > 0) {
       for (const device of devices) {
         if (device.status === 'offline' && !device.ip_address && typeof window.print === 'function') {
-          // Browser printer is accessible, update status
-          await supabase
-            .from('devices')
-            .update({ 
-              status: 'online', 
-              last_seen: new Date().toISOString() 
-            })
-            .eq('id', device.id);
-          
-          device.status = 'online'; // Update local copy
-          console.log(`✅ Auto-reconnected browser printer: ${device.name}`);
+          // Browser printer is accessible - perform quick verification
+          try {
+            // Verify browser can create print context
+            const testIframe = document.createElement('iframe');
+            testIframe.style.display = 'none';
+            document.body.appendChild(testIframe);
+            
+            const canPrint = !!testIframe.contentWindow?.print;
+            document.body.removeChild(testIframe);
+            
+            if (canPrint) {
+              // Browser printing is available, update status
+              await supabase
+                .from('devices')
+                .update({ 
+                  status: 'online', 
+                  last_seen: new Date().toISOString() 
+                })
+                .eq('id', device.id);
+              
+              device.status = 'online'; // Update local copy
+              console.log(`✅ Auto-reconnected browser printer: ${device.name}`);
+              
+              // Log successful reconnection
+              await supabase.from('device_health_log').insert({
+                device_id: device.id,
+                status: 'online',
+                metadata: { 
+                  action: 'auto_reconnect',
+                  method: 'browser_health_check',
+                  timestamp: new Date().toISOString()
+                }
+              });
+            }
+          } catch (error) {
+            console.warn(`⚠️  Browser print verification failed for ${device.name}:`, error);
+          }
         }
       }
     }

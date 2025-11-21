@@ -25,17 +25,10 @@ export class BrowserPrintService {
         iframe.style.width = '0';
         iframe.style.height = '0';
         iframe.style.border = 'none';
+        
+        // Use srcdoc instead of document.write (modern approach)
+        iframe.srcdoc = html;
         document.body.appendChild(iframe);
-
-        // Write content to iframe
-        const iframeDoc = iframe.contentWindow?.document;
-        if (!iframeDoc) {
-          throw new Error('Failed to access iframe document');
-        }
-
-        iframeDoc.open();
-        iframeDoc.write(html);
-        iframeDoc.close();
 
         // Wait for content to load, then trigger print
         iframe.onload = () => {

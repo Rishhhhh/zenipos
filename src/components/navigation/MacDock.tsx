@@ -117,8 +117,8 @@ export function MacDock() {
     return false;
   };
 
-  // Mobile: Use bottom nav instead of dock
-  if (isMobile) {
+  // Mobile: Use bottom nav instead of dock (strict width check)
+  if (typeof window !== 'undefined' && window.innerWidth < 768) {
     return <MobileBottomNav />;
   }
 
