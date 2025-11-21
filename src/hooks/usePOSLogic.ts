@@ -191,7 +191,7 @@ export function usePOSLogic() {
             modifiers: item.modifiers as any || [],
             status: 'kitchen_queue',
             organization_id: existingOrder.organization_id,
-            branch_id: existingOrder.branch_id,
+            // branch_id removed - column doesn't exist in order_items table
           }));
 
           const { error: itemsError } = await supabase

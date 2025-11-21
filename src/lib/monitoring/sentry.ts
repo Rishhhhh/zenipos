@@ -84,6 +84,11 @@ export async function trackPerformance(metricType: string, duration: number, met
 }
 
 async function logPerformanceMetric(metricType: string, duration: number, metadata?: any) {
+  // Skip in production to avoid CORS errors with performance_metrics table
+  if (import.meta.env.PROD) {
+    return;
+  }
+  
   const budget = getPerformanceBudget(metricType);
   
   try {
@@ -103,10 +108,14 @@ async function logPerformanceMetric(metricType: string, duration: number, metada
       });
 
     if (error) {
-      console.error('Failed to log performance metric:', error);
+      // Only warn in dev mode
+      console.warn('Failed to log performance metric:', error);
     }
   } catch (error) {
-    console.error('Performance logging error:', error);
+    // Suppress errors in production
+    if (import.meta.env.DEV) {
+      console.warn('Performance logging error:', error);
+    }
   }
 }
 

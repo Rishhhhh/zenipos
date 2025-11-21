@@ -110,23 +110,21 @@ export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) 
         isTouch ? 'p-4' : 'p-5'
       )}
     >
-      <div className="flex flex-col h-full">
-        {/* Header Row: Icon + Name + Badge + 3-dot Menu */}
-        <div className="flex items-start justify-between mb-2 flex-shrink-0">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            {state.icon}
-            <h3 className={cn("font-bold truncate", isTouch ? "text-lg" : "text-xl")}>
-              {table.label}
-            </h3>
-          </div>
+      {/* 4-QUADRANT LAYOUT */}
+      <div className="flex flex-col h-full justify-between">
+        {/* TOP ROW */}
+        <div className="flex items-start justify-between">
+          {/* Top-left: Table name */}
+          <h3 className={cn("font-bold truncate", isTouch ? "text-2xl" : "text-3xl", state.textColor)}>
+            {table.label}
+          </h3>
           
+          {/* Top-right: Badge + 3-dot Menu */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Status Badge */}
             <Badge className={cn("font-semibold text-xs whitespace-nowrap", state.badgeColor)}>
               {state.label}
             </Badge>
             
-            {/* 3-dot Settings Menu */}
             {onConfigureTable && (
               <Button
                 size="icon"
@@ -135,66 +133,51 @@ export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) 
                   e.stopPropagation();
                   onConfigureTable(table.id);
                 }}
-                className="h-7 w-7 flex-shrink-0"
+                className="h-7 w-7"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             )}
           </div>
         </div>
-        
-        {/* NFC Card Badge (if exists) */}
-        {order?.nfc_card_id && (
-          <div className="mb-2 flex-shrink-0">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100/60 border border-emerald-300 dark:bg-emerald-900/30 dark:border-emerald-700">
-                    <NfcIcon className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-xs font-mono">{order.nfc_cards?.[0]?.card_uid?.slice(0, 8) || order.nfc_card_id.slice(0, 8)}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs font-mono">
-                    Card: {order.nfc_cards?.[0]?.card_uid || order.nfc_card_id.slice(0, 8)}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
 
-        {/* Content - Flex-grow to fill remaining space */}
-        <div className="flex-1 flex flex-col justify-between min-h-0">
-          {/* Seat Count */}
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2 flex-shrink-0">
-            <Users className="h-3.5 w-3.5" />
-            <span>{table.seats} seats</span>
-          </div>
-
-          {/* Order Info or Reservation Info */}
-          {order ? (
-            <div className="space-y-1 flex-shrink-0">
-              <div className={cn("flex items-center gap-1.5 text-muted-foreground", isTouch ? "text-xs" : "text-sm")}>
-                <Clock className="h-3 w-3" />
-                <span className="truncate">
-                  {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+        {/* BOTTOM ROW */}
+        <div className="flex items-end justify-between">
+          {/* Bottom-left: Card + Time */}
+          <div className="space-y-0.5">
+            {order?.nfc_card_id && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <NfcIcon className="h-3 w-3" />
+                <span className="font-mono truncate max-w-[100px]">
+                  {order.nfc_cards?.[0]?.card_uid?.slice(0, 8) || order.nfc_card_id.slice(0, 8)}
                 </span>
               </div>
-              <div className={cn("font-bold", state.textColor, isTouch ? "text-base" : "text-lg")}>
+            )}
+            {order && (
+              <div className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+              </div>
+            )}
+            {!order && table.reservation_time && state.label === 'Reserved' && (
+              <div className="space-y-0.5">
+                <div className="text-xs text-muted-foreground truncate max-w-[120px]">
+                  {table.reservation_name}
+                </div>
+                <div className={cn("text-xs font-medium", state.textColor)}>
+                  {new Date(table.reservation_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom-right: Total */}
+          {order && (
+            <div className="text-right">
+              <div className={cn("font-bold", isTouch ? "text-xl" : "text-2xl", state.textColor)}>
                 RM {order.total.toFixed(2)}
               </div>
             </div>
-          ) : table.reservation_time && state.label === 'Reserved' ? (
-            <div className="space-y-1 flex-shrink-0">
-              <div className="text-xs text-muted-foreground truncate">
-                {table.reservation_name}
-              </div>
-              <div className={cn("text-sm font-medium", state.textColor)}>
-                {new Date(table.reservation_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          ) : null}
+          )}
         </div>
       </div>
     </Card>
