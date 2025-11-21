@@ -67,6 +67,22 @@ export default function POS() {
     setNFCCardId
   } = useCartStore();
   
+  // PERFORMANCE: Prefetch NFC cards immediately on POS mount
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ['nfc-cards', 'active'],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from('nfc_cards')
+          .select('id, card_uid, status, notes, last_scanned_at, scan_count')
+          .eq('status', 'active')
+          .order('card_uid');
+        return data;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+  }, [queryClient]);
+  
   // Handle loading existing order from table management
   useEffect(() => {
     const { tableId, existingOrderId, returnTo } = location.state || {};

@@ -15,15 +15,9 @@ interface TableConfigModalProps {
 
 export function TableConfigModal({ open, onOpenChange, table, onSave }: TableConfigModalProps) {
   const [formData, setFormData] = useState({
-    label: table.label || '',
-    seats: table.seats || 4,
-    custom_name: table.custom_name || '',
-    grid_x: table.grid_x || 0,
-    grid_y: table.grid_y || 0,
-    reservation_name: table.reservation_name || '',
-    reservation_time: table.reservation_time ? new Date(table.reservation_time).toISOString().slice(0, 16) : '',
-    reservation_contact: table.reservation_contact || '',
-    notes: table.notes || '',
+    label: table?.label || '',
+    seats: table?.seats || 4,
+    notes: table?.notes || '',
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -72,69 +66,13 @@ export function TableConfigModal({ open, onOpenChange, table, onSave }: TableCon
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="grid_x">Grid Position X</Label>
-            <Input
-              id="grid_x"
-              type="number"
-              value={formData.grid_x}
-              onChange={(e) => setFormData({ ...formData, grid_x: parseInt(e.target.value) })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="grid_y">Grid Position Y</Label>
-            <Input
-              id="grid_y"
-              type="number"
-              value={formData.grid_y}
-              onChange={(e) => setFormData({ ...formData, grid_y: parseInt(e.target.value) })}
-            />
-          </div>
-        </div>
-
-        <Separator />
-        
-        <h3 className="font-semibold">Reservation</h3>
-        
         <div>
-          <Label htmlFor="reservation_name">Guest Name</Label>
+          <Label htmlFor="notes">Custom Name (Optional)</Label>
           <Input
-            id="reservation_name"
-            value={formData.reservation_name}
-            onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
-            placeholder="Leave empty if not reserved"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="reservation_time">Reservation Time</Label>
-          <Input
-            id="reservation_time"
-            type="datetime-local"
-            value={formData.reservation_time}
-            onChange={(e) => setFormData({ ...formData, reservation_time: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="reservation_contact">Contact</Label>
-          <Input
-            id="reservation_contact"
-            value={formData.reservation_contact}
-            onChange={(e) => setFormData({ ...formData, reservation_contact: e.target.value })}
-            placeholder="Phone or email"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
             id="notes"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Special requests, allergies, etc."
-            rows={3}
+            placeholder="e.g., VIP Corner, Window Seat"
           />
         </div>
 

@@ -42,8 +42,8 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
       return data as NFCCard[];
     },
     enabled: open,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes (cards don't change often)
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   const handleCardSelect = async (cardId: string, cardUid: string) => {
@@ -155,11 +155,23 @@ export function NFCCardSelectionModal({ open, onOpenChange, onSelect }: NFCCardS
 
           <TabsContent value="select" className="flex-1 overflow-y-auto mt-4">
             {isLoading && (
-              <div className="flex items-center justify-center py-12">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  <p className="text-muted-foreground">Loading NFC cards...</p>
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Card key={i} className="p-6 min-h-[180px] animate-pulse">
+                    <div className="flex flex-col gap-4 h-full">
+                      <div className="flex items-start justify-between">
+                        <div className="h-6 w-6 bg-muted rounded" />
+                        <div className="h-5 w-16 bg-muted rounded" />
+                      </div>
+                      <div className="h-8 bg-muted rounded" />
+                      <div className="h-4 bg-muted rounded w-3/4" />
+                      <div className="flex flex-col gap-2 mt-auto">
+                        <div className="h-4 bg-muted rounded w-1/2" />
+                        <div className="h-4 bg-muted rounded w-2/3" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
 

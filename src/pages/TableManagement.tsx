@@ -6,10 +6,11 @@ import { TableOrderDetails } from '@/components/tables/TableOrderDetails';
 import { TablePaymentModal } from '@/components/tables/TablePaymentModal';
 import { TableHistoryPanel } from '@/components/tables/TableHistoryPanel';
 import { TableConfigModal } from '@/components/tables/TableConfigModal';
+import { ReservationModal } from '@/components/tables/ReservationModal';
 import { TableLayoutEditor } from '@/components/tables/TableLayoutEditor';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, TrendingUp, DollarSign, Clock, Users, NfcIcon, Grid3x3 } from 'lucide-react';
+import { RefreshCw, TrendingUp, DollarSign, Clock, Users, NfcIcon, Grid3x3, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import { PaymentNFCScannerModal } from '@/components/pos/PaymentNFCScannerModal';
@@ -28,6 +29,7 @@ export default function TableManagement() {
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [configTable, setConfigTable] = useState<any>(null);
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const [layoutMode, setLayoutMode] = useState(false);
 
   // Query tables with orders
@@ -131,6 +133,16 @@ export default function TableManagement() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReservationModal(true)}
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Reservations
+            </Button>
+            
             <Button
               variant={layoutMode ? "default" : "outline"}
               size="sm"
@@ -139,6 +151,7 @@ export default function TableManagement() {
               <Grid3x3 className="h-4 w-4 mr-2" />
               {layoutMode ? 'Exit Layout' : 'Edit Layout'}
             </Button>
+            
             <Button
               variant="outline"
               size="sm"
@@ -224,10 +237,13 @@ export default function TableManagement() {
               <div className="text-center py-8 text-muted-foreground">Loading tables...</div>
             ) : (
               <TableGrid
-                tables={tables || []}
-                isLoading={isLoading}
-                onTableClick={handleTableClick}
-                onConfigureTable={setConfigTable}
+          tables={tables || []}
+          isLoading={isLoading}
+          onTableClick={handleTableClick}
+          onConfigureTable={(tableId) => {
+            const table = tables?.find(t => t.id === tableId);
+            if (table) setConfigTable(table);
+          }}
               />
             )}
           </div>
@@ -316,6 +332,12 @@ export default function TableManagement() {
           onSave={handleSaveConfig}
         />
       )}
+      
+      <ReservationModal
+        open={showReservationModal}
+        onOpenChange={setShowReservationModal}
+        tables={tables || []}
+      />
     </div>
   );
 }
