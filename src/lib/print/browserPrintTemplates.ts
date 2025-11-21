@@ -204,20 +204,20 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
 
   const lines: string[] = [];
 
-  // Station header - BOLD and prominent
+  // Station header
   lines.push('================================');
   lines.push(`     ${data.stationName.toUpperCase()}`);
   lines.push('================================');
   lines.push('');
   
-  // Order number - LARGE and BOLD
-  lines.push(`#${data.orderNumber}`);
-  lines.push('');
-
-  // Table info - BOLD
+  // Table number - MAIN HEADER (LARGE and BOLD)
   if (data.tableLabel) {
     lines.push(`TABLE: ${data.tableLabel}`);
+    lines.push('');
   }
+
+  // Order number - smaller, secondary
+  lines.push(`#${data.orderNumber}`);
   lines.push('');
 
   // DateTime and order type
@@ -257,11 +257,6 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
     // Special notes - HIGHLIGHTED
     if (item.notes) {
       lines.push(`  * ${item.notes.toUpperCase()} *`);
-    }
-
-    // Prep time
-    if (item.prepTime) {
-      lines.push(`  Prep: ~${item.prepTime} min`);
     }
 
     lines.push(''); // spacing between items
@@ -312,8 +307,8 @@ export function generate80mmKitchenTicketHTML(data: KitchenTicketData): string {
       </style>
     </head>
     <body><strong>${content.replace(/\n(={32}.*?={32})\n/g, '\n</strong>$1<strong>\n')
-                          .replace(/\n(#[A-Z0-9-]+)\n/g, '\n<span style="font-size: 20px; font-weight: bold;">$1</span>\n')
-                          .replace(/\n(TABLE: .*?)\n/g, '\n<strong style="font-size: 14px;">$1</strong>\n')
+                          .replace(/\n(TABLE: .*?)\n/g, '\n<span style="font-size: 20px; font-weight: bold;">$1</span>\n')
+                          .replace(/\n(#[A-Z0-9-]+)\n/g, '\n<span style="font-size: 12px;">$1</span>\n')
                           .replace(/\n(\d+ x .*?)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')
                           .replace(/\n(!!! .*? !!!)\n/g, '\n<strong style="font-size: 14px;">$1</strong>\n')
                           .replace(/\n(\*\* .*? \*\*)\n/g, '\n<strong style="font-size: 13px;">$1</strong>\n')
