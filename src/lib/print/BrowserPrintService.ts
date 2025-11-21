@@ -2,9 +2,11 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   generateTestPageHTML,
   generate58mmReceiptHTML,
+  generate80mmReceiptHTML,
   generate80mmKitchenTicketHTML,
   TestPageData,
   ReceiptData,
+  ReceiptData80mm,
   KitchenTicketData
 } from './browserPrintTemplates';
 
@@ -74,6 +76,14 @@ export class BrowserPrintService {
    */
   static async printReceipt(receiptData: ReceiptData, deviceId?: string, deviceName?: string): Promise<boolean> {
     const html = generate58mmReceiptHTML(receiptData);
+    return this.printHTML(html, deviceId, deviceName);
+  }
+
+  /**
+   * Print an 80mm customer receipt
+   */
+  static async print80mmReceipt(receiptData: ReceiptData80mm, deviceId?: string, deviceName?: string): Promise<boolean> {
+    const html = generate80mmReceiptHTML(receiptData);
     return this.printHTML(html, deviceId, deviceName);
   }
 

@@ -24,6 +24,29 @@ export interface ReceiptData {
   cashier?: string;
 }
 
+export interface ReceiptData80mm {
+  restaurantName: string;
+  address?: string;
+  phone?: string;
+  orderNumber: string;
+  tableLabel?: string;
+  orderType?: string;
+  timestamp: Date;
+  items: Array<{ 
+    name: string; 
+    quantity: number; 
+    price: number;
+    modifiers?: string[];
+  }>;
+  subtotal: number;
+  tax: number;
+  total: number;
+  paymentMethod: string;
+  cashReceived?: number;
+  changeGiven?: number;
+  cashier?: string;
+}
+
 export interface KitchenTicketData {
   stationName: string;
   stationIcon?: string;
@@ -201,6 +224,233 @@ export function generate58mmReceiptHTML(data: ReceiptData): string {
       <div class="footer">
         Thank you for your visit!<br/>
         Powered by ZeniPOS
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate 80mm customer receipt HTML for browser printing
+ * PROFESSIONAL LAYOUT - Clear sections, payment details
+ */
+export function generate80mmReceiptHTML(data: ReceiptData80mm): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Receipt ${data.orderNumber}</title>
+      <style>
+        @page {
+          size: 80mm auto;
+          margin: 0;
+        }
+        
+        @media print {
+          body { 
+            margin: 0; 
+            padding: 0;
+            width: 80mm;
+            max-width: 80mm;
+          }
+        }
+        
+        body {
+          font-family: 'Courier New', monospace;
+          font-size: 12px;
+          line-height: 1.4;
+          width: 80mm;
+          max-width: 80mm;
+          margin: 0 auto;
+          padding: 5mm;
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 10px;
+          border-bottom: 2px solid #000;
+          padding-bottom: 8px;
+        }
+        
+        .restaurant-name {
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 4px;
+        }
+        
+        .address, .phone {
+          font-size: 11px;
+          margin: 2px 0;
+        }
+        
+        .order-info {
+          margin: 10px 0;
+          padding: 8px 0;
+          border-bottom: 1px dashed #000;
+        }
+        
+        .order-info div {
+          display: flex;
+          justify-content: space-between;
+          margin: 3px 0;
+        }
+        
+        .items-section {
+          margin: 10px 0;
+          border-bottom: 1px dashed #000;
+          padding-bottom: 8px;
+        }
+        
+        .items-header {
+          font-weight: bold;
+          margin-bottom: 5px;
+          border-bottom: 1px solid #000;
+          padding-bottom: 3px;
+        }
+        
+        .item {
+          display: flex;
+          justify-content: space-between;
+          margin: 5px 0;
+        }
+        
+        .item-details {
+          flex: 1;
+        }
+        
+        .item-price {
+          text-align: right;
+          min-width: 60px;
+        }
+        
+        .modifier {
+          font-size: 10px;
+          margin-left: 10px;
+          color: #333;
+        }
+        
+        .totals-section {
+          margin: 10px 0;
+        }
+        
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          margin: 4px 0;
+        }
+        
+        .grand-total {
+          font-size: 14px;
+          font-weight: bold;
+          border-top: 2px solid #000;
+          border-bottom: 2px solid #000;
+          padding: 8px 0;
+          margin: 8px 0;
+        }
+        
+        .payment-section {
+          margin: 10px 0;
+          padding: 8px 0;
+          border-bottom: 1px dashed #000;
+        }
+        
+        .footer {
+          text-align: center;
+          margin-top: 15px;
+          font-size: 11px;
+        }
+        
+        .footer-message {
+          margin: 5px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="restaurant-name">${data.restaurantName}</div>
+        ${data.address ? `<div class="address">${data.address}</div>` : ''}
+        ${data.phone ? `<div class="phone">Tel: ${data.phone}</div>` : ''}
+      </div>
+      
+      <div class="order-info">
+        <div>
+          <span>Order #:</span>
+          <span><strong>${data.orderNumber}</strong></span>
+        </div>
+        ${data.tableLabel ? `<div><span>Table:</span><span><strong>${data.tableLabel}</strong></span></div>` : ''}
+        <div>
+          <span>Type:</span>
+          <span>${data.orderType || 'DINE IN'}</span>
+        </div>
+        <div>
+          <span>Date:</span>
+          <span>${data.timestamp.toLocaleDateString('en-GB')}</span>
+        </div>
+        <div>
+          <span>Time:</span>
+          <span>${data.timestamp.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+        ${data.cashier ? `<div><span>Cashier:</span><span>${data.cashier}</span></div>` : ''}
+      </div>
+      
+      <div class="items-section">
+        <div class="items-header">ITEMS</div>
+        ${data.items.map(item => `
+          <div class="item">
+            <div class="item-details">
+              <div><strong>${item.quantity} x ${item.name}</strong></div>
+              ${item.modifiers && item.modifiers.length > 0 ? 
+                item.modifiers.map(mod => `<div class="modifier">+ ${mod}</div>`).join('') 
+                : ''}
+            </div>
+            <div class="item-price">RM ${item.price.toFixed(2)}</div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div class="totals-section">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>RM ${data.subtotal.toFixed(2)}</span>
+        </div>
+        <div class="total-row">
+          <span>Tax (6%):</span>
+          <span>RM ${data.tax.toFixed(2)}</span>
+        </div>
+        <div class="grand-total">
+          <div class="total-row">
+            <span>TOTAL:</span>
+            <span>RM ${data.total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="payment-section">
+        <div class="total-row">
+          <span><strong>Payment Method:</strong></span>
+          <span><strong>${data.paymentMethod.toUpperCase()}</strong></span>
+        </div>
+        ${data.cashReceived ? `
+          <div class="total-row">
+            <span>Cash Received:</span>
+            <span>RM ${data.cashReceived.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        ${data.changeGiven ? `
+          <div class="total-row">
+            <span>Change:</span>
+            <span>RM ${data.changeGiven.toFixed(2)}</span>
+          </div>
+        ` : ''}
+      </div>
+      
+      <div class="footer">
+        <div class="footer-message">================================</div>
+        <div class="footer-message">Thank you for dining with us!</div>
+        <div class="footer-message">Please visit us again</div>
+        <div class="footer-message">================================</div>
+        <div class="footer-message" style="margin-top: 10px;">Powered by ZeniPOS</div>
       </div>
     </body>
     </html>
