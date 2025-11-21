@@ -62,9 +62,9 @@ export function generateTestPageHTML(data: TestPageData): string {
   lines.push('If you can read this clearly,');
   lines.push('your printer is working properly.');
   lines.push('------------------------------', '');
-  lines.push('██████████████████████████████');
-  lines.push('▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒');
-  lines.push('░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░');
+  lines.push('##############################');
+  lines.push('..............................');
+  lines.push('******************************');
   lines.push('------------------------------', '');
   lines.push(`Test Time: ${new Date().toLocaleString()}`, '');
   lines.push('Powered by ZeniPOS');
