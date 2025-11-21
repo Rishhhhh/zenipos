@@ -77,9 +77,9 @@ export function OrderConfirmationModal({
         </div>
 
         {/* Items List - Scrollable */}
-        <ScrollArea className="flex-1 max-h-[300px]">
-          <div className="space-y-2 pr-4">
-            {items.map((item) => (
+      <ScrollArea className="flex-1 max-h-[400px]">
+        <div className="space-y-2 pr-4">
+          {items.map((item) => (
               <Card key={item.id} className="p-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
