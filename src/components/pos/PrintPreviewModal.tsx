@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface PrintPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: 'station' | 'customer' | 'both';
   orderData: {
     orderId: string;
     orderNumber: string;
@@ -27,6 +28,7 @@ interface PrintPreviewModalProps {
 export function PrintPreviewModal({
   open,
   onOpenChange,
+  mode = 'both',
   orderData,
   onSendToPrinter,
 }: PrintPreviewModalProps) {
@@ -192,7 +194,7 @@ export function PrintPreviewModal({
           <div className="flex items-center justify-between mb-4">
             <TabsList>
               <TabsTrigger value="customer">Customer Receipt</TabsTrigger>
-              {stationTickets.map((ticket) => (
+              {mode !== 'customer' && stationTickets.map((ticket) => (
                 <TabsTrigger key={ticket.stationId} value={ticket.stationId}>
                   {ticket.stationName}
                 </TabsTrigger>
@@ -223,7 +225,7 @@ export function PrintPreviewModal({
               )}
             </TabsContent>
 
-            {stationTickets.map((ticket) => (
+            {mode !== 'customer' && stationTickets.map((ticket) => (
               <TabsContent key={ticket.stationId} value={ticket.stationId} className="mt-0 p-6">
                 {showRaw ? (
                   <pre className="text-xs font-mono whitespace-pre-wrap bg-muted p-4 rounded">

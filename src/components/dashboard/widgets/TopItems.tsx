@@ -85,8 +85,8 @@ export default memo(function TopItems() {
       "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold">Top Items</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-base font-semibold">Top Items</h3>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2">

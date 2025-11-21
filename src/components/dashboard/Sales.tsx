@@ -133,15 +133,15 @@ export default memo(function Sales() {
       "glass-card flex flex-col w-full h-full overflow-hidden",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold">Today's Sales</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-base font-semibold">Today's Sales</h3>
         <Button
           onClick={handleRefetch}
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0"
+          className="h-7 w-7 p-0"
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-3.5 w-3.5" />
         </Button>
       </div>
 

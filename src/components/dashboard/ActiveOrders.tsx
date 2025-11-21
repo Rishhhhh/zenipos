@@ -177,8 +177,8 @@ export default memo(function ActiveOrders() {
 
   return (
     <Card className={cn("glass-card w-full h-full flex flex-col", config.compactMode ? "p-3" : "p-4")}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold">Active Orders</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-base font-semibold">Active Orders</h3>
         {filteredOrders && filteredOrders.length > 0 && (
           <Badge variant="default" className="bg-warning/20 text-warning">
             {filteredOrders.length}

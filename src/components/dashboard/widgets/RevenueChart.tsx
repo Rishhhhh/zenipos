@@ -64,9 +64,9 @@ export default memo(function RevenueChart() {
       "glass-card flex flex-col w-full h-full",
       config.compactMode ? "p-3" : "p-4"
     )}>
-      <div className="flex items-center justify-between gap-2 flex-wrap mb-3 pr-12">
+      <div className="flex items-center justify-between gap-2 flex-wrap mb-2 pr-12">
         <div className="flex items-center gap-3 flex-wrap">
-          <h3 className="text-lg font-semibold">Revenue Trend</h3>
+          <h3 className="text-base font-semibold">Revenue Trend</h3>
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10">
             <Clock className="h-3 w-3 text-primary" />
             <span className={cn(
