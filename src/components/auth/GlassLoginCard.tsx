@@ -18,6 +18,8 @@ export function GlassLoginCard({ children, className }: GlassLoginCardProps) {
         'p-4 sm:p-6 md:p-8 lg:p-12',
         // Responsive width: prevent overflow on small screens
         'w-full max-w-[95vw] sm:max-w-md',
+        // Scroll constraints for long forms
+        'max-h-[90vh] overflow-y-auto',
         'animate-[login-card-enter_0.6s_ease-out]',
         className
       )}

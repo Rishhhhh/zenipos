@@ -6,15 +6,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import type { RegistrationData } from '@/hooks/useRegistrationWizard';
 
 interface Step1Props {
   data: Partial<RegistrationData>;
   onUpdate: (updates: Partial<RegistrationData>) => void;
   onNext: () => void;
+  serverError?: string | null;
 }
 
-export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
+export function Step1AccountCreation({ data, onUpdate, onNext, serverError }: Step1Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isValidating, setIsValidating] = useState(false);
@@ -245,21 +247,12 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
         </div>
       )}
       
-      {/* Debug Mode Toggle */}
-      <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
-        <Label htmlFor="debugMode" className="text-xs text-muted-foreground cursor-pointer">
-          Debug Mode (Show Validation Status)
-        </Label>
-        <Checkbox
-          id="debugMode"
-          checked={debugMode}
-          onCheckedChange={(checked) => setDebugMode(checked as boolean)}
-        />
-      </div>
-
-      {/* Debug Status Panel */}
-      {debugMode && (
-        <div className="p-3 bg-muted/50 rounded-md space-y-2 text-xs">
+      {/* Debug Mode Toggle - Collapsed by default */}
+      <details className="bg-muted/30 rounded-lg overflow-hidden">
+        <summary className="flex items-center justify-between p-2 cursor-pointer text-xs text-muted-foreground hover:bg-muted/50 transition-colors">
+          <span>🐛 Debug Mode (Show Validation Status)</span>
+        </summary>
+        <div className="p-3 bg-muted/50 space-y-2 text-xs">
           <h4 className="font-semibold text-sm">Validation Status:</h4>
           <div className="space-y-1">
             {['restaurantName', 'ownerName', 'email', 'phone', 'password', 'confirmPassword', 'terms'].map(field => (
@@ -287,7 +280,7 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
             )}
           </div>
         </div>
-      )}
+      </details>
       <div>
         <Label htmlFor="restaurantName">Restaurant Name *</Label>
         <div className="relative">
@@ -327,7 +320,10 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
             value={data.email || ''}
             onChange={(e) => onUpdate({ email: e.target.value })}
             placeholder="owner@restaurant.com"
-            className="bg-background/50"
+            className={cn(
+              "bg-background/50",
+              (errors.email || serverError?.toLowerCase().includes('email')) && "border-danger focus-visible:ring-danger"
+            )}
           />
           {emailCheckStatus === 'checking' && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-primary" />}
           {emailCheckStatus === 'available' && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-success" />}
@@ -335,6 +331,9 @@ export function Step1AccountCreation({ data, onUpdate, onNext }: Step1Props) {
           {emailCheckStatus === 'error' && <AlertCircle className="absolute right-3 top-3 h-4 w-4 text-warning" />}
         </div>
         {errors.email && <p className="text-sm text-danger mt-1">{errors.email}</p>}
+        {serverError?.toLowerCase().includes('email') && (
+          <p className="text-sm text-danger mt-1 font-medium">{serverError}</p>
+        )}
       </div>
 
       <div>

@@ -94,7 +94,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Missing required fields: email, password, restaurantName, ownerName' 
+          error: 'Missing required fields: email, password, restaurantName, ownerName',
+          errorCode: 'MISSING_REQUIRED_FIELDS'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
@@ -104,7 +105,11 @@ serve(async (req) => {
     // Validate email format
     if (!isValidEmail(email)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Invalid email format' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid email format',
+          errorCode: 'INVALID_EMAIL_FORMAT'
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -112,7 +117,11 @@ serve(async (req) => {
     // Validate password strength
     if (!isValidPassword(password)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Password must be at least 8 characters long' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Password must be at least 8 characters long',
+          errorCode: 'WEAK_PASSWORD'
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -128,7 +137,11 @@ serve(async (req) => {
     if (existingOrg) {
       console.log('[Organization Signup] ❌ Email already registered');
       return new Response(
-        JSON.stringify({ success: false, error: 'Email already registered' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Email already registered',
+          errorCode: 'EMAIL_ALREADY_REGISTERED'
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 }
       );
     }
@@ -165,7 +178,8 @@ serve(async (req) => {
           success: false, 
           error: isDuplicateEmail 
             ? 'Email already registered' 
-            : `Failed to create user: ${authError?.message}` 
+            : `Failed to create user: ${authError?.message}`,
+          errorCode: isDuplicateEmail ? 'EMAIL_ALREADY_REGISTERED' : 'AUTH_USER_CREATION_FAILED'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
@@ -316,7 +330,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Signup failed: ${rollbackError.message}` 
+          error: `Signup failed: ${rollbackError.message}`,
+          errorCode: 'SIGNUP_ROLLBACK_ERROR'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
@@ -330,6 +345,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: false, 
         error: error.message || 'Internal server error',
+        errorCode: 'INTERNAL_SERVER_ERROR',
         details: error.toString()
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
