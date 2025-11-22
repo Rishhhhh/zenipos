@@ -258,6 +258,7 @@ serve(async (req) => {
           role: 'owner',
           pin: hashedPin,
           branch_id: branchId,
+          organization_id: organizationId,
           auth_user_id: userId,
           active: true
         })
