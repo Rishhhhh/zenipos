@@ -247,6 +247,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // Clear any registration artifacts on successful login
+          localStorage.removeItem('registration_progress');
+          localStorage.removeItem('tempRegistrationPin');
+          
           // Defer async calls to prevent deadlock
           setTimeout(() => {
             restoreSessions();

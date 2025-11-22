@@ -385,6 +385,17 @@ export default function Register() {
     );
   }
 
+  const handleNavigateToDashboard = () => {
+    // Clear registration progress
+    clearProgress();
+    localStorage.removeItem('tempRegistrationPin');
+    
+    // Navigate to auth/login page
+    navigate('/auth', { replace: true });
+    
+    toast.success('Registration complete! Please log in with your credentials.');
+  };
+
   const stepTitles = [
     'Create Your Account',
     'Restaurant Details',
@@ -496,12 +507,12 @@ export default function Register() {
             />
           )}
 
-          {currentStep === 5 && (
-            <Step5Completion
-              data={data}
-              onNavigateToDashboard={() => navigate('/auth')}
-            />
-          )}
+            {currentStep === 5 && (
+              <Step5Completion
+                data={data}
+                onNavigateToDashboard={handleNavigateToDashboard}
+              />
+            )}
         </GlassLoginCard>
       </div>
     </div>
