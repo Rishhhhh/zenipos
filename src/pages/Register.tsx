@@ -12,10 +12,12 @@ import { useRegistrationWizard } from '@/hooks/useRegistrationWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ErrorBanner } from '@/components/ui/error-banner';
 
 export default function Register() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
   const { currentStep, data, updateData, nextStep, prevStep, clearProgress } = useRegistrationWizard();
   const navigate = useNavigate();
 
@@ -26,6 +28,11 @@ export default function Register() {
       setIsAdminAuthenticated(true);
     }
   }, []);
+
+  // Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
 
   // Helper: Retry with exponential backoff
   const retryWithBackoff = async (fn: () => Promise<any>, maxRetries = 3) => {
@@ -62,33 +69,55 @@ export default function Register() {
   };
 
   // Helper: Invoke edge function with enhanced logging and error handling
+  // Using fetch directly to access response body on errors
   const invokeEdgeFunction = async (functionName: string, options: any) => {
     console.group(`[Edge Function] ${functionName}`);
     console.log('Request timestamp:', new Date().toISOString());
     console.log('Request payload:', JSON.stringify(options.body, null, 2));
-    console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-    console.log('Has Anon Key:', !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+    
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    
+    console.log('Supabase URL:', SUPABASE_URL);
+    console.log('Has Anon Key:', !!SUPABASE_ANON_KEY);
     
     try {
       const startTime = performance.now();
       
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke(functionName, options),
+      const response = await withTimeout(
+        fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+          },
+          body: JSON.stringify(options.body)
+        }),
         30000
       );
       
       const duration = Math.round(performance.now() - startTime);
       console.log(`Request completed in ${duration}ms`);
-      console.log('Response data:', data);
-      console.log('Response error:', error);
+      console.log('Response status:', response.status);
       
-      if (error) {
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+      
+      if (!response.ok) {
+        const errorMessage = responseData.error || 'Edge Function returned a non-2xx status code';
+        const error = { 
+          status: response.status,
+          message: errorMessage,
+          data: responseData
+        };
         console.error(`[Edge Function] ${functionName} error:`, error);
+        console.groupEnd();
         throw error;
       }
       
       console.groupEnd();
-      return { data, error };
+      return { data: responseData, error: null };
     } catch (error: any) {
       console.error(`[Edge Function] ${functionName} exception:`, error);
       console.error('Error stack:', error.stack);
@@ -99,6 +128,7 @@ export default function Register() {
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
+    setRegistrationError(null); // Clear previous errors
     console.log('═══════════════════════════════════════════════════════');
     console.log('[Registration] Starting organization signup process');
     console.log('[Registration] Timestamp:', new Date().toISOString());
@@ -151,42 +181,50 @@ export default function Register() {
         console.error('[Registration] ❌ Signup failed:', signupError);
         console.error('[Registration] Response data:', signupData);
         
-        // Extract error message from BOTH error and data
-        const errorMessage = signupData?.error || signupError.message || 'Failed to create organization';
-        const statusCode = signupError.status || signupError.message?.match(/\d{3}/)?.[0];
+        // Extract error message and status from new error structure
+        const errorMessage = signupError.message || signupData?.error || 'Failed to create organization';
+        const statusCode = signupError.status;
         
         console.log('[Registration] Error message:', errorMessage);
         console.log('[Registration] Status code:', statusCode);
         
+        let userFriendlyError = '';
+        
         // Check for email already registered (409 or 422)
         if (statusCode === 409 || statusCode === 422 || 
             errorMessage.toLowerCase().includes('already registered') ||
-            errorMessage.toLowerCase().includes('already exists') ||
-            errorMessage.toLowerCase().includes('email address has already been registered')) {
-          toast.error('This email is already registered. Please use a different email or try logging in.', {
-            duration: 5000
-          });
+            errorMessage.toLowerCase().includes('already exists')) {
+          userFriendlyError = 'This email is already registered. Please use a different email or try logging in.';
+          setRegistrationError(userFriendlyError);
+          toast.error(userFriendlyError, { duration: 6000 });
           throw new Error('Email already registered');
         } 
         // Invalid data
         else if (statusCode === 400) {
-          toast.error('Invalid registration data. Please check all fields and try again.', {
-            duration: 5000
-          });
+          userFriendlyError = 'Invalid registration data. Please check all fields and try again.';
+          setRegistrationError(userFriendlyError);
+          toast.error(userFriendlyError, { duration: 5000 });
           throw new Error('Invalid registration data');
         } 
         // Timeout
-        else if (errorMessage.includes('timeout')) {
-          toast.error('Registration is taking longer than expected. Please check your connection and try again.', {
-            duration: 5000
-          });
+        else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          userFriendlyError = 'Registration is taking longer than expected. Please check your connection and try again.';
+          setRegistrationError(userFriendlyError);
+          toast.error(userFriendlyError, { duration: 5000 });
           throw new Error('Request timeout');
         } 
+        // Server error
+        else if (statusCode === 500) {
+          userFriendlyError = 'Server error occurred. Please try again in a moment or contact support if the issue persists.';
+          setRegistrationError(userFriendlyError);
+          toast.error(userFriendlyError, { duration: 6000 });
+          throw new Error('Server error');
+        }
         // Generic error with actual message from server
         else {
-          toast.error(errorMessage || 'Unable to create organization. Please try again or contact support.', {
-            duration: 5000
-          });
+          userFriendlyError = errorMessage || 'Unable to create organization. Please try again or contact support.';
+          setRegistrationError(userFriendlyError);
+          toast.error(userFriendlyError, { duration: 5000 });
           throw new Error(errorMessage);
         }
       }
@@ -408,11 +446,26 @@ export default function Register() {
           </div>
 
           {currentStep === 1 && (
-            <Step1AccountCreation
-              data={data}
-              onUpdate={updateData}
-              onNext={nextStep}
-            />
+            <>
+              <ErrorBanner 
+                error={registrationError}
+                onDismiss={() => setRegistrationError(null)}
+                actionLink={
+                  registrationError?.toLowerCase().includes('already registered')
+                    ? {
+                        text: 'Go to Login',
+                        onClick: () => navigate('/login')
+                      }
+                    : undefined
+                }
+              />
+              <Step1AccountCreation
+                data={data}
+                onUpdate={updateData}
+                onNext={nextStep}
+                serverError={registrationError}
+              />
+            </>
           )}
 
           {currentStep === 2 && (
