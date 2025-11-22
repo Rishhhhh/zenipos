@@ -84,7 +84,7 @@ serve(async (req) => {
     // Verify organization ownership
     const { data: orgData, error: orgError } = await supabaseAdmin
       .from('organizations')
-      .select('id, owner_id, onboarding_complete')
+      .select('id, owner_id, onboarding_completed')
       .eq('id', organizationId)
       .single();
 
@@ -101,7 +101,7 @@ serve(async (req) => {
     // 2. If org is not yet onboarded (first-time setup) -> allow with any request (trusted during registration)
     // 3. Otherwise -> reject
     const ownsOrganization = userId && orgData.owner_id === userId;
-    const isOnboarding = !orgData.onboarding_complete;
+    const isOnboarding = !orgData.onboarding_completed;
 
     if (!ownsOrganization && !isOnboarding) {
       console.error('[Setup Wizard] Unauthorized access attempt');
@@ -249,6 +249,7 @@ serve(async (req) => {
               role,
               pin: hashedPin,
               branch_id: branchId,
+              organization_id: organizationId,
               active: true
             })
             .select('id, name, email')
