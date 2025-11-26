@@ -405,7 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('shifts')
           .update({
             clock_out_at: new Date().toISOString(),
-            status: 'completed',
+            status: 'closed',
           })
           .eq('id', shiftId);
       }
@@ -513,31 +513,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Create shift record
-      const { data: shift, error: shiftError } = await supabase
-        .from('shifts')
-        .insert({
-          employee_id: employeeData.id,
-          branch_id: employeeData.branch_id,
-          organization_id: organization.id, // Use organization from context
-          user_id: data.user?.id || employeeData.id,
-          clock_in_at: new Date().toISOString(),
-          status: 'active',
-        })
-        .select()
-        .single();
-
-      if (shiftError) {
-        console.error('Failed to create shift:', shiftError);
-      }
-
-      // Create employee session with verified role
+      // NOTE: Shift is now created explicitly from the POS Clock In flow
+      // We only create an employee session here.
       const empSession: EmployeeSession = {
         organizationId: organization.id,
         employeeId: employeeData.id,
         employeeName: employeeData.name,
         role: effectiveRole, // ✅ Use verified role from user_roles
-        shiftId: shift?.id,
+        shiftId: null,
         loginTime: Date.now(),
         expiresAt: Date.now() + EMPLOYEE_SESSION_DURATION,
         rememberMe,
@@ -546,7 +529,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(EMPLOYEE_SESSION_KEY, JSON.stringify(empSession));
 
       setEmployee(employeeData);
-      setShiftId(shift?.id || null);
+      setShiftId(null);
 
       toast.success(`Welcome back, ${employeeData.name}!`);
     } catch (error: any) {
@@ -564,7 +547,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('shifts')
           .update({
             clock_out_at: new Date().toISOString(),
-            status: 'completed',
+            status: 'closed',
           })
           .eq('id', shiftId);
       }
