@@ -8,6 +8,7 @@ import { TableHistoryPanel } from '@/components/tables/TableHistoryPanel';
 import { TableConfigModal } from '@/components/tables/TableConfigModal';
 import { ReservationModal } from '@/components/tables/ReservationModal';
 import { TableLayoutEditor } from '@/components/tables/TableLayoutEditor';
+import { AwaitingPaymentModal } from '@/components/tables/AwaitingPaymentModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, TrendingUp, DollarSign, Clock, Users, NfcIcon, Grid3x3, Calendar } from 'lucide-react';
@@ -31,6 +32,7 @@ export default function TableManagement() {
   const [configTable, setConfigTable] = useState<any>(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [layoutMode, setLayoutMode] = useState(false);
+  const [showAwaitingPayment, setShowAwaitingPayment] = useState(false);
 
   // Query tables with orders
   const { data: tables, isLoading } = useQuery({
@@ -194,7 +196,12 @@ export default function TableManagement() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className={`cursor-pointer hover:border-warning transition-colors ${
+            (metrics?.awaitingPayment || 0) > 0 ? 'border-warning/50' : ''
+          }`}
+          onClick={() => setShowAwaitingPayment(true)}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -337,6 +344,11 @@ export default function TableManagement() {
         open={showReservationModal}
         onOpenChange={setShowReservationModal}
         tables={tables || []}
+      />
+
+      <AwaitingPaymentModal
+        open={showAwaitingPayment}
+        onOpenChange={setShowAwaitingPayment}
       />
     </div>
   );
