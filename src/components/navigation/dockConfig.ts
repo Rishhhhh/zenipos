@@ -1,7 +1,7 @@
 import { Monitor, ChefHat, Flame, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen, LayoutGrid } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type AppRole = 'staff' | 'manager' | 'owner';
+export type AppRole = 'staff' | 'manager' | 'owner' | 'kitchen';
 
 export interface DockApp {
   id: string;
@@ -44,7 +44,7 @@ export const DOCK_APPS: DockApp[] = [
     icon: ChefHat,
     route: '/kds',
     shortcut: '⌘3',
-    roles: ['staff', 'manager', 'owner'],
+    roles: ['staff', 'manager', 'owner', 'kitchen'],
   },
   {
     id: 'inventory',

@@ -6,7 +6,7 @@ interface Employee {
   id: string;
   name: string;
   email?: string;
-  role: 'owner' | 'manager' | 'staff';
+  role: 'owner' | 'manager' | 'staff' | 'kitchen';
   branch_id?: string;
 }
 
@@ -44,7 +44,7 @@ interface EmployeeSession {
   organizationId: string;
   employeeId: string;
   employeeName: string;
-  role: 'owner' | 'manager' | 'staff';
+  role: 'owner' | 'manager' | 'staff' | 'kitchen';
   shiftId?: string;
   loginTime: number;
   expiresAt: number;
@@ -61,7 +61,7 @@ interface AuthContextType {
   
   // Employee-level
   employee: Employee | null;
-  role: 'owner' | 'manager' | 'staff' | null;
+  role: 'owner' | 'manager' | 'staff' | 'kitchen' | null;
   isEmployeeAuthenticated: boolean;
   employeeLogin: (pin: string, rememberMe: boolean) => Promise<void>;
   employeeLogout: () => Promise<void>;
