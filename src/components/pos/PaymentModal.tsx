@@ -374,72 +374,77 @@ export function PaymentModal({
           )}
         </TabsContent>
 
-        <TabsContent value="cash" className="space-y-6 py-4">
-          {/* Total Due - Large Display */}
-          <div className="bg-muted/50 rounded-xl p-4 border-2 border-border">
-            <p className="text-sm text-muted-foreground mb-1">Total Due</p>
-            <p className="text-4xl font-bold text-foreground">RM {total.toFixed(2)}</p>
-          </div>
+        <TabsContent value="cash" className="py-4">
+          {/* 2-Column Layout: Info Left, Numpad Right */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* LEFT COLUMN: Display Info + Quick Amounts */}
+            <div className="space-y-4">
+              {/* Total Due - Large Display */}
+              <div className="bg-muted/50 rounded-xl p-4 border-2 border-border">
+                <p className="text-sm text-muted-foreground mb-1">Total Due</p>
+                <p className="text-4xl font-bold text-foreground">RM {total.toFixed(2)}</p>
+              </div>
 
-          {/* Cash Received & Change Display */}
-          <div className="space-y-3">
-            <div className="bg-background rounded-lg p-4 border border-border">
-              <p className="text-sm text-muted-foreground mb-1">Cash Received</p>
-              <p className="text-3xl font-bold text-foreground">
-                {cashReceived ? `RM ${parseFloat(cashReceived).toFixed(2)}` : 'RM 0.00'}
-              </p>
-            </div>
-
-            {cashReceived && parseFloat(cashReceived) >= total && (
-              <div className="bg-success/10 rounded-lg p-4 border-2 border-success/20">
-                <p className="text-sm text-muted-foreground mb-1">Change Due</p>
-                <p className="text-3xl font-bold text-success">
-                  RM {change.toFixed(2)}
+              {/* Cash Received Display */}
+              <div className="bg-background rounded-lg p-4 border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Cash Received</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {cashReceived ? `RM ${parseFloat(cashReceived).toFixed(2)}` : 'RM 0.00'}
                 </p>
               </div>
-            )}
-          </div>
 
-          {/* Quick Amount Buttons */}
-          <div className="grid grid-cols-4 gap-2">
-            {quickAmounts.map((amount) => (
-              <Button
-                key={amount.label}
-                variant="outline"
-                className="h-12 text-base font-semibold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
-                onClick={() => setCashReceived(amount.value.toFixed(2))}
-              >
-                {amount.label}
-              </Button>
-            ))}
-          </div>
+              {/* Change Due Display */}
+              {cashReceived && parseFloat(cashReceived) >= total && (
+                <div className="bg-success/10 rounded-lg p-4 border-2 border-success/20">
+                  <p className="text-sm text-muted-foreground mb-1">Change Due</p>
+                  <p className="text-3xl font-bold text-success">
+                    RM {change.toFixed(2)}
+                  </p>
+                </div>
+              )}
 
-          {/* Touch-Optimized Numpad */}
-          <div className="bg-muted/30 rounded-xl p-4 space-y-2">
-            {numpadKeys.map((row, rowIndex) => (
-              <div key={rowIndex} className="grid grid-cols-3 gap-2">
-                {row.map((key) => (
+              {/* Quick Amount Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                {quickAmounts.map((amount) => (
                   <Button
-                    key={key}
-                    variant="secondary"
-                    className={cn(
-                      "h-16 text-2xl font-bold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95",
-                      key === 'backspace' && "text-lg"
-                    )}
-                    onClick={() => handleNumpadPress(key)}
+                    key={amount.label}
+                    variant="outline"
+                    className="h-12 text-base font-semibold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
+                    onClick={() => setCashReceived(amount.value.toFixed(2))}
                   >
-                    {key === 'backspace' ? <Delete className="h-6 w-6" /> : key.toUpperCase()}
+                    {amount.label}
                   </Button>
                 ))}
               </div>
-            ))}
+            </div>
+
+            {/* RIGHT COLUMN: Numpad */}
+            <div className="bg-muted/30 rounded-xl p-4 space-y-2">
+              {numpadKeys.map((row, rowIndex) => (
+                <div key={rowIndex} className="grid grid-cols-3 gap-2">
+                  {row.map((key) => (
+                    <Button
+                      key={key}
+                      variant="secondary"
+                      className={cn(
+                        "h-16 text-2xl font-bold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95",
+                        key === 'backspace' && "text-lg"
+                      )}
+                      onClick={() => handleNumpadPress(key)}
+                    >
+                      {key === 'backspace' ? <Delete className="h-6 w-6" /> : key.toUpperCase()}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Complete Payment Button */}
+          {/* Complete Payment Button - Full Width Below */}
           <Button
             onClick={handleCashPayment}
             disabled={isProcessing || !cashReceived || parseFloat(cashReceived) < total}
-            className="w-full h-16 text-xl font-bold"
+            className="w-full h-16 text-xl font-bold mt-6"
             size="lg"
           >
             {isProcessing ? (
