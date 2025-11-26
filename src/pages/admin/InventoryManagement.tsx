@@ -127,8 +127,8 @@ export default function InventoryManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8 pb-28 overflow-y-auto">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen bg-background overflow-y-auto">
+      <div className="p-8 pb-32 max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Link to="/admin">
             <Button variant="ghost" size="icon">
