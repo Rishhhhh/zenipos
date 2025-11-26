@@ -189,7 +189,7 @@ export function PurchaseOrderModal({ open, onOpenChange, purchaseOrder, onSucces
           inventory_item_id: item.inventory_item_id,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
-          total_cost: item.quantity * item.unit_cost,
+          // total_cost is auto-calculated by database as GENERATED ALWAYS
           notes: item.notes,
         }));
 
@@ -221,14 +221,14 @@ export function PurchaseOrderModal({ open, onOpenChange, purchaseOrder, onSucces
         if (insertError) throw insertError;
 
         // Insert line items
-        const itemsToInsert = validLineItems.map(item => ({
-          purchase_order_id: newPO.id,
-          inventory_item_id: item.inventory_item_id,
-          quantity: item.quantity,
-          unit_cost: item.unit_cost,
-          total_cost: item.quantity * item.unit_cost,
-          notes: item.notes,
-        }));
+      const itemsToInsert = validLineItems.map(item => ({
+        purchase_order_id: newPO.id,
+        inventory_item_id: item.inventory_item_id,
+        quantity: item.quantity,
+        unit_cost: item.unit_cost,
+        // total_cost is auto-calculated by database as GENERATED ALWAYS
+        notes: item.notes,
+      }));
 
         // @ts-ignore - Types will update after migration
         const { error: itemsError } = await supabase
@@ -374,7 +374,7 @@ export function PurchaseOrderModal({ open, onOpenChange, purchaseOrder, onSucces
                   <div className="col-span-2">
                     <Label className="text-xs">Total</Label>
                     <Input
-                      value={`$${(item.quantity * item.unit_cost).toFixed(2)}`}
+                      value={`RM ${(item.quantity * item.unit_cost).toFixed(2)}`}
                       disabled
                     />
                   </div>
@@ -399,7 +399,7 @@ export function PurchaseOrderModal({ open, onOpenChange, purchaseOrder, onSucces
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total Amount</p>
-            <p className="text-3xl font-bold">${calculateTotal().toFixed(2)}</p>
+            <p className="text-3xl font-bold">RM {calculateTotal().toFixed(2)}</p>
           </div>
 
           <div className="flex gap-2">
