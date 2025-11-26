@@ -39,15 +39,20 @@ export default function GeneralLedger() {
             employees(name)
           )
         `)
-        .eq('order.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .eq("status", "completed")
-        .not("order.paid_at", "is", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(p => ({
+      
+      // Client-side filter for branch and paid_at (PostgREST foreign table filtering is unreliable)
+      const filtered = (data || []).filter(p => 
+        p.order?.branch_id === currentBranch.id && 
+        p.order?.paid_at !== null
+      );
+      
+      return filtered.map(p => ({
         ...p,
         type: 'payment',
         transaction_type: p.method,
@@ -71,13 +76,16 @@ export default function GeneralLedger() {
           order:orders!inner(id, branch_id),
           employee:employees(name)
         `)
-        .eq('order.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(r => ({
+      
+      // Client-side filter for branch
+      const filtered = (data || []).filter(r => r.order?.branch_id === currentBranch.id);
+      
+      return filtered.map(r => ({
         ...r,
         type: 'refund',
         transaction_type: 'refund',
@@ -101,13 +109,16 @@ export default function GeneralLedger() {
           customer:customers!inner(name, phone, branch_id),
           order:orders(id)
         `)
-        .eq('customer.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(l => ({
+      
+      // Client-side filter for branch
+      const filtered = (data || []).filter(l => l.customer?.branch_id === currentBranch.id);
+      
+      return filtered.map(l => ({
         ...l,
         type: 'loyalty',
         transaction_type: l.transaction_type,
