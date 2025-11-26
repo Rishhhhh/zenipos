@@ -21,26 +21,33 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
 
   const handlePaymentSuccess = async (orderId?: string) => {
     try {
-      console.log('💰 Table Payment Success:', { orderId });
+      console.log('💰 Table Payment Success:', { orderId, table });
       
-      // Update order to completed
-      await supabase
+      // Get ALL orders for this table
+      const orderIds = table?.current_orders?.map((o: any) => o.id) || [order.id];
+      
+      // Update ALL orders to completed
+      const { error: updateError } = await supabase
         .from('orders')
         .update({
           status: 'completed',
           paid_at: new Date().toISOString(),
         })
-        .eq('id', order.id);
+        .in('id', orderIds);
 
-      // Free up the table
-      await supabase
-        .from('tables')
-        .update({
-          status: 'available',
-          current_order_id: null,
-          seated_at: null,
-        })
-        .eq('id', table.id);
+      if (updateError) throw updateError;
+
+      // Free up the table (only if table exists - takeaway orders won't have a table)
+      if (table?.id) {
+        await supabase
+          .from('tables')
+          .update({
+            status: 'available',
+            current_order_id: null,
+            seated_at: null,
+          })
+          .eq('id', table.id);
+      }
 
       // Fetch order data and organization settings for customer receipt
       if (orderId) {
@@ -110,14 +117,19 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
         }
       }
 
+      const orderCount = table?.current_orders?.length || 1;
       toast({
         title: 'Payment Complete',
-        description: `Table ${table.label} is now available`,
+        description: table?.label 
+          ? `Table ${table.label} is now available${orderCount > 1 ? ` (${orderCount} orders paid)` : ''}`
+          : `Order paid successfully${orderCount > 1 ? ` (${orderCount} orders)` : ''}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
       onSuccess();
     } catch (error: any) {
+      console.error('❌ Payment error:', error);
       toast({
         variant: 'destructive',
         title: 'Failed to complete payment',
@@ -126,6 +138,9 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
     }
   };
 
+  // Calculate combined total if multiple orders
+  const combinedTotal = table?.current_orders?.reduce((sum: number, o: any) => sum + (o.total || 0), 0) || order.total;
+
   return (
     <>
       <PaymentModal
@@ -133,7 +148,7 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
         onOpenChange={onOpenChange}
         orderId={order.id}
         orderNumber={order.id.slice(0, 8)}
-        total={order.total}
+        total={combinedTotal}
         onPaymentSuccess={handlePaymentSuccess}
       />
       

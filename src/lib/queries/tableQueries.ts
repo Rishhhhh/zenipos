@@ -12,7 +12,6 @@ export async function getTablesWithOrders() {
   console.log('🔍 [getTablesWithOrders] Step 1 - Tables:', { 
     count: tables?.length, 
     error: tablesError,
-    tables: tables?.map(t => ({ label: t.label, current_order_id: t.current_order_id }))
   });
 
   if (tablesError) {
@@ -24,32 +23,25 @@ export async function getTablesWithOrders() {
     return [];
   }
 
-  // Step 2: Extract current order IDs from tables
-  const currentOrderIds = tables
-    .map(t => t.current_order_id)
-    .filter((id): id is string => id !== null && id !== undefined);
-
-  // If no tables have current orders, return tables with null orders
-  if (currentOrderIds.length === 0) {
-    return tables.map(table => ({
-      ...table,
-      current_order: null
-    }));
-  }
-
-  // Step 3: Fetch orders for these IDs (including all pending payment statuses)
-  console.log('🔍 [getTablesWithOrders] Step 3 - Fetching orders for IDs:', currentOrderIds);
+  // Step 2: Fetch ALL active orders for all tables (not just current_order_id)
+  const tableIds = tables.map(t => t.id);
+  
+  console.log('🔍 [getTablesWithOrders] Step 2 - Fetching all active orders for tables');
   
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select(`
       id,
+      table_id,
       status,
       total,
+      subtotal,
+      tax,
       created_at,
       delivered_at,
       paid_at,
       nfc_card_id,
+      order_type,
       nfc_cards!orders_nfc_card_id_fkey (card_uid),
       order_items (
         id,
@@ -58,13 +50,13 @@ export async function getTablesWithOrders() {
         menu_items (name)
       )
     `)
-    .in('id', currentOrderIds)
-    .in('status', ['kitchen_queue', 'pending', 'preparing', 'delivered']);
+    .in('table_id', tableIds)
+    .in('status', ['kitchen_queue', 'pending', 'preparing', 'delivered', 'dining', 'serving'])
+    .order('created_at', { ascending: true });
 
-  console.log('🔍 [getTablesWithOrders] Step 3 - Orders result:', { 
+  console.log('🔍 [getTablesWithOrders] Step 2 - Orders result:', { 
     count: orders?.length, 
     error: ordersError,
-    orders: orders?.map(o => ({ id: o.id, status: o.status, nfc_card_id: o.nfc_card_id }))
   });
 
   if (ordersError) {
@@ -72,15 +64,26 @@ export async function getTablesWithOrders() {
     throw ordersError;
   }
 
-  // Step 4: Join orders to tables client-side
+  // Step 3: Group orders by table_id
+  const ordersByTable = new Map<string, any[]>();
+  orders?.forEach(order => {
+    if (!order.table_id) return;
+    const existing = ordersByTable.get(order.table_id) || [];
+    ordersByTable.set(order.table_id, [...existing, order]);
+  });
+
+  // Step 4: Attach all orders to each table
   const result = tables.map(table => ({
     ...table,
-    current_order: orders?.find(order => order.id === table.current_order_id) || null
+    current_orders: ordersByTable.get(table.id) || [],
+    // Keep current_order for backwards compatibility (most recent order)
+    current_order: ordersByTable.get(table.id)?.[ordersByTable.get(table.id)!.length - 1] || null
   }));
   
   console.log('✅ [getTablesWithOrders] Final result:', { 
     totalTables: result.length,
-    tablesWithOrders: result.filter(t => t.current_order).length
+    tablesWithOrders: result.filter(t => t.current_orders.length > 0).length,
+    totalActiveOrders: orders?.length || 0
   });
   
   return result;
