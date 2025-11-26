@@ -187,8 +187,9 @@ export default function ReportsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-7xl space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -284,6 +285,7 @@ export default function ReportsDashboard() {
             </Suspense>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
