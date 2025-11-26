@@ -61,7 +61,7 @@ export async function getCompletedPaymentsQuery(
   endDate: Date,
   branchId?: string
 ) {
-  let query = supabase
+  const { data, error } = await supabase
     .from("payments")
     .select(`
       *,
@@ -75,16 +75,18 @@ export async function getCompletedPaymentsQuery(
       )
     `)
     .eq("status", "completed")
-    .not("order.paid_at", "is", null)
     .gte("created_at", startOfDay(startDate).toISOString())
-    .lte("created_at", endOfDay(endDate).toISOString());
-
-  if (branchId) {
-    query.eq("order.branch_id", branchId);
-  }
-
-  const { data, error } = await query.order("created_at", { ascending: false });
+    .lte("created_at", endOfDay(endDate).toISOString())
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  
+  // Client-side filter for branch and paid_at (PostgREST foreign table filtering is unreliable)
+  const filtered = (data || []).filter(p => {
+    const matchesBranch = !branchId || p.order?.branch_id === branchId;
+    const hasPaidAt = p.order?.paid_at !== null;
+    return matchesBranch && hasPaidAt;
+  });
+  
+  return filtered;
 }
