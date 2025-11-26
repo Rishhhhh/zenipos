@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { OpenTillModal } from './OpenTillModal';
 import { useTillSession } from '@/contexts/TillSessionContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBranch } from '@/contexts/BranchContext';
 
 interface EmployeeClockInModalProps {
   open: boolean;
@@ -20,31 +22,32 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openTillSession } = useTillSession();
+  const { organization } = useAuth();
+  const { currentBranch } = useBranch();
   const [pin, setPin] = useState('');
   const [showOpenTill, setShowOpenTill] = useState(false);
   const [clockedInData, setClockedInData] = useState<{ employee: any; shift: any } | null>(null);
 
   const clockIn = useMutation({
     mutationFn: async (enteredPin: string) => {
-      // Validate PIN via edge function
-      const { data: pinData, error: pinError } = await supabase.functions.invoke('validate-manager-pin', {
-        body: { pin: enteredPin },
+      if (!organization?.id) {
+        throw new Error('Organization context not available');
+      }
+
+      // Validate PIN via new edge function with proper parameters
+      const { data: pinData, error: pinError } = await supabase.functions.invoke('validate-employee-clock-in', {
+        body: { 
+          pin: enteredPin,
+          organizationId: organization.id,
+          branchId: currentBranch?.id
+        },
       });
 
       if (pinError || !pinData?.valid) {
-        throw new Error('Invalid PIN');
+        throw new Error(pinData?.error || 'Invalid PIN');
       }
 
       const employee = pinData.employee;
-
-      // Check for active shift
-      const { data: activeShift } = await supabase.rpc('get_active_shift', {
-        employee_id_param: employee.id,
-      });
-
-      if (activeShift) {
-        throw new Error('Employee already has an active shift');
-      }
 
       // Get geolocation if available
       let location = null;
