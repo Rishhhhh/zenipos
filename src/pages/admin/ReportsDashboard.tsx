@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useModalManager } from "@/hooks/useModalManager";
 import { Link } from "react-router-dom";
+import { useBranch } from "@/contexts/BranchContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 // LAZY LOAD: Heavy chart components
 const SalesHeatmap = lazy(() => import("@/components/admin/reports/SalesHeatmap"));
@@ -25,15 +27,19 @@ export default function ReportsDashboard() {
 
   const queryClient = useQueryClient();
   const { openModal } = useModalManager();
+  const { currentBranch } = useBranch();
+  const { organization } = useAuth();
 
   // Fetch KPI data
   const { data: kpiData, isLoading: kpiLoading } = useQuery({
-    queryKey: ['kpi-dashboard', dateRange],
+    queryKey: ['kpi-dashboard', dateRange, currentBranch?.id, organization?.id],
     queryFn: async () => {
       // Fetch sales by hour for sparkline
       const { data: salesByHour } = await supabase.rpc('get_sales_by_hour' as any, {
         start_date: dateRange.from.toISOString(),
         end_date: dateRange.to.toISOString(),
+        _organization_id: organization?.id || null,
+        _branch_id: currentBranch?.id || null,
       }) as any;
 
       // Fetch COGS data
@@ -46,6 +52,8 @@ export default function ReportsDashboard() {
       const { data: employeeData } = await supabase.rpc('get_sales_by_employee' as any, {
         start_date: dateRange.from.toISOString(),
         end_date: dateRange.to.toISOString(),
+        _organization_id: organization?.id || null,
+        _branch_id: currentBranch?.id || null,
       }) as any;
 
       // Count voids from audit log
@@ -87,16 +95,20 @@ export default function ReportsDashboard() {
 
   // Fetch heatmap data
   const { data: heatmapData } = useQuery({
-    queryKey: ['sales-heatmap', dateRange],
+    queryKey: ['sales-heatmap', dateRange, currentBranch?.id, organization?.id],
     queryFn: async () => {
       const { data: byHour } = await supabase.rpc('get_sales_by_hour' as any, {
         start_date: dateRange.from.toISOString(),
         end_date: dateRange.to.toISOString(),
+        _organization_id: organization?.id || null,
+        _branch_id: currentBranch?.id || null,
       }) as any;
 
       const { data: byDay } = await supabase.rpc('get_sales_by_day_of_week' as any, {
         start_date: dateRange.from.toISOString(),
         end_date: dateRange.to.toISOString(),
+        _organization_id: organization?.id || null,
+        _branch_id: currentBranch?.id || null,
       }) as any;
 
       // Combine data into 2D array
@@ -133,11 +145,13 @@ export default function ReportsDashboard() {
 
   // Fetch category sales
   const { data: categorySales } = useQuery({
-    queryKey: ['category-sales', dateRange],
+    queryKey: ['category-sales', dateRange, currentBranch?.id, organization?.id],
     queryFn: async () => {
       const { data } = await supabase.rpc('get_sales_by_category' as any, {
         start_date: dateRange.from.toISOString(),
         end_date: dateRange.to.toISOString(),
+        _organization_id: organization?.id || null,
+        _branch_id: currentBranch?.id || null,
       }) as any;
       return data || [];
     },

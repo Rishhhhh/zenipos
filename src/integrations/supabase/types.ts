@@ -4743,100 +4743,59 @@ export type Database = {
               unit: string
             }[]
           }
-      get_sales_by_category:
-        | {
-            Args: { end_date: string; start_date: string }
-            Returns: {
-              category_id: string
-              category_name: string
-              item_count: number
-              percentage_of_total: number
-              total_sales: number
-            }[]
-          }
-        | {
-            Args: {
-              _branch_id?: string
-              _organization_id?: string
-              end_date: string
-              start_date: string
-            }
-            Returns: {
-              category_name: string
-              item_count: number
-              total_sales: number
-            }[]
-          }
-      get_sales_by_day_of_week:
-        | {
-            Args: {
-              _branch_id?: string
-              _organization_id?: string
-              end_date: string
-              start_date: string
-            }
-            Returns: {
-              day_name: string
-              day_of_week: number
-              order_count: number
-              total_sales: number
-            }[]
-          }
-        | {
-            Args: { end_date: string; start_date: string }
-            Returns: {
-              avg_ticket: number
-              day_of_week: number
-              order_count: number
-              total_sales: number
-            }[]
-          }
-      get_sales_by_employee:
-        | {
-            Args: {
-              _branch_id?: string
-              _organization_id?: string
-              end_date: string
-              start_date: string
-            }
-            Returns: {
-              employee_name: string
-              order_count: number
-              total_sales: number
-            }[]
-          }
-        | {
-            Args: { end_date: string; start_date: string }
-            Returns: {
-              employee_id: string
-              employee_name: string
-              hours_worked: number
-              order_count: number
-              total_sales: number
-            }[]
-          }
-      get_sales_by_hour:
-        | {
-            Args: {
-              _branch_id?: string
-              _organization_id?: string
-              end_date: string
-              start_date: string
-            }
-            Returns: {
-              hour: number
-              order_count: number
-              total_sales: number
-            }[]
-          }
-        | {
-            Args: { end_date: string; start_date: string }
-            Returns: {
-              hour: number
-              order_count: number
-              total_sales: number
-            }[]
-          }
+      get_sales_by_category: {
+        Args: {
+          _branch_id?: string
+          _organization_id?: string
+          end_date: string
+          start_date: string
+        }
+        Returns: {
+          category_name: string
+          item_count: number
+          total_sales: number
+        }[]
+      }
+      get_sales_by_day_of_week: {
+        Args: {
+          _branch_id?: string
+          _organization_id?: string
+          end_date: string
+          start_date: string
+        }
+        Returns: {
+          day_name: string
+          day_of_week: number
+          order_count: number
+          total_sales: number
+        }[]
+      }
+      get_sales_by_employee: {
+        Args: {
+          _branch_id?: string
+          _organization_id?: string
+          end_date: string
+          start_date: string
+        }
+        Returns: {
+          employee_name: string
+          order_count: number
+          total_sales: number
+        }[]
+      }
+      get_sales_by_hour: {
+        Args: {
+          _branch_id?: string
+          _organization_id?: string
+          end_date: string
+          start_date: string
+        }
+        Returns: {
+          hour: number
+          order_count: number
+          total_sales: number
+        }[]
+      }
       get_shift_summary: {
         Args: { shift_id_param: string }
         Returns: {

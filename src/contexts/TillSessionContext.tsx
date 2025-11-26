@@ -14,7 +14,6 @@ interface TillSession {
   status: 'open' | 'closed' | 'reconciled';
   opened_at: string;
   closed_at?: string;
-  metadata?: any;
 }
 
 interface TillSessionContextType {
@@ -87,7 +86,6 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
           opening_float: data.openingFloat,
           expected_cash: data.openingFloat,
           status: 'open',
-          metadata: data.denominations ? { opening_denominations: data.denominations } : null,
         })
         .select()
         .single();
@@ -123,13 +121,6 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
 
       if (data.varianceReason) {
         updateData.variance_reason = data.varianceReason;
-      }
-
-      if (data.denominations) {
-        updateData.metadata = {
-          ...activeTillSession.metadata,
-          closing_denominations: data.denominations,
-        };
       }
 
       const { error } = await supabase
