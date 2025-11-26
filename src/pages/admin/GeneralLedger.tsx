@@ -18,13 +18,19 @@ export default function GeneralLedger() {
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [filterType, setFilterType] = useState<string>("all");
 
-  const { data: payments, isLoading: paymentsLoading } = useQuery({
+  console.log('[GeneralLedger] Render state:', {
+    currentBranch: currentBranch ? { id: currentBranch.id, name: currentBranch.name } : null,
+    dateRange: { startDate, endDate }
+  });
+
+  const { data: payments, isLoading: paymentsLoading, error: paymentsError } = useQuery({
     queryKey: ["ledger-payments", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
-      if (!currentBranch?.id) {
-        console.warn('[GeneralLedger] No branch selected, returning empty payments');
-        return [];
-      }
+      console.log('[GeneralLedger] 💰 Fetching payments...', {
+        branchId: currentBranch?.id,
+        startDate,
+        endDate
+      });
 
       const { data, error } = await supabase
         .from("payments")
@@ -35,8 +41,7 @@ export default function GeneralLedger() {
             created_by, 
             branch_id,
             status,
-            paid_at,
-            employees(name)
+            paid_at
           )
         `)
         .gte("created_at", `${startDate}T00:00:00`)
@@ -44,13 +49,38 @@ export default function GeneralLedger() {
         .eq("status", "completed")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      console.log('[GeneralLedger] 📊 Raw payments query result:', {
+        dataCount: data?.length || 0,
+        error: error,
+        sampleData: data?.slice(0, 2)
+      });
+
+      if (error) {
+        console.error('[GeneralLedger] ❌ Payments query error:', error);
+        throw error;
+      }
       
-      // Client-side filter for branch and paid_at (PostgREST foreign table filtering is unreliable)
-      const filtered = (data || []).filter(p => 
-        p.order?.branch_id === currentBranch.id && 
-        p.order?.paid_at !== null
-      );
+      // Optional client-side filter for branch (if branch selected)
+      const filtered = currentBranch?.id 
+        ? (data || []).filter(p => {
+            const matches = p.order?.branch_id === currentBranch.id && p.order?.paid_at !== null;
+            if (!matches) {
+              console.log('[GeneralLedger] Filtered out payment:', {
+                paymentId: p.id,
+                orderBranchId: p.order?.branch_id,
+                currentBranchId: currentBranch.id,
+                paidAt: p.order?.paid_at
+              });
+            }
+            return matches;
+          })
+        : (data || []).filter(p => p.order?.paid_at !== null);
+      
+      console.log('[GeneralLedger] ✅ Filtered payments:', {
+        beforeFilter: data?.length || 0,
+        afterFilter: filtered.length,
+        branchFilter: currentBranch?.id ? 'Applied' : 'Skipped'
+      });
       
       return filtered.map(p => ({
         ...p,
@@ -59,31 +89,44 @@ export default function GeneralLedger() {
         description: `Payment for Order ${p.order_id.substring(0, 8)}`,
       }));
     },
-    enabled: !!currentBranch?.id,
+    // Always enabled - show org-level data if no branch
+    enabled: true,
   });
 
-  const { data: refunds, isLoading: refundsLoading } = useQuery({
+  const { data: refunds, isLoading: refundsLoading, error: refundsError } = useQuery({
     queryKey: ["ledger-refunds", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
-      if (!currentBranch?.id) {
-        return [];
-      }
+      console.log('[GeneralLedger] 💸 Fetching refunds...');
 
       const { data, error } = await supabase
         .from("refunds")
         .select(`
           *,
-          order:orders!inner(id, branch_id),
-          employee:employees(name)
+          order:orders!inner(id, branch_id)
         `)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      console.log('[GeneralLedger] 📊 Raw refunds query result:', {
+        dataCount: data?.length || 0,
+        error: error
+      });
+
+      if (error) {
+        console.error('[GeneralLedger] ❌ Refunds query error:', error);
+        throw error;
+      }
       
-      // Client-side filter for branch
-      const filtered = (data || []).filter(r => r.order?.branch_id === currentBranch.id);
+      // Optional client-side filter for branch
+      const filtered = currentBranch?.id 
+        ? (data || []).filter(r => r.order?.branch_id === currentBranch.id)
+        : (data || []);
+      
+      console.log('[GeneralLedger] ✅ Filtered refunds:', {
+        beforeFilter: data?.length || 0,
+        afterFilter: filtered.length
+      });
       
       return filtered.map(r => ({
         ...r,
@@ -92,15 +135,13 @@ export default function GeneralLedger() {
         description: `Refund - ${r.reason || 'No reason'}`,
       }));
     },
-    enabled: !!currentBranch?.id,
+    enabled: true,
   });
 
-  const { data: loyaltyTransactions, isLoading: loyaltyLoading } = useQuery({
+  const { data: loyaltyTransactions, isLoading: loyaltyLoading, error: loyaltyError } = useQuery({
     queryKey: ["ledger-loyalty", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
-      if (!currentBranch?.id) {
-        return [];
-      }
+      console.log('[GeneralLedger] 🎁 Fetching loyalty transactions...');
 
       const { data, error } = await supabase
         .from("loyalty_ledger")
@@ -113,10 +154,25 @@ export default function GeneralLedger() {
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      console.log('[GeneralLedger] 📊 Raw loyalty query result:', {
+        dataCount: data?.length || 0,
+        error: error
+      });
+
+      if (error) {
+        console.error('[GeneralLedger] ❌ Loyalty query error:', error);
+        throw error;
+      }
       
-      // Client-side filter for branch
-      const filtered = (data || []).filter(l => l.customer?.branch_id === currentBranch.id);
+      // Optional client-side filter for branch
+      const filtered = currentBranch?.id 
+        ? (data || []).filter(l => l.customer?.branch_id === currentBranch.id)
+        : (data || []);
+      
+      console.log('[GeneralLedger] ✅ Filtered loyalty:', {
+        beforeFilter: data?.length || 0,
+        afterFilter: filtered.length
+      });
       
       return filtered.map(l => ({
         ...l,
@@ -126,7 +182,7 @@ export default function GeneralLedger() {
         description: `Loyalty ${l.transaction_type} - ${l.customer?.name || 'Unknown'}`,
       }));
     },
-    enabled: !!currentBranch?.id,
+    enabled: true,
   });
 
   const allTransactions = [
@@ -134,6 +190,18 @@ export default function GeneralLedger() {
     ...(refunds || []),
     ...(loyaltyTransactions || []),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  console.log('[GeneralLedger] 📋 All transactions combined:', {
+    payments: payments?.length || 0,
+    refunds: refunds?.length || 0,
+    loyalty: loyaltyTransactions?.length || 0,
+    total: allTransactions.length,
+    errors: {
+      payments: paymentsError ? 'Error' : 'OK',
+      refunds: refundsError ? 'Error' : 'OK',
+      loyalty: loyaltyError ? 'Error' : 'OK'
+    }
+  });
 
   const filteredTransactions = filterType === "all" 
     ? allTransactions 
@@ -143,6 +211,13 @@ export default function GeneralLedger() {
   const totalRefunds = refunds?.reduce((sum, r) => sum + Number(r.amount), 0) || 0;
   const totalTips = payments?.reduce((sum, p) => sum + Number(p.tip_amount || 0), 0) || 0;
   const netRevenue = totalRevenue - totalRefunds;
+
+  console.log('[GeneralLedger] 💵 Calculated totals:', {
+    totalRevenue,
+    totalRefunds,
+    totalTips,
+    netRevenue
+  });
 
   const exportToCsv = () => {
     const csvData = filteredTransactions.map(txn => ({
@@ -184,12 +259,28 @@ export default function GeneralLedger() {
       </div>
 
       {!currentBranch && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
+        <Card className="border-blue-500/30 bg-blue-500/5">
           <CardContent className="flex items-center gap-3 p-4">
-            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <AlertCircle className="h-5 w-5 text-blue-500" />
             <p className="text-sm text-muted-foreground">
-              Please select a branch to view financial transactions
+              Showing organization-wide transactions. Select a branch to filter by location.
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {(paymentsError || refundsError || loyaltyError) && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 p-4">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-sm font-medium text-destructive">Error Loading Transactions</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {paymentsError && `Payments: ${(paymentsError as any)?.message || 'Unknown error'}`}
+                {refundsError && ` | Refunds: ${(refundsError as any)?.message || 'Unknown error'}`}
+                {loyaltyError && ` | Loyalty: ${(loyaltyError as any)?.message || 'Unknown error'}`}
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
