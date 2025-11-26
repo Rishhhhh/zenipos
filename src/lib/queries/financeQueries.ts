@@ -61,12 +61,12 @@ export async function getCompletedPaymentsQuery(
   endDate: Date,
   branchId?: string
 ) {
-  const query = supabase
+  let query = supabase
     .from("payments")
     .select(`
       *,
       order:orders!inner(
-        order_number, 
+        id,
         created_by, 
         branch_id,
         status,

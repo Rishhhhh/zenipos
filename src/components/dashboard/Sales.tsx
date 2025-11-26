@@ -174,8 +174,8 @@ export default memo(function Sales() {
               />
             ))}
           </div>
-        ) : config.displayType === 'table' ? (
-          <div className="space-y-2.5 animate-fade-in max-h-[320px]">
+        ) : (
+          <div className="space-y-2.5 animate-fade-in">
           <div className={cn(
             "flex items-center justify-between bg-accent/30 rounded-lg",
             config.compactMode ? "p-2.5" : "p-3.5"
@@ -273,35 +273,6 @@ export default memo(function Sales() {
             </div>
           )}
         </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4 h-full animate-fade-in-content">
-          <MagicBento
-            title="Revenue"
-            value={`RM ${todayStats?.revenue.toFixed(2) || "0.00"}`}
-            trend={{
-              value: todayStats?.revenueTrend || 0,
-              isPositive: (todayStats?.revenueTrend || 0) >= 0,
-            }}
-            subtitle="Total earnings today"
-            threshold={{ warning: 1000, danger: 500 }}
-          />
-          <MagicBento
-            title="Orders"
-            value={todayStats?.orders.toString() || "0"}
-            trend={{
-              value: todayStats?.orderTrend || 0,
-              isPositive: (todayStats?.orderTrend || 0) >= 0,
-            }}
-            subtitle="Completed orders"
-            threshold={{ warning: 20, danger: 10 }}
-          />
-          <MagicBento
-            title="Items Sold"
-            value={todayStats?.items.toString() || "0"}
-            subtitle="Total items today"
-            threshold={{ warning: 50, danger: 20 }}
-          />
-          </div>
         )}
       </div>
 
