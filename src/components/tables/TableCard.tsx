@@ -92,6 +92,11 @@ export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) 
 
   const state = getTableState();
   const order = table.current_order;
+  const allOrders = table.current_orders || [];
+  
+  // Calculate combined total from ALL orders for this table
+  const combinedTotal = allOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+  const orderCount = allOrders.length;
 
   return (
     <Card
@@ -202,8 +207,13 @@ export function TableCard({ table, onClick, onConfigureTable }: TableCardProps) 
           {order && (
             <div className="text-right">
               <div className={cn("font-bold", isTouch ? "text-xl" : "text-2xl", state.textColor)}>
-                RM {order.total.toFixed(2)}
+                RM {combinedTotal.toFixed(2)}
               </div>
+              {orderCount > 1 && (
+                <div className="text-xs text-muted-foreground">
+                  {orderCount} orders
+                </div>
+              )}
             </div>
           )}
         </div>
