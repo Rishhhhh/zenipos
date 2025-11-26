@@ -35,7 +35,7 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
           table_id,
           delivered_at,
           branch_id,
-          tables(label),
+          tables!table_id(label),
           order_items(
             id,
             quantity,
