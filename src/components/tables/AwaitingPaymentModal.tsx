@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBranch } from '@/contexts/BranchContext';
+import { queryClient } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, ShoppingBag, UtensilsCrossed } from 'lucide-react';
@@ -20,12 +21,12 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const { data: deliveredOrders, isLoading } = useQuery({
+  const { data: deliveredOrders, isLoading, error } = useQuery({
     queryKey: ['delivered-orders', currentBranch?.id],
     queryFn: async () => {
-      if (!currentBranch?.id) return [];
+      console.log('🔍 [AwaitingPaymentModal] Fetching delivered orders, branch:', currentBranch?.id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('orders')
         .select(`
           id,
@@ -43,13 +44,25 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
           )
         `)
         .eq('status', 'delivered')
-        .eq('branch_id', currentBranch.id)
         .order('delivered_at', { ascending: true });
+
+      // Only filter by branch if one is selected
+      if (currentBranch?.id) {
+        query = query.eq('branch_id', currentBranch.id);
+      }
+
+      const { data, error } = await query;
+      
+      console.log('🔍 [AwaitingPaymentModal] Query result:', { 
+        count: data?.length, 
+        error,
+        branchFilter: currentBranch?.id || 'none (org-wide)'
+      });
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!currentBranch?.id && open,
+    enabled: open,
     refetchInterval: 5000,
   });
 
@@ -61,6 +74,9 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
   const handlePaymentSuccess = async () => {
     setShowPaymentModal(false);
     setSelectedOrder(null);
+    // Invalidate to refresh the list
+    queryClient.invalidateQueries({ queryKey: ['delivered-orders'] });
+    queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
   };
 
   return (
@@ -75,6 +91,11 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
           </DialogHeader>
 
           <ScrollArea className="h-[60vh] pr-4">
+            {error && (
+              <div className="p-4 mb-4 text-sm text-destructive bg-destructive/10 rounded-md">
+                Error loading orders: {(error as Error).message}
+              </div>
+            )}
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">Loading orders...</p>
