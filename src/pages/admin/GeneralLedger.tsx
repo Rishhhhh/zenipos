@@ -31,7 +31,7 @@ export default function GeneralLedger() {
         .select(`
           *,
           order:orders!inner(
-            order_number, 
+            id,
             created_by, 
             branch_id,
             status,
@@ -51,7 +51,7 @@ export default function GeneralLedger() {
         ...p,
         type: 'payment',
         transaction_type: p.method,
-        description: `Payment for Order #${p.order?.order_number || p.order_id}`,
+        description: `Payment for Order ${p.order_id.substring(0, 8)}`,
       }));
     },
     enabled: !!currentBranch?.id,
@@ -68,7 +68,7 @@ export default function GeneralLedger() {
         .from("refunds")
         .select(`
           *,
-          order:orders!inner(order_number, branch_id),
+          order:orders!inner(id, branch_id),
           employee:employees(name)
         `)
         .eq('order.branch_id', currentBranch.id)
@@ -99,7 +99,7 @@ export default function GeneralLedger() {
         .select(`
           *,
           customer:customers!inner(name, phone, branch_id),
-          order:orders(order_number)
+          order:orders(id)
         `)
         .eq('customer.branch_id', currentBranch.id)
         .gte("created_at", `${startDate}T00:00:00`)
@@ -306,7 +306,7 @@ export default function GeneralLedger() {
                       <TableCell className="capitalize">{txn.transaction_type}</TableCell>
                       <TableCell className="text-sm">{txn.description}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {txn.order?.order_number || txn.order_id || '-'}
+                        {txn.order_id ? txn.order_id.substring(0, 8) : '-'}
                       </TableCell>
                       <TableCell className={`text-right font-medium ${
                         isCredit ? 'text-success' : isDebit ? 'text-destructive' : ''
