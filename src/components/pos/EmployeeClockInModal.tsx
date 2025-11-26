@@ -134,8 +134,8 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
             type="password"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            maxLength={6}
-            placeholder="Enter 6-digit PIN"
+            maxLength={5}
+            placeholder="Enter 5-digit PIN"
             disabled={clockIn.isPending}
             autoFocus
           />
@@ -148,7 +148,7 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
               key={num}
               type="button"
               variant="outline"
-              onClick={() => setPin(pin.length < 6 ? pin + num : pin)}
+              onClick={() => setPin(pin.length < 5 ? pin + num : pin)}
               disabled={clockIn.isPending}
             >
               {num}
@@ -165,7 +165,7 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
           <Button
             type="button"
             variant="outline"
-            onClick={() => setPin(pin.length < 6 ? pin + '0' : pin)}
+            onClick={() => setPin(pin.length < 5 ? pin + '0' : pin)}
             disabled={clockIn.isPending}
           >
             0
@@ -180,7 +180,7 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
           </Button>
         </div>
 
-        <Button type="submit" className="w-full" disabled={clockIn.isPending || pin.length !== 6}>
+        <Button type="submit" className="w-full" disabled={clockIn.isPending || pin.length !== 5}>
           {clockIn.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           Clock In
         </Button>
