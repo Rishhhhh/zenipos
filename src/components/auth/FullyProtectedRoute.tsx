@@ -14,13 +14,14 @@ import { Button } from '@/components/ui/button';
 
 interface FullyProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'owner' | 'manager' | 'staff';
+  requiredRole?: 'owner' | 'manager' | 'staff' | 'kitchen';
 }
 
 const roleHierarchy = {
   owner: 3,
   manager: 2,
   staff: 1,
+  kitchen: 1,
 };
 
 export function FullyProtectedRoute({ children, requiredRole }: FullyProtectedRouteProps) {

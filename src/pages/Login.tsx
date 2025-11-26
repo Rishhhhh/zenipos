@@ -23,7 +23,8 @@ export default function Login() {
     isEmployeeAuthenticated, 
     isOrganizationAuthenticated,
     organization,
-    organizationLogout 
+    organizationLogout,
+    role
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,11 +77,17 @@ export default function Login() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isEmployeeAuthenticated) {
+    if (isEmployeeAuthenticated && role) {
+      // Kitchen role: Always redirect to KDS
+      if (role === 'kitchen') {
+        navigate('/kds', { replace: true });
+        return;
+      }
+      
       const from = (location.state as any)?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
-  }, [isEmployeeAuthenticated, navigate, location]);
+  }, [isEmployeeAuthenticated, role, navigate, location]);
 
   // Auto-submit when PIN is complete
   useEffect(() => {
