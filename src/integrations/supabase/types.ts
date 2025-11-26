@@ -4193,6 +4193,7 @@ export type Database = {
       till_ledger: {
         Row: {
           amount: number
+          branch_id: string | null
           created_at: string | null
           denomination_breakdown: Json | null
           id: string
@@ -4204,6 +4205,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          branch_id?: string | null
           created_at?: string | null
           denomination_breakdown?: Json | null
           id?: string
@@ -4215,6 +4217,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string | null
           created_at?: string | null
           denomination_breakdown?: Json | null
           id?: string
@@ -4225,6 +4228,13 @@ export type Database = {
           transaction_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "till_ledger_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "till_ledger_order_id_fkey"
             columns: ["order_id"]

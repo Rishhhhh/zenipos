@@ -147,7 +147,10 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
 
   const recordCashTransaction = useCallback(
     async (amount: number, type: 'sale' | 'change_given', orderId?: string, paymentId?: string) => {
-      if (!activeTillSession || !currentBranch?.id) return;
+      if (!activeTillSession || !currentBranch?.id) {
+        console.warn('[Till Session] Cannot record transaction: No active session or branch');
+        return;
+      }
 
       try {
         // Insert transaction into till_ledger
@@ -162,7 +165,10 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
             payment_id: paymentId,
           });
 
-        if (ledgerError) throw ledgerError;
+        if (ledgerError) {
+          console.error('[Till Session] Failed to insert into till_ledger:', ledgerError);
+          throw ledgerError;
+        }
 
         // Update expected_cash in till_session
         const newExpectedCash = activeTillSession.expected_cash + (type === 'change_given' ? -amount : amount);
@@ -172,12 +178,17 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
           .update({ expected_cash: newExpectedCash })
           .eq('id', activeTillSession.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('[Till Session] Failed to update expected_cash:', updateError);
+          throw updateError;
+        }
+
+        console.log('[Till Session] Transaction recorded:', { type, amount, newExpectedCash });
 
         // Refetch session to update local state
         await refetch();
       } catch (error) {
-        console.error('Failed to record cash transaction:', error);
+        console.error('[Till Session] Failed to record cash transaction:', error);
       }
     },
     [activeTillSession, currentBranch, refetch]

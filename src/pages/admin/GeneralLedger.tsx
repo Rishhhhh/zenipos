@@ -199,7 +199,7 @@ export default function GeneralLedger() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-success">RM {totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">{payments?.length || 0} transactions</p>
           </CardContent>
         </Card>
@@ -210,7 +210,7 @@ export default function GeneralLedger() {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">${totalRefunds.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-destructive">RM {totalRefunds.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">{refunds?.length || 0} refunds</p>
           </CardContent>
         </Card>
@@ -221,7 +221,7 @@ export default function GeneralLedger() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalTips.toFixed(2)}</div>
+            <div className="text-2xl font-bold">RM {totalTips.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Employee tips</p>
           </CardContent>
         </Card>
@@ -232,7 +232,7 @@ export default function GeneralLedger() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${netRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">RM {netRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">After refunds</p>
           </CardContent>
         </Card>
@@ -287,7 +287,7 @@ export default function GeneralLedger() {
                       <TableCell className={`text-right font-medium ${
                         isCredit ? 'text-success' : isDebit ? 'text-destructive' : ''
                       }`}>
-                        {isCredit ? '+' : isDebit ? '-' : ''}${Math.abs(Number(txn.amount)).toFixed(2)}
+                        {isCredit ? '+' : isDebit ? '-' : ''}RM {Math.abs(Number(txn.amount)).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={
