@@ -61,6 +61,12 @@ export async function getCompletedPaymentsQuery(
   endDate: Date,
   branchId?: string
 ) {
+  console.log('[financeQueries] 💰 getCompletedPaymentsQuery called:', {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+    branchId: branchId || 'all'
+  });
+
   const { data, error } = await supabase
     .from("payments")
     .select(`
@@ -70,8 +76,7 @@ export async function getCompletedPaymentsQuery(
         created_by, 
         branch_id,
         status,
-        paid_at,
-        employees(name)
+        paid_at
       )
     `)
     .eq("status", "completed")
@@ -79,13 +84,39 @@ export async function getCompletedPaymentsQuery(
     .lte("created_at", endOfDay(endDate).toISOString())
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  console.log('[financeQueries] 📊 Raw query result:', {
+    dataCount: data?.length || 0,
+    error: error,
+    sampleData: data?.slice(0, 2)
+  });
+
+  if (error) {
+    console.error('[financeQueries] ❌ Query error:', error);
+    throw error;
+  }
   
-  // Client-side filter for branch and paid_at (PostgREST foreign table filtering is unreliable)
+  // Optional client-side filter for branch and paid_at
   const filtered = (data || []).filter(p => {
     const matchesBranch = !branchId || p.order?.branch_id === branchId;
     const hasPaidAt = p.order?.paid_at !== null;
-    return matchesBranch && hasPaidAt;
+    const passes = matchesBranch && hasPaidAt;
+    
+    if (!passes) {
+      console.log('[financeQueries] Filtered out payment:', {
+        paymentId: p.id,
+        orderBranchId: p.order?.branch_id,
+        requestedBranchId: branchId,
+        paidAt: p.order?.paid_at
+      });
+    }
+    
+    return passes;
+  });
+  
+  console.log('[financeQueries] ✅ Filtered result:', {
+    beforeFilter: data?.length || 0,
+    afterFilter: filtered.length,
+    branchFilter: branchId ? 'Applied' : 'Skipped'
   });
   
   return filtered;
