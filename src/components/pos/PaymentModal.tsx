@@ -33,7 +33,7 @@ export function PaymentModal({
   onPaymentSuccess,
 }: PaymentModalProps) {
   const { toast } = useToast();
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('qr');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('cash');
   const [qrProvider, setQrProvider] = useState<PaymentProviderType>('duitnow');
   const [cashReceived, setCashReceived] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -315,13 +315,13 @@ export function PaymentModal({
 
       <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
         <TabsList className="grid w-full grid-cols-2 h-14">
-          <TabsTrigger value="qr" className="text-base h-12">
-            <QrCode className="h-5 w-5 mr-2" />
-            QR Payment
-          </TabsTrigger>
           <TabsTrigger value="cash" className="text-base h-12">
             <Banknote className="h-5 w-5 mr-2" />
             Cash
+          </TabsTrigger>
+          <TabsTrigger value="qr" className="text-base h-12">
+            <QrCode className="h-5 w-5 mr-2" />
+            QR Payment
           </TabsTrigger>
         </TabsList>
 
