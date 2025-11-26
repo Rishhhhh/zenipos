@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect } from 'react';
 import { createPaymentProvider } from '@/lib/payments/PaymentProvider';
-import { QrCode, Banknote, Loader2, FileText } from 'lucide-react';
+import { QrCode, Banknote, Loader2, FileText, Delete } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generate58mmReceipt } from '@/lib/print/receiptGenerator';
+import { cn } from '@/lib/utils';
 
 type PaymentProviderType = 'duitnow' | 'tng' | 'stripe' | 'billplz';
 
@@ -41,6 +42,38 @@ export function PaymentModal({
   const [enableEInvoice, setEnableEInvoice] = useState(false);
 
   const change = cashReceived ? Math.max(0, parseFloat(cashReceived) - total) : 0;
+
+  const handleNumpadPress = (key: string) => {
+    if (key === 'clear') {
+      setCashReceived('');
+    } else if (key === 'backspace') {
+      setCashReceived(prev => prev.slice(0, -1));
+    } else if (key === '.') {
+      // Only allow one decimal point
+      if (!cashReceived.includes('.')) {
+        setCashReceived(prev => prev + '.');
+      }
+    } else {
+      // Limit to 2 decimal places
+      const parts = cashReceived.split('.');
+      if (parts[1] && parts[1].length >= 2) return;
+      setCashReceived(prev => prev + key);
+    }
+  };
+
+  const quickAmounts = [
+    { label: 'Exact', value: total },
+    { label: 'RM 20', value: 20 },
+    { label: 'RM 50', value: 50 },
+    { label: 'RM 100', value: 100 },
+  ];
+
+  const numpadKeys = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    ['.', '0', 'backspace'],
+  ];
 
   // Track payment initiation
   useEffect(() => {
@@ -281,13 +314,13 @@ export function PaymentModal({
       </div>
 
       <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="qr">
-            <QrCode className="h-4 w-4 mr-2" />
+        <TabsList className="grid w-full grid-cols-2 h-14">
+          <TabsTrigger value="qr" className="text-base h-12">
+            <QrCode className="h-5 w-5 mr-2" />
             QR Payment
           </TabsTrigger>
-          <TabsTrigger value="cash">
-            <Banknote className="h-4 w-4 mr-2" />
+          <TabsTrigger value="cash" className="text-base h-12">
+            <Banknote className="h-5 w-5 mr-2" />
             Cash
           </TabsTrigger>
         </TabsList>
@@ -297,14 +330,16 @@ export function PaymentModal({
             <Button
               variant={qrProvider === 'duitnow' ? 'default' : 'outline'}
               onClick={() => setQrProvider('duitnow')}
-              className="flex-1"
+              className="flex-1 h-14 text-base"
+              size="lg"
             >
               DuitNow QR
             </Button>
             <Button
               variant={qrProvider === 'tng' ? 'default' : 'outline'}
               onClick={() => setQrProvider('tng')}
-              className="flex-1"
+              className="flex-1 h-14 text-base"
+              size="lg"
             >
               Touch 'n Go
             </Button>
@@ -314,13 +349,13 @@ export function PaymentModal({
             <Button
               onClick={handleGenerateQR}
               disabled={isProcessing}
-              className="w-full"
+              className="w-full h-16 text-lg"
               size="lg"
             >
               {isProcessing ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-6 w-6 mr-2 animate-spin" />
               ) : (
-                <QrCode className="h-4 w-4 mr-2" />
+                <QrCode className="h-6 w-6 mr-2" />
               )}
               Generate QR Code
             </Button>
@@ -339,40 +374,78 @@ export function PaymentModal({
           )}
         </TabsContent>
 
-        <TabsContent value="cash" className="space-y-4">
-          <div>
-            <Label htmlFor="cash">Cash Received (RM)</Label>
-            <Input
-              id="cash"
-              type="number"
-              step="0.01"
-              min={total}
-              value={cashReceived}
-              onChange={(e) => setCashReceived(e.target.value)}
-              placeholder={total.toFixed(2)}
-              autoFocus
-            />
+        <TabsContent value="cash" className="space-y-6 py-4">
+          {/* Total Due - Large Display */}
+          <div className="bg-muted/50 rounded-xl p-4 border-2 border-border">
+            <p className="text-sm text-muted-foreground mb-1">Total Due</p>
+            <p className="text-4xl font-bold text-foreground">RM {total.toFixed(2)}</p>
           </div>
 
-          {cashReceived && parseFloat(cashReceived) >= total && (
-            <div className="bg-success/10 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">Change</p>
-              <p className="text-2xl font-bold text-success">
-                RM {change.toFixed(2)}
+          {/* Cash Received & Change Display */}
+          <div className="space-y-3">
+            <div className="bg-background rounded-lg p-4 border border-border">
+              <p className="text-sm text-muted-foreground mb-1">Cash Received</p>
+              <p className="text-3xl font-bold text-foreground">
+                {cashReceived ? `RM ${parseFloat(cashReceived).toFixed(2)}` : 'RM 0.00'}
               </p>
             </div>
-          )}
 
+            {cashReceived && parseFloat(cashReceived) >= total && (
+              <div className="bg-success/10 rounded-lg p-4 border-2 border-success/20">
+                <p className="text-sm text-muted-foreground mb-1">Change Due</p>
+                <p className="text-3xl font-bold text-success">
+                  RM {change.toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Amount Buttons */}
+          <div className="grid grid-cols-4 gap-2">
+            {quickAmounts.map((amount) => (
+              <Button
+                key={amount.label}
+                variant="outline"
+                className="h-12 text-base font-semibold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
+                onClick={() => setCashReceived(amount.value.toFixed(2))}
+              >
+                {amount.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Touch-Optimized Numpad */}
+          <div className="bg-muted/30 rounded-xl p-4 space-y-2">
+            {numpadKeys.map((row, rowIndex) => (
+              <div key={rowIndex} className="grid grid-cols-3 gap-2">
+                {row.map((key) => (
+                  <Button
+                    key={key}
+                    variant="secondary"
+                    className={cn(
+                      "h-16 text-2xl font-bold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95",
+                      key === 'backspace' && "text-lg"
+                    )}
+                    onClick={() => handleNumpadPress(key)}
+                  >
+                    {key === 'backspace' ? <Delete className="h-6 w-6" /> : key.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Complete Payment Button */}
           <Button
             onClick={handleCashPayment}
             disabled={isProcessing || !cashReceived || parseFloat(cashReceived) < total}
-            className="w-full"
+            className="w-full h-16 text-xl font-bold"
             size="lg"
           >
             {isProcessing ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-6 w-6 mr-2 animate-spin" />
             ) : (
-              <Banknote className="h-4 w-4 mr-2" />
+              <Banknote className="h-6 w-6 mr-2" />
             )}
             Complete Payment
           </Button>
