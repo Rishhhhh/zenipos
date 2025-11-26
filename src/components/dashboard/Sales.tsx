@@ -45,6 +45,7 @@ export default memo(function Sales() {
       const today = startOfDay(new Date());
       const comparisonDate = getComparisonDate();
 
+      // Fetch completed orders
       const { data: todayOrders, error: todayError } = await supabase
         .from("orders")
         .select("total, order_items(quantity), status, paid_at")
@@ -57,22 +58,22 @@ export default memo(function Sales() {
         throw todayError;
       }
 
+      // Fetch pending orders (delivered but not paid)
+      const { data: pendingOrders, error: pendingError } = await supabase
+        .from("orders")
+        .select("total, status")
+        .gte("created_at", today.toISOString())
+        .eq("status", "delivered");
+
+      if (pendingError) {
+        console.error('[Sales Widget] Pending query error:', pendingError);
+      }
+
       console.log('[Sales Widget] Today orders:', {
-        total: todayOrders?.length,
-        statuses: todayOrders?.map(o => o.status),
+        completed: todayOrders?.length,
+        pending: pendingOrders?.length,
         revenue: todayOrders?.reduce((sum, o) => sum + o.total, 0)
       });
-
-      // Fallback check if no orders found today
-      if (!todayOrders || todayOrders.length === 0) {
-        console.warn('[Sales Widget] No orders today. Checking recent orders...');
-        const { data: recentOrders } = await supabase
-          .from("orders")
-          .select("created_at, status, total")
-          .order("created_at", { ascending: false })
-          .limit(10);
-        console.log('[Sales Widget] Last 10 orders:', recentOrders);
-      }
 
       const { data: comparisonOrders, error: comparisonError } = await supabase
         .from("orders")
@@ -88,7 +89,9 @@ export default memo(function Sales() {
       }
 
       const todayRevenue = todayOrders?.reduce((sum, order) => sum + order.total, 0) || 0;
+      const pendingRevenue = pendingOrders?.reduce((sum, order) => sum + order.total, 0) || 0;
       const todayOrderCount = todayOrders?.length || 0;
+      const pendingOrderCount = pendingOrders?.length || 0;
       const todayItemCount = todayOrders?.reduce(
         (sum, order) =>
           sum + (order.order_items?.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0) || 0),
@@ -105,11 +108,19 @@ export default memo(function Sales() {
         ? ((todayOrderCount - comparisonOrderCount) / comparisonOrderCount) * 100 
         : 0;
 
-      console.log('[Sales Widget] Stats calculated:', { todayRevenue, todayOrderCount, todayItemCount });
+      console.log('[Sales Widget] Stats calculated:', { 
+        todayRevenue, 
+        pendingRevenue, 
+        todayOrderCount, 
+        pendingOrderCount, 
+        todayItemCount 
+      });
 
       return {
         revenue: todayRevenue,
+        pendingRevenue,
         orders: todayOrderCount,
+        pendingOrders: pendingOrderCount,
         items: todayItemCount,
         revenueTrend,
         orderTrend,
@@ -123,7 +134,9 @@ export default memo(function Sales() {
   }, [refetch]);
 
   const revenue = useMemo(() => todayStats?.revenue || 0, [todayStats?.revenue]);
+  const pendingRevenue = useMemo(() => todayStats?.pendingRevenue || 0, [todayStats?.pendingRevenue]);
   const orders = useMemo(() => todayStats?.orders || 0, [todayStats?.orders]);
+  const pendingOrders = useMemo(() => todayStats?.pendingOrders || 0, [todayStats?.pendingOrders]);
   const items = useMemo(() => todayStats?.items || 0, [todayStats?.items]);
   const revenueTrend = useMemo(() => todayStats?.revenueTrend || 0, [todayStats?.revenueTrend]);
   const orderTrend = useMemo(() => todayStats?.orderTrend || 0, [todayStats?.orderTrend]);
@@ -174,6 +187,11 @@ export default memo(function Sales() {
               )}>
                 RM {revenue.toFixed(2)}
               </p>
+              {pendingRevenue > 0 && (
+                <p className={cn("text-amber-500 font-medium", config.compactMode ? "text-xs" : "text-sm")}>
+                  +RM {pendingRevenue.toFixed(2)} pending
+                </p>
+              )}
             </div>
             {config.showTrends && (
               <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
@@ -200,6 +218,11 @@ export default memo(function Sales() {
               <p className={cn("font-bold truncate", config.compactMode ? "text-base" : "text-xl")}>
                 {orders}
               </p>
+              {pendingOrders > 0 && (
+                <p className={cn("text-amber-500 font-medium", config.compactMode ? "text-xs" : "text-sm")}>
+                  +{pendingOrders} pending
+                </p>
+              )}
             </div>
             {config.showTrends && (
               <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">

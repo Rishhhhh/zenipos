@@ -101,7 +101,8 @@ export default function Cashbook() {
       const sessionIds = tillSessions?.map(s => s.id) || [];
       if (sessionIds.length === 0) return [];
 
-      const { data, error } = await supabase
+      // Try to get from till_ledger first
+      const { data: ledgerData, error } = await supabase
         .from("till_ledger")
         .select(`
           *,
@@ -112,7 +113,36 @@ export default function Cashbook() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+
+      // If till_ledger is empty, fallback to payments table
+      if (!ledgerData || ledgerData.length === 0) {
+        console.log('[Cashbook] till_ledger empty, fetching from payments table');
+        const { data: paymentsData, error: paymentsError } = await supabase
+          .from("payments")
+          .select(`
+            *,
+            order:orders(order_number, branch_id)
+          `)
+          .eq('order.branch_id', currentBranch?.id)
+          .gte("created_at", `${startDate}T00:00:00`)
+          .lte("created_at", `${endDate}T23:59:59`)
+          .order("created_at", { ascending: false });
+
+        if (paymentsError) throw paymentsError;
+        
+        // Transform payments to match till_ledger format
+        return (paymentsData || []).map(p => ({
+          id: p.id,
+          created_at: p.created_at,
+          amount: p.amount,
+          transaction_type: p.method,
+          order: p.order,
+          payment: { method: p.method, amount: p.amount },
+          till_session_id: null,
+        }));
+      }
+
+      return ledgerData;
     },
     enabled: !!tillSessions && tillSessions.length > 0,
   });
@@ -238,7 +268,7 @@ export default function Cashbook() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalOpening.toFixed(2)}</div>
+            <div className="text-2xl font-bold">RM {totalOpening.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">All till sessions</p>
           </CardContent>
         </Card>
@@ -249,7 +279,7 @@ export default function Cashbook() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalClosing.toFixed(2)}</div>
+            <div className="text-2xl font-bold">RM {totalClosing.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">End of day totals</p>
           </CardContent>
         </Card>
@@ -261,7 +291,7 @@ export default function Cashbook() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalVariance !== 0 ? 'text-destructive' : ''}`}>
-              ${Math.abs(totalVariance).toFixed(2)}
+              RM {Math.abs(totalVariance).toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               {totalVariance > 0 ? 'Over' : totalVariance < 0 ? 'Short' : 'Balanced'}
@@ -276,7 +306,7 @@ export default function Cashbook() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{sessionsWithVariance}</div>
-            <p className="text-xs text-muted-foreground">Sessions &gt; $5 variance</p>
+            <p className="text-xs text-muted-foreground">Sessions &gt; RM 5 variance</p>
           </CardContent>
         </Card>
       </div>
@@ -318,12 +348,12 @@ export default function Cashbook() {
                         {format(new Date(session.opened_at), "MMM dd, yyyy HH:mm")}
                       </TableCell>
                       <TableCell>{session.employee?.name || "N/A"}</TableCell>
-                      <TableCell className="text-right">${Number(session.opening_float || 0).toFixed(2)}</TableCell>
-                      <TableCell className="text-right">${Number(session.expected_cash || 0).toFixed(2)}</TableCell>
-                      <TableCell className="text-right">${Number(session.actual_cash || 0).toFixed(2)}</TableCell>
+                      <TableCell className="text-right">RM {Number(session.opening_float || 0).toFixed(2)}</TableCell>
+                      <TableCell className="text-right">RM {Number(session.expected_cash || 0).toFixed(2)}</TableCell>
+                      <TableCell className="text-right">RM {Number(session.actual_cash || 0).toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <span className={hasVariance ? 'text-destructive font-semibold' : ''}>
-                          ${Math.abs(variance).toFixed(2)} {variance > 0 ? '(Over)' : variance < 0 ? '(Short)' : ''}
+                          RM {Math.abs(variance).toFixed(2)} {variance > 0 ? '(Over)' : variance < 0 ? '(Short)' : ''}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -366,9 +396,9 @@ export default function Cashbook() {
                   <TableRow key={event.id}>
                     <TableCell>{format(new Date(event.created_at), "HH:mm:ss")}</TableCell>
                     <TableCell className="capitalize">{event.event_type?.replace('_', ' ')}</TableCell>
-                    <TableCell>${Number(event.denomination || 0).toFixed(2)}</TableCell>
+                    <TableCell>RM {Number(event.denomination || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">{event.quantity || 0}</TableCell>
-                    <TableCell className="text-right">${Number(event.running_balance || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">RM {Number(event.running_balance || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {event.metadata && typeof event.metadata === 'object' 
                         ? JSON.stringify(event.metadata) 
