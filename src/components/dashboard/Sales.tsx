@@ -45,11 +45,12 @@ export default memo(function Sales() {
       const today = startOfDay(new Date());
       const comparisonDate = getComparisonDate();
 
-      // Fetch completed orders
+      // Fetch completed orders using paid_at (orders paid today)
       const { data: todayOrders, error: todayError } = await supabase
         .from("orders")
         .select("total, order_items(quantity), status, paid_at")
-        .gte("created_at", today.toISOString())
+        .gte("paid_at", today.toISOString())
+        .lte("paid_at", new Date().toISOString())
         .in("status", ["completed", "done"])
         .not("paid_at", "is", null);
 
@@ -61,9 +62,9 @@ export default memo(function Sales() {
       // Fetch pending orders (delivered but not paid)
       const { data: pendingOrders, error: pendingError } = await supabase
         .from("orders")
-        .select("total, status")
-        .gte("created_at", today.toISOString())
-        .eq("status", "delivered");
+        .select("total, status, created_at")
+        .eq("status", "delivered")
+        .gte("created_at", today.toISOString());
 
       if (pendingError) {
         console.error('[Sales Widget] Pending query error:', pendingError);
@@ -72,14 +73,16 @@ export default memo(function Sales() {
       console.log('[Sales Widget] Today orders:', {
         completed: todayOrders?.length,
         pending: pendingOrders?.length,
-        revenue: todayOrders?.reduce((sum, o) => sum + o.total, 0)
+        revenue: todayOrders?.reduce((sum, o) => sum + o.total, 0),
+        pendingRevenue: pendingOrders?.reduce((sum, o) => sum + o.total, 0)
       });
 
+      // Fetch comparison orders using paid_at
       const { data: comparisonOrders, error: comparisonError } = await supabase
         .from("orders")
         .select("total, paid_at")
-        .gte("created_at", comparisonDate.toISOString())
-        .lt("created_at", today.toISOString())
+        .gte("paid_at", comparisonDate.toISOString())
+        .lt("paid_at", today.toISOString())
         .in("status", ["completed", "done"])
         .not("paid_at", "is", null);
 

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, Download, Filter } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Download, Filter, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function GeneralLedger() {
@@ -21,6 +21,11 @@ export default function GeneralLedger() {
   const { data: payments, isLoading: paymentsLoading } = useQuery({
     queryKey: ["ledger-payments", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
+      if (!currentBranch?.id) {
+        console.warn('[GeneralLedger] No branch selected, returning empty payments');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("payments")
         .select(`
@@ -55,6 +60,10 @@ export default function GeneralLedger() {
   const { data: refunds, isLoading: refundsLoading } = useQuery({
     queryKey: ["ledger-refunds", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
+      if (!currentBranch?.id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("refunds")
         .select(`
@@ -81,6 +90,10 @@ export default function GeneralLedger() {
   const { data: loyaltyTransactions, isLoading: loyaltyLoading } = useQuery({
     queryKey: ["ledger-loyalty", currentBranch?.id, startDate, endDate],
     queryFn: async () => {
+      if (!currentBranch?.id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("loyalty_ledger")
         .select(`
@@ -153,11 +166,22 @@ export default function GeneralLedger() {
           <h1 className="text-3xl font-bold">General Ledger</h1>
           <p className="text-muted-foreground">All financial transactions and accounting records</p>
         </div>
-        <Button onClick={exportToCsv} variant="outline" size="sm">
+        <Button onClick={exportToCsv} variant="outline" size="sm" disabled={!currentBranch}>
           <Download className="mr-2 h-4 w-4" />
           Export CSV
         </Button>
       </div>
+
+      {!currentBranch && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="flex items-center gap-3 p-4">
+            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <p className="text-sm text-muted-foreground">
+              Please select a branch to view financial transactions
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex gap-4">
         <div className="flex-1">
