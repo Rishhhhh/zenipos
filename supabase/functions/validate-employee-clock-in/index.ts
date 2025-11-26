@@ -71,7 +71,7 @@ serve(async (req) => {
       console.log('No employee found with provided PIN');
       return new Response(
         JSON.stringify({ valid: false, error: 'Invalid PIN' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
@@ -87,7 +87,7 @@ serve(async (req) => {
       console.log('Employee already has active shift');
       return new Response(
         JSON.stringify({ valid: false, error: 'Employee already has an active shift' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
@@ -110,7 +110,7 @@ serve(async (req) => {
     console.error('Validation error:', error);
     return new Response(
       JSON.stringify({ valid: false, error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   }
 });

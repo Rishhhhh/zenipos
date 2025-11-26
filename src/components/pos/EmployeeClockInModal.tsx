@@ -34,7 +34,7 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
         throw new Error('Organization context not available');
       }
 
-      // Validate PIN via new edge function with proper parameters
+      // Validate PIN via edge function
       const { data: pinData, error: pinError } = await supabase.functions.invoke('validate-employee-clock-in', {
         body: { 
           pin: enteredPin,
@@ -43,7 +43,12 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
         },
       });
 
-      if (pinError || !pinData?.valid) {
+      // Edge function now returns 200 with error details in body
+      if (pinError) {
+        throw new Error(pinData?.error || pinError.message || 'Invalid PIN');
+      }
+
+      if (!pinData?.valid) {
         throw new Error(pinData?.error || 'Invalid PIN');
       }
 
