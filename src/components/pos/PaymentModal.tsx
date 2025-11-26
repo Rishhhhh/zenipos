@@ -377,7 +377,7 @@ export function PaymentModal({
         <TabsContent value="cash" className="py-4">
           {/* 2-Column Layout: Info Left, Numpad Right */}
           <div className="grid grid-cols-2 gap-6">
-            {/* LEFT COLUMN: Display Info + Quick Amounts */}
+            {/* LEFT COLUMN: Display Info Only */}
             <div className="space-y-4">
               {/* Total Due - Large Display */}
               <div className="bg-muted/50 rounded-xl p-4 border-2 border-border">
@@ -402,7 +402,10 @@ export function PaymentModal({
                   </p>
                 </div>
               )}
+            </div>
 
+            {/* RIGHT COLUMN: Quick Amounts + Numpad */}
+            <div className="space-y-4">
               {/* Quick Amount Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 {quickAmounts.map((amount) => (
@@ -416,27 +419,27 @@ export function PaymentModal({
                   </Button>
                 ))}
               </div>
-            </div>
 
-            {/* RIGHT COLUMN: Numpad */}
-            <div className="bg-muted/30 rounded-xl p-4 space-y-2">
-              {numpadKeys.map((row, rowIndex) => (
-                <div key={rowIndex} className="grid grid-cols-3 gap-2">
-                  {row.map((key) => (
-                    <Button
-                      key={key}
-                      variant="secondary"
-                      className={cn(
-                        "h-16 text-2xl font-bold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95",
-                        key === 'backspace' && "text-lg"
-                      )}
-                      onClick={() => handleNumpadPress(key)}
-                    >
-                      {key === 'backspace' ? <Delete className="h-6 w-6" /> : key.toUpperCase()}
-                    </Button>
-                  ))}
-                </div>
-              ))}
+              {/* Touch-Optimized Numpad */}
+              <div className="bg-muted/30 rounded-xl p-4 space-y-2">
+                {numpadKeys.map((row, rowIndex) => (
+                  <div key={rowIndex} className="grid grid-cols-3 gap-2">
+                    {row.map((key) => (
+                      <Button
+                        key={key}
+                        variant="secondary"
+                        className={cn(
+                          "h-16 text-2xl font-bold hover:bg-primary hover:text-primary-foreground transition-all active:scale-95",
+                          key === 'backspace' && "text-lg"
+                        )}
+                        onClick={() => handleNumpadPress(key)}
+                      >
+                        {key === 'backspace' ? <Delete className="h-6 w-6" /> : key.toUpperCase()}
+                      </Button>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
