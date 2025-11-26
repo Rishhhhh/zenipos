@@ -27,15 +27,32 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
   const [isBumping, setIsBumping] = useState(false);
   const [isOverriding, setIsOverriding] = useState(false);
   
-  if (!table?.current_order) return null;
+  // Handle multiple orders for a table
+  const orders = table?.current_orders || [];
+  if (orders.length === 0) return null;
 
-  const order = table.current_order;
+  // Consolidate all order items and calculate combined totals
+  const allItems = orders.flatMap((order: any) => 
+    order.order_items?.map((item: any) => ({
+      ...item,
+      orderId: order.id,
+      orderCreatedAt: order.created_at
+    })) || []
+  );
+  
+  const combinedSubtotal = orders.reduce((sum: number, order: any) => sum + (order.subtotal || order.total || 0), 0);
+  const combinedTax = orders.reduce((sum: number, order: any) => sum + (order.tax || 0), 0);
+  const combinedTotal = orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+  
+  // Most recent order status for timeline
+  const mostRecentOrder = orders[orders.length - 1];
+  const oldestOrder = orders[0];
 
   const handleAddMoreItems = () => {
     navigate('/pos', {
       state: {
         tableId: table.id,
-        existingOrderId: order.id,
+        existingOrderId: mostRecentOrder.id,
         returnTo: '/tables',
       }
     });
@@ -54,6 +71,8 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
         .eq('auth_user_id', user.id)
         .single();
 
+      // Update ALL orders for this table to delivered
+      const orderIds = orders.map((o: any) => o.id);
       await supabase
         .from('orders')
         .update({
@@ -61,11 +80,11 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
           delivered_at: new Date().toISOString(),
           delivered_by: employee?.id,
         })
-        .eq('id', order.id);
+        .in('id', orderIds);
 
       toast({
-        title: 'Order Delivered',
-        description: 'Order marked as delivered. Ready for payment.',
+        title: 'All Orders Delivered',
+        description: `${orders.length} order(s) marked as delivered. Ready for payment.`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['tables'] });
@@ -97,7 +116,8 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
         throw new Error('Admin privileges required');
       }
 
-      // Force order from 'preparing' directly to 'dining'
+      // Force ALL orders from 'preparing' directly to 'dining'
+      const orderIds = orders.map((o: any) => o.id);
       await supabase
         .from('orders')
         .update({
@@ -106,25 +126,27 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
           ready_at: new Date().toISOString(),
           serving_at: new Date().toISOString(),
         })
-        .eq('id', order.id);
+        .in('id', orderIds);
 
       // Log admin override action
-      await supabase.from('audit_log').insert({
-        actor: user.id,
-        action: 'admin_override_to_dining',
-        entity: 'orders',
-        entity_id: order.id,
-        diff: { 
-          from: 'preparing', 
-          to: 'dining', 
-          reason: 'kitchen_forgot_ready_button',
-          override_by: employee.id
-        }
-      });
+      await supabase.from('audit_log').insert(
+        orderIds.map((orderId: string) => ({
+          actor: user.id,
+          action: 'admin_override_to_dining',
+          entity: 'orders',
+          entity_id: orderId,
+          diff: { 
+            from: 'preparing', 
+            to: 'dining', 
+            reason: 'kitchen_forgot_ready_button',
+            override_by: employee.id
+          }
+        }))
+      );
 
       toast({
-        title: 'Order Force-Progressed',
-        description: 'Order moved directly to dining stage.',
+        title: 'All Orders Force-Progressed',
+        description: `${orders.length} order(s) moved to dining stage.`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['tables'] });
@@ -143,55 +165,72 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
   // Shared content component
   const DetailsContent = () => (
     <>
-      {/* Order Timeline */}
+      {/* Multiple Orders Info */}
+      {orders.length > 1 && (
+        <div className="bg-muted/50 rounded-lg p-3 mb-4">
+          <p className="text-sm font-medium">
+            {orders.length} orders combined for this table
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            First order: {new Date(oldestOrder.created_at).toLocaleTimeString()}
+          </p>
+        </div>
+      )}
+
+      {/* Order Timeline - based on most recent order */}
       <div>
         <h4 className="text-sm font-semibold mb-4">Order Progress</h4>
         <div className="space-y-0">
           <TimelineItem
             icon={<ShoppingCart />}
             title="Order Placed"
-            timestamp={order.created_at}
+            timestamp={oldestOrder.created_at}
             status="completed"
           />
           <TimelineItem
             icon={<ChefHat />}
             title="Kitchen Preparing"
-            timestamp={['preparing', 'kitchen_queue'].includes(order.status) ? order.created_at : null}
+            timestamp={['preparing', 'kitchen_queue'].includes(mostRecentOrder.status) ? mostRecentOrder.created_at : null}
             status={
-              ['preparing', 'kitchen_queue'].includes(order.status) ? 'active' : 
-              ['ready', 'serving', 'dining', 'delivered', 'payment', 'completed'].includes(order.status) ? 'completed' : 
+              ['preparing', 'kitchen_queue'].includes(mostRecentOrder.status) ? 'active' : 
+              ['ready', 'serving', 'dining', 'delivered', 'payment', 'completed'].includes(mostRecentOrder.status) ? 'completed' : 
               'pending'
             }
           />
           <TimelineItem
             icon={<Truck />}
             title="Being Served / Dining"
-            timestamp={order.serving_at || order.dining_at || order.delivered_at}
+            timestamp={mostRecentOrder.serving_at || mostRecentOrder.dining_at || mostRecentOrder.delivered_at}
             status={
-              ['serving', 'dining'].includes(order.status) ? 'active' :
-              ['delivered', 'payment', 'completed'].includes(order.status) ? 'completed' :
+              ['serving', 'dining'].includes(mostRecentOrder.status) ? 'active' :
+              ['delivered', 'payment', 'completed'].includes(mostRecentOrder.status) ? 'completed' :
               'pending'
             }
           />
           <TimelineItem
             icon={<DollarSign />}
             title="Payment Complete"
-            timestamp={order.paid_at}
-            status={order.paid_at ? 'completed' : 'pending'}
+            timestamp={mostRecentOrder.paid_at}
+            status={mostRecentOrder.paid_at ? 'completed' : 'pending'}
           />
         </div>
       </div>
 
       <Separator />
 
-      {/* Order Items */}
+      {/* Consolidated Order Items */}
       <div>
-        <h4 className="text-sm font-semibold mb-2">Items</h4>
-        <div className="space-y-1">
-          {order.order_items?.map((item: any) => (
+        <h4 className="text-sm font-semibold mb-2">All Items ({allItems.length})</h4>
+        <div className="space-y-1 max-h-64 overflow-y-auto">
+          {allItems.map((item: any) => (
             <div key={item.id} className="flex justify-between text-sm">
               <span>
                 {item.quantity}x {item.menu_items?.name}
+                {orders.length > 1 && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (#{item.orderId.slice(0, 6)})
+                  </span>
+                )}
               </span>
               <span className="font-medium">
                 RM {(item.quantity * item.unit_price).toFixed(2)}
@@ -200,16 +239,28 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
           ))}
         </div>
         <Separator className="my-2" />
-        <div className="flex justify-between font-bold">
-          <span>Total</span>
-          <span>RM {order.total.toFixed(2)}</span>
+        <div className="space-y-1">
+          <div className="flex justify-between text-sm">
+            <span>Subtotal</span>
+            <span>RM {combinedSubtotal.toFixed(2)}</span>
+          </div>
+          {combinedTax > 0 && (
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Tax</span>
+              <span>RM {combinedTax.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between font-bold text-lg">
+            <span>Total</span>
+            <span>RM {combinedTotal.toFixed(2)}</span>
+          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="space-y-2">
         {/* Add More Items Button - Always visible for active orders */}
-        {['preparing', 'delivered', 'dining'].includes(order.status) && (
+        {['preparing', 'delivered', 'dining'].includes(mostRecentOrder.status) && (
           <Button
             variant="outline"
             className="w-full"
@@ -220,7 +271,7 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
           </Button>
         )}
 
-        {order.status === 'preparing' && (
+        {mostRecentOrder.status === 'preparing' && (
           <>
             <Button
               variant="outline"
@@ -229,7 +280,7 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
               disabled={isBumping}
             >
               <Truck className="h-4 w-4 mr-2" />
-              Mark as Delivered (Normal)
+              Mark All as Delivered
             </Button>
 
             <Button
@@ -239,19 +290,19 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
               disabled={isOverriding}
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
-              Admin Override: Force to Dining
+              Admin Override: Force All to Dining
             </Button>
           </>
         )}
 
-        {(order.status === 'delivered' || order.status === 'dining') && (
+        {(mostRecentOrder.status === 'delivered' || mostRecentOrder.status === 'dining') && (
           <Button
             onClick={onPayment}
             className="w-full"
             size="lg"
           >
             <DollarSign className="h-5 w-5 mr-2" />
-            Process Payment
+            Process Payment (RM {combinedTotal.toFixed(2)})
           </Button>
         )}
       </div>
@@ -266,7 +317,9 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
           <SheetHeader>
             <SheetTitle className="flex items-center justify-between">
               <span>Table {table.label}</span>
-              <Badge variant="outline">Order #{order.id.slice(0, 8)}</Badge>
+              <Badge variant="outline">
+                {orders.length === 1 ? `Order #${orders[0].id.slice(0, 8)}` : `${orders.length} Orders`}
+              </Badge>
             </SheetTitle>
           </SheetHeader>
           <div className="mt-6 space-y-6">
@@ -284,7 +337,9 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Table {table.label}</span>
-            <Badge variant="outline">Order #{order.id.slice(0, 8)}</Badge>
+            <Badge variant="outline">
+              {orders.length === 1 ? `Order #${orders[0].id.slice(0, 8)}` : `${orders.length} Orders`}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
