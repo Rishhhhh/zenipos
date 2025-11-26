@@ -280,8 +280,8 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
             {/* Offline sync status */}
             <QueueStatusBadge />
 
-            {/* Clock In/Out for POS page */}
-            {isPOSPage && employee && currentShiftId !== undefined && (
+            {/* Clock In/Out - Available on all pages */}
+            {employee && currentShiftId !== undefined && (
               <>
                 {currentShiftId && shiftElapsed && (
                   <Badge variant="secondary" className="text-sm">

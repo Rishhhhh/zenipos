@@ -742,36 +742,6 @@ export default function POS() {
       {/* LANDSCAPE TABLET & DESKTOP: 3-column layout */}
       {!isMobile && device !== 'portrait-tablet' && (
         <div className="pos-container flex flex-col" style={{ height: 'var(--available-height)' }}>
-          {/* Status bar - flex-shrink-0 */}
-          <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center gap-2">
-            {nfc_card_id && nfcCardUid && (
-              <Badge variant="outline" className="text-xs">
-                <NfcIcon className="w-3 h-3 mr-1" />
-                {nfcCardUid}
-              </Badge>
-            )}
-            {order_type && (
-              <Badge variant="secondary" className="text-xs">
-                {order_type === 'dine_in' ? 'Dine In' : 'Takeaway'}
-              </Badge>
-            )}
-            {table_id && tableLabelShort && (
-              <Badge variant="default" className="text-xs">
-                <MapPin className="w-3 h-3 mr-1" />
-                {tableLabelShort}
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLinkDisplay(true)}
-              className="ml-auto h-7 px-2 text-xs"
-            >
-              <Monitor className="w-3 h-3 mr-1" />
-              {customerDisplayId ? 'Linked' : 'Link'}
-            </Button>
-          </div>
-
           {/* 3-column layout - flex-1 overflow-hidden */}
           <div className="flex-1 flex overflow-hidden">
             {/* LEFT: Categories */}

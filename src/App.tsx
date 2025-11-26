@@ -20,6 +20,7 @@ import Auth from "./pages/Auth";
 import CustomerScreen from "./pages/CustomerScreen";
 import Index from "./pages/Index";
 import { AppHeader } from "./components/layout/AppHeader";
+import { HeaderWithClockIn } from "./components/layout/HeaderWithClockIn";
 import { MacDock } from "./components/navigation/MacDock";
 import { MobileBottomNav } from "./components/navigation/MobileBottomNav";
 import { FloatingSimulationControl } from "./components/simulation/FloatingSimulationControl";
@@ -210,7 +211,7 @@ const App = () => (
               {/* Dashboard at home route */}
               <Route path="/" element={
                 <FullyProtectedRoute requiredRole="staff">
-                  <AppHeader />
+                  <HeaderWithClockIn />
                   <Dashboard />
                 </FullyProtectedRoute>
               } />
@@ -223,14 +224,14 @@ const App = () => (
               
               <Route path="/tables" element={
                 <FullyProtectedRoute requiredRole="staff">
-                  <AppHeader />
+                  <HeaderWithClockIn />
                   <TableManagement />
                 </FullyProtectedRoute>
               } />
               
               <Route path="/kds" element={
                 <FullyProtectedRoute requiredRole="staff">
-                  <AppHeader />
+                  <HeaderWithClockIn />
                   <KDS />
                 </FullyProtectedRoute>
               } />
@@ -245,7 +246,7 @@ const App = () => (
               <Route path="/admin" element={
                 <FullyProtectedRoute requiredRole="manager">
                   <>
-                    <AppHeader />
+                    <HeaderWithClockIn />
                     <Admin />
                   </>
                 </FullyProtectedRoute>
