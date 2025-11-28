@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Wallet, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CloseTillModalProps {
   open: boolean;
@@ -62,7 +63,27 @@ export function CloseTillModal({
     0
   );
 
-  const expectedCash = tillSession?.expected_cash || 0;
+  // Phase 4: Fetch real-time expected cash from database
+  const [calculatedExpectedCash, setCalculatedExpectedCash] = useState(tillSession?.expected_cash || 0);
+
+  useEffect(() => {
+    if (tillSession?.id && open) {
+      // Fetch directly via SQL query since RPC types may not be updated yet
+      supabase
+        .from('till_sessions')
+        .select('expected_cash')
+        .eq('id', tillSession.id)
+        .single()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            console.log('[CloseTillModal] Fetched expected cash:', data.expected_cash);
+            setCalculatedExpectedCash(Number(data.expected_cash));
+          }
+        });
+    }
+  }, [tillSession?.id, open]);
+
+  const expectedCash = calculatedExpectedCash || tillSession?.expected_cash || 0;
   const openingFloat = tillSession?.opening_float || 0;
   const variance = actualCashCounted - expectedCash;
   const hasSignificantVariance = Math.abs(variance) > 5;

@@ -75,6 +75,7 @@ export function EmployeeClockInModal({ open, onOpenChange, onSuccess }: Employee
           employee_id: employee.id,
           user_id: user?.id || null,
           organization_id: employee.organization_id,
+          branch_id: currentBranch?.id || null,
           status: 'active',
           clock_in_location: location,
         })

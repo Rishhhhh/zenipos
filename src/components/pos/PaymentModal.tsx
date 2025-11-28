@@ -201,6 +201,57 @@ export function PaymentModal({
 
       if (error) throw error;
 
+      // Phase 3: Direct till_ledger recording for CASH payments
+      if (method === 'cash') {
+        // Get active till session for current user
+        const { data: tillSession } = await supabase
+          .from('till_sessions')
+          .select('id, expected_cash, branch_id')
+          .eq('status', 'open')
+          .order('opened_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (tillSession) {
+          console.log('[PaymentModal] Recording cash to till_ledger:', { tillSessionId: tillSession.id, total, changeGiven });
+
+          // Insert SALE transaction
+          await supabase.from('till_ledger').insert({
+            till_session_id: tillSession.id,
+            branch_id: tillSession.branch_id,
+            organization_id: orderData.organization_id,
+            transaction_type: 'sale',
+            amount: total,
+            order_id: orderId,
+            payment_id: payment.id,
+          });
+
+          // Insert CHANGE transaction if any
+          if (changeGiven > 0) {
+            await supabase.from('till_ledger').insert({
+              till_session_id: tillSession.id,
+              branch_id: tillSession.branch_id,
+              organization_id: orderData.organization_id,
+              transaction_type: 'change_given',
+              amount: -changeGiven,
+              order_id: orderId,
+              payment_id: payment.id,
+            });
+          }
+
+          // Update expected_cash
+          const newExpectedCash = tillSession.expected_cash + total - changeGiven;
+          await supabase
+            .from('till_sessions')
+            .update({ expected_cash: newExpectedCash })
+            .eq('id', tillSession.id);
+
+          console.log('[PaymentModal] Till updated:', { newExpectedCash });
+        } else {
+          console.warn('[PaymentModal] No active till session found - skipping till_ledger recording');
+        }
+      }
+
       // Update order status and e-invoice flag
       await supabase
         .from('orders')
