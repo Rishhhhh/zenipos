@@ -4199,6 +4199,7 @@ export type Database = {
           id: string
           notes: string | null
           order_id: string | null
+          organization_id: string | null
           payment_id: string | null
           till_session_id: string | null
           transaction_type: string
@@ -4211,6 +4212,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_id?: string | null
+          organization_id?: string | null
           payment_id?: string | null
           till_session_id?: string | null
           transaction_type: string
@@ -4223,6 +4225,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_id?: string | null
+          organization_id?: string | null
           payment_id?: string | null
           till_session_id?: string | null
           transaction_type?: string
@@ -4240,6 +4243,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -4271,6 +4281,7 @@ export type Database = {
           id: string
           opened_at: string | null
           opening_float: number
+          organization_id: string | null
           reconciled_at: string | null
           shift_id: string | null
           status: string | null
@@ -4290,6 +4301,7 @@ export type Database = {
           id?: string
           opened_at?: string | null
           opening_float?: number
+          organization_id?: string | null
           reconciled_at?: string | null
           shift_id?: string | null
           status?: string | null
@@ -4309,6 +4321,7 @@ export type Database = {
           id?: string
           opened_at?: string | null
           opening_float?: number
+          organization_id?: string | null
           reconciled_at?: string | null
           shift_id?: string | null
           status?: string | null
@@ -4329,6 +4342,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -4517,6 +4537,10 @@ export type Database = {
         }[]
       }
       calculate_points_earned: { Args: { amount: number }; Returns: number }
+      calculate_till_expected_cash: {
+        Args: { till_session_id_param: string }
+        Returns: number
+      }
       can_access_branch: {
         Args: { _branch_id: string; _user_id: string }
         Returns: boolean

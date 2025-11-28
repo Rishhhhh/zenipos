@@ -77,12 +77,24 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
         throw new Error('No branch selected');
       }
 
+      // Get organization_id from branch
+      const { data: branchData } = await supabase
+        .from('branches')
+        .select('organization_id')
+        .eq('id', currentBranch.id)
+        .single();
+
+      if (!branchData?.organization_id) {
+        throw new Error('Could not determine organization');
+      }
+
       const { data: session, error } = await supabase
         .from('till_sessions')
         .insert({
           employee_id: data.employeeId,
           shift_id: data.shiftId,
           branch_id: currentBranch.id,
+          organization_id: branchData.organization_id,
           opening_float: data.openingFloat,
           expected_cash: data.openingFloat,
           status: 'open',
@@ -138,18 +150,48 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
 
   const recordCashTransaction = useCallback(
     async (amount: number, type: 'sale' | 'change_given', orderId?: string, paymentId?: string) => {
-      if (!activeTillSession || !currentBranch?.id) {
-        console.warn('[Till Session] Cannot record transaction: No active session or branch');
-        return;
-      }
-
       try {
+        // Fetch active till session if not in state
+        let tillSession = activeTillSession;
+        if (!tillSession && employee?.id) {
+          const { data } = await supabase
+            .from('till_sessions')
+            .select('*, branches!inner(organization_id)')
+            .eq('employee_id', employee.id)
+            .eq('status', 'open')
+            .order('opened_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          tillSession = data as any;
+        }
+
+        if (!tillSession) {
+          throw new Error('No active till session found');
+        }
+
+        if (!currentBranch?.id) {
+          throw new Error('No branch context available');
+        }
+
+        // Get organization_id
+        const { data: branchData } = await supabase
+          .from('branches')
+          .select('organization_id')
+          .eq('id', currentBranch.id)
+          .single();
+
+        if (!branchData?.organization_id) {
+          throw new Error('Could not determine organization');
+        }
+
         // Insert transaction into till_ledger
         const { error: ledgerError } = await supabase
           .from('till_ledger')
           .insert({
-            till_session_id: activeTillSession.id,
+            till_session_id: tillSession.id,
             branch_id: currentBranch.id,
+            organization_id: branchData.organization_id,
             transaction_type: type,
             amount: type === 'change_given' ? -amount : amount,
             order_id: orderId,
@@ -162,12 +204,12 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
         }
 
         // Update expected_cash in till_session
-        const newExpectedCash = activeTillSession.expected_cash + (type === 'change_given' ? -amount : amount);
+        const newExpectedCash = tillSession.expected_cash + (type === 'change_given' ? -amount : amount);
         
         const { error: updateError } = await supabase
           .from('till_sessions')
           .update({ expected_cash: newExpectedCash })
-          .eq('id', activeTillSession.id);
+          .eq('id', tillSession.id);
 
         if (updateError) {
           console.error('[Till Session] Failed to update expected_cash:', updateError);
@@ -180,9 +222,10 @@ export function TillSessionProvider({ children }: { children: ReactNode }) {
         await refetch();
       } catch (error) {
         console.error('[Till Session] Failed to record cash transaction:', error);
+        throw error;
       }
     },
-    [activeTillSession, currentBranch, refetch]
+    [activeTillSession, currentBranch, employee, refetch]
   );
 
   const getCurrentCashPosition = useCallback(() => {
