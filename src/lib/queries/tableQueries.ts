@@ -108,29 +108,43 @@ export async function getRecentCompletedOrders(limit = 10) {
   return data;
 }
 
-export async function getTodayMetrics(branchId: string) {
+export async function getTodayMetrics(branchId?: string, organizationId?: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Get completed orders with timestamps
-  const { data: completedOrders, error: completedError } = await supabase
+  // Build query with fallback: branch_id → organization_id → all
+  let query = supabase
     .from('orders')
     .select('total, created_at, paid_at, table_id')
-    .eq('branch_id', branchId)
-    .gte('created_at', today.toISOString())
-    .in('status', ['completed', 'done'])
+    .gte('paid_at', today.toISOString())
+    .in('status', ['completed', 'done', 'paid'])
     .not('paid_at', 'is', null);
+
+  if (branchId) {
+    query = query.eq('branch_id', branchId);
+  } else if (organizationId) {
+    query = query.eq('organization_id', organizationId);
+  }
+
+  const { data: completedOrders, error: completedError } = await query;
 
   if (completedError) throw completedError;
 
-  const totalRevenue = completedOrders?.reduce((sum, o) => sum + o.total, 0) || 0;
+  const totalRevenue = completedOrders?.reduce((sum, o) => sum + (o.total || 0), 0) || 0;
 
   // Awaiting payment (delivered but not paid)
-  const { data: deliveredOrders, error: deliveredError } = await supabase
+  let deliveredQuery = supabase
     .from('orders')
     .select('id')
-    .eq('branch_id', branchId)
     .eq('status', 'delivered');
+
+  if (branchId) {
+    deliveredQuery = deliveredQuery.eq('branch_id', branchId);
+  } else if (organizationId) {
+    deliveredQuery = deliveredQuery.eq('organization_id', organizationId);
+  }
+
+  const { data: deliveredOrders, error: deliveredError } = await deliveredQuery;
 
   if (deliveredError) throw deliveredError;
 
@@ -139,7 +153,8 @@ export async function getTodayMetrics(branchId: string) {
   // Average turnover time (creation to payment)
   const avgTurnoverMinutes = completedOrders && completedOrders.length > 0
     ? completedOrders.reduce((sum, o) => {
-        const diff = new Date(o.paid_at!).getTime() - new Date(o.created_at).getTime();
+        if (!o.paid_at) return sum;
+        const diff = new Date(o.paid_at).getTime() - new Date(o.created_at).getTime();
         return sum + (diff / 60000);
       }, 0) / completedOrders.length
     : 0;

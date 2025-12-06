@@ -17,6 +17,7 @@ import { useOrderRealtime } from '@/hooks/useOrderRealtime';
 import { PaymentNFCScannerModal } from '@/components/pos/PaymentNFCScannerModal';
 import { useToast } from '@/hooks/use-toast';
 import { useBranch } from '@/contexts/BranchContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TableManagement() {
   useOrderRealtime(); // Enable real-time sync
@@ -24,6 +25,7 @@ export default function TableManagement() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { currentBranch } = useBranch();
+  const { organization } = useAuth();
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [showPaymentNFCScanner, setShowPaymentNFCScanner] = useState(false);
@@ -41,11 +43,11 @@ export default function TableManagement() {
     refetchInterval: 3000, // Fallback polling every 3s
   });
 
-  // Query today's metrics
+  // Query today's metrics - fallback to organization if no branch
   const { data: metrics } = useQuery({
-    queryKey: ['today-metrics', currentBranch?.id],
-    queryFn: () => getTodayMetrics(currentBranch!.id),
-    enabled: !!currentBranch?.id,
+    queryKey: ['today-metrics', currentBranch?.id, organization?.id],
+    queryFn: () => getTodayMetrics(currentBranch?.id, organization?.id),
+    enabled: !!(currentBranch?.id || organization?.id),
     refetchInterval: 30000, // Refresh every 30s
   });
 
