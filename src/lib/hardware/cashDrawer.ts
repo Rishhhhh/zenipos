@@ -130,8 +130,12 @@ async function logDrawerOpen(
   meta?: { orderId?: string; userId?: string }
 ): Promise<void> {
   try {
+    // audit_log.actor is a FK to auth.users.id; use the current authed user to avoid FK conflicts
+    const { data } = await supabase.auth.getUser();
+    const actor = data.user?.id ?? null;
+
     await supabase.from('audit_log').insert({
-      actor: meta?.userId || null,
+      actor,
       action: 'cash_drawer.open',
       entity: 'cash_drawer',
       entity_id: meta?.orderId || null,
