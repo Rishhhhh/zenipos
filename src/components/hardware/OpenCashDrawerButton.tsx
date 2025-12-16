@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { ManagerPinModal } from '@/components/pos/ManagerPinModal';
@@ -15,7 +16,8 @@ import {
   kickCashDrawer, 
   listQzPrinters,
   getQzStatus,
-  CashDrawerSettings 
+  CashDrawerSettings,
+  CommandProfile
 } from '@/lib/hardware/cashDrawer';
 import { 
   LockOpen, 
@@ -24,7 +26,8 @@ import {
   CheckCircle2, 
   XCircle, 
   AlertCircle,
-  Loader2 
+  Loader2,
+  Trash2
 } from 'lucide-react';
 
 interface OpenCashDrawerButtonProps {
@@ -42,6 +45,7 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
   const [printers, setPrinters] = useState<string[]>([]);
   const [qzStatus, setQzStatus] = useState<'connected' | 'disconnected' | 'unavailable'>('unavailable');
   const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
   useEffect(() => {
     checkQzStatus();
@@ -143,13 +147,25 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
   };
 
   const handleTestDrawer = async () => {
+    setDebugLogs([]); // Clear previous logs
     setIsOpening(true);
     try {
-      const result = await kickCashDrawer('test', { userId: employee?.id });
+      const result = await kickCashDrawer(
+        'test',
+        { userId: employee?.id },
+        (msg) => setDebugLogs(prev => [...prev, `${new Date().toISOString().substring(11, 23)} ${msg}`])
+      );
       if (result.success) {
-        toast({ title: 'Test successful', description: 'Drawer should have opened.' });
+        toast({ 
+          title: 'Test successful', 
+          description: 'Check debug log below. If drawer didn\'t open, try a different Command Profile or Kick Mode.' 
+        });
       } else {
         toast({ title: 'Test failed', description: result.error, variant: 'destructive' });
+      }
+      // Also add the final logs from result
+      if (result.logs.length > 0) {
+        setDebugLogs(result.logs);
       }
     } finally {
       setIsOpening(false);
@@ -214,7 +230,7 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
               <Settings className="h-3.5 w-3.5" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Cash Drawer Settings</DialogTitle>
             </DialogHeader>
@@ -287,6 +303,27 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Command Profile - NEW */}
+              <div className="space-y-2">
+                <Label>Command Profile</Label>
+                <Select
+                  value={settings.commandProfile}
+                  onValueChange={(v) => handleSettingChange('commandProfile', v as CommandProfile)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AUTO">AUTO (Recommended)</SelectItem>
+                    <SelectItem value="ESC_P">ESC/POS (ESC p)</SelectItem>
+                    <SelectItem value="PULSE">Pulse (DLE DC4)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  AUTO tries both commands. If drawer doesn't open, try specific profiles.
+                </p>
               </div>
 
               {/* Kick Mode */}
@@ -372,6 +409,45 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                 )}
                 Test Drawer
               </Button>
+
+              {/* Debug Panel */}
+              {debugLogs.length > 0 && (
+                <div className="mt-4 rounded-lg border border-border overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 bg-muted/50">
+                    <span className="text-xs font-medium text-muted-foreground">Debug Log</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2"
+                      onClick={() => setDebugLogs([])}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <ScrollArea className="h-48">
+                    <div className="p-3 bg-zinc-900 text-green-400 font-mono text-xs space-y-0.5">
+                      {debugLogs.map((log, i) => (
+                        <div key={i} className="whitespace-pre-wrap break-all">
+                          {log}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
+              {/* Troubleshooting Tips */}
+              {debugLogs.length > 0 && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs space-y-1">
+                  <p className="font-medium text-blue-800 dark:text-blue-200">If drawer didn't open:</p>
+                  <ul className="list-disc list-inside text-blue-700 dark:text-blue-300 space-y-0.5">
+                    <li>If "DRAWER TEST" line printed, printer communication works</li>
+                    <li>Try switching "Command Profile" (AUTO → ESC/POS → Pulse)</li>
+                    <li>Try switching "Kick Mode" (Pin 0 ↔ Pin 1)</li>
+                    <li>Verify cash drawer cable is connected to printer DK port</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
