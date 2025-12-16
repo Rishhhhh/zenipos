@@ -1,7 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-
-// QZ Tray types
-declare const qz: any;
+import qz from 'qz-tray';
 
 export interface CashDrawerSettings {
   enabled: boolean;
@@ -150,9 +148,9 @@ async function logDrawerOpen(
   }
 }
 
-// Check if QZ Tray is available
+// Check if QZ Tray is available (library is always loaded now via import)
 export function isQzAvailable(): boolean {
-  return typeof qz !== 'undefined';
+  return qz && typeof qz.websocket !== 'undefined';
 }
 
 // Get QZ connection status
