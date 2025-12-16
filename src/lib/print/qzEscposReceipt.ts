@@ -1,0 +1,89 @@
+import qz from "qz-tray";
+
+export type PrintReceiptOpts = {
+  printerName: string;
+  receiptText: string;          // plain text receipt (80mm)
+  feedLines?: number;           // default 5
+  cut?: boolean;                // default true
+  openDrawer?: boolean;         // default false (set true for CASH)
+};
+
+// ESC/POS Commands - exact bytes matching QZ demo escpos_sample.bin
+const ESC_INIT = "\x1B\x40";             // ESC @ - Initialize printer
+const LF = "\x0A";                       // Line feed
+const CUT_ESC_I = "\x1B\x69";            // ESC i - Cut paper (matches escpos_sample.bin)
+const DRAWER_PULSE = "\x10\x14\x01\x00\x05"; // DLE DC4 pulse (matches escpos_sample.bin)
+
+// Normalize text for ESC/POS
+function safeText(s: string): string {
+  return (s ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+// Ensure QZ Tray is connected
+async function ensureQzConnected(): Promise<void> {
+  if (qz.websocket.isActive()) return;
+  
+  // Connect to QZ Tray (unsigned for dev, or use certificate for prod)
+  await qz.websocket.connect();
+}
+
+/**
+ * Print receipt via QZ Tray with ESC/POS commands for cut and drawer kick.
+ * This matches the behavior of QZ demo escpos_sample.bin
+ */
+export async function qzPrintReceiptEscpos(opts: PrintReceiptOpts): Promise<void> {
+  const {
+    printerName,
+    receiptText,
+    feedLines = 5,
+    cut = true,
+    openDrawer = false,
+  } = opts;
+
+  if (!printerName) throw new Error("No printerName provided");
+
+  await ensureQzConnected();
+
+  const config = qz.configs.create(printerName);
+
+  const text = safeText(receiptText);
+  const feed = LF.repeat(Math.max(0, feedLines));
+
+  // Build raw data array - QZ accepts mixed raw strings containing control bytes
+  // Order: Initialize → Text → Feed → Cut → Drawer
+  const data: string[] = [
+    ESC_INIT,                           // Initialize printer
+    text + LF,                          // Receipt text with trailing LF
+    feed,                               // Feed lines before cut
+    cut ? CUT_ESC_I : "",               // Cut command (ESC i)
+    openDrawer ? DRAWER_PULSE : "",     // Drawer kick (DLE DC4)
+  ].filter(Boolean);
+
+  console.log('[QZ ESC/POS] Printing receipt:', {
+    printerName,
+    textLength: text.length,
+    feedLines,
+    cut,
+    openDrawer,
+  });
+
+  await qz.print(config, data);
+  
+  console.log('[QZ ESC/POS] Print job sent successfully');
+}
+
+/**
+ * Get configured printer name from localStorage
+ */
+export function getConfiguredPrinterName(): string | null {
+  try {
+    const settings = localStorage.getItem('zenipos.cashDrawer.settings');
+    if (settings) {
+      const parsed = JSON.parse(settings);
+      return parsed?.printerName || null;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}

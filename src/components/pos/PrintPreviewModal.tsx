@@ -9,6 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BrowserPrintService } from "@/lib/print/BrowserPrintService";
+import { qzPrintReceiptEscpos, getConfiguredPrinterName } from "@/lib/print/qzEscposReceipt";
+import { buildReceiptText80mm } from "@/lib/print/receiptText80mm";
 
 interface PrintPreviewModalProps {
   open: boolean;
@@ -22,8 +24,13 @@ interface PrintPreviewModalProps {
     tax: number;
     total: number;
     timestamp: Date;
+    paymentMethod?: string;
+    cashReceived?: number;
+    changeGiven?: number;
   };
   onSendToPrinter?: () => void;
+  orgName?: string;
+  branchName?: string;
 }
 
 export function PrintPreviewModal({
@@ -32,6 +39,8 @@ export function PrintPreviewModal({
   mode = 'both',
   orderData,
   onSendToPrinter,
+  orgName = 'ZeniPOS Restaurant',
+  branchName,
 }: PrintPreviewModalProps) {
   const [showRaw, setShowRaw] = useState(false);
   const [stationTickets, setStationTickets] = useState<Array<{
@@ -170,12 +179,59 @@ export function PrintPreviewModal({
   });
 
   const handleSendToPrinter = async () => {
-    console.log('📄 Sending to printer - Customer Receipt:', customerReceipt);
+    console.log('📄 Sending to printer - Customer Receipt');
     
-    // Print customer receipt via browser dialog
-    await BrowserPrintService.printHTML(customerReceipt);
+    const printerName = getConfiguredPrinterName();
     
-    // Print station tickets if mode is 'both' or 'station'
+    // Try QZ ESC/POS printing first (with auto-cut)
+    if (printerName) {
+      try {
+        // Build plain text receipt for ESC/POS
+        const receiptText = buildReceiptText80mm({
+          orgName,
+          branchName,
+          order: {
+            id: orderData.orderId,
+            order_number: orderData.orderNumber,
+            subtotal: orderData.subtotal,
+            tax: orderData.tax,
+            total: orderData.total,
+            created_at: orderData.timestamp.toISOString(),
+            order_items: orderData.items.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              total_price: item.price * item.quantity,
+            })),
+          },
+          paymentMethod: orderData.paymentMethod,
+          cashReceived: orderData.cashReceived,
+          changeGiven: orderData.changeGiven,
+        });
+
+        await qzPrintReceiptEscpos({
+          printerName,
+          receiptText,
+          feedLines: 5,
+          cut: true,
+          // Open drawer for cash payments
+          openDrawer: orderData.paymentMethod?.toLowerCase() === 'cash',
+        });
+
+        toast.success('Receipt printed via QZ (auto-cut enabled)');
+        
+      } catch (error: any) {
+        console.error('[QZ Print] Failed, falling back to browser:', error);
+        toast.error(`QZ print failed: ${error?.message || 'Unknown error'}. Using browser print.`);
+        // Fallback to browser print
+        await BrowserPrintService.printHTML(customerReceipt);
+      }
+    } else {
+      // No QZ printer configured - use browser print
+      await BrowserPrintService.printHTML(customerReceipt);
+      toast.info('Printed via browser (no QZ printer configured)');
+    }
+    
+    // Print station tickets if mode is 'both' or 'station' (still use browser for now)
     if (mode !== 'customer') {
       for (const ticket of stationTickets) {
         console.log(`🍳 Printing ${ticket.stationName} ticket...`);
@@ -183,7 +239,6 @@ export function PrintPreviewModal({
       }
     }
     
-    toast.success('Print dialog opened!');
     onSendToPrinter?.();
     onOpenChange(false);
   };
