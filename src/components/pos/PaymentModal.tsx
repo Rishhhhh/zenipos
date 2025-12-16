@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPaymentProvider } from '@/lib/payments/PaymentProvider';
+import { getCashDrawerSettings, kickCashDrawer } from '@/lib/hardware/cashDrawer';
 import { QrCode, Banknote, Loader2, FileText, Delete } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +41,9 @@ export function PaymentModal({
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [enableEInvoice, setEnableEInvoice] = useState(false);
+  
+  // Cash drawer auto-open tracking
+  const hasAutoOpenedRef = useRef<boolean>(false);
 
   const change = cashReceived ? Math.max(0, parseFloat(cashReceived) - total) : 0;
 
@@ -75,9 +79,12 @@ export function PaymentModal({
     ['.', '0', 'backspace'],
   ];
 
-  // Track payment initiation
+  // Track payment initiation and auto-open cash drawer
   useEffect(() => {
     if (open && orderId) {
+      // Reset auto-open tracking when modal opens
+      hasAutoOpenedRef.current = false;
+      
       // Set status to 'payment' when payment modal opens
       supabase
         .from('orders')
@@ -93,8 +100,28 @@ export function PaymentModal({
             console.log('✅ Payment initiated for order:', orderId);
           }
         });
+      
+      // Auto-open cash drawer on cash payment initiation
+      if (paymentMethod === 'cash') {
+        const settings = getCashDrawerSettings();
+        if (settings.autoOpenOnCashInitiated && !hasAutoOpenedRef.current) {
+          kickCashDrawer('cash_payment_initiated', { orderId }).then(result => {
+            if (result.success) {
+              hasAutoOpenedRef.current = true;
+              console.log('💰 Cash drawer auto-opened on payment initiation');
+            }
+          });
+        }
+      }
     }
-  }, [open, orderId]);
+  }, [open, orderId, paymentMethod]);
+  
+  // Reset tracking when modal closes
+  useEffect(() => {
+    if (!open) {
+      hasAutoOpenedRef.current = false;
+    }
+  }, [open]);
 
   const handleGenerateQR = async () => {
     setIsProcessing(true);
@@ -160,6 +187,17 @@ export function PaymentModal({
     }
 
     setIsProcessing(true);
+    
+    // Fallback: Auto-open cash drawer on payment completion if not opened earlier
+    const settings = getCashDrawerSettings();
+    if (settings.autoOpenOnCashCompleted && !hasAutoOpenedRef.current) {
+      const result = await kickCashDrawer('cash_payment_completed', { orderId });
+      if (result.success) {
+        hasAutoOpenedRef.current = true;
+        console.log('💰 Cash drawer auto-opened on payment completion (fallback)');
+      }
+    }
+    
     await completePayment(`cash_${Date.now()}`, 'cash', change);
   };
 

@@ -8,6 +8,7 @@ import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { useModalManager } from '@/hooks/useModalManager';
+import { OpenCashDrawerButton } from '@/components/hardware/OpenCashDrawerButton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -279,6 +280,11 @@ export function AppHeader({ currentShiftId, shiftElapsed, onClockIn, onClockOut 
 
             {/* Offline sync status */}
             <QueueStatusBadge />
+
+            {/* Cash Drawer - Available for owner, manager, staff */}
+            {employee && ['owner', 'manager', 'staff'].includes(role || '') && (
+              <OpenCashDrawerButton variant="icon" />
+            )}
 
             {/* Clock In/Out - Available on all pages */}
             {employee && currentShiftId !== undefined && (

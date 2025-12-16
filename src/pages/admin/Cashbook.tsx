@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, TrendingUp, AlertCircle, DollarSign, Download, Clock } from "lucide-react";
 import { format, formatDistance } from "date-fns";
 import { TillReconciliationDialog } from "@/components/admin/TillReconciliationDialog";
+import { OpenCashDrawerButton } from "@/components/hardware/OpenCashDrawerButton";
 
 export default function Cashbook() {
   const { currentBranch } = useBranch();
@@ -184,10 +185,13 @@ export default function Cashbook() {
           <h1 className="text-3xl font-bold">Cashbook</h1>
           <p className="text-muted-foreground">Daily cash reconciliation and till management</p>
         </div>
-        <Button onClick={exportToCsv} variant="outline" size="sm">
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <OpenCashDrawerButton variant="button" />
+          <Button onClick={exportToCsv} variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4">

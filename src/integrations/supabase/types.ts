@@ -4585,6 +4585,7 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
+              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
@@ -4602,7 +4603,6 @@ export type Database = {
         | {
             Args: {
               p_applied_promotions: Json
-              p_branch_id: string
               p_created_by: string
               p_discount: number
               p_items: Json
@@ -4743,9 +4743,8 @@ export type Database = {
       }
       get_low_stock_items:
         | {
-            Args: { branch_id_param?: string }
+            Args: never
             Returns: {
-              branch_id: string
               current_qty: number
               days_until_stockout: number
               id: string
@@ -4756,8 +4755,9 @@ export type Database = {
             }[]
           }
         | {
-            Args: never
+            Args: { branch_id_param?: string }
             Returns: {
+              branch_id: string
               current_qty: number
               days_until_stockout: number
               id: string
