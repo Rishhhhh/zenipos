@@ -1,4 +1,16 @@
 declare module 'qz-tray' {
+  interface PrintData {
+    type?: 'raw' | 'pixel' | 'html';
+    format?: 'command' | 'plain' | 'image' | 'pdf' | 'html';
+    flavor?: 'hex' | 'base64' | 'file' | 'plain';
+    data: string | number[] | ArrayBuffer;
+    options?: Record<string, unknown>;
+  }
+
+  interface PrinterConfig {
+    // Config object returned by configs.create
+  }
+
   const qz: {
     websocket: {
       connect: () => Promise<void>;
@@ -9,9 +21,9 @@ declare module 'qz-tray' {
       find: () => Promise<string | string[]>;
     };
     configs: {
-      create: (printer: string) => any;
+      create: (printer: string, options?: Record<string, unknown>) => PrinterConfig;
     };
-    print: (config: any, data: any[]) => Promise<void>;
+    print: (config: PrinterConfig, data: (PrintData | string)[]) => Promise<void>;
   };
   export default qz;
 }
