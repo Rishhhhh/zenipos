@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 /**
  * Unified Realtime Service
@@ -160,6 +160,7 @@ export const realtimeService = new RealtimeService();
 /**
  * React hook for subscribing to table changes
  * Automatically handles cleanup on unmount
+ * OPTIMIZED: Uses ref for callback to prevent resubscription on callback change
  */
 export function useRealtimeTable(
   table: string,
@@ -171,10 +172,16 @@ export function useRealtimeTable(
   }
 ) {
   const { filter, event = '*', enabled = true } = options || {};
+  const callbackRef = React.useRef(callback);
+  
+  // Update ref on each render (no resubscription)
+  callbackRef.current = callback;
 
   useEffect(() => {
     if (!enabled) return;
 
-    return realtimeService.subscribe(table, callback, filter, event);
-  }, [table, filter, event, enabled, callback]);
+    // Stable wrapper that calls the latest callback
+    const stableCallback = (payload: any) => callbackRef.current(payload);
+    return realtimeService.subscribe(table, stableCallback, filter, event);
+  }, [table, filter, event, enabled]);
 }
