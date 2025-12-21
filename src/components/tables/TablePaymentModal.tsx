@@ -30,6 +30,15 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
 
   // Broadcast payment_pending when modal opens AND hook is ready
   useEffect(() => {
+    console.log('📺 [TablePayment] useEffect triggered:', {
+      open,
+      isLoading,
+      isLinked,
+      displayId,
+      hasBroadcasted: hasBroadcastedRef.current,
+      orderId: order?.id,
+    });
+
     // Only broadcast once per modal open
     if (!open) {
       hasBroadcastedRef.current = false;
@@ -38,13 +47,13 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
     
     // Wait for hook to finish loading
     if (isLoading) {
-      console.log('📺 Waiting for customer display hook to load...');
+      console.log('📺 [TablePayment] Waiting for customer display hook to load...');
       return;
     }
     
     // Check if display is linked
     if (!isLinked || !displayId) {
-      console.log('📺 No linked customer display found');
+      console.log('📺 [TablePayment] No linked customer display found:', { isLinked, displayId });
       return;
     }
     
