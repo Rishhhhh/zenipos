@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PaymentModal } from '@/components/pos/PaymentModal';
 import { PrintPreviewModal } from '@/components/pos/PrintPreviewModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,13 +23,40 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
   const queryClient = useQueryClient();
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [previewOrderData, setPreviewOrderData] = useState<any>(null);
+  const hasBroadcastedRef = useRef(false);
   
-  // Get linked customer display
-  const { displayId, isLinked, broadcastTablePayment, resetToIdle } = useLinkedCustomerDisplay();
+  // Get linked customer display - includes isLoading state
+  const { displayId, isLinked, isLoading, broadcastTablePayment, resetToIdle } = useLinkedCustomerDisplay();
 
-  // Broadcast payment pending when modal opens
-  const handleOpenChange = async (isOpen: boolean) => {
-    if (isOpen && isLinked && displayId) {
+  // Broadcast payment_pending when modal opens AND hook is ready
+  useEffect(() => {
+    // Only broadcast once per modal open
+    if (!open) {
+      hasBroadcastedRef.current = false;
+      return;
+    }
+    
+    // Wait for hook to finish loading
+    if (isLoading) {
+      console.log('📺 Waiting for customer display hook to load...');
+      return;
+    }
+    
+    // Check if display is linked
+    if (!isLinked || !displayId) {
+      console.log('📺 No linked customer display found');
+      return;
+    }
+    
+    // Already broadcasted for this modal open
+    if (hasBroadcastedRef.current) {
+      return;
+    }
+    
+    const broadcastPaymentPending = async () => {
+      hasBroadcastedRef.current = true;
+      console.log('📺 Broadcasting payment_pending to display:', displayId);
+      
       // Fetch order items for display
       const { data: orderData } = await supabase
         .from('orders')
@@ -63,11 +90,12 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
           total: orderData.total || 0,
           orderId: order.id,
         });
-        console.log('📺 Broadcasted payment_pending to customer display');
+        console.log('📺 Successfully broadcasted payment_pending to customer display');
       }
-    }
-    onOpenChange(isOpen);
-  };
+    };
+    
+    broadcastPaymentPending();
+  }, [open, isLoading, isLinked, displayId, order.id, table?.label, broadcastTablePayment]);
 
   const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, change?: number) => {
     try {
@@ -284,7 +312,7 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
     <>
       <PaymentModal
         open={open}
-        onOpenChange={handleOpenChange}
+        onOpenChange={onOpenChange}
         orderId={order.id}
         orderNumber={order.id.slice(0, 8)}
         total={combinedTotal}
