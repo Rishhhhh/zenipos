@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import qz from 'qz-tray';
+import { initQzSecurity } from './qzSecurity';
 
 export type CommandProfile = 'AUTO' | 'ESC_P' | 'PULSE';
 
@@ -60,6 +61,9 @@ export async function ensureQzConnected(): Promise<boolean> {
     if (typeof qz === 'undefined') {
       throw new Error('QZ Tray library not loaded');
     }
+
+    // Initialize QZ security (certificate + signature) before connecting
+    await initQzSecurity();
 
     if (!qz.websocket.isActive()) {
       await qz.websocket.connect();

@@ -1,4 +1,5 @@
 import qz from "qz-tray";
+import { initQzSecurity } from "@/lib/hardware/qzSecurity";
 
 export type PrintReceiptOpts = {
   printerName: string;
@@ -19,11 +20,13 @@ function safeText(s: string): string {
   return (s ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
-// Ensure QZ Tray is connected
+// Ensure QZ Tray is connected with security initialized
 async function ensureQzConnected(): Promise<void> {
+  // Initialize QZ security (certificate + signature) before connecting
+  await initQzSecurity();
+  
   if (qz.websocket.isActive()) return;
   
-  // Connect to QZ Tray (unsigned for dev, or use certificate for prod)
   await qz.websocket.connect();
 }
 
