@@ -4681,7 +4681,17 @@ export type Database = {
               reason: string
             }[]
           }
-      get_active_shift: { Args: { employee_id_param: string }; Returns: string }
+      get_active_shift: {
+        Args: { employee_id_param: string }
+        Returns: {
+          branch_id: string
+          clock_in_at: string
+          shift_id: string
+          status: string
+          till_expected_cash: number
+          till_session_id: string
+        }[]
+      }
       get_current_consciousness: {
         Args: never
         Returns: {
@@ -4826,15 +4836,18 @@ export type Database = {
       get_shift_summary: {
         Args: { shift_id_param: string }
         Returns: {
+          cash_sales: number
           clock_in: string
           clock_out: string
-          discounts: number
           employee_name: string
-          hours_worked: number
           orders: number
-          refunds: number
+          qr_sales: number
           sales: number
-          voids: number
+          till_actual: number
+          till_expected: number
+          till_opening: number
+          till_variance: number
+          tips: number
         }[]
       }
       get_super_admin_analytics: {

@@ -8,16 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, TrendingUp, AlertCircle, DollarSign, Download, Clock } from "lucide-react";
+import { Wallet, TrendingUp, AlertCircle, DollarSign, Download, Clock, LogIn, LogOut } from "lucide-react";
 import { format, formatDistance } from "date-fns";
 import { TillReconciliationDialog } from "@/components/admin/TillReconciliationDialog";
 import { OpenCashDrawerButton } from "@/components/hardware/OpenCashDrawerButton";
+import { useModalManager } from "@/hooks/useModalManager";
 
 export default function Cashbook() {
   const { currentBranch } = useBranch();
+  const { openModal } = useModalManager();
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
 
   // Fetch active (open) till sessions
   const { data: activeSessions, isLoading: activeLoading } = useQuery({
@@ -186,6 +189,32 @@ export default function Cashbook() {
           <p className="text-muted-foreground">Daily cash reconciliation and till management</p>
         </div>
         <div className="flex items-center gap-2">
+          {!currentShiftId ? (
+            <Button 
+              onClick={() => openModal('employeeClockIn', {
+                onSuccess: (employee: any, shiftId: string) => {
+                  setCurrentShiftId(shiftId);
+                },
+              })}
+              variant="default"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              Clock In
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => openModal('employeeClockOut', {
+                shiftId: currentShiftId,
+                onSuccess: () => {
+                  setCurrentShiftId(null);
+                },
+              })}
+              variant="secondary"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Clock Out
+            </Button>
+          )}
           <OpenCashDrawerButton variant="button" />
           <Button onClick={exportToCsv} variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />

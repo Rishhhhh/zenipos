@@ -21,12 +21,18 @@ interface OpenTillModalProps {
   }) => Promise<any>;
 }
 
+// RM denominations including coins
 const DENOMINATIONS = [
   { value: 100, label: 'RM 100' },
   { value: 50, label: 'RM 50' },
+  { value: 20, label: 'RM 20' },
   { value: 10, label: 'RM 10' },
   { value: 5, label: 'RM 5' },
   { value: 1, label: 'RM 1' },
+  { value: 0.50, label: '50 sen' },
+  { value: 0.20, label: '20 sen' },
+  { value: 0.10, label: '10 sen' },
+  { value: 0.05, label: '5 sen' },
 ];
 
 export function OpenTillModal({
@@ -43,9 +49,14 @@ export function OpenTillModal({
   const [denominations, setDenominations] = useState<Record<number, number>>({
     100: 0,
     50: 0,
+    20: 0,
     10: 0,
     5: 0,
     1: 0,
+    0.50: 0,
+    0.20: 0,
+    0.10: 0,
+    0.05: 0,
   });
 
   const updateDenomination = (value: number, count: string) => {
@@ -100,10 +111,21 @@ export function OpenTillModal({
   return (
     <GlassModal
       open={open}
-      onOpenChange={onOpenChange}
-      title="💰 Open Till Session"
+      onOpenChange={(value) => {
+        // Prevent closing without completing - till is mandatory
+        if (!value) {
+          toast({
+            variant: 'destructive',
+            title: 'Till Required',
+            description: 'You must count and enter your opening cash to start your shift.',
+          });
+          return;
+        }
+        onOpenChange(value);
+      }}
+      title="Open Till Session"
       description={`Good day, ${employeeName}! Please count your opening cash.`}
-      size="md"
+      size="lg"
       variant="default"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -113,28 +135,29 @@ export function OpenTillModal({
             <h3 className="font-semibold">Denomination Breakdown</h3>
           </div>
 
-          {DENOMINATIONS.map((denom) => (
-            <div key={denom.value} className="grid grid-cols-[1fr,auto,auto] items-center gap-3">
-              <Label htmlFor={`denom-${denom.value}`} className="text-base">
-                {denom.label}
-              </Label>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">×</span>
+          <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-2">
+            {DENOMINATIONS.map((denom) => (
+              <div key={denom.value} className="flex items-center gap-2">
+                <Label htmlFor={`denom-${denom.value}`} className="text-sm min-w-[60px]">
+                  {denom.label}
+                </Label>
+                <span className="text-muted-foreground text-sm">×</span>
                 <Input
                   id={`denom-${denom.value}`}
                   type="number"
                   min="0"
-                  value={denominations[denom.value]}
+                  value={denominations[denom.value] || ''}
                   onChange={(e) => updateDenomination(denom.value, e.target.value)}
-                  className="w-20 text-center"
+                  className="w-16 text-center h-8"
                   disabled={isSubmitting}
+                  placeholder="0"
                 />
+                <span className="text-sm font-medium min-w-[70px] text-right">
+                  RM {(denom.value * (denominations[denom.value] || 0)).toFixed(2)}
+                </span>
               </div>
-              <div className="text-right font-medium min-w-[80px]">
-                RM {(denom.value * denominations[denom.value]).toFixed(2)}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           <div className="border-t pt-3 mt-4">
             <div className="flex items-center justify-between">
@@ -147,18 +170,9 @@ export function OpenTillModal({
         </div>
 
         <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" className="flex-1" disabled={isSubmitting || totalOpeningBalance <= 0}>
+          <Button type="submit" className="w-full" disabled={isSubmitting || totalOpeningBalance <= 0}>
             {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Open Till ✅
+            Open Till & Start Shift
           </Button>
         </div>
       </form>
