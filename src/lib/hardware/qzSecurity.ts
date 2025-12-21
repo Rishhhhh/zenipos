@@ -2,13 +2,37 @@ import qz from "qz-tray";
 import { supabase } from "@/integrations/supabase/client";
 
 let initialized = false;
+let initPromise: Promise<void> | null = null;
 
 /**
  * Initialize QZ Tray security with certificate and signature promises.
  * This enables silent printing without "Allow" popups after first approval.
+ * Uses promise caching to prevent concurrent initialization attempts.
  */
 export async function initQzSecurity(): Promise<void> {
-  if (initialized) return;
+  // Already initialized - fast path
+  if (initialized) {
+    console.log('[QZ Security] Already initialized (cached)');
+    return;
+  }
+  
+  // Initialization in progress - reuse existing promise
+  if (initPromise) {
+    console.log('[QZ Security] Waiting for existing initialization...');
+    return initPromise;
+  }
+  
+  // Start new initialization
+  initPromise = doInitQzSecurity();
+  try {
+    await initPromise;
+  } finally {
+    initPromise = null;
+  }
+}
+
+async function doInitQzSecurity(): Promise<void> {
+  console.log('[QZ Security] Starting initialization...');
 
   // 1) Certificate Promise - fetches public certificate
   qz.security.setCertificatePromise((resolve, reject) => {

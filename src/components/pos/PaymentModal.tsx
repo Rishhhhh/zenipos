@@ -79,10 +79,13 @@ export function PaymentModal({
     ['.', '0', 'backspace'],
   ];
 
+  // BUILD VERSION - check console to confirm latest code is running
+  const BUILD_VERSION = '2025-01-21T01:00:00Z';
+  
   // Track payment initiation - NO cash drawer kick here!
   useEffect(() => {
     if (open && orderId) {
-      console.log('💳 PaymentModal opened - NO drawer kick here (drawer only opens at Complete Payment)');
+      console.log(`💳 PaymentModal v${BUILD_VERSION} - NO drawer kick on modal open`);
       
       // Reset auto-open tracking when modal opens
       hasAutoOpenedRef.current = false;
