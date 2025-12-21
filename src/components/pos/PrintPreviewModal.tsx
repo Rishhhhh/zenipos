@@ -213,8 +213,8 @@ export function PrintPreviewModal({
           receiptText,
           feedLines: 5,
           cut: true,
-          // Open drawer for cash payments
-          openDrawer: orderData.paymentMethod?.toLowerCase() === 'cash',
+          // NEVER open drawer from PrintPreview - drawer is opened by PaymentModal at Complete Payment
+          openDrawer: false,
         });
 
         toast.success('Receipt printed via QZ (auto-cut enabled)');
