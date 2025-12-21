@@ -8,32 +8,33 @@ import { getCashDrawerSettings } from '@/lib/hardware/cashDrawer';
 /**
  * Station icon mapping for different kitchen areas
  */
-const STATION_ICONS: Record<string, string> = {
-  'HOT KITCHEN': '🍳',
-  'KITCHEN': '🍳',
-  'GRILL': '🔥',
-  'FRY': '🍟',
-  'BAR': '🍹',
-  'DRINKS': '🍹',
-  'SALAD': '🥗',
-  'COLD PREP': '🥗',
-  'DESSERTS': '🍰',
-  'PASTRY': '🍰',
-  'EXPO': '📋',
-  'DEFAULT': '🍽️'
+// ASCII-safe station markers for thermal printing
+const STATION_MARKERS: Record<string, string> = {
+  'HOT KITCHEN': '*HOT*',
+  'KITCHEN': '*KIT*',
+  'GRILL': '*GRL*',
+  'FRY': '*FRY*',
+  'BAR': '*BAR*',
+  'DRINKS': '*DRK*',
+  'SALAD': '*SLD*',
+  'COLD PREP': '*CLD*',
+  'DESSERTS': '*DST*',
+  'PASTRY': '*PST*',
+  'EXPO': '*EXP*',
+  'DEFAULT': '*STN*'
 };
 
 /**
- * Get station icon based on station name
+ * Get station marker based on station name (ASCII-safe)
  */
-function getStationIcon(stationName: string): string {
+function getStationMarker(stationName: string): string {
   const upperName = stationName.toUpperCase();
-  for (const [key, icon] of Object.entries(STATION_ICONS)) {
+  for (const [key, marker] of Object.entries(STATION_MARKERS)) {
     if (upperName.includes(key)) {
-      return icon;
+      return marker;
     }
   }
-  return STATION_ICONS.DEFAULT;
+  return STATION_MARKERS.DEFAULT;
 }
 
 /**
@@ -88,13 +89,13 @@ export class PrintRoutingService {
   private static async generateKitchenTicketHTML(ticketData: any, stationName: string): Promise<string> {
     const { generate80mmKitchenTicketHTML } = await import('./browserPrintTemplates');
     
-    const stationIcon = getStationIcon(stationName);
+    const stationMarker = getStationMarker(stationName);
     const priority = detectPriority(ticketData.order_type);
     const allergyWarnings = extractAllergyWarnings(ticketData.items);
     
     return generate80mmKitchenTicketHTML({
       stationName,
-      stationIcon,
+      stationIcon: stationMarker,
       orderNumber: ticketData.order_number,
       timestamp: ticketData.timestamp,
       items: ticketData.items.map((item: any) => ({

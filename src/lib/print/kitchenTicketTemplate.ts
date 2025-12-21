@@ -133,16 +133,9 @@ export function generateKitchenTicket(data: KitchenTicketData): string {
     
     // Item name with quantity (HUGE TEXT)
     ticket += `${ESC}!\x30`; // Double height
-    const itemLine = `  QTY: ${item.quantity}x  ${item.name.toUpperCase().substring(0, 25)}`;
-    ticket += `|${itemLine}\n`;
+    const itemLine = `${item.quantity}x ${item.name.toUpperCase().substring(0, 28)}`;
+    ticket += `|  ${itemLine}\n`;
     ticket += `${ESC}!\x00`; // Reset
-    
-    // Quantity checkboxes
-    let checkboxLine = `          `;
-    for (let i = 0; i < Math.min(item.quantity, 8); i++) {
-      checkboxLine += `[ ] `;
-    }
-    ticket += `|${checkboxLine}\n`;
     
     ticket += `|${' '.repeat(WIDTH - 2)}|\n`;
     ticket += `+${'-'.repeat(WIDTH - 2)}+\n`;
