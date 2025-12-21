@@ -9,25 +9,48 @@ interface LinkedDisplayState {
 }
 
 export function useLinkedCustomerDisplay() {
-  const { organization } = useAuth();
+  const { organization, impersonatedOrganization } = useAuth();
   const [state, setState] = useState<LinkedDisplayState>({
     displayId: null,
     isLinked: false,
     isLoading: true,
   });
 
+  // Get the effective organization (impersonated takes priority)
+  const effectiveOrgId = impersonatedOrganization?.id || organization?.id;
+
   // Fetch linked display for current organization (not just user)
   const fetchLinkedDisplay = useCallback(async () => {
-    console.log('📺 [LinkedDisplay] Starting fetch, organization:', organization?.id);
+    console.log('📺 [LinkedDisplay] Starting fetch...');
+    console.log('📺 [LinkedDisplay] Organization from context:', effectiveOrgId);
     
     try {
-      // First try: Query by organization_id (organization-wide display)
-      if (organization?.id) {
-        console.log('📺 [LinkedDisplay] Querying by organization_id:', organization.id);
+      // First, get any active display (simplest approach - works for single-display setups)
+      const { data: anyDisplay, error: anyError } = await supabase
+        .from('pos_displays')
+        .select('display_id, organization_id')
+        .eq('active', true)
+        .order('last_activity', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!anyError && anyDisplay?.display_id) {
+        console.log('📺 [LinkedDisplay] ✅ Found active display:', anyDisplay.display_id);
+        setState({
+          displayId: anyDisplay.display_id,
+          isLinked: true,
+          isLoading: false,
+        });
+        return;
+      }
+
+      // Fallback: Try organization-specific query if org is available
+      if (effectiveOrgId) {
+        console.log('📺 [LinkedDisplay] Trying organization query:', effectiveOrgId);
         const { data: orgDisplay, error: orgError } = await supabase
           .from('pos_displays')
           .select('display_id')
-          .eq('organization_id', organization.id)
+          .eq('organization_id', effectiveOrgId)
           .eq('active', true)
           .order('last_activity', { ascending: false })
           .limit(1)
@@ -42,10 +65,9 @@ export function useLinkedCustomerDisplay() {
           });
           return;
         }
-        console.log('📺 [LinkedDisplay] No organization display found, trying user fallback');
       }
 
-      // Fallback: Query by user ID (for backwards compatibility)
+      // Last fallback: Query by user ID
       const { data: { user } } = await supabase.auth.getUser();
       console.log('📺 [LinkedDisplay] User fallback, auth user:', user?.id);
       
@@ -89,7 +111,7 @@ export function useLinkedCustomerDisplay() {
       console.error('📺 [LinkedDisplay] ❌ Unexpected error:', error);
       setState({ displayId: null, isLinked: false, isLoading: false });
     }
-  }, [organization?.id]);
+  }, [effectiveOrgId]);
 
   useEffect(() => {
     fetchLinkedDisplay();
@@ -170,9 +192,9 @@ export function useLinkedCustomerDisplay() {
       displayId: state.displayId,
       isLinked: state.isLinked,
       isLoading: state.isLoading,
-      organizationId: organization?.id,
+      effectiveOrgId,
     });
-  }, [state, organization?.id]);
+  }, [state, effectiveOrgId]);
 
   return {
     displayId: state.displayId,
