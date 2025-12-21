@@ -30,30 +30,9 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
 
   // Broadcast payment_pending when modal opens AND hook is ready
   useEffect(() => {
-    console.log('📺 [TablePayment] useEffect triggered:', {
-      open,
-      isLoading,
-      isLinked,
-      displayId,
-      hasBroadcasted: hasBroadcastedRef.current,
-      orderId: order?.id,
-    });
-
     // Only broadcast once per modal open
     if (!open) {
       hasBroadcastedRef.current = false;
-      return;
-    }
-    
-    // Wait for hook to finish loading
-    if (isLoading) {
-      console.log('📺 [TablePayment] Waiting for customer display hook to load...');
-      return;
-    }
-    
-    // Check if display is linked
-    if (!isLinked || !displayId) {
-      console.log('📺 [TablePayment] No linked customer display found:', { isLinked, displayId });
       return;
     }
     
@@ -62,9 +41,27 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
       return;
     }
     
+    // Don't wait for hook - broadcast directly to the display
     const broadcastPaymentPending = async () => {
       hasBroadcastedRef.current = true;
-      console.log('📺 Broadcasting payment_pending to display:', displayId);
+      
+      // Get the display directly from database
+      const { data: displayData } = await supabase
+        .from('pos_displays')
+        .select('display_id')
+        .eq('active', true)
+        .order('last_activity', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      const targetDisplayId = displayData?.display_id || displayId;
+      
+      if (!targetDisplayId) {
+        console.log('📺 [TablePayment] No display found for broadcast');
+        return;
+      }
+      
+      console.log('📺 [TablePayment] Broadcasting payment_pending to:', targetDisplayId);
       
       // Fetch order items for display
       const { data: orderData } = await supabase
@@ -88,23 +85,32 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
           modifiers: item.modifiers ? Object.keys(item.modifiers) : [],
         }));
         
-        // Broadcast to customer display
-        await broadcastTablePayment(displayId, {
-          mode: 'payment_pending',
-          tableLabel: orderData.tables?.label || table?.label,
-          orderItems,
-          subtotal: orderData.subtotal || 0,
-          tax: orderData.tax || 0,
-          discount: orderData.discount || 0,
-          total: orderData.total || 0,
-          orderId: order.id,
-        });
-        console.log('📺 Successfully broadcasted payment_pending to customer display');
+        // Broadcast directly to customer_display_sessions
+        const { error } = await supabase
+          .from('customer_display_sessions')
+          .upsert({
+            session_id: targetDisplayId,
+            mode: 'payment_pending',
+            table_label: orderData.tables?.label || table?.label,
+            order_items: orderItems,
+            subtotal: orderData.subtotal || 0,
+            tax: orderData.tax || 0,
+            discount: orderData.discount || 0,
+            total: orderData.total || 0,
+            order_id: order.id,
+            last_activity: new Date().toISOString(),
+          }, { onConflict: 'session_id' });
+
+        if (error) {
+          console.error('📺 [TablePayment] ❌ Broadcast failed:', error);
+        } else {
+          console.log('📺 [TablePayment] ✅ Successfully broadcasted payment_pending');
+        }
       }
     };
     
     broadcastPaymentPending();
-  }, [open, isLoading, isLinked, displayId, order.id, table?.label, broadcastTablePayment]);
+  }, [open, order.id, table?.label, displayId]);
 
   const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, change?: number) => {
     try {
