@@ -9,6 +9,7 @@ import { usePOSRealtime } from '@/hooks/usePOSRealtime';
 import { usePOSPayments } from '@/hooks/usePOSPayments';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useTillSession } from '@/contexts/TillSessionContext';
+import { useSpeedMode } from '@/hooks/useSpeedMode';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,6 +37,9 @@ export default function POS() {
   
   // Till session management
   const { activeTillSession, getCurrentCashPosition } = useTillSession();
+  
+  // Speed mode for quick service
+  const { speedMode } = useSpeedMode();
   
   // Device detection
   const { device, isMobile, isTablet } = useDeviceDetection();
@@ -489,7 +493,7 @@ export default function POS() {
         orderType={order_type || 'dine_in'}
         onConfirm={(notes) => {
           setShowOrderConfirmation(false);
-          confirmAndSendOrder.mutate(notes);
+          confirmAndSendOrder.mutate({ orderNotes: notes });
         }}
         onEdit={() => setShowOrderConfirmation(false)}
       />
@@ -618,9 +622,17 @@ export default function POS() {
                 appliedPromotions={appliedPromotions}
                 onUpdateQuantity={updateQuantity}
                 onVoidItem={voidItem}
-                onSendToKDS={() => setShowOrderConfirmation(true)}
+                onSendToKDS={() => {
+                  if (speedMode) {
+                    // Speed Mode: Skip confirmation, send directly
+                    confirmAndSendOrder.mutate({ isSpeedMode: true });
+                  } else {
+                    setShowOrderConfirmation(true);
+                  }
+                }}
                 onSplitBill={items.length > 0 ? () => setShowSplitBill(true) : undefined}
                 isSending={confirmAndSendOrder.isPending}
+                speedMode={speedMode}
               />
             </TabsContent>
           </Tabs>
@@ -753,9 +765,16 @@ export default function POS() {
                 appliedPromotions={appliedPromotions}
                 onUpdateQuantity={updateQuantity}
                 onVoidItem={voidItem}
-                onSendToKDS={() => setShowOrderConfirmation(true)}
+                onSendToKDS={() => {
+                  if (speedMode) {
+                    confirmAndSendOrder.mutate({ isSpeedMode: true });
+                  } else {
+                    setShowOrderConfirmation(true);
+                  }
+                }}
                 onSplitBill={items.length > 0 ? () => setShowSplitBill(true) : undefined}
                 isSending={confirmAndSendOrder.isPending}
+                speedMode={speedMode}
               />
             </div>
           </div>
@@ -849,9 +868,16 @@ export default function POS() {
               appliedPromotions={appliedPromotions}
               onUpdateQuantity={(id, qty) => updateQuantity(id, qty)}
               onVoidItem={(id) => voidItem(id)}
-              onSendToKDS={() => setShowOrderConfirmation(true)}
+              onSendToKDS={() => {
+                if (speedMode) {
+                  confirmAndSendOrder.mutate({ isSpeedMode: true });
+                } else {
+                  setShowOrderConfirmation(true);
+                }
+              }}
               onSplitBill={() => setShowSplitBill(true)}
               isSending={confirmAndSendOrder.isPending}
+              speedMode={speedMode}
             />
           </div>
         </div>

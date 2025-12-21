@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCartStore } from '@/lib/store/cart';
 import { useQueryConfig } from '@/hooks/useQueryConfig';
 import { PrintRoutingService } from '@/lib/print/PrintRoutingService';
+import { useSpeedMode } from '@/hooks/useSpeedMode';
 
 /**
  * Core POS business logic and data fetching
@@ -14,6 +15,7 @@ export function usePOSLogic() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const queryConfig = useQueryConfig();
+  const { speedMode } = useSpeedMode();
   
   // Cart store access
   const { 
@@ -140,12 +142,16 @@ export function usePOSLogic() {
   });
 
   // Create and send order mutation
+  // Speed Mode: Set order status to 'delivered' and skip KDS
   const confirmAndSendOrder = useMutation({
-    mutationFn: async (orderNotes?: string) => {
+    mutationFn: async (params: { orderNotes?: string; isSpeedMode?: boolean }) => {
+      const { orderNotes, isSpeedMode = speedMode } = params;
+      
       console.log('🔵 Starting order creation...', {
         items: items.length,
         table_id: useCartStore.getState().table_id,
         order_type: useCartStore.getState().order_type,
+        speedMode: isSpeedMode,
       });
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -182,6 +188,7 @@ export function usePOSLogic() {
           console.log('🔄 Found existing order, adding items:', existingOrder.id);
 
           // Insert new items into existing order
+          // Speed Mode: Set status to 'delivered' directly
           const newOrderItems = items.map((item) => ({
             order_id: existingOrder.id,
             menu_item_id: item.menu_item_id,
@@ -189,9 +196,8 @@ export function usePOSLogic() {
             unit_price: item.price,
             notes: item.notes || null,
             modifiers: item.modifiers as any || [],
-            status: 'kitchen_queue',
+            status: isSpeedMode ? 'delivered' : 'kitchen_queue',
             organization_id: existingOrder.organization_id,
-            // branch_id removed - column doesn't exist in order_items table
           }));
 
           const { error: itemsError } = await supabase
@@ -312,29 +318,34 @@ export function usePOSLogic() {
     onSuccess: async (order) => {
       console.log('✅ Order submitted successfully:', order.id);
       
-      // AUTO-PRINT: Route order to station printers (SILENT)
-      try {
-        await PrintRoutingService.routeOrder(order.id);
-        console.log('✅ Kitchen tickets auto-printed silently');
-      } catch (printError) {
+      // AUTO-PRINT: Route order to station printers (FIRE-AND-FORGET for speed)
+      // Non-blocking: Don't await, just fire off the print job
+      Promise.resolve(PrintRoutingService.routeOrder(order.id)).catch((printError) => {
         console.error('⚠️ Print routing failed:', printError);
-      }
+      });
 
-      // Update table status if dine-in
+      // Update table status if dine-in (also fire-and-forget)
       if (table_id) {
-        await supabase
-          .from('tables')
-          .update({
-            status: 'occupied',
-            current_order_id: order.id,
-            seated_at: new Date().toISOString(),
-            last_order_at: new Date().toISOString(),
-          })
-          .eq('id', table_id);
+        (async () => {
+          try {
+            await supabase
+              .from('tables')
+              .update({
+                status: 'occupied',
+                current_order_id: order.id,
+                seated_at: new Date().toISOString(),
+                last_order_at: new Date().toISOString(),
+              })
+              .eq('id', table_id);
+            console.log('✅ Table status updated');
+          } catch (err) {
+            console.error('⚠️ Table update failed:', err);
+          }
+        })();
       }
 
       toast({
-        title: "Order sent to Kitchen",
+        title: speedMode ? "Order ready for payment!" : "Order sent to Kitchen",
         description: `Order #${order.id.substring(0, 8)} - ${items.length} items`,
       });
 

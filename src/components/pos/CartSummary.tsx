@@ -20,6 +20,7 @@ interface CartSummaryProps {
   onSendToKDS: () => void;
   onSplitBill?: () => void;
   isSending: boolean;
+  speedMode?: boolean;
 }
 
 export function CartSummary({
@@ -34,6 +35,7 @@ export function CartSummary({
   onSendToKDS,
   onSplitBill,
   isSending,
+  speedMode = false,
 }: CartSummaryProps) {
   // No PIN required for pre-order edits - only for post-confirmation modifications
   const { isMobile } = useDeviceDetection();
@@ -163,7 +165,7 @@ export function CartSummary({
                 className="w-full h-12 text-base font-semibold"
               >
                 <CreditCard className="h-5 w-5 mr-2" />
-                Review Order
+                {speedMode ? 'Send Order' : 'Review Order'}
               </Button>
             </div>
           </div>
@@ -297,7 +299,7 @@ export function CartSummary({
             disabled={items.length === 0 || isSending}
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            {isSending ? 'Confirming...' : 'Review Order'}
+            {isSending ? 'Confirming...' : (speedMode ? 'Send Order' : 'Review Order')}
           </Button>
         </div>
       </div>
