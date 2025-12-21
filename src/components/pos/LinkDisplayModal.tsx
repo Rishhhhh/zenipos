@@ -1,13 +1,14 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Copy, Unlink, QrCode, AlertTriangle } from "lucide-react";
+import { Monitor, Copy, Unlink, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { QRCodeSVG } from "qrcode.react";
 
 interface LinkDisplayModalProps {
   open: boolean;
@@ -30,7 +31,8 @@ export function LinkDisplayModal({
     return currentDisplayId || `display-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
 
-  const displayUrl = `${window.location.origin}/customer-screen?displayId=${displayId}`;
+  // FIX: Route is /customer/:sessionId NOT /customer-screen?displayId=
+  const displayUrl = `${window.location.origin}/customer/${displayId}`;
   
   // Only managers can link displays (they have dual screens)
   const canLinkDisplay = role === 'manager' || role === 'owner';
@@ -142,21 +144,18 @@ export function LinkDisplayModal({
             </Alert>
           )}
 
-          {/* QR Code Placeholder */}
+          {/* QR Code - Actual scannable QR */}
           <div className="flex flex-col items-center gap-3 p-6 border rounded-lg bg-muted/30">
-            <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2">
-              <div className="text-center p-4">
-                <QrCode className="h-16 w-16 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">
-                  Scan with mobile device
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  (QR generation available with library)
-                </p>
-              </div>
+            <div className="bg-white p-4 rounded-lg border-2">
+              <QRCodeSVG
+                value={displayUrl}
+                size={180}
+                level="H"
+                includeMargin={true}
+              />
             </div>
             <p className="text-sm text-center text-muted-foreground max-w-xs">
-              Open this URL on a tablet, TV, or second monitor
+              Scan with a tablet or open on a secondary monitor
             </p>
           </div>
 

@@ -1,14 +1,26 @@
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useCustomerDisplaySync } from '@/hooks/useCustomerDisplaySync';
 import { MarketingCarousel } from '@/components/customer/MarketingCarousel';
 import { OrderDisplay } from '@/components/customer/OrderDisplay';
 import { PaymentDisplay } from '@/components/customer/PaymentDisplay';
-import { Loader2 } from 'lucide-react';
+import { ThankYouDisplay } from '@/components/customer/ThankYouDisplay';
+import { CustomerHeader } from '@/components/customer/CustomerHeader';
+import { Loader2, Wifi, WifiOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CustomerScreen() {
-  // Generate or retrieve display session ID (check URL params first)
+  const { sessionId: urlSessionId } = useParams();
+  
+  // Generate or retrieve display session ID
   const [displaySessionId] = useState(() => {
-    // Check URL parameter first
+    // Check URL parameter first (from route param)
+    if (urlSessionId) {
+      sessionStorage.setItem('customer-display-id', urlSessionId);
+      return urlSessionId;
+    }
+    
+    // Check query parameter (legacy support)
     const urlParams = new URLSearchParams(window.location.search);
     const urlDisplayId = urlParams.get('displayId');
     
@@ -31,23 +43,62 @@ export default function CustomerScreen() {
 
   // Show connection status briefly
   const [showConnecting, setShowConnecting] = useState(true);
+  
   useEffect(() => {
     if (isConnected) {
-      const timer = setTimeout(() => setShowConnecting(false), 2000);
+      const timer = setTimeout(() => setShowConnecting(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [isConnected]);
 
+  // Auto-reset to idle after thank you screen
+  const handleResetToIdle = () => {
+    // The POS will broadcast idle, but we can show marketing as fallback
+    console.log('Thank you screen complete, returning to idle');
+  };
+
+  // Fullscreen on F11 or double-click (for kiosk mode)
+  useEffect(() => {
+    const handleFullscreen = (e: KeyboardEvent) => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.();
+        } else {
+          document.exitFullscreen?.();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleFullscreen);
+    return () => window.removeEventListener('keydown', handleFullscreen);
+  }, []);
+
+  // Connection screen
   if (showConnecting || !isConnected) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
-        <Loader2 className="w-16 h-16 animate-spin text-primary mb-4" />
-        <p className="text-2xl text-muted-foreground">
-          Connecting to POS...
-        </p>
-        <p className="text-lg text-muted-foreground/70 mt-2">
-          Display ID: {displaySessionId}
-        </p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Connecting to POS...
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Customer Display
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-2 text-muted-foreground/70">
+            {isConnected ? (
+              <Wifi className="w-4 h-4 text-green-500" />
+            ) : (
+              <WifiOff className="w-4 h-4" />
+            )}
+            <span className="text-sm font-mono">{displaySessionId}</span>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -78,10 +129,10 @@ export default function CustomerScreen() {
       
       case 'complete':
         return (
-          <PaymentDisplay
+          <ThankYouDisplay
             total={displaySession.total || 0}
-            isComplete={true}
             change={displaySession.change}
+            onResetCountdownComplete={handleResetToIdle}
           />
         );
       
@@ -92,13 +143,43 @@ export default function CustomerScreen() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-background">
-      {renderContent()}
+    <div className="h-screen overflow-hidden bg-background flex flex-col">
+      {/* Connection status indicator */}
+      <AnimatePresence>
+        {displaySession.mode !== 'idle' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <CustomerHeader />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      {/* Display session ID badge (hidden in production) */}
+      {/* Main content */}
+      <div className="flex-1 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={displaySession.mode}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="h-full"
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      
+      {/* Connection status badge (dev mode only) */}
       {import.meta.env.DEV && (
-        <div className="fixed top-4 right-4 px-3 py-1 bg-black/50 text-white text-xs rounded-full font-mono">
-          {displaySessionId}
+        <div className="fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-black/70 text-white text-xs rounded-full font-mono backdrop-blur">
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span>{displaySession.mode}</span>
+          <span className="text-white/50">|</span>
+          <span className="text-white/70">{displaySessionId.substring(0, 16)}...</span>
         </div>
       )}
     </div>
