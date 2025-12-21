@@ -23,6 +23,10 @@ interface PaymentModalProps {
   orderNumber: string;
   total: number;
   onPaymentSuccess: (orderId?: string, method?: string, total?: number, change?: number) => Promise<void>;
+  // Customer display broadcast functions
+  customerDisplayId?: string | null;
+  onBroadcastPayment?: (displayId: string, qrUrl?: string) => void;
+  onBroadcastComplete?: (displayId: string, change?: number) => void;
 }
 
 export function PaymentModal({
@@ -32,6 +36,9 @@ export function PaymentModal({
   orderNumber,
   total,
   onPaymentSuccess,
+  customerDisplayId,
+  onBroadcastPayment,
+  onBroadcastComplete,
 }: PaymentModalProps) {
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('cash');
@@ -137,6 +144,11 @@ export function PaymentModal({
       if (result.success && result.qr_code_url) {
         setQrCodeUrl(result.qr_code_url);
         setTransactionId(result.transaction_id!);
+        
+        // Broadcast to customer display
+        if (customerDisplayId && onBroadcastPayment) {
+          onBroadcastPayment(customerDisplayId, result.qr_code_url);
+        }
         
         // Start polling for payment verification
         pollPaymentStatus(provider, result.transaction_id!);
