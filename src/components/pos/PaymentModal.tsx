@@ -79,9 +79,11 @@ export function PaymentModal({
     ['.', '0', 'backspace'],
   ];
 
-  // Track payment initiation and auto-open cash drawer
+  // Track payment initiation - NO cash drawer kick here!
   useEffect(() => {
     if (open && orderId) {
+      console.log('💳 PaymentModal opened - NO drawer kick here (drawer only opens at Complete Payment)');
+      
       // Reset auto-open tracking when modal opens
       hasAutoOpenedRef.current = false;
       
