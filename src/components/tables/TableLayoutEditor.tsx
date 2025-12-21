@@ -98,7 +98,7 @@ export function TableLayoutEditor({ tables, onExit, onSave }: TableLayoutEditorP
   };
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur z-50">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur z-[10100]">
       <div className="h-full flex flex-col">
         {/* Toolbar */}
         <div className="flex items-center justify-between p-4 border-b">

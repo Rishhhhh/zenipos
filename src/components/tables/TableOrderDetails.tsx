@@ -313,7 +313,7 @@ export function TableOrderDetails({ open, onOpenChange, table, onPayment }: Tabl
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto pb-24">
           <SheetHeader>
             <SheetTitle className="flex items-center justify-between">
               <span>Table {table.label}</span>
