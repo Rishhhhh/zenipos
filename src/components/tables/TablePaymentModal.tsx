@@ -4,6 +4,8 @@ import { PrintPreviewModal } from '@/components/pos/PrintPreviewModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { qzPrintReceiptEscpos, getConfiguredPrinterName } from '@/lib/print/qzEscposReceipt';
+import { buildReceiptText80mm } from '@/lib/print/receiptText80mm';
 
 interface TablePaymentModalProps {
   open: boolean;
@@ -96,9 +98,54 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
             cashier: 'Cashier' // TODO: get from employee session
           };
           
-          // Print customer receipt (browser fallback)
-          const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
-          await BrowserPrintService.print80mmReceipt(receiptData);
+          // Try QZ Tray first, fallback to browser print
+          const configuredPrinter = getConfiguredPrinterName();
+          
+          if (configuredPrinter) {
+            try {
+              // Build plain text receipt for ESC/POS
+              const receiptText = buildReceiptText80mm({
+                orgName: receiptData.restaurantName,
+                branchAddress: receiptData.address,
+                order: {
+                  id: orderId,
+                  order_number: receiptData.orderNumber,
+                  paid_at: receiptData.timestamp.toISOString(),
+                  subtotal: receiptData.subtotal,
+                  tax: receiptData.tax,
+                  total: receiptData.total,
+                  tables: { label: receiptData.tableLabel },
+                  order_items: receiptData.items.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    total_price: item.price,
+                  })),
+                },
+                paymentMethod: receiptData.paymentMethod,
+                cashReceived: receiptData.cashReceived,
+                changeGiven: receiptData.changeGiven,
+              });
+              
+              // Print via QZ Tray with cut (no drawer kick for table payments - handled by PaymentModal)
+              await qzPrintReceiptEscpos({
+                printerName: configuredPrinter,
+                receiptText,
+                cut: true,
+                openDrawer: false,
+              });
+              
+              console.log('✅ Receipt printed via QZ Tray');
+            } catch (qzError) {
+              console.warn('⚠️ QZ Tray print failed, falling back to browser:', qzError);
+              // Fallback to browser print
+              const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+              await BrowserPrintService.print80mmReceipt(receiptData);
+            }
+          } else {
+            // No QZ printer configured, use browser print
+            const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
+            await BrowserPrintService.print80mmReceipt(receiptData);
+          }
           
           // Also set preview data for modal
           console.log('✅ Setting preview data for table payment:', orderData);

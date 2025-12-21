@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { printService } from './PrintService';
 import { generateKitchenTicket } from './kitchenTicketTemplate';
+import { qzPrintReceiptEscpos, getConfiguredPrinterName } from './qzEscposReceipt';
 
 /**
  * Station icon mapping for different kitchen areas
@@ -220,6 +221,7 @@ export class PrintRoutingService {
   
   /**
    * Print ticket to station's assigned printers
+   * Priority: QZ Tray ESC/POS > Network Print > Browser Print
    */
   private static async printToStation(stationId: string, ticketData: any) {
     // Get station details and assigned printers
@@ -234,59 +236,62 @@ export class PrintRoutingService {
       return;
     }
 
+    // PRIORITY 1: Try QZ Tray ESC/POS printing first
+    const qzPrinter = getConfiguredPrinterName();
+    if (qzPrinter) {
+      try {
+        const stationIcon = getStationIcon(station.name);
+        const ticketText = generateKitchenTicket({
+          station: {
+            name: station.name,
+            color: station.color || '#8B5CF6',
+            icon: stationIcon
+          },
+          order_number: ticketData.order_number,
+          table_label: ticketData.table_label,
+          order_type: ticketData.order_type,
+          priority: ticketData.priority,
+          items: ticketData.items.map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity,
+            notes: item.notes,
+            modifiers: item.modifiers?.map((mod: any) => ({
+              name: mod.name,
+              type: mod.price && mod.price < 0 ? 'remove' : 'add'
+            })),
+            prepTime: item.prepTime
+          })),
+          timestamp: ticketData.timestamp,
+          orderNotes: undefined,
+          allergyWarnings: ticketData.allergyWarnings
+        });
+
+        await qzPrintReceiptEscpos({
+          printerName: qzPrinter,
+          receiptText: ticketText,
+          cut: true,
+          openDrawer: false,
+        });
+
+        console.log(`✅ Kitchen ticket printed via QZ Tray to ${qzPrinter}`);
+        return; // Success, no fallback needed
+      } catch (qzError) {
+        console.warn('⚠️ QZ Tray print failed, trying other methods:', qzError);
+      }
+    }
+
+    // PRIORITY 2 & 3: Network print or browser fallback
     const { data: devices } = await supabase
       .from('devices')
       .select('*')
       .eq('station_id', stationId)
       .eq('role', 'PRINTER');
     
-    // AUTO-DETECT: Try to reconnect offline browser-only printers with health check
-    if (devices && devices.length > 0) {
-      for (const device of devices) {
-        if (device.status === 'offline' && !device.ip_address && typeof window.print === 'function') {
-          // Browser printer is accessible - perform quick verification
-          try {
-            // Verify browser can create print context
-            const testIframe = document.createElement('iframe');
-            testIframe.style.display = 'none';
-            document.body.appendChild(testIframe);
-            
-            const canPrint = !!testIframe.contentWindow?.print;
-            document.body.removeChild(testIframe);
-            
-            if (canPrint) {
-              // Browser printing is available, update status
-              await supabase
-                .from('devices')
-                .update({ 
-                  status: 'online', 
-                  last_seen: new Date().toISOString() 
-                })
-                .eq('id', device.id);
-              
-              device.status = 'online'; // Update local copy
-              console.log(`✅ Auto-reconnected browser printer: ${device.name}`);
-              
-              // Log successful reconnection
-              await supabase.from('device_health_log').insert({
-                device_id: device.id,
-                status: 'online',
-                metadata: { 
-                  action: 'auto_reconnect',
-                  method: 'browser_health_check',
-                  timestamp: new Date().toISOString()
-                }
-              });
-            }
-          } catch (error) {
-            console.warn(`⚠️  Browser print verification failed for ${device.name}:`, error);
-          }
-        }
-      }
-    }
-    
     if (!devices || devices.length === 0) {
-      console.warn(`⚠️  No printers configured for station ${station.name}`);
+      console.warn(`⚠️  No printers configured for station ${station.name}, using browser fallback`);
+      const { BrowserPrintService } = await import('./BrowserPrintService');
+      const html = await this.generateKitchenTicketHTML(ticketData, station.name);
+      await BrowserPrintService.printHTML(html);
       return;
     }
     
@@ -296,14 +301,10 @@ export class PrintRoutingService {
     );
     
     if (onlinePrinters.length === 0) {
-      console.warn(`⚠️  No online printers for station ${station.name}, attempting browser fallback...`);
-      
-      // ✅ FALLBACK: Use browser print even if offline
+      console.warn(`⚠️  No online printers for station ${station.name}, using browser fallback`);
       const { BrowserPrintService } = await import('./BrowserPrintService');
       const html = await this.generateKitchenTicketHTML(ticketData, station.name);
       await BrowserPrintService.printHTML(html, devices[0].id, devices[0].name);
-      
-      console.log(`✅ Browser print fallback triggered for ${devices[0].name}`);
       return;
     }
     
