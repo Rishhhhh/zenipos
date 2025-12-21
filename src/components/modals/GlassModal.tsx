@@ -122,7 +122,7 @@ export function GlassModal({
 
   return (
     <div
-      className="glass-modal-backdrop glass-backdrop fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
+      className="glass-modal-backdrop glass-backdrop fixed inset-0 z-[10100] flex items-center justify-center animate-fade-in"
       onClick={handleBackdropClick}
     >
       <div
@@ -132,16 +132,16 @@ export function GlassModal({
         aria-labelledby="glass-modal-title"
         aria-describedby={description || ariaDescribedBy ? "glass-modal-description" : undefined}
         className={cn(
-          'glass-modal-content glass-card relative w-full shadow-2xl',
+          'glass-modal-content glass-card relative w-full shadow-2xl z-[10101]',
           'animate-scale-in',
           {
             // Default variant - centered modal
             'rounded-xl mx-4': variant === 'default' && !isDrawer,
             [sizeClasses[size]]: variant === 'default' && !isDrawer,
-            
+
             // Drawer variant - slide from bottom on mobile
             'fixed bottom-0 left-0 right-0 rounded-t-2xl max-h-[90vh] animate-slide-in-bottom': isDrawer,
-            
+
             // Fullscreen variant
             'h-screen w-screen rounded-none': isFullscreen
           },
