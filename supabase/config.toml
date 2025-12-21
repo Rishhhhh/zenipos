@@ -108,6 +108,9 @@ verify_jwt = false
 [functions.auto-complete-payments]
 verify_jwt = false
 
+[functions.qz-sign]
+verify_jwt = true
+
 [edge_runtime.functions.jarvis-alerts]
 periodic_schedule = "*/15 * * * *"
 

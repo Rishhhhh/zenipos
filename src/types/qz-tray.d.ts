@@ -11,9 +11,12 @@ declare module 'qz-tray' {
     // Config object returned by configs.create
   }
 
+  type CertificatePromiseCallback = (resolve: (cert: string) => void, reject: (error: Error) => void) => void;
+  type SignaturePromiseCallback = (toSign: string) => (resolve: (signature: string) => void, reject: (error: Error) => void) => void;
+
   const qz: {
     websocket: {
-      connect: () => Promise<void>;
+      connect: (options?: { host?: string; usingSecure?: boolean }) => Promise<void>;
       disconnect: () => Promise<void>;
       isActive: () => boolean;
     };
@@ -24,6 +27,11 @@ declare module 'qz-tray' {
       create: (printer: string, options?: Record<string, unknown>) => PrinterConfig;
     };
     print: (config: PrinterConfig, data: (PrintData | string)[]) => Promise<void>;
+    security: {
+      setCertificatePromise: (callback: CertificatePromiseCallback) => void;
+      setSignaturePromise: (callback: SignaturePromiseCallback) => void;
+      setSignatureAlgorithm: (algorithm: 'SHA1' | 'SHA256' | 'SHA512') => void;
+    };
   };
   export default qz;
 }
