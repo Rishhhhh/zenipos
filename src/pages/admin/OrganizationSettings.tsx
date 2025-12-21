@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 
 export default function OrganizationSettings() {
   return (
-    <div className="container mx-auto p-8 pb-32 max-w-6xl">
+    <div className="admin-container container mx-auto p-8 pb-32 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Organization Settings</h1>
         <p className="text-muted-foreground">
