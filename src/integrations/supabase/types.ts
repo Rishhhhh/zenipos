@@ -2489,6 +2489,7 @@ export type Database = {
           recall_requested: boolean | null
           recall_requested_at: string | null
           recall_requested_by: string | null
+          rounding_adjustment: number | null
           serving_at: string | null
           session_id: string
           status: Database["public"]["Enums"]["order_status"] | null
@@ -2522,6 +2523,7 @@ export type Database = {
           recall_requested?: boolean | null
           recall_requested_at?: string | null
           recall_requested_by?: string | null
+          rounding_adjustment?: number | null
           serving_at?: string | null
           session_id: string
           status?: Database["public"]["Enums"]["order_status"] | null
@@ -2555,6 +2557,7 @@ export type Database = {
           recall_requested?: boolean | null
           recall_requested_at?: string | null
           recall_requested_by?: string | null
+          rounding_adjustment?: number | null
           serving_at?: string | null
           session_id?: string
           status?: Database["public"]["Enums"]["order_status"] | null

@@ -45,7 +45,15 @@ export function PaymentModal({
   // Cash drawer auto-open tracking
   const hasAutoOpenedRef = useRef<boolean>(false);
 
-  const change = cashReceived ? Math.max(0, parseFloat(cashReceived) - total) : 0;
+  // Round to nearest 10 sen (0.10) for cash payments
+  // e.g., 2.02 → 2.00, 5.59 → 5.60, 4.18 → 4.20
+  const roundToNearest10Sen = (amount: number): number => {
+    return Math.round(amount * 10) / 10;
+  };
+
+  const roundedTotal = roundToNearest10Sen(total);
+  const roundingAdjustment = roundedTotal - total;
+  const change = cashReceived ? Math.max(0, parseFloat(cashReceived) - roundedTotal) : 0;
 
   const handleNumpadPress = (key: string) => {
     if (key === 'clear') {
@@ -66,7 +74,7 @@ export function PaymentModal({
   };
 
   const quickAmounts = [
-    { label: 'Exact', value: total },
+    { label: 'Exact', value: roundedTotal },
     { label: 'RM 20', value: 20 },
     { label: 'RM 50', value: 50 },
     { label: 'RM 100', value: 100 },
@@ -170,11 +178,11 @@ export function PaymentModal({
   };
 
   const handleCashPayment = async () => {
-    if (!cashReceived || parseFloat(cashReceived) < total) {
+    if (!cashReceived || parseFloat(cashReceived) < roundedTotal) {
       toast({
         variant: 'destructive',
         title: 'Insufficient Amount',
-        description: 'Cash received is less than total amount',
+        description: `Cash received is less than rounded total (RM ${roundedTotal.toFixed(2)})`,
       });
       return;
     }
@@ -191,17 +199,24 @@ export function PaymentModal({
       }
     }
     
-    await completePayment(`cash_${Date.now()}`, 'cash', change);
+    // Pass the rounded total and cash received for proper receipt printing
+    await completePayment(`cash_${Date.now()}`, 'cash', change, parseFloat(cashReceived), roundedTotal, roundingAdjustment);
   };
 
   const completePayment = async (
     txnId: string,
     method: string,
-    changeGiven: number = 0
+    changeGiven: number = 0,
+    cashReceivedAmount?: number,
+    finalTotal?: number,
+    rounding?: number
   ) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // Use rounded total for cash payments, original for QR
+      const paymentTotal = method === 'cash' && finalTotal !== undefined ? finalTotal : total;
 
       // Get organization_id from order
       const { data: orderData } = await supabase
@@ -214,7 +229,7 @@ export function PaymentModal({
         throw new Error('Could not determine organization');
       }
 
-      // Create payment record
+      // Create payment record with rounded total
       const { data: payment, error } = await supabase
         .from('payments')
         .insert({
@@ -223,7 +238,7 @@ export function PaymentModal({
           method: method === 'cash' ? 'cash' : 'qr',
           provider_ref: txnId,
           provider: method === 'cash' ? null : qrProvider,
-          amount: total,
+          amount: paymentTotal,
           change_given: changeGiven,
           status: 'completed',
         })
@@ -244,7 +259,7 @@ export function PaymentModal({
           .maybeSingle();
 
         if (tillSession) {
-          console.log('[PaymentModal] Recording cash to till_ledger:', { tillSessionId: tillSession.id, total, changeGiven });
+          console.log('[PaymentModal] Recording cash to till_ledger:', { tillSessionId: tillSession.id, total: paymentTotal, changeGiven });
 
           // Insert SALE transaction
           await supabase.from('till_ledger').insert({
@@ -252,7 +267,7 @@ export function PaymentModal({
             branch_id: tillSession.branch_id,
             organization_id: orderData.organization_id,
             transaction_type: 'sale',
-            amount: total,
+            amount: paymentTotal,
             order_id: orderId,
             payment_id: payment.id,
           });
@@ -271,7 +286,7 @@ export function PaymentModal({
           }
 
           // Update expected_cash
-          const newExpectedCash = tillSession.expected_cash + total - changeGiven;
+          const newExpectedCash = tillSession.expected_cash + paymentTotal - changeGiven;
           await supabase
             .from('till_sessions')
             .update({ expected_cash: newExpectedCash })
@@ -283,14 +298,22 @@ export function PaymentModal({
         }
       }
 
-      // Update order status and e-invoice flag
+      // Update order with rounded total and rounding adjustment
+      const orderUpdate: Record<string, any> = { 
+        status: 'completed',
+        paid_at: new Date().toISOString(),
+        einvoice_enabled: enableEInvoice,
+      };
+      
+      // For cash payments, save the rounded total
+      if (method === 'cash' && finalTotal !== undefined) {
+        orderUpdate.total = finalTotal;
+        orderUpdate.rounding_adjustment = rounding || 0;
+      }
+
       await supabase
         .from('orders')
-        .update({ 
-          status: 'completed',
-          paid_at: new Date().toISOString(),
-          einvoice_enabled: enableEInvoice 
-        })
+        .update(orderUpdate)
         .eq('id', orderId);
 
       // Get order details to check for customer
@@ -374,8 +397,8 @@ export function PaymentModal({
     <ResponsiveModal 
       open={open} 
       onOpenChange={onOpenChange}
-      title={`Payment - RM ${total.toFixed(2)}`}
-      description="Select payment method and complete transaction"
+      title={`Payment - RM ${roundedTotal.toFixed(2)}`}
+      description={roundingAdjustment !== 0 ? `Rounded from RM ${total.toFixed(2)} (${roundingAdjustment > 0 ? '+' : ''}${roundingAdjustment.toFixed(2)})` : "Select payment method and complete transaction"}
       side="bottom"
       size="lg"
     >
@@ -461,10 +484,15 @@ export function PaymentModal({
           <div className="grid grid-cols-2 gap-6">
             {/* LEFT COLUMN: Display Info Only */}
             <div className="space-y-4">
-              {/* Total Due - Large Display */}
+              {/* Total Due - Large Display with Rounding Info */}
               <div className="bg-muted/50 rounded-xl p-4 border-2 border-border">
-                <p className="text-sm text-muted-foreground mb-1">Total Due</p>
-                <p className="text-4xl font-bold text-foreground">RM {total.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground mb-1">Total Due (Rounded)</p>
+                <p className="text-4xl font-bold text-foreground">RM {roundedTotal.toFixed(2)}</p>
+                {roundingAdjustment !== 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Original: RM {total.toFixed(2)} ({roundingAdjustment > 0 ? '+' : ''}{roundingAdjustment.toFixed(2)} rounding)
+                  </p>
+                )}
               </div>
 
               {/* Cash Received Display */}
@@ -476,7 +504,7 @@ export function PaymentModal({
               </div>
 
               {/* Change Due Display */}
-              {cashReceived && parseFloat(cashReceived) >= total && (
+              {cashReceived && parseFloat(cashReceived) >= roundedTotal && (
                 <div className="bg-success/10 rounded-lg p-4 border-2 border-success/20">
                   <p className="text-sm text-muted-foreground mb-1">Change Due</p>
                   <p className="text-3xl font-bold text-success">
