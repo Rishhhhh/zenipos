@@ -391,14 +391,6 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
               {/* Auto-open toggles */}
               <div className="space-y-3 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="autoInit" className="text-sm">Auto-open on cash payment start</Label>
-                  <Switch
-                    id="autoInit"
-                    checked={settings.autoOpenOnCashInitiated}
-                    onCheckedChange={(v) => handleSettingChange('autoOpenOnCashInitiated', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
                   <Label htmlFor="autoComplete" className="text-sm">Auto-open on payment complete</Label>
                   <Switch
                     id="autoComplete"

@@ -12,7 +12,6 @@ export interface CashDrawerSettings {
   t1: number;
   t2: number;
   commandProfile: CommandProfile;
-  autoOpenOnCashInitiated: boolean;
   autoOpenOnCashCompleted: boolean;
   requireManagerPinForManualOpen: boolean;
   paperSize: PaperSize;
@@ -35,7 +34,6 @@ const DEFAULT_SETTINGS: CashDrawerSettings = {
   t1: 25,
   t2: 250,
   commandProfile: 'AUTO',
-  autoOpenOnCashInitiated: false,
   autoOpenOnCashCompleted: true,
   requireManagerPinForManualOpen: true,
   paperSize: '80mm',
@@ -45,7 +43,17 @@ export function getCashDrawerSettings(): CashDrawerSettings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+      const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+      
+      // Migration: Remove deprecated autoOpenOnCashInitiated setting
+      // Drawer should ONLY open at Complete Payment, never on modal open
+      if ('autoOpenOnCashInitiated' in parsed) {
+        console.log('[CashDrawer] Migrating settings: removing deprecated autoOpenOnCashInitiated');
+        delete (parsed as any).autoOpenOnCashInitiated;
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed));
+      }
+      
+      return parsed;
     }
   } catch (e) {
     console.warn('Failed to load cash drawer settings:', e);
