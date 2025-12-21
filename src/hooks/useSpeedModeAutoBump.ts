@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
-const AUTO_BUMP_DELAY_MS = 5000; // 5 seconds
+const AUTO_BUMP_DELAY_MS = 0; // Immediate bump in speed mode
 
 interface PendingOrder {
   id: string;
@@ -77,23 +77,17 @@ export function useSpeedModeAutoBump() {
     }
   }, [queryClient]);
 
-  // Schedule auto-bump for an order
-  const scheduleAutoBump = useCallback((orderId: string, createdAt: string) => {
-    // Don't schedule if already scheduled or processing
-    if (timeoutsRef.current.has(orderId) || processingRef.current.has(orderId)) {
+  // Immediately bump an order (no delay in speed mode)
+  const scheduleAutoBump = useCallback((orderId: string, _createdAt: string) => {
+    // Don't process if already processing
+    if (processingRef.current.has(orderId)) {
       return;
     }
 
-    const orderAge = Date.now() - new Date(createdAt).getTime();
-    const delay = Math.max(0, AUTO_BUMP_DELAY_MS - orderAge);
-
-    console.log(`[AutoBump] Scheduling order ${orderId.slice(0, 8)} in ${delay}ms`);
-
-    const timeout = setTimeout(() => {
-      bumpOrder(orderId);
-    }, delay);
-
-    timeoutsRef.current.set(orderId, timeout);
+    console.log(`[AutoBump] ⚡ Immediately bumping order ${orderId.slice(0, 8)}`);
+    
+    // Bump immediately - no delay
+    bumpOrder(orderId);
   }, [bumpOrder]);
 
   // Cancel scheduled auto-bump
