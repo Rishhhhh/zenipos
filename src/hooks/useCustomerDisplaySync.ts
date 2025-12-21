@@ -2,7 +2,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
 
-export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
+export type DisplayMode = 'ordering' | 'payment' | 'payment_pending' | 'idle' | 'complete';
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  modifiers?: string[];
+}
 
 interface DisplaySession {
   mode: DisplayMode;
@@ -16,6 +23,10 @@ interface DisplaySession {
   discount?: number;
   paymentQR?: string;
   change?: number;
+  // New fields for table payment flow
+  orderItems?: OrderItem[];
+  paymentMethod?: string;
+  orderId?: string;
 }
 
 export function useCustomerDisplaySync(displaySessionId: string) {
@@ -65,6 +76,9 @@ export function useCustomerDisplaySync(displaySessionId: string) {
           discount: existing.discount || 0,
           paymentQR: existing.payment_qr,
           change: existing.change,
+          orderItems: Array.isArray(existing.order_items) ? (existing.order_items as unknown as OrderItem[]) : [],
+          paymentMethod: existing.payment_method,
+          orderId: existing.order_id,
         });
         setLastSync(new Date());
       } else {
@@ -125,6 +139,9 @@ export function useCustomerDisplaySync(displaySessionId: string) {
               discount: newData.discount || 0,
               paymentQR: newData.payment_qr,
               change: newData.change,
+              orderItems: Array.isArray(newData.order_items) ? (newData.order_items as unknown as OrderItem[]) : [],
+              paymentMethod: newData.payment_method,
+              orderId: newData.order_id,
             });
             setLastSync(new Date());
           }
@@ -158,24 +175,28 @@ export function useBroadcastToCustomerDisplay() {
   const broadcastUpdate = useCallback(async (displaySessionId: string, update: Partial<DisplaySession>) => {
     try {
       // Update customer display session - postgres_changes will propagate to Customer Display
+      const updateData = {
+        session_id: displaySessionId,
+        pos_session_id: cart.sessionId,
+        mode: update.mode || 'ordering',
+        nfc_card_uid: update.nfcCardUid || null,
+        table_label: update.tableLabel || null,
+        cart_items: update.cartItems || [],
+        subtotal: update.subtotal || 0,
+        tax: update.tax || 0,
+        total: update.total || 0,
+        discount: update.discount || 0,
+        payment_qr: update.paymentQR || null,
+        change: update.change || null,
+        order_items: update.orderItems || [],
+        payment_method: update.paymentMethod || null,
+        order_id: update.orderId || null,
+        last_activity: new Date().toISOString(),
+      };
+      
       const { error } = await supabase
         .from('customer_display_sessions')
-        .upsert({
-          session_id: displaySessionId,
-          pos_session_id: cart.sessionId,
-          mode: update.mode || 'ordering',
-          nfc_card_uid: update.nfcCardUid || null,
-          table_label: update.tableLabel || null,
-          // Cart data fields
-          cart_items: update.cartItems || [],
-          subtotal: update.subtotal || 0,
-          tax: update.tax || 0,
-          total: update.total || 0,
-          discount: update.discount || 0,
-          payment_qr: update.paymentQR || null,
-          change: update.change || null,
-          last_activity: new Date().toISOString(),
-        }, { onConflict: 'session_id' });
+        .upsert(updateData as any, { onConflict: 'session_id' });
 
       if (error) {
         console.error('❌ Display update failed:', error);
@@ -235,13 +256,16 @@ export function useBroadcastToCustomerDisplay() {
     });
   }, [cart.sessionId, cart.getTotal, broadcastUpdate]);
 
-  const broadcastComplete = useCallback((displaySessionId: string, change?: number) => {
+  const broadcastComplete = useCallback((displaySessionId: string, change?: number, paymentMethod?: string, orderItems?: OrderItem[]) => {
     broadcastUpdate(displaySessionId, {
       mode: 'complete',
       posSessionId: cart.sessionId,
       change,
+      paymentMethod,
+      orderItems,
+      total: cart.getTotal(),
     });
-  }, [cart.sessionId, broadcastUpdate]);
+  }, [cart.sessionId, cart.getTotal, broadcastUpdate]);
 
   const broadcastIdle = useCallback((displaySessionId: string) => {
     broadcastUpdate(displaySessionId, {
@@ -256,6 +280,9 @@ export function useBroadcastToCustomerDisplay() {
       discount: 0,
       paymentQR: undefined,
       change: undefined,
+      orderItems: [],
+      paymentMethod: undefined,
+      orderId: undefined,
     });
   }, [broadcastUpdate]);
 

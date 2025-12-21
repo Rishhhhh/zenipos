@@ -8,6 +8,7 @@ import { qzPrintReceiptEscpos, getConfiguredPrinterName } from '@/lib/print/qzEs
 import { buildReceiptText80mm } from '@/lib/print/receiptText80mm';
 import { buildReceiptText58mm } from '@/lib/print/receiptText58mm';
 import { getCashDrawerSettings } from '@/lib/hardware/cashDrawer';
+import { useLinkedCustomerDisplay } from '@/hooks/useLinkedCustomerDisplay';
 
 interface TablePaymentModalProps {
   open: boolean;
@@ -22,10 +23,55 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
   const queryClient = useQueryClient();
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [previewOrderData, setPreviewOrderData] = useState<any>(null);
+  
+  // Get linked customer display
+  const { displayId, isLinked, broadcastTablePayment, resetToIdle } = useLinkedCustomerDisplay();
 
-  const handlePaymentSuccess = async (orderId?: string) => {
+  // Broadcast payment pending when modal opens
+  const handleOpenChange = async (isOpen: boolean) => {
+    if (isOpen && isLinked && displayId) {
+      // Fetch order items for display
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          tables!table_id(label),
+          order_items(
+            *,
+            menu_items(id, name)
+          )
+        `)
+        .eq('id', order.id)
+        .single();
+      
+      if (orderData) {
+        const orderItems = (orderData.order_items || []).map((item: any) => ({
+          name: item.menu_items?.name || 'Unknown Item',
+          quantity: item.quantity,
+          price: (item.unit_price || 0) * item.quantity,
+          modifiers: item.modifiers ? Object.keys(item.modifiers) : [],
+        }));
+        
+        // Broadcast to customer display
+        await broadcastTablePayment(displayId, {
+          mode: 'payment_pending',
+          tableLabel: orderData.tables?.label || table?.label,
+          orderItems,
+          subtotal: orderData.subtotal || 0,
+          tax: orderData.tax || 0,
+          discount: orderData.discount || 0,
+          total: orderData.total || 0,
+          orderId: order.id,
+        });
+        console.log('📺 Broadcasted payment_pending to customer display');
+      }
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, change?: number) => {
     try {
-      console.log('💰 Table Payment Success:', { orderId, table });
+      console.log('💰 Table Payment Success:', { orderId, table, paymentMethod, change });
       
       // Get ALL orders for this table
       const orderIds = table?.current_orders?.map((o: any) => o.id) || [order.id];
@@ -69,6 +115,38 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
           .single();
         
         if (!orderError && orderData) {
+          // Prepare order items for customer display
+          const orderItems = (orderData.order_items || []).map((item: any) => ({
+            name: item.menu_items?.name || 'Unknown Item',
+            quantity: item.quantity,
+            price: (item.unit_price || 0) * item.quantity,
+            modifiers: item.modifiers ? Object.keys(item.modifiers) : [],
+          }));
+          
+          // Broadcast complete to customer display
+          if (isLinked && displayId) {
+            await broadcastTablePayment(displayId, {
+              mode: 'complete',
+              tableLabel: orderData.tables?.label || table?.label,
+              orderItems,
+              subtotal: orderData.subtotal || 0,
+              tax: orderData.tax || 0,
+              total: orderData.total || 0,
+              change: change || 0,
+              paymentMethod: paymentMethod || 'cash',
+              orderId,
+            });
+            console.log('📺 Broadcasted complete to customer display');
+            
+            // Auto-reset to idle after 10 seconds
+            setTimeout(() => {
+              if (displayId) {
+                resetToIdle(displayId);
+                console.log('📺 Reset customer display to idle');
+              }
+            }, 10000);
+          }
+          
           // Fetch organization details
           const { data: orgData } = await supabase
             .from('organizations')
@@ -85,19 +163,19 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
             tableLabel: orderData.tables?.label || undefined,
             orderType: orderData.order_type?.replace('_', ' ').toUpperCase() || 'DINE IN',
             timestamp: new Date(orderData.paid_at || new Date()),
-            items: (orderData.order_items || []).map((item: any) => ({
-              name: item.menu_items?.name || 'Unknown Item',
+            items: orderItems.map((item: any) => ({
+              name: item.name,
               quantity: item.quantity,
-              price: (item.unit_price || 0) * item.quantity,
-              modifiers: item.modifiers ? Object.keys(item.modifiers) : []
+              price: item.price,
+              modifiers: item.modifiers,
             })),
             subtotal: orderData.subtotal || 0,
             tax: orderData.tax || 0,
             total: orderData.total || 0,
-            paymentMethod: 'Cash', // TODO: get from payment modal
-            cashReceived: undefined, // TODO: get from payment modal
-            changeGiven: undefined, // TODO: get from payment modal
-            cashier: 'Cashier' // TODO: get from employee session
+            paymentMethod: paymentMethod || 'Cash',
+            cashReceived: undefined,
+            changeGiven: change,
+            cashier: 'Cashier'
           };
           
           // Try QZ Tray first, fallback to browser print
@@ -206,7 +284,7 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
     <>
       <PaymentModal
         open={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={handleOpenChange}
         orderId={order.id}
         orderNumber={order.id.slice(0, 8)}
         total={combinedTotal}

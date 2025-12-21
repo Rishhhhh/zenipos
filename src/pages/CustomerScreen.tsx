@@ -4,10 +4,12 @@ import { useCustomerDisplaySync } from '@/hooks/useCustomerDisplaySync';
 import { MarketingCarousel } from '@/components/customer/MarketingCarousel';
 import { OrderDisplay } from '@/components/customer/OrderDisplay';
 import { PaymentDisplay } from '@/components/customer/PaymentDisplay';
+import { PaymentPendingDisplay } from '@/components/customer/PaymentPendingDisplay';
 import { ThankYouDisplay } from '@/components/customer/ThankYouDisplay';
 import { CustomerHeader } from '@/components/customer/CustomerHeader';
 import { Loader2, Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function CustomerScreen() {
   const { sessionId: urlSessionId } = useParams();
@@ -52,9 +54,25 @@ export default function CustomerScreen() {
   }, [isConnected]);
 
   // Auto-reset to idle after thank you screen
-  const handleResetToIdle = () => {
-    // The POS will broadcast idle, but we can show marketing as fallback
-    console.log('Thank you screen complete, returning to idle');
+  const handleResetToIdle = async () => {
+    console.log('Thank you screen complete, resetting to idle');
+    // Update DB to idle mode
+    await supabase
+      .from('customer_display_sessions')
+      .update({
+        mode: 'idle',
+        cart_items: [],
+        order_items: [],
+        subtotal: 0,
+        tax: 0,
+        discount: 0,
+        total: 0,
+        change: null,
+        payment_method: null,
+        payment_qr: null,
+        last_activity: new Date().toISOString(),
+      })
+      .eq('session_id', displaySessionId);
   };
 
   // Fullscreen on F11 or double-click (for kiosk mode)
@@ -153,6 +171,18 @@ export default function CustomerScreen() {
           />
         );
       
+      case 'payment_pending':
+        return (
+          <PaymentPendingDisplay
+            tableLabel={displaySession.tableLabel}
+            orderItems={displaySession.orderItems || []}
+            subtotal={displaySession.subtotal || 0}
+            tax={displaySession.tax || 0}
+            discount={displaySession.discount || 0}
+            total={displaySession.total || 0}
+          />
+        );
+      
       case 'payment':
         return (
           <PaymentDisplay
@@ -167,6 +197,9 @@ export default function CustomerScreen() {
           <ThankYouDisplay
             total={displaySession.total || 0}
             change={displaySession.change}
+            paymentMethod={displaySession.paymentMethod}
+            orderItems={displaySession.orderItems}
+            tableLabel={displaySession.tableLabel}
             onResetCountdownComplete={handleResetToIdle}
           />
         );
