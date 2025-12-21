@@ -594,6 +594,9 @@ export type Database = {
           last_activity: string | null
           mode: string
           nfc_card_uid: string | null
+          order_id: string | null
+          order_items: Json | null
+          payment_method: string | null
           payment_qr: string | null
           pos_session_id: string | null
           session_id: string
@@ -611,6 +614,9 @@ export type Database = {
           last_activity?: string | null
           mode?: string
           nfc_card_uid?: string | null
+          order_id?: string | null
+          order_items?: Json | null
+          payment_method?: string | null
           payment_qr?: string | null
           pos_session_id?: string | null
           session_id: string
@@ -628,6 +634,9 @@ export type Database = {
           last_activity?: string | null
           mode?: string
           nfc_card_uid?: string | null
+          order_id?: string | null
+          order_items?: Json | null
+          payment_method?: string | null
           payment_qr?: string | null
           pos_session_id?: string | null
           session_id?: string
@@ -636,7 +645,15 @@ export type Database = {
           tax?: number | null
           total?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_display_sessions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
