@@ -4,13 +4,16 @@ import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGesture } from '@use-gesture/react';
 import { haptics } from '@/lib/haptics';
+import { Zap } from 'lucide-react';
 import { DockIcon } from './DockIcon';
 import { DockSeparator } from './DockSeparator';
-import { getVisibleApps, DOCK_UTILITIES } from './dockConfig';
+import { getVisibleApps, DOCK_UTILITIES, SPEED_MODE_APP_IDS } from './dockConfig';
 import type { AppRole } from './dockConfig';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { MobileBottomNav } from './MobileBottomNav';
+import { useNavbarConfig } from '@/hooks/useNavbarConfig';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function MacDock() {
   const navigate = useNavigate();
@@ -19,8 +22,11 @@ export function MacDock() {
   const { role, logout } = useAuth();
   const [swipeOffset, setSwipeOffset] = useState(0);
   const { device, isMobile } = useDeviceDetection();
+  const { navbarModules, speedMode } = useNavbarConfig();
 
-  const visibleApps = getVisibleApps(role as AppRole);
+  // In speed mode, use fixed 4 modules; otherwise use saved navbar config
+  const moduleFilter = speedMode ? SPEED_MODE_APP_IDS : navbarModules;
+  const visibleApps = getVisibleApps(role as AppRole, moduleFilter);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -173,6 +179,20 @@ export function MacDock() {
       }}
     >
       <div className="glass-dock rounded-2xl px-3 py-2 flex items-center gap-0.5 shadow-2xl border border-primary/10">
+        {/* Speed Mode Indicator */}
+        {speedMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-10 h-10 flex items-center justify-center text-primary animate-pulse">
+                <Zap className="w-5 h-5" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              Speed Mode Active
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* App Icons */}
         {visibleApps.map((app) => (
           <DockIcon
