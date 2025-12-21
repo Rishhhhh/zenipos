@@ -2,6 +2,7 @@
  * Kitchen Ticket Template Generator
  * Generates ESC/POS formatted tickets for 80mm kitchen printers
  * OPTIMIZED FOR KITCHEN STAFF - Large text, bold items, NO PRICES
+ * Uses ASCII-only characters for maximum printer compatibility
  */
 
 export interface KitchenTicketData {
@@ -22,16 +23,29 @@ export interface KitchenTicketData {
       type?: 'add' | 'remove';
     }>;
     notes?: string;
-    prepTime?: number;
   }>;
   timestamp: Date;
   orderNotes?: string;
   allergyWarnings?: string[];
 }
 
+const WIDTH = 42; // 80mm printer character width
+
+function line(ch = "-"): string {
+  return ch.repeat(WIDTH);
+}
+
+function center(s: string, n: number): string {
+  s = s ?? "";
+  if (s.length >= n) return s.slice(0, n);
+  const pad = Math.floor((n - s.length) / 2);
+  return " ".repeat(pad) + s + " ".repeat(n - s.length - pad);
+}
+
 /**
  * Generates an 80mm kitchen ticket in ESC/POS format
  * Designed for easy reading in busy kitchen environments
+ * Uses ASCII-only characters for QZ Tray compatibility
  */
 export function generateKitchenTicket(data: KitchenTicketData): string {
   // ESC/POS control commands
@@ -46,19 +60,18 @@ export function generateKitchenTicket(data: KitchenTicketData): string {
   // ============ STATION HEADER (HUGE) ============
   ticket += `${ESC}a\x01`; // Center align
   ticket += `${ESC}!\x38`; // Double height + double width + emphasized
-  const stationIcon = data.station.icon || '🍳';
-  ticket += `${stationIcon} ${data.station.name.toUpperCase()}\n`;
+  ticket += `* ${data.station.name.toUpperCase()} *\n`;
   ticket += `${ESC}!\x00`; // Reset text style
   
   ticket += `\n`;
-  ticket += `${'='.repeat(42)}\n\n`;
+  ticket += `${line('=')}\n\n`;
   
   // ============ ORDER NUMBER (GIANT) ============
   ticket += `${ESC}!\x38`; // Double height + double width
   ticket += `ORDER #${data.order_number}\n`;
   ticket += `${ESC}!\x00`; // Reset
   ticket += `\n`;
-  ticket += `${'='.repeat(42)}\n`;
+  ticket += `${line('=')}\n`;
   ticket += `${ESC}a\x00`; // Left align
   
   // ============ ORDER INFO ============
@@ -81,30 +94,32 @@ export function generateKitchenTicket(data: KitchenTicketData): string {
   
   ticket += `Type: ${data.order_type.toUpperCase()}`;
   
-  // Priority indicator
-  if (data.priority) {
-    const priorityIcon = data.priority === 'urgent' ? '🔴' : 
-                        data.priority === 'rush' ? '🟡' : '⚪';
-    ticket += `     ${priorityIcon} ${data.priority.toUpperCase()}`;
+  // Priority indicator (ASCII only)
+  if (data.priority && data.priority !== 'normal') {
+    const priorityText = data.priority === 'urgent' ? '[!!!] URGENT' : 
+                        data.priority === 'rush' ? '[!!] RUSH' : '';
+    if (priorityText) {
+      ticket += `     ${priorityText}`;
+    }
   }
   
   ticket += `\n`;
   ticket += `${ESC}!\x00`; // Reset
   
-  ticket += `${'='.repeat(42)}\n`;
+  ticket += `${line('=')}\n`;
   ticket += `\n`;
   
-  // ============ ALLERGY WARNINGS (RED ALERT) ============
+  // ============ ALLERGY WARNINGS ============
   if (data.allergyWarnings && data.allergyWarnings.length > 0) {
     ticket += `${ESC}!\x30`; // Double height
     ticket += `${ESC}\x45\x01`; // Bold on
     data.allergyWarnings.forEach(warning => {
-      ticket += `⚠️  ${warning.toUpperCase()}  ⚠️\n`;
+      ticket += `*** ${warning.toUpperCase()} ***\n`;
     });
     ticket += `${ESC}\x45\x00`; // Bold off
     ticket += `${ESC}!\x00`; // Reset
     ticket += `\n`;
-    ticket += `${'='.repeat(42)}\n`;
+    ticket += `${line('=')}\n`;
     ticket += `\n`;
   }
   
@@ -112,29 +127,30 @@ export function generateKitchenTicket(data: KitchenTicketData): string {
   const totalItems = data.items.reduce((sum, item) => sum + item.quantity, 0);
   
   data.items.forEach((item, index) => {
-    // Item box separator
-    ticket += `┏${'━'.repeat(40)}┓\n`;
-    ticket += `┃${' '.repeat(40)}┃\n`;
+    // Item box separator (ASCII only)
+    ticket += `+${'-'.repeat(WIDTH - 2)}+\n`;
+    ticket += `|${' '.repeat(WIDTH - 2)}|\n`;
     
     // Item name with quantity (HUGE TEXT)
     ticket += `${ESC}!\x30`; // Double height
-    ticket += `┃  QTY: ${item.quantity}x  ${item.name.toUpperCase().substring(0, 25)}\n`;
+    const itemLine = `  QTY: ${item.quantity}x  ${item.name.toUpperCase().substring(0, 25)}`;
+    ticket += `|${itemLine}\n`;
     ticket += `${ESC}!\x00`; // Reset
     
     // Quantity checkboxes
-    ticket += `┃          `;
-    for (let i = 0; i < item.quantity; i++) {
-      ticket += `[☐] `;
+    let checkboxLine = `          `;
+    for (let i = 0; i < Math.min(item.quantity, 8); i++) {
+      checkboxLine += `[ ] `;
     }
-    ticket += `\n`;
+    ticket += `|${checkboxLine}\n`;
     
-    ticket += `┃${' '.repeat(40)}┃\n`;
-    ticket += `┗${'━'.repeat(40)}┛\n`;
+    ticket += `|${' '.repeat(WIDTH - 2)}|\n`;
+    ticket += `+${'-'.repeat(WIDTH - 2)}+\n`;
     
     // Modifiers (NO PRICES, with +/- symbols)
     if (item.modifiers && item.modifiers.length > 0) {
       item.modifiers.forEach((mod) => {
-        const symbol = mod.type === 'remove' ? '➖' : '➕';
+        const symbol = mod.type === 'remove' ? '-' : '+';
         ticket += `     ${symbol} ${mod.name}\n`;
       });
     }
@@ -142,18 +158,13 @@ export function generateKitchenTicket(data: KitchenTicketData): string {
     // Special notes (EMPHASIZED)
     if (item.notes) {
       ticket += `\n`;
-      ticket += `     ⚠️  ${item.notes.toUpperCase()}  ⚠️\n`;
-    }
-    
-    // Prep time if available
-    if (item.prepTime) {
-      ticket += `     ⏱️  Prep: ~${item.prepTime} min\n`;
+      ticket += `     *** ${item.notes.toUpperCase()} ***\n`;
     }
     
     // Space between items
     if (index < data.items.length - 1) {
       ticket += `\n`;
-      ticket += `${'═'.repeat(42)}\n`;
+      ticket += `${line('=')}\n`;
       ticket += `\n`;
     }
   });
@@ -161,17 +172,17 @@ export function generateKitchenTicket(data: KitchenTicketData): string {
   // ============ ORDER NOTES ============
   if (data.orderNotes) {
     ticket += `\n`;
-    ticket += `${'='.repeat(42)}\n`;
+    ticket += `${line('=')}\n`;
     ticket += `${ESC}!\x10`; // Emphasized
-    ticket += `📝 SPECIAL INSTRUCTIONS:\n`;
+    ticket += `>>> SPECIAL INSTRUCTIONS:\n`;
     ticket += `${data.orderNotes.toUpperCase()}\n`;
     ticket += `${ESC}!\x00`; // Reset
-    ticket += `${'='.repeat(42)}\n`;
+    ticket += `${line('=')}\n`;
   }
   
   // ============ FOOTER ============
   ticket += `\n`;
-  ticket += `${'='.repeat(42)}\n`;
+  ticket += `${line('=')}\n`;
   ticket += `${ESC}a\x01`; // Center align
   ticket += `${ESC}!\x10`; // Emphasized
   ticket += `TOTAL ITEMS: ${totalItems}\n`;
@@ -206,7 +217,7 @@ export function generateTestTicket(printerName: string, stationName: string): st
   ticket += `${ESC}!\x00`;
   
   ticket += `\n`;
-  ticket += `${'='.repeat(42)}\n`;
+  ticket += `${line('=')}\n`;
   ticket += `${ESC}a\x00`; // Left align
   
   // Info
@@ -220,15 +231,15 @@ export function generateTestTicket(printerName: string, stationName: string): st
   
   // Test patterns
   ticket += `\n`;
-  ticket += `${'='.repeat(42)}\n`;
+  ticket += `${line('=')}\n`;
   ticket += `Line Test:\n`;
   ticket += `1234567890123456789012345678901234567890\n`;
-  ticket += `${'='.repeat(42)}\n`;
+  ticket += `${line('=')}\n`;
   
   // Footer
   ticket += `\n`;
   ticket += `${ESC}a\x01`; // Center
-  ticket += `✓ Test Successful\n`;
+  ticket += `[OK] Test Successful\n`;
   
   // Cut
   ticket += `\n\n`;
