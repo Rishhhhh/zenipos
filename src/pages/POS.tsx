@@ -264,10 +264,8 @@ export default function POS() {
       // If no order type or table, show table selection
       if (!order_type || (order_type === 'dine_in' && !table_id)) {
         console.log('⚡ Speed Mode: Opening table selection (skipping NFC)');
-        // Set a virtual NFC card ID for speed mode tracking
-        if (!nfc_card_id) {
-          setNFCCardId('speed-mode-virtual', 'SPEED');
-        }
+        // In speed mode, NFC is skipped - leave nfc_card_id as null
+        // The database expects a UUID or null, not a fake string
         const timer = setTimeout(() => setShowTableSelect(true), 50);
         return () => clearTimeout(timer);
       }
