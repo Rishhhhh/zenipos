@@ -101,20 +101,8 @@ export function PaymentModal({
           }
         });
       
-      // Auto-open cash drawer on cash payment initiation
-      if (paymentMethod === 'cash') {
-        const settings = getCashDrawerSettings();
-        if (settings.autoOpenOnCashInitiated && !hasAutoOpenedRef.current) {
-          kickCashDrawer('cash_payment_initiated', { orderId }).then(result => {
-            if (result.success) {
-              hasAutoOpenedRef.current = true;
-              console.log('💰 Cash drawer auto-opened on payment initiation');
-            }
-          });
-        }
-      }
     }
-  }, [open, orderId, paymentMethod]);
+  }, [open, orderId]);
   
   // Reset tracking when modal closes
   useEffect(() => {

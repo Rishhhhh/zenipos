@@ -114,13 +114,6 @@ export function generateKitchenTicket58mm(data: KitchenTicketData): string {
     ticket += `${item.quantity}x ${itemName}\n`;
     ticket += `${ESC}!\x00`; // Reset
     
-    // Checkboxes (compact)
-    let checkboxes = '   ';
-    for (let i = 0; i < Math.min(item.quantity, 5); i++) {
-      checkboxes += '[ ]';
-    }
-    ticket += `${checkboxes}\n`;
-    
     // Modifiers
     if (item.modifiers && item.modifiers.length > 0) {
       item.modifiers.forEach((mod) => {

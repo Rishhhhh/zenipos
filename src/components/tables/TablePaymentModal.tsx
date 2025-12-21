@@ -88,7 +88,7 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
             items: (orderData.order_items || []).map((item: any) => ({
               name: item.menu_items?.name || 'Unknown Item',
               quantity: item.quantity,
-              price: item.price * item.quantity,
+              price: (item.unit_price || 0) * item.quantity,
               modifiers: item.modifiers ? Object.keys(item.modifiers) : []
             })),
             subtotal: orderData.subtotal || 0,
@@ -106,49 +106,55 @@ export function TablePaymentModal({ open, onOpenChange, order, table, onSuccess 
           const paperSize = settings.paperSize || '80mm';
           
           if (configuredPrinter) {
-            try {
-              // Build plain text receipt for ESC/POS based on paper size
-              const receiptParams = {
-                orgName: receiptData.restaurantName,
-                branchAddress: receiptData.address,
-                order: {
-                  id: orderId,
-                  order_number: receiptData.orderNumber,
-                  paid_at: receiptData.timestamp.toISOString(),
-                  subtotal: receiptData.subtotal,
-                  tax: receiptData.tax,
-                  total: receiptData.total,
-                  tables: { label: receiptData.tableLabel },
-                  order_items: receiptData.items.map(item => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    total_price: item.price,
-                  })),
-                },
-                paymentMethod: receiptData.paymentMethod,
-                cashReceived: receiptData.cashReceived,
-                changeGiven: receiptData.changeGiven,
-              };
-              
-              const receiptText = paperSize === '58mm' 
-                ? buildReceiptText58mm(receiptParams)
-                : buildReceiptText80mm(receiptParams);
-              
-              // Print via QZ Tray with cut (no drawer kick for table payments - handled by PaymentModal)
-              await qzPrintReceiptEscpos({
-                printerName: configuredPrinter,
-                receiptText,
-                cut: true,
-                openDrawer: false,
+            // Build plain text receipt for ESC/POS based on paper size
+            const receiptParams = {
+              orgName: receiptData.restaurantName,
+              branchAddress: receiptData.address,
+              order: {
+                id: orderId,
+                order_number: receiptData.orderNumber,
+                paid_at: receiptData.timestamp.toISOString(),
+                subtotal: receiptData.subtotal,
+                tax: receiptData.tax,
+                total: receiptData.total,
+                tables: { label: receiptData.tableLabel },
+                order_items: receiptData.items.map(item => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  total_price: item.price,
+                })),
+              },
+              paymentMethod: receiptData.paymentMethod,
+              cashReceived: receiptData.cashReceived,
+              changeGiven: receiptData.changeGiven,
+            };
+            
+            const receiptText = paperSize === '58mm' 
+              ? buildReceiptText58mm(receiptParams)
+              : buildReceiptText80mm(receiptParams);
+            
+            // Print in background (non-blocking)
+            qzPrintReceiptEscpos({
+              printerName: configuredPrinter,
+              receiptText,
+              cut: true,
+              openDrawer: false,
+            })
+              .then(() => {
+                console.log(`✅ Receipt printed via QZ Tray (${paperSize})`);
+                toast({
+                  title: 'Receipt Printed',
+                  description: 'Receipt sent to printer successfully',
+                });
+              })
+              .catch((qzError) => {
+                console.warn('⚠️ QZ Tray print failed:', qzError);
+                toast({
+                  variant: 'destructive',
+                  title: 'Print Failed',
+                  description: 'Could not print receipt. Try browser print.',
+                });
               });
-              
-              console.log(`✅ Receipt printed via QZ Tray (${paperSize})`);
-            } catch (qzError) {
-              console.warn('⚠️ QZ Tray print failed, falling back to browser:', qzError);
-              // Fallback to browser print
-              const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
-              await BrowserPrintService.print80mmReceipt(receiptData);
-            }
           } else {
             // No QZ printer configured, use browser print
             const { BrowserPrintService } = await import('@/lib/print/BrowserPrintService');
