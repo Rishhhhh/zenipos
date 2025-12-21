@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ImageIcon, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ImageIcon, Tag, Plus } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,16 +23,20 @@ interface MenuItem {
   image_url: string | null;
   description: string | null;
 }
+
 interface ItemGridProps {
   items: MenuItem[] | undefined;
   isLoading: boolean;
   onAddItem: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
+  onOpenModifiers?: (item: Omit<CartItem, 'id' | 'quantity'>) => void;
   categoryId?: string;
 }
+
 export function ItemGrid({
   items,
   isLoading,
   onAddItem,
+  onOpenModifiers,
   categoryId
 }: ItemGridProps) {
   const queryClient = useQueryClient();
@@ -61,6 +66,23 @@ export function ItemGrid({
     isEightySixed,
     getEightySixInfo
   } = useEightySixItems();
+
+  // Fetch which items have modifiers (category-level)
+  const { data: itemsWithModifiers } = useQuery({
+    queryKey: ['items-with-modifiers'],
+    queryFn: async () => {
+      // Get all category IDs that have modifier groups
+      const { data, error } = await supabase
+        .from('category_modifier_groups')
+        .select('category_id');
+      
+      if (error) throw error;
+      
+      // Return unique category IDs as a Set for O(1) lookup
+      return new Set(data?.map(d => d.category_id) || []);
+    },
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
 
   // PREFETCH: Load modifiers on hover for instant modal open
   const handleItemHover = useCallback((menuItemId: string) => {
@@ -112,6 +134,12 @@ export function ItemGrid({
   const filteredItems = useMemo(() => items?.filter(item => !categoryId || item.category_id === categoryId) || [], [items, categoryId]);
   const hasActivePromos = promotions && promotions.length > 0;
 
+  // Check if item has modifiers based on its category
+  const hasModifiers = useCallback((categoryId: string | null) => {
+    if (!categoryId || !itemsWithModifiers) return false;
+    return itemsWithModifiers.has(categoryId);
+  }, [itemsWithModifiers]);
+
   const handleItemClick = useCallback((item: MenuItem) => {
     onAddItem({
       menu_item_id: item.id,
@@ -119,6 +147,17 @@ export function ItemGrid({
       price: Number(item.price)
     });
   }, [onAddItem]);
+
+  const handleModifierClick = useCallback((e: React.MouseEvent, item: MenuItem) => {
+    e.stopPropagation(); // Prevent card click
+    if (onOpenModifiers) {
+      onOpenModifiers({
+        menu_item_id: item.id,
+        name: item.name,
+        price: Number(item.price)
+      });
+    }
+  }, [onOpenModifiers]);
   
   if (isLoading) {
     return <div className="h-full p-4">
@@ -143,6 +182,7 @@ export function ItemGrid({
             const is86d = isEightySixed(item.id);
             const eightySixInfo = is86d ? getEightySixInfo(item.id) : null;
             const isAvailable = item.in_stock && !is86d;
+            const itemHasModifiers = hasModifiers(item.category_id);
             
             return <Card 
               key={item.id} 
@@ -208,6 +248,19 @@ export function ItemGrid({
                   <Tag className="h-3 w-3 mr-1" />
                   Promo
                 </Badge>
+              )}
+
+              {/* Add-ons button - only show for items with modifiers */}
+              {isAvailable && itemHasModifiers && onOpenModifiers && (
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute bottom-2 right-2 h-8 w-8 rounded-full shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={(e) => handleModifierClick(e, item)}
+                  title="Add with modifiers"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               )}
             </Card>;
           })}
