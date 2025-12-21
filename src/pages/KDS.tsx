@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRealtimeTable } from "@/lib/realtime/RealtimeService";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { Check, Clock, RotateCcw, Edit } from "lucide-react";
+import { Check, Clock, RotateCcw, Edit, Zap } from "lucide-react";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { RecallOrderModal } from "@/components/pos/RecallOrderModal";
 import { ModifyOrderModal } from "@/components/pos/ModifyOrderModal";
@@ -17,6 +17,8 @@ import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { getGridClasses, getGapClasses } from "@/lib/utils/responsiveGrid";
 import { cn } from "@/lib/utils";
 import { useQueryConfig } from "@/hooks/useQueryConfig";
+import { useSpeedMode } from "@/hooks/useSpeedMode";
+import { Progress } from "@/components/ui/progress";
 
 interface Order {
   id: string;
@@ -53,6 +55,11 @@ export default function KDS() {
   const lastUpdateRef = useRef(Date.now());
   const [selectedOrderForRecall, setSelectedOrderForRecall] = useState<string | null>(null);
   const [selectedOrderForModify, setSelectedOrderForModify] = useState<string | null>(null);
+  
+  // Speed mode for auto-bump
+  const { speedMode } = useSpeedMode();
+  const [autoBumpTimers, setAutoBumpTimers] = useState<Record<string, number>>({});
+  const autoBumpIntervalsRef = useRef<Record<string, NodeJS.Timeout>>({});
   
   // Device detection for responsive layouts
   const { device, isMobile } = useDeviceDetection();
@@ -113,6 +120,68 @@ export default function KDS() {
   useRealtimeTable('orders', () => {
     queryClient.invalidateQueries({ queryKey: ['orders', 'pending'] });
   });
+
+  // Auto-bump timer for speed mode (5 seconds countdown)
+  const startAutoBumpTimer = useCallback((orderId: string) => {
+    if (autoBumpIntervalsRef.current[orderId]) return; // Already running
+    
+    setAutoBumpTimers(prev => ({ ...prev, [orderId]: 5 }));
+    
+    const interval = setInterval(() => {
+      setAutoBumpTimers(prev => {
+        const remaining = (prev[orderId] || 5) - 1;
+        if (remaining <= 0) {
+          clearInterval(autoBumpIntervalsRef.current[orderId]);
+          delete autoBumpIntervalsRef.current[orderId];
+          // Trigger auto-bump
+          bumpOrder.mutate(orderId);
+          const { [orderId]: _, ...rest } = prev;
+          return rest;
+        }
+        return { ...prev, [orderId]: remaining };
+      });
+    }, 1000);
+    
+    autoBumpIntervalsRef.current[orderId] = interval;
+  }, []);
+
+  const cancelAutoBumpTimer = useCallback((orderId: string) => {
+    if (autoBumpIntervalsRef.current[orderId]) {
+      clearInterval(autoBumpIntervalsRef.current[orderId]);
+      delete autoBumpIntervalsRef.current[orderId];
+    }
+    setAutoBumpTimers(prev => {
+      const { [orderId]: _, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  // Start auto-bump timers for new orders in speed mode
+  useEffect(() => {
+    if (!speedMode || !orders) return;
+    
+    orders.forEach(order => {
+      if (!autoBumpTimers[order.id] && !autoBumpIntervalsRef.current[order.id]) {
+        startAutoBumpTimer(order.id);
+      }
+    });
+    
+    // Cleanup: remove timers for orders that no longer exist
+    Object.keys(autoBumpTimers).forEach(orderId => {
+      if (!orders.find(o => o.id === orderId)) {
+        cancelAutoBumpTimer(orderId);
+      }
+    });
+  }, [speedMode, orders, autoBumpTimers, startAutoBumpTimer, cancelAutoBumpTimer]);
+
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(autoBumpIntervalsRef.current).forEach(interval => {
+        clearInterval(interval);
+      });
+    };
+  }, []);
 
   // Bump order mutation
   const bumpOrder = useMutation({
@@ -225,7 +294,15 @@ export default function KDS() {
   return (
     <div className="kiosk-layout p-8 overflow-y-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Kitchen Display</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-foreground">Kitchen Display</h1>
+          {speedMode && (
+            <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
+              <Zap className="w-3 h-3 mr-1" />
+              Auto-Bump
+            </Badge>
+          )}
+        </div>
         <div className="text-lg font-medium text-muted-foreground">
           {orders?.length || 0} orders in queue
         </div>
@@ -294,6 +371,23 @@ export default function KDS() {
                   </Badge>
                 )}
 
+                {/* Speed Mode Auto-Bump Progress */}
+                {speedMode && autoBumpTimers[order.id] !== undefined && (
+                  <div className="mb-3 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Zap className="w-3 h-3 text-primary" />
+                        Auto-bump in
+                      </span>
+                      <span className="font-bold text-primary">{autoBumpTimers[order.id]}s</span>
+                    </div>
+                    <Progress 
+                      value={(autoBumpTimers[order.id] / 5) * 100} 
+                      className="h-1.5"
+                    />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-3 gap-2">
                   <Button
                     size="sm"
@@ -313,7 +407,10 @@ export default function KDS() {
                   <Button
                     className="col-span-1"
                     variant="default"
-                    onClick={() => bumpOrder.mutate(order.id)}
+                    onClick={() => {
+                      cancelAutoBumpTimer(order.id);
+                      bumpOrder.mutate(order.id);
+                    }}
                     disabled={bumpOrder.isPending}
                   >
                     <Check className="h-4 w-4" />

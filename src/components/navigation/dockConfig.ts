@@ -1,4 +1,4 @@
-import { Monitor, ChefHat, Flame, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen, LayoutGrid } from 'lucide-react';
+import { Monitor, ChefHat, Flame, Package, BarChart3, Settings, Moon, Sun, LogOut, FileText, BookOpen, LayoutGrid, Wallet } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type AppRole = 'staff' | 'manager' | 'owner' | 'kitchen';
@@ -47,11 +47,19 @@ export const DOCK_APPS: DockApp[] = [
     roles: ['staff', 'manager', 'owner', 'kitchen'],
   },
   {
+    id: 'cashbook',
+    label: 'Cashbook',
+    icon: Wallet,
+    route: '/admin/cashbook',
+    shortcut: '⌘4',
+    roles: ['manager', 'owner'],
+  },
+  {
     id: 'inventory',
     label: 'Inventory',
     icon: Package,
     route: '/admin/inventory',
-    shortcut: '⌘4',
+    shortcut: '⌘5',
     roles: ['manager', 'owner'],
   },
   {
@@ -59,7 +67,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Reports',
     icon: BarChart3,
     route: '/admin/reports',
-    shortcut: '⌘5',
+    shortcut: '⌘6',
     roles: ['manager', 'owner'],
   },
   {
@@ -67,7 +75,7 @@ export const DOCK_APPS: DockApp[] = [
     label: 'Admin',
     icon: Settings,
     route: '/admin',
-    shortcut: '⌘6',
+    shortcut: '⌘7',
     roles: ['owner'],
   },
   {
@@ -96,6 +104,9 @@ export const DOCK_APPS: DockApp[] = [
   },
 ];
 
+// Speed mode fixed modules (only 4)
+export const SPEED_MODE_APP_IDS = ['pos', 'tables', 'cashbook', 'admin'];
+
 export const DOCK_UTILITIES: DockUtility[] = [
   {
     id: 'theme',
@@ -114,7 +125,22 @@ export const DOCK_UTILITIES: DockUtility[] = [
   },
 ];
 
-export function getVisibleApps(role: AppRole | null): DockApp[] {
+/**
+ * Get visible apps based on role and optional module filter
+ * @param role User role
+ * @param moduleIds Optional array of module IDs to filter (for speed mode or custom config)
+ */
+export function getVisibleApps(role: AppRole | null, moduleIds?: string[]): DockApp[] {
   if (!role) return [];
-  return DOCK_APPS.filter(app => app.roles.includes(role));
+  
+  let apps = DOCK_APPS.filter(app => app.roles.includes(role));
+  
+  // If moduleIds provided, filter to only those modules
+  if (moduleIds && moduleIds.length > 0) {
+    apps = apps.filter(app => moduleIds.includes(app.id));
+    // Sort by the order in moduleIds
+    apps.sort((a, b) => moduleIds.indexOf(a.id) - moduleIds.indexOf(b.id));
+  }
+  
+  return apps;
 }

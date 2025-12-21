@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { MapPin, Monitor, NfcIcon, ChevronRight, ShoppingCart, Wallet } from 'lucide-react';
+import { MapPin, Monitor, NfcIcon, ChevronRight, ShoppingCart, Wallet, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Import extracted components
@@ -249,8 +249,9 @@ export default function POS() {
   } = usePOSPayments(broadcastIdle, customerDisplayId, setPreviewOrderData, setShowPrintPreview);
 
   // NFC-first flow: Direct to table selection after card scan
+  // In Speed Mode: Skip NFC card selection entirely, go straight to table selection
   useEffect(() => {
-    console.log('🔍 POS Flow Check:', { nfc_card_id, order_type, table_id });
+    console.log('🔍 POS Flow Check:', { nfc_card_id, order_type, table_id, speedMode });
     
     // EXIT EARLY: If everything is set, don't show any modals
     if (nfc_card_id && order_type && (order_type === 'takeaway' || table_id)) {
@@ -258,7 +259,22 @@ export default function POS() {
       return;
     }
     
-    // Step 1: No card? Show NFC selection
+    // Speed Mode: Skip NFC entirely, go to table selection
+    if (speedMode) {
+      // If no order type or table, show table selection
+      if (!order_type || (order_type === 'dine_in' && !table_id)) {
+        console.log('⚡ Speed Mode: Opening table selection (skipping NFC)');
+        // Set a virtual NFC card ID for speed mode tracking
+        if (!nfc_card_id) {
+          setNFCCardId('speed-mode-virtual', 'SPEED');
+        }
+        const timer = setTimeout(() => setShowTableSelect(true), 50);
+        return () => clearTimeout(timer);
+      }
+      return;
+    }
+    
+    // Normal Mode: Step 1 - No card? Show NFC selection
     if (!nfc_card_id) {
       console.log('📱 Opening NFC card selection');
       setShowNFCCardSelect(true);
@@ -271,7 +287,7 @@ export default function POS() {
       const timer = setTimeout(() => setShowTableSelect(true), 50);
       return () => clearTimeout(timer);
     }
-  }, [nfc_card_id, order_type, table_id]);
+  }, [nfc_card_id, order_type, table_id, speedMode]);
 
   // Open modifier modal when pendingItem is set (prevents race condition)
   useEffect(() => {
@@ -287,8 +303,16 @@ export default function POS() {
       <div className="h-14 border-b flex items-center justify-between px-4 gap-3 flex-shrink-0">
         {/* LEFT: Status Badges */}
         <div className="flex items-center gap-2">
-          {/* NFC Card Badge */}
-          {nfc_card_id && (
+          {/* Speed Mode Indicator */}
+          {speedMode && (
+            <Badge variant="secondary" className="text-sm px-3 py-1.5 bg-primary/20 text-primary border-primary/30">
+              <Zap className="h-3.5 w-3.5 mr-1.5" />
+              Speed
+            </Badge>
+          )}
+          
+          {/* NFC Card Badge - Hidden in Speed Mode */}
+          {nfc_card_id && !speedMode && (
             <Badge
               variant="outline"
               className="text-sm px-3 py-1.5 bg-emerald-500/10 border-emerald-500 cursor-pointer hover:bg-emerald-500/20 transition-colors"
