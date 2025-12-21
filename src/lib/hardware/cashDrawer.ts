@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS: CashDrawerSettings = {
   t1: 25,
   t2: 250,
   commandProfile: 'AUTO',
-  autoOpenOnCashInitiated: true,
+  autoOpenOnCashInitiated: false,
   autoOpenOnCashCompleted: true,
   requireManagerPinForManualOpen: true,
 };
