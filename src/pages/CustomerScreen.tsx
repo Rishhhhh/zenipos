@@ -39,7 +39,7 @@ export default function CustomerScreen() {
     return newId;
   });
 
-  const { displaySession, isConnected } = useCustomerDisplaySync(displaySessionId);
+  const { displaySession, isConnected, error, lastSync } = useCustomerDisplaySync(displaySessionId);
 
   // Show connection status briefly
   const [showConnecting, setShowConnecting] = useState(true);
@@ -74,6 +74,36 @@ export default function CustomerScreen() {
     return () => window.removeEventListener('keydown', handleFullscreen);
   }, []);
 
+  // Error screen
+  if (error) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-destructive/5 via-background to-muted">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md px-4"
+        >
+          <WifiOff className="w-16 h-16 text-destructive mx-auto mb-6" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Connection Error
+          </h1>
+          <p className="text-lg text-muted-foreground mb-4">
+            {error}
+          </p>
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm font-mono text-muted-foreground">
+            Session: {displaySessionId}
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Retry Connection
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   // Connection screen
   if (showConnecting || !isConnected) {
     return (
@@ -98,6 +128,11 @@ export default function CustomerScreen() {
             )}
             <span className="text-sm font-mono">{displaySessionId}</span>
           </div>
+          {lastSync && (
+            <div className="mt-2 text-xs text-muted-foreground/50">
+              Last sync: {lastSync.toLocaleTimeString()}
+            </div>
+          )}
         </motion.div>
       </div>
     );

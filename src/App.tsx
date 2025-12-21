@@ -156,36 +156,53 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-const App = () => (
+// Separate component for customer screen that doesn't need BranchProvider
+const CustomerScreenApp = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <BranchProvider>
-          <TillSessionProvider>
-            <WidgetRefreshProvider>
-              <ModalProvider>
-                <TooltipProvider>
-            <Suspense fallback={
-              <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading...</p>
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading display...</p>
+          </div>
+        </div>
+      }>
+        <Toaster />
+        <Sonner />
+        <CustomerScreen />
+      </Suspense>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
+
+// Main app with full provider tree
+const MainApp = () => (
+  <AuthProvider>
+    <BranchProvider>
+      <TillSessionProvider>
+        <WidgetRefreshProvider>
+          <ModalProvider>
+            <TooltipProvider>
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading...</p>
+                  </div>
                 </div>
-              </div>
-            }>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+              }>
+                <Toaster />
+                <Sonner />
                 <AppLayout>
                   <Routes>
-              {/* Public Routes */}
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/register" element={
-                <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
-                  <Register />
-                </Suspense>
-              } />
-              <Route path="/customer/:sessionId" element={<CustomerScreen />} />
+                    {/* Public Routes */}
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/register" element={
+                      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
+                        <Register />
+                      </Suspense>
+                    } />
               
               {/* Organization-Protected Routes (org auth only) */}
               <Route path="/login" element={
@@ -580,19 +597,32 @@ const App = () => (
               <Route path="/documentation" element={<Documentation />} />
               <Route path="/documentation/:slug" element={<Documentation />} />
               
-              {/* Catch-all redirect to auth */}
-              <Route path="*" element={<Navigate to="/auth" replace />} />
+                    {/* Catch-all redirect to auth */}
+                    <Route path="*" element={<Navigate to="/auth" replace />} />
                   </Routes>
                 </AppLayout>
-              </BrowserRouter>
-            </Suspense>
-              </TooltipProvider>
-            </ModalProvider>
-          </WidgetRefreshProvider>
-        </TillSessionProvider>
-      </BranchProvider>
-    </AuthProvider>
-  </ThemeProvider>
+              </Suspense>
+            </TooltipProvider>
+          </ModalProvider>
+        </WidgetRefreshProvider>
+      </TillSessionProvider>
+    </BranchProvider>
+  </AuthProvider>
+);
+
+// Root App component that handles customer screen routing separately
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <BrowserRouter>
+        <Routes>
+          {/* Customer screen route - outside BranchProvider */}
+          <Route path="/customer/:sessionId" element={<CustomerScreenApp />} />
+          {/* All other routes go through MainApp */}
+          <Route path="*" element={<MainApp />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

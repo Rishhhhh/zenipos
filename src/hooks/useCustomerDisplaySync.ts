@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/lib/store/cart';
-import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 export type DisplayMode = 'ordering' | 'payment' | 'idle' | 'complete';
 
@@ -25,55 +24,129 @@ export function useCustomerDisplaySync(displaySessionId: string) {
     posSessionId: null,
   });
   const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
 
+  // Initialize session and fetch initial state
   useEffect(() => {
+    if (!displaySessionId) {
+      console.error('[CustomerDisplay] No display session ID provided');
+      setError('No display session ID');
+      return;
+    }
+
     const initSession = async () => {
-      const { error } = await supabase
-        .from('customer_display_sessions')
-        .upsert({
-          session_id: displaySessionId,
-          mode: 'idle',
-          last_activity: new Date().toISOString(),
-        }, { onConflict: 'session_id' });
+      console.log('[CustomerDisplay] Initializing session:', displaySessionId);
       
-      if (error) {
-        console.error('Failed to init display session:', error);
+      // First, try to fetch existing session
+      const { data: existing, error: fetchError } = await supabase
+        .from('customer_display_sessions')
+        .select('*')
+        .eq('session_id', displaySessionId)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error('[CustomerDisplay] Failed to fetch session:', fetchError);
+        setError(`Fetch failed: ${fetchError.message}`);
+        return;
+      }
+
+      if (existing) {
+        console.log('[CustomerDisplay] Found existing session:', existing);
+        setDisplaySession({
+          mode: existing.mode as DisplayMode,
+          posSessionId: existing.pos_session_id,
+          nfcCardUid: existing.nfc_card_uid,
+          tableLabel: existing.table_label,
+          cartItems: Array.isArray(existing.cart_items) ? existing.cart_items : [],
+          subtotal: existing.subtotal || 0,
+          tax: existing.tax || 0,
+          total: existing.total || 0,
+          discount: existing.discount || 0,
+          paymentQR: existing.payment_qr,
+          change: existing.change,
+        });
+        setLastSync(new Date());
+      } else {
+        // Create new session if doesn't exist
+        console.log('[CustomerDisplay] Creating new session');
+        const { error: upsertError } = await supabase
+          .from('customer_display_sessions')
+          .upsert({
+            session_id: displaySessionId,
+            mode: 'idle',
+            last_activity: new Date().toISOString(),
+          }, { onConflict: 'session_id' });
+        
+        if (upsertError) {
+          console.error('[CustomerDisplay] Failed to create session:', upsertError);
+          setError(`Create failed: ${upsertError.message}`);
+          return;
+        }
       }
       
       setIsConnected(true);
+      setError(null);
+      console.log('[CustomerDisplay] ✅ Session initialized successfully');
     };
 
     initSession();
   }, [displaySessionId]);
 
-  // Real-time subscription using unified service
-  useRealtimeTable(
-    'customer_display_sessions',
-    (payload) => {
-      console.log('✅ Display session updated:', payload);
-      if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-        setDisplaySession({
-          mode: payload.new.mode,
-          posSessionId: payload.new.pos_session_id,
-          nfcCardUid: payload.new.nfc_card_uid,
-          tableLabel: payload.new.table_label,
-          cartItems: payload.new.cart_items || [],
-          subtotal: payload.new.subtotal || 0,
-          tax: payload.new.tax || 0,
-          total: payload.new.total || 0,
-          discount: payload.new.discount || 0,
-          paymentQR: payload.new.payment_qr,
-          change: payload.new.change,
-        });
-      }
-    },
-    {
-      filter: `session_id=eq.${displaySessionId}`,
-      enabled: !!displaySessionId,
-    }
-  );
+  // Direct Supabase realtime subscription (bypassing RealtimeService for simpler public access)
+  useEffect(() => {
+    if (!displaySessionId || !isConnected) return;
 
-  return { displaySession, isConnected };
+    console.log('[CustomerDisplay] Setting up realtime subscription for:', displaySessionId);
+
+    const channel = supabase
+      .channel(`customer-display-${displaySessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'customer_display_sessions',
+          filter: `session_id=eq.${displaySessionId}`,
+        },
+        (payload) => {
+          console.log('[CustomerDisplay] ✅ Realtime update received:', payload);
+          const newData = payload.new as any;
+          if (newData) {
+            setDisplaySession({
+              mode: newData.mode as DisplayMode,
+              posSessionId: newData.pos_session_id,
+              nfcCardUid: newData.nfc_card_uid,
+              tableLabel: newData.table_label,
+              cartItems: Array.isArray(newData.cart_items) ? newData.cart_items : [],
+              subtotal: newData.subtotal || 0,
+              tax: newData.tax || 0,
+              total: newData.total || 0,
+              discount: newData.discount || 0,
+              paymentQR: newData.payment_qr,
+              change: newData.change,
+            });
+            setLastSync(new Date());
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[CustomerDisplay] Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[CustomerDisplay] ✅ Realtime subscription active');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[CustomerDisplay] ❌ Realtime subscription failed');
+          setError('Realtime connection failed');
+        }
+      });
+
+    return () => {
+      console.log('[CustomerDisplay] Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [displaySessionId, isConnected]);
+
+  return { displaySession, isConnected, error, lastSync };
 }
 
 // Hook for POS to broadcast to customer display
