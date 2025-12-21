@@ -56,7 +56,7 @@ export function ResponsiveModal({
             <SheetTitle>{title}</SheetTitle>
             {description && <SheetDescription>{description}</SheetDescription>}
           </SheetHeader>
-          <div className="mt-4">{children}</div>
+          <div className="mt-4 pb-20">{children}</div>
         </SheetContent>
       </Sheet>
     );
@@ -75,7 +75,7 @@ export function ResponsiveModal({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="mt-4">{children}</div>
+        <div className="mt-4 pb-6">{children}</div>
       </DialogContent>
     </Dialog>
   );

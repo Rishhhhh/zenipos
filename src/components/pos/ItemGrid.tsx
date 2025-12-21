@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Tag, Plus } from "lucide-react";
+import { ImageIcon, Tag, MoreHorizontal } from "lucide-react";
 import type { CartItem } from "@/lib/store/cart";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,12 +254,12 @@ export function ItemGrid({
               {isAvailable && itemHasModifiers && onOpenModifiers && (
                 <Button
                   size="icon"
-                  variant="secondary"
-                  className="absolute bottom-2 right-2 h-8 w-8 rounded-full shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
+                  variant="ghost"
+                  className="absolute bottom-2 right-2 h-6 w-6 rounded-full shadow-lg bg-black/60 text-white hover:bg-black/80 backdrop-blur-sm"
                   onClick={(e) => handleModifierClick(e, item)}
                   title="Add with modifiers"
                 >
-                  <Plus className="h-4 w-4" />
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               )}
             </Card>;
