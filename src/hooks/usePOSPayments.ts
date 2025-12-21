@@ -25,10 +25,13 @@ export function usePOSPayments(
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<any>(null);
 
   const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, totalAmount?: number, changeGiven?: number): Promise<void> => {
+    const cashReceived = totalAmount ? (totalAmount + (changeGiven || 0)) : undefined;
+    
     console.log('💰 Payment Success Handler Called:', {
       orderId,
       paymentMethod,
       totalAmount,
+      cashReceived,
       changeGiven,
       hasSetPreviewOrderData: !!setPreviewOrderData,
       hasSetShowPrintPreview: !!setShowPrintPreview
@@ -95,7 +98,7 @@ export function usePOSPayments(
         console.log('📄 Order fetch result:', { order, error });
         
         if (!error && order) {
-          console.log('✅ Setting preview data and showing modal');
+          console.log('✅ Setting preview data with cash/change:', { cashReceived, changeGiven, paymentMethod });
           setPreviewOrderData({
             orderId: orderId,
             orderNumber: orderId.substring(0, 8),
@@ -104,6 +107,9 @@ export function usePOSPayments(
             tax: order.tax,
             total: order.total,
             timestamp: order.paid_at,
+            paymentMethod: paymentMethod?.toUpperCase() || 'CASH',
+            cashReceived: cashReceived,
+            changeGiven: changeGiven || 0,
           });
           setShowPrintPreview(true);
           console.log('✅ Preview modal should now be visible');

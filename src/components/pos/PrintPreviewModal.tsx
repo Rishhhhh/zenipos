@@ -157,25 +157,26 @@ export function PrintPreviewModal({
     }
   }, [open, orderData]);
 
-  // Generate customer receipt
+  // Generate customer receipt with cash/change
   const customerReceipt = generate58mmReceipt({
     order_id: orderData.orderId,
     order_number: orderData.orderNumber,
     items: orderData.items.map(item => ({
-      name: item.name,
+      name: item.menu_items?.name || item.name || 'Item',
       quantity: item.quantity,
-      price: item.price,
-      total: item.price * item.quantity,
+      price: item.unit_price || item.price || 0,
+      total: (item.unit_price || item.price || 0) * item.quantity,
     })),
     subtotal: orderData.subtotal,
     tax: orderData.tax,
     total: orderData.total,
-    payment_method: 'Pending',
-    timestamp: orderData.timestamp,
+    payment_method: orderData.paymentMethod || 'CASH',
+    timestamp: orderData.timestamp ? new Date(orderData.timestamp) : new Date(),
+    cash_received: orderData.cashReceived,
+    change_given: orderData.changeGiven,
   }, {
-    restaurantName: 'ZeniPOS Restaurant',
-    address: '123 Main St, City',
-    cashier: 'Cashier 01',
+    restaurantName: orgName,
+    address: branchName || '',
   });
 
   const handleSendToPrinter = async () => {
