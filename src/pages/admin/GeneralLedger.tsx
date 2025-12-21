@@ -9,14 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, Download, Filter, AlertCircle } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Download, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { TransactionDetailModal } from "@/components/admin/TransactionDetailModal";
+import { HeaderWithClockIn } from "@/components/layout/HeaderWithClockIn";
 
 export default function GeneralLedger() {
   const { currentBranch } = useBranch();
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [filterType, setFilterType] = useState<string>("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
   console.log('[GeneralLedger] Render state:', {
     currentBranch: currentBranch ? { id: currentBranch.id, name: currentBranch.name } : null,
@@ -392,7 +395,11 @@ export default function GeneralLedger() {
                   const isDebit = txn.type === 'refund';
                   
                   return (
-                    <TableRow key={`${txn.type}-${txn.id}-${idx}`}>
+                    <TableRow 
+                      key={`${txn.type}-${txn.id}-${idx}`}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedTransaction(txn)}
+                    >
                       <TableCell className="text-sm">
                         {format(new Date(txn.created_at), "MMM dd, yyyy HH:mm")}
                       </TableCell>
@@ -411,16 +418,16 @@ export default function GeneralLedger() {
                         {txn.order_id ? txn.order_id.substring(0, 8) : '-'}
                       </TableCell>
                       <TableCell className={`text-right font-medium ${
-                        isCredit ? 'text-success' : isDebit ? 'text-destructive' : ''
+                        isCredit ? 'text-green-600' : isDebit ? 'text-destructive' : ''
                       }`}>
                         {isCredit ? '+' : isDebit ? '-' : ''}RM {Math.abs(Number(txn.amount)).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={
-                          txn.status === 'completed' ? 'success' : 
-                          txn.status === 'pending' ? 'default' : 
+                          txn.status === 'completed' ? 'default' : 
+                          txn.status === 'pending' ? 'secondary' : 
                           'secondary'
-                        }>
+                        } className={txn.status === 'completed' ? 'bg-green-500' : ''}>
                           {txn.status}
                         </Badge>
                       </TableCell>
@@ -432,6 +439,14 @@ export default function GeneralLedger() {
           )}
         </CardContent>
       </Card>
+
+      <TransactionDetailModal
+        open={!!selectedTransaction}
+        onOpenChange={(open) => !open && setSelectedTransaction(null)}
+        transaction={selectedTransaction}
+      />
     </div>
+  );
+}
   );
 }

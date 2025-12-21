@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Loader2, Wallet, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,13 +27,22 @@ interface CloseTillModalProps {
   onSuccess: () => void;
 }
 
+// RM denominations including coins
 const DENOMINATIONS = [
   { value: 100, label: 'RM 100' },
   { value: 50, label: 'RM 50' },
+  { value: 20, label: 'RM 20' },
   { value: 10, label: 'RM 10' },
   { value: 5, label: 'RM 5' },
   { value: 1, label: 'RM 1' },
+  { value: 0.50, label: '50 sen' },
+  { value: 0.20, label: '20 sen' },
+  { value: 0.10, label: '10 sen' },
+  { value: 0.05, label: '5 sen' },
 ];
+
+// Variance threshold in RM - amounts exceeding this require explanation
+const VARIANCE_THRESHOLD = 2.00;
 
 export function CloseTillModal({
   open,
@@ -47,9 +56,14 @@ export function CloseTillModal({
   const [denominations, setDenominations] = useState<Record<number, number>>({
     100: 0,
     50: 0,
+    20: 0,
     10: 0,
     5: 0,
     1: 0,
+    0.50: 0,
+    0.20: 0,
+    0.10: 0,
+    0.05: 0,
   });
   const [varianceReason, setVarianceReason] = useState('');
 
@@ -86,7 +100,7 @@ export function CloseTillModal({
   const expectedCash = calculatedExpectedCash || tillSession?.expected_cash || 0;
   const openingFloat = tillSession?.opening_float || 0;
   const variance = actualCashCounted - expectedCash;
-  const hasSignificantVariance = Math.abs(variance) > 5;
+  const hasSignificantVariance = Math.abs(variance) > VARIANCE_THRESHOLD;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +118,7 @@ export function CloseTillModal({
       toast({
         variant: 'destructive',
         title: 'Reason Required',
-        description: 'Please provide a reason for the variance greater than RM 5.00',
+        description: `Please provide a reason for the variance exceeding RM ${VARIANCE_THRESHOLD.toFixed(2)}`,
       });
       return;
     }
