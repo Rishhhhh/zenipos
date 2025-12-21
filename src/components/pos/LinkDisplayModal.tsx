@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Copy, Unlink, AlertTriangle } from "lucide-react";
+import { Monitor, Copy, Unlink, AlertTriangle, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
+import { Input } from "@/components/ui/input";
 
 interface LinkDisplayModalProps {
   open: boolean;
@@ -30,12 +31,24 @@ export function LinkDisplayModal({
   const [displayId] = useState(() => {
     return currentDisplayId || `display-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   });
+  
+  // Custom domain input for generating correct URLs
+  const [customDomain, setCustomDomain] = useState(() => {
+    const saved = localStorage.getItem('customer-display-domain');
+    return saved || window.location.origin;
+  });
 
-  // FIX: Route is /customer/:sessionId NOT /customer-screen?displayId=
-  const displayUrl = `${window.location.origin}/customer/${displayId}`;
+  // Generate the display URL based on domain
+  const displayUrl = `${customDomain}/customer/${displayId}`;
   
   // Only managers can link displays (they have dual screens)
   const canLinkDisplay = role === 'manager' || role === 'owner';
+
+  // Save custom domain preference
+  const handleDomainChange = (domain: string) => {
+    setCustomDomain(domain);
+    localStorage.setItem('customer-display-domain', domain);
+  };
 
   // Mutation to link display to database
   const linkDisplayMutation = useMutation({
@@ -112,12 +125,16 @@ export function LinkDisplayModal({
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(displayUrl);
-    toast.success("URL copied to clipboard");
+    toast.success("Display URL copied to clipboard");
   };
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(displayId);
     toast.success("Display ID copied");
+  };
+
+  const handleOpenDisplay = () => {
+    window.open(displayUrl, '_blank');
   };
 
   const handleLink = () => {
@@ -134,7 +151,7 @@ export function LinkDisplayModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Monitor className="h-5 w-5" />
@@ -145,7 +162,7 @@ export function LinkDisplayModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 py-4">
           {/* Role Check Warning */}
           {!canLinkDisplay && (
             <Alert variant="destructive">
@@ -156,12 +173,29 @@ export function LinkDisplayModal({
             </Alert>
           )}
 
+          {/* Custom Domain Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              Your Domain
+              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+            </label>
+            <Input
+              value={customDomain}
+              onChange={(e) => handleDomainChange(e.target.value)}
+              placeholder="https://yourdomain.com"
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Enter your custom domain to generate the correct display URL
+            </p>
+          </div>
+
           {/* QR Code - Actual scannable QR */}
-          <div className="flex flex-col items-center gap-3 p-6 border rounded-lg bg-muted/30">
-            <div className="bg-white p-4 rounded-lg border-2">
+          <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-muted/30">
+            <div className="bg-white p-3 rounded-lg border-2">
               <QRCodeSVG
                 value={displayUrl}
-                size={180}
+                size={160}
                 level="H"
                 includeMargin={true}
               />
@@ -182,16 +216,34 @@ export function LinkDisplayModal({
                 variant="outline"
                 size="icon"
                 onClick={handleCopyUrl}
+                title="Copy URL"
               >
                 <Copy className="h-4 w-4" />
               </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleOpenDisplay}
+                title="Open in new tab"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
+            <Alert className="mt-2 py-2">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Important:</strong> Open this exact URL on your customer display. 
+                Using a different URL will create a new session that won't receive updates.
+              </AlertDescription>
+            </Alert>
           </div>
 
-          {/* Display ID */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Display ID</label>
-            <div className="flex gap-2">
+          {/* Display ID (collapsed) */}
+          <details className="text-sm">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+              Show Display ID
+            </summary>
+            <div className="flex gap-2 mt-2">
               <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
                 {displayId}
               </div>
@@ -203,7 +255,7 @@ export function LinkDisplayModal({
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-          </div>
+          </details>
 
           {/* Status */}
           {currentDisplayId ? (
