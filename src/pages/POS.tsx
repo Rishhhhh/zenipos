@@ -1,5 +1,5 @@
 import { useEffect, startTransition, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCartStore } from '@/lib/store/cart';
 import { useToast } from '@/hooks/use-toast';
@@ -248,6 +248,31 @@ export default function POS() {
     handleOrderFound,
   } = usePOSPayments(broadcastIdle, customerDisplayId, setPreviewOrderData, setShowPrintPreview);
 
+  // Speed Mode: Auto-assign first available NFC card to skip manual selection
+  const { data: autoNfcCard } = useQuery({
+    queryKey: ['nfc-cards', 'auto-assign'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('nfc_cards')
+        .select('id, card_uid')
+        .eq('status', 'active')
+        .order('card_uid')
+        .limit(1)
+        .single();
+      return data;
+    },
+    enabled: speedMode && !nfc_card_id, // Only fetch in speed mode when no card is set
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Auto-assign NFC card in Speed Mode
+  useEffect(() => {
+    if (speedMode && !nfc_card_id && autoNfcCard) {
+      console.log('⚡ Speed Mode: Auto-assigning NFC card:', autoNfcCard.card_uid);
+      setNFCCardId(autoNfcCard.id, autoNfcCard.card_uid);
+    }
+  }, [speedMode, nfc_card_id, autoNfcCard, setNFCCardId]);
+
   // NFC-first flow: Direct to table selection after card scan
   // In Speed Mode: Skip NFC card selection entirely, go straight to table selection
   useEffect(() => {
@@ -259,13 +284,16 @@ export default function POS() {
       return;
     }
     
-    // Speed Mode: Skip NFC entirely, go to table selection
+    // Speed Mode: Skip NFC modal, wait for auto-assign, then show table selection
     if (speedMode) {
-      // If no order type or table, show table selection
-      if (!order_type || (order_type === 'dine_in' && !table_id)) {
-        console.log('⚡ Speed Mode: Opening table selection (skipping NFC)');
-        // In speed mode, NFC is skipped - leave nfc_card_id as null
-        // The database expects a UUID or null, not a fake string
+      // Close NFC modal if somehow open
+      if (showNFCCardSelect) {
+        setShowNFCCardSelect(false);
+      }
+      
+      // If NFC card is auto-assigned (or we don't need one), show table selection
+      if (nfc_card_id && (!order_type || (order_type === 'dine_in' && !table_id))) {
+        console.log('⚡ Speed Mode: Opening table selection');
         const timer = setTimeout(() => setShowTableSelect(true), 50);
         return () => clearTimeout(timer);
       }
@@ -285,7 +313,7 @@ export default function POS() {
       const timer = setTimeout(() => setShowTableSelect(true), 50);
       return () => clearTimeout(timer);
     }
-  }, [nfc_card_id, order_type, table_id, speedMode]);
+  }, [nfc_card_id, order_type, table_id, speedMode, showNFCCardSelect]);
 
   // Open modifier modal when pendingItem is set (prevents race condition)
   useEffect(() => {
