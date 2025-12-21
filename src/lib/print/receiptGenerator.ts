@@ -3,62 +3,81 @@ import { Receipt, KitchenTicket } from './PrintService';
 /**
  * Generate 58mm customer receipt HTML
  */
-export function generate58mmReceipt(receipt: Receipt & { einvoice_enabled?: boolean }, options?: {
+export function generate58mmReceipt(receipt: Receipt & { 
+  einvoice_enabled?: boolean;
+  cash_received?: number;
+  change_given?: number;
+}, options?: {
   restaurantName?: string;
   address?: string;
   cashier?: string;
 }): string {
+  const paymentMethod = (receipt.payment_method || 'Cash').toUpperCase();
+  const cashReceived = receipt.cash_received ?? receipt.total;
+  const changeGiven = receipt.change_given ?? 0;
+  
   const template = `
-    <div style="width: 58mm; font-family: monospace; font-size: 12px;">
-      <h2 style="text-align: center; margin: 10px 0;">${options?.restaurantName || 'Restaurant'}</h2>
-      <p style="text-align: center; font-size: 10px;">${options?.address || ''}</p>
-      <hr style="border: 1px dashed #000;">
+    <div style="width: 58mm; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.3;">
+      <h2 style="text-align: center; margin: 8px 0; font-size: 14px; font-weight: bold; letter-spacing: 1px;">${options?.restaurantName || 'Restaurant'}</h2>
+      ${options?.address ? `<p style="text-align: center; font-size: 9px; margin: 0 0 5px 0;">${options.address}</p>` : ''}
+      <hr style="border: none; border-top: 1px dashed #000; margin: 8px 0;">
       
-      <p style="margin: 5px 0;">Order #${receipt.order_number}</p>
-      <p style="margin: 5px 0;">Date: ${new Date(receipt.timestamp).toLocaleString()}</p>
-      ${options?.cashier ? `<p style="margin: 5px 0;">Cashier: ${options.cashier}</p>` : ''}
+      <p style="margin: 3px 0; font-size: 10px;">Order #${receipt.order_number}</p>
+      <p style="margin: 3px 0; font-size: 10px;">Date: ${new Date(receipt.timestamp).toLocaleString('en-MY')}</p>
+      ${options?.cashier ? `<p style="margin: 3px 0; font-size: 10px;">Cashier: ${options.cashier}</p>` : ''}
       
-      <hr style="border: 1px dashed #000;">
+      <hr style="border: none; border-top: 1px dashed #000; margin: 8px 0;">
       
       ${receipt.items.map(item => `
-        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-          <span>${item.quantity}x ${item.name}</span>
-          <span>RM ${item.total.toFixed(2)}</span>
+        <div style="display: flex; justify-content: space-between; margin: 4px 0; font-size: 11px;">
+          <span style="flex: 1;">${item.quantity}x ${item.name.toUpperCase()}</span>
+          <span style="font-weight: bold; min-width: 55px; text-align: right;">RM${item.total.toFixed(2)}</span>
         </div>
       `).join('')}
       
-      <hr style="border: 1px dashed #000;">
+      <hr style="border: none; border-top: 1px dashed #000; margin: 8px 0;">
       
-      <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-        <span>Subtotal:</span>
-        <span>RM ${receipt.subtotal.toFixed(2)}</span>
+      <div style="display: flex; justify-content: space-between; margin: 3px 0; font-size: 10px;">
+        <span>SUBTOTAL</span>
+        <span style="font-weight: bold;">RM${receipt.subtotal.toFixed(2)}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-        <span>Tax (6%):</span>
-        <span>RM ${receipt.tax.toFixed(2)}</span>
+      ${receipt.tax > 0 ? `
+      <div style="display: flex; justify-content: space-between; margin: 3px 0; font-size: 10px;">
+        <span>TAX</span>
+        <span style="font-weight: bold;">RM${receipt.tax.toFixed(2)}</span>
       </div>
-      <div style="display: flex; justify-content: space-between; margin: 10px 0; font-weight: bold; font-size: 14px;">
-        <span>Total:</span>
-        <span>RM ${receipt.total.toFixed(2)}</span>
+      ` : ''}
+      
+      <hr style="border: none; border-top: 1px dashed #000; margin: 8px 0;">
+      
+      <div style="display: flex; justify-content: space-between; margin: 6px 0; font-weight: bold; font-size: 14px;">
+        <span>TOTAL</span>
+        <span>RM${receipt.total.toFixed(2)}</span>
       </div>
       
-      <hr style="border: 1px dashed #000;">
+      <hr style="border: none; border-top: 2px solid #000; margin: 8px 0;">
       
-      <p style="margin: 5px 0;">Payment: ${receipt.payment_method || 'Cash'}</p>
+      <div style="display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px;">
+        <span style="font-weight: bold;">${paymentMethod}</span>
+        <span style="font-weight: bold;">RM${cashReceived.toFixed(2)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px;">
+        <span style="font-weight: bold;">CHANGE</span>
+        <span style="font-weight: bold;">RM${changeGiven.toFixed(2)}</span>
+      </div>
       
       ${receipt.einvoice_enabled ? `
-        <hr style="border: 1px dashed #000;">
-        <div style="background: #f0f0f0; padding: 8px; margin: 5px 0; border-radius: 4px;">
-          <p style="margin: 3px 0; font-weight: bold; font-size: 11px;">📄 e-Invoice: Pending</p>
-          <p style="margin: 3px 0; font-size: 10px;">MyInvois submission in progress</p>
-          <p style="margin: 3px 0; font-size: 10px;">QR code will be available shortly</p>
+        <hr style="border: none; border-top: 1px dashed #000; margin: 8px 0;">
+        <div style="background: #f5f5f5; padding: 6px; margin: 5px 0;">
+          <p style="margin: 2px 0; font-weight: bold; font-size: 10px;">📄 e-Invoice: Pending</p>
+          <p style="margin: 2px 0; font-size: 9px;">MyInvois submission in progress</p>
         </div>
       ` : ''}
       
-      <hr style="border: 1px dashed #000;">
+      <hr style="border: none; border-top: 1px dashed #000; margin: 8px 0;">
       
-      <p style="text-align: center; margin: 10px 0;">Thank you!</p>
-      <p style="text-align: center; font-size: 10px;">Powered by ZeniPOS</p>
+      <p style="text-align: center; margin: 8px 0; font-weight: bold; font-size: 12px;">THANK YOU!</p>
+      <p style="text-align: center; font-size: 8px; color: #666;">Powered by ZeniPOS</p>
     </div>
   `;
   

@@ -140,25 +140,24 @@ export function buildReceiptText58mm(params: ReceiptParams): string {
 
   // Totals (compact)
   const labelWidth = WIDTH - 9;
-  lines.push(padRight("SUBTOTAL", labelWidth) + padLeft(money(subtotal), 9));
+  lines.push(padRight("SUBTOTAL", labelWidth) + padLeft(`RM${money(subtotal)}`, 9));
   if (tax > 0) {
-    lines.push(padRight("TAX", labelWidth) + padLeft(money(tax), 9));
+    lines.push(padRight("TAX", labelWidth) + padLeft(`RM${money(tax)}`, 9));
   }
   lines.push(line("-"));
-  lines.push(padRight("TOTAL", labelWidth) + padLeft(money(total), 9));
-  lines.push(line("="));
-
-  // Payment info (compact)
+  lines.push(padRight("TOTAL", labelWidth) + padLeft(`RM${money(total)}`, 9));
+  
+  // Payment info - prominent section
   if (paymentMethod) {
-    lines.push(`PAY: ${paymentMethod.toUpperCase()}`);
+    lines.push(line("="));
+    lines.push(padRight(paymentMethod.toUpperCase(), labelWidth) + padLeft(`RM${money(cashReceived ?? total)}`, 9));
     
-    if (paymentMethod.toLowerCase() === 'cash' && cashReceived !== undefined) {
-      lines.push(`CASH: ${money(cashReceived)}`);
-      if (changeGiven !== undefined && changeGiven > 0) {
-        lines.push(`CHANGE: ${money(changeGiven)}`);
-      }
+    if (paymentMethod.toLowerCase() === 'cash' && changeGiven !== undefined) {
+      lines.push(padRight("CHANGE", labelWidth) + padLeft(`RM${money(changeGiven)}`, 9));
     }
   }
+  
+  lines.push(line("="));
 
   // Footer (compact)
   lines.push("");
