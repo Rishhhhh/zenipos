@@ -1,37 +1,39 @@
+import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRealtimeTable } from '@/lib/realtime/RealtimeService';
 
 /**
  * System-wide real-time synchronization for orders
- * Ensures all roles see order updates instantly
- * Now uses unified RealtimeService
+ * OPTIMIZED: Throttled invalidation to prevent spam
  */
 export function useOrderRealtime() {
   const queryClient = useQueryClient();
+  const lastInvalidation = useRef(0);
+  const THROTTLE_MS = 500; // Throttle invalidations to 500ms
 
-  console.log('📡 Setting up real-time order sync...');
+  // Stable callback for order changes - throttled
+  const handleOrderChange = useCallback((payload: any) => {
+    const now = Date.now();
+    if (now - lastInvalidation.current < THROTTLE_MS) return;
+    lastInvalidation.current = now;
 
-  // Subscribe to order changes using unified service
-  useRealtimeTable('orders', (payload) => {
-    console.log('📥 Order change detected:', payload.eventType, payload);
-    
-    // Invalidate all order-related queries
+    // Single batch invalidation
     queryClient.invalidateQueries({ queryKey: ['orders'] });
     queryClient.invalidateQueries({ queryKey: ['active-orders'] });
     queryClient.invalidateQueries({ queryKey: ['kds-orders'] });
     
-    // If specific order ID, invalidate that too
     const newData = payload.new as Record<string, any> | null;
     if (newData?.id) {
       queryClient.invalidateQueries({ queryKey: ['order', newData.id] });
     }
-  });
+  }, [queryClient]);
 
-  // Subscribe to order_items changes using unified service
-  useRealtimeTable('order_items', (payload) => {
-    console.log('📥 Order items change detected:', payload.eventType);
-    
-    // Invalidate order queries when items change
+  // Stable callback for order items changes - throttled
+  const handleItemsChange = useCallback((payload: any) => {
+    const now = Date.now();
+    if (now - lastInvalidation.current < THROTTLE_MS) return;
+    lastInvalidation.current = now;
+
     queryClient.invalidateQueries({ queryKey: ['orders'] });
     queryClient.invalidateQueries({ queryKey: ['active-orders'] });
     queryClient.invalidateQueries({ queryKey: ['kds-orders'] });
@@ -40,5 +42,9 @@ export function useOrderRealtime() {
     if (newData?.order_id) {
       queryClient.invalidateQueries({ queryKey: ['order', newData.order_id] });
     }
-  });
+  }, [queryClient]);
+
+  // Subscribe with stable callbacks
+  useRealtimeTable('orders', handleOrderChange);
+  useRealtimeTable('order_items', handleItemsChange);
 }
