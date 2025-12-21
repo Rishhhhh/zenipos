@@ -585,6 +585,20 @@ export default function POS() {
                         setShowTableSelect(true);
                         return;
                       }
+                      // Direct add to cart - no modifiers
+                      addItem(item);
+                      setMobileTab('cart');
+                    }}
+                    onOpenModifiers={(item) => {
+                      if (!nfc_card_id) {
+                        setShowNFCCardSelect(true);
+                        return;
+                      }
+                      if (!order_type || (order_type === 'dine_in' && !table_id)) {
+                        setShowTableSelect(true);
+                        return;
+                      }
+                      // Open modifier modal
                       setPendingItem(item);
                       setMobileTab('cart');
                     }}
@@ -709,10 +723,19 @@ export default function POS() {
                     setShowTableSelect(true);
                     return;
                   }
-                  if (order_type === 'dine_in' && !table_id) {
+                  // Direct add to cart - no modifiers
+                  addItem(item);
+                }}
+                onOpenModifiers={(item) => {
+                  if (!nfc_card_id) {
+                    setShowNFCCardSelect(true);
+                    return;
+                  }
+                  if (!order_type || (order_type === 'dine_in' && !table_id)) {
                     setShowTableSelect(true);
                     return;
                   }
+                  // Open modifier modal
                   setPendingItem(item);
                 }}
                 categoryId={selectedCategoryId}
@@ -760,7 +783,7 @@ export default function POS() {
               items={menuItems}
               isLoading={itemsLoading}
               onAddItem={(item) => {
-                console.log('🛒 Adding item:', item.name, 'ID:', item.menu_item_id);
+                console.log('🛒 Direct add item:', item.name, 'ID:', item.menu_item_id);
                 
                 if (!nfc_card_id) {
                   toast({
@@ -792,7 +815,23 @@ export default function POS() {
                   return;
                 }
                 
-                console.log('📦 Setting pending item:', item);
+                // Direct add to cart - no modifiers
+                console.log('✅ Adding directly to cart:', item.name);
+                addItem(item);
+              }}
+              onOpenModifiers={(item) => {
+                console.log('➕ Opening modifiers for:', item.name, 'ID:', item.menu_item_id);
+                
+                if (!nfc_card_id) {
+                  setShowNFCCardSelect(true);
+                  return;
+                }
+                if (!order_type || (order_type === 'dine_in' && !table_id)) {
+                  setShowTableSelect(true);
+                  return;
+                }
+                
+                // Open modifier modal
                 setPendingItem(item);
               }}
               categoryId={selectedCategoryId}
