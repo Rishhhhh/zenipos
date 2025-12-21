@@ -43,11 +43,23 @@ export function LinkDisplayModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Get the user's organization_id from employees table
+      const { data: employeeData } = await supabase
+        .from('employees')
+        .select('branch_id, branches!inner(organization_id)')
+        .eq('auth_user_id', user.id)
+        .eq('active', true)
+        .single();
+
+      const organizationId = (employeeData?.branches as any)?.organization_id;
+      console.log('📺 [LinkDisplay] Linking with org:', organizationId);
+
       const { data, error } = await supabase
         .from('pos_displays')
         .upsert({
           display_id: displayId,
           linked_by_user_id: user.id,
+          organization_id: organizationId,
           last_activity: new Date().toISOString(),
           active: true,
         }, { onConflict: 'display_id' })

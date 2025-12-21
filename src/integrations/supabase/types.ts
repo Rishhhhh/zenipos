@@ -2972,6 +2972,7 @@ export type Database = {
           last_activity: string | null
           linked_at: string | null
           linked_by_user_id: string
+          organization_id: string | null
           pos_session_id: string | null
           updated_at: string | null
         }
@@ -2983,6 +2984,7 @@ export type Database = {
           last_activity?: string | null
           linked_at?: string | null
           linked_by_user_id: string
+          organization_id?: string | null
           pos_session_id?: string | null
           updated_at?: string | null
         }
@@ -2994,10 +2996,19 @@ export type Database = {
           last_activity?: string | null
           linked_at?: string | null
           linked_by_user_id?: string
+          organization_id?: string | null
           pos_session_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pos_displays_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotion_usage: {
         Row: {
