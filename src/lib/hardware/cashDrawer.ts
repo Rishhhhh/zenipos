@@ -3,6 +3,7 @@ import qz from 'qz-tray';
 import { initQzSecurity } from './qzSecurity';
 
 export type CommandProfile = 'AUTO' | 'ESC_P' | 'PULSE';
+export type PaperSize = '80mm' | '58mm';
 
 export interface CashDrawerSettings {
   enabled: boolean;
@@ -14,6 +15,7 @@ export interface CashDrawerSettings {
   autoOpenOnCashInitiated: boolean;
   autoOpenOnCashCompleted: boolean;
   requireManagerPinForManualOpen: boolean;
+  paperSize: PaperSize;
 }
 
 export type DebugLogger = (msg: string) => void;
@@ -36,6 +38,7 @@ const DEFAULT_SETTINGS: CashDrawerSettings = {
   autoOpenOnCashInitiated: false,
   autoOpenOnCashCompleted: true,
   requireManagerPinForManualOpen: true,
+  paperSize: '80mm',
 };
 
 export function getCashDrawerSettings(): CashDrawerSettings {

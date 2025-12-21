@@ -1,7 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { printService } from './PrintService';
 import { generateKitchenTicket } from './kitchenTicketTemplate';
+import { generateKitchenTicket58mm } from './kitchenTicket58mm';
 import { qzPrintReceiptEscpos, getConfiguredPrinterName } from './qzEscposReceipt';
+import { getCashDrawerSettings } from '@/lib/hardware/cashDrawer';
 
 /**
  * Station icon mapping for different kitchen areas
@@ -240,12 +242,13 @@ export class PrintRoutingService {
     const qzPrinter = getConfiguredPrinterName();
     if (qzPrinter) {
       try {
-        const stationIcon = getStationIcon(station.name);
-        const ticketText = generateKitchenTicket({
+        const settings = getCashDrawerSettings();
+        const paperSize = settings.paperSize || '80mm';
+        
+        const ticketParams = {
           station: {
             name: station.name,
             color: station.color || '#8B5CF6',
-            icon: stationIcon
           },
           order_number: ticketData.order_number,
           table_label: ticketData.table_label,
@@ -259,12 +262,16 @@ export class PrintRoutingService {
               name: mod.name,
               type: mod.price && mod.price < 0 ? 'remove' : 'add'
             })),
-            prepTime: item.prepTime
           })),
           timestamp: ticketData.timestamp,
           orderNotes: undefined,
           allergyWarnings: ticketData.allergyWarnings
-        });
+        };
+
+        // Use appropriate template based on paper size
+        const ticketText = paperSize === '58mm'
+          ? generateKitchenTicket58mm(ticketParams)
+          : generateKitchenTicket(ticketParams);
 
         await qzPrintReceiptEscpos({
           printerName: qzPrinter,
@@ -273,7 +280,7 @@ export class PrintRoutingService {
           openDrawer: false,
         });
 
-        console.log(`✅ Kitchen ticket printed via QZ Tray to ${qzPrinter}`);
+        console.log(`✅ Kitchen ticket printed via QZ Tray (${paperSize}) to ${qzPrinter}`);
         return; // Success, no fallback needed
       } catch (qzError) {
         console.warn('⚠️ QZ Tray print failed, trying other methods:', qzError);
@@ -317,14 +324,14 @@ export class PrintRoutingService {
       // Try network print first if IP is configured
       if (printer.ip_address) {
         try {
-          // Generate ESC/POS ticket
-          const stationIcon = getStationIcon(station.name);
+          // Generate ESC/POS ticket based on paper size
+          const settings = getCashDrawerSettings();
+          const paperSize = settings.paperSize || '80mm';
           
-          const ticketESCPOS = generateKitchenTicket({
+          const ticketParams = {
             station: {
               name: station.name,
               color: station.color || '#8B5CF6',
-              icon: stationIcon
             },
             order_number: ticketData.order_number,
             table_label: ticketData.table_label,
@@ -338,12 +345,15 @@ export class PrintRoutingService {
                 name: mod.name,
                 type: mod.price && mod.price < 0 ? 'remove' : 'add'
               })),
-              prepTime: item.prepTime
             })),
             timestamp: ticketData.timestamp,
-            orderNotes: undefined, // Orders don't have general notes, only items do
+            orderNotes: undefined,
             allergyWarnings: ticketData.allergyWarnings
-          });
+          };
+          
+          const ticketESCPOS = paperSize === '58mm'
+            ? generateKitchenTicket58mm(ticketParams)
+            : generateKitchenTicket(ticketParams);
           
           await printService.printRaw(printer.ip_address, ticketESCPOS);
           

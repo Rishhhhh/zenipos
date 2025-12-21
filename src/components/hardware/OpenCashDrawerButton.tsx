@@ -17,7 +17,8 @@ import {
   listQzPrinters,
   getQzStatus,
   CashDrawerSettings,
-  CommandProfile
+  CommandProfile,
+  PaperSize
 } from '@/lib/hardware/cashDrawer';
 import { 
   LockOpen, 
@@ -323,6 +324,26 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                 </Select>
                 <p className="text-xs text-muted-foreground">
                   AUTO tries both commands. If drawer doesn't open, try specific profiles.
+                </p>
+              </div>
+
+              {/* Paper Size */}
+              <div className="space-y-2">
+                <Label>Paper Size</Label>
+                <Select
+                  value={settings.paperSize || '80mm'}
+                  onValueChange={(v) => handleSettingChange('paperSize', v as PaperSize)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="80mm">80mm (Standard)</SelectItem>
+                    <SelectItem value="58mm">58mm (Narrow)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Select 58mm if using narrow paper rolls on your 80mm printer.
                 </p>
               </div>
 
