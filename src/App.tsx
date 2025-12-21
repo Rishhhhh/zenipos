@@ -30,6 +30,7 @@ import { useLocation } from "react-router-dom";
 import { useSimulationStore } from "./lib/store/simulation";
 import { useRealtimeStore } from "./lib/store/realtimeStore";
 import { useDeviceDetection } from "./hooks/useDeviceDetection";
+import { useSpeedModeAutoBump } from "./hooks/useSpeedModeAutoBump";
 
 // Lazy load routes for code splitting and faster initial load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -122,6 +123,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const subscribeAll = useRealtimeStore(state => state.subscribeAll);
   const isLoginPage = location.pathname === '/login';
   const isCustomerScreen = location.pathname.startsWith('/customer/');
+
+  // Speed mode auto-bump background service (runs app-wide)
+  useSpeedModeAutoBump();
 
   // Initialize global realtime subscriptions when user logs in
   useEffect(() => {
