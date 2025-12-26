@@ -298,7 +298,7 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                   <SelectTrigger>
                     <SelectValue placeholder="Select printer..." />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="z-[200]">
+                  <SelectContent position="popper" className="z-[10200]">
                     {printers.map((p) => (
                       <SelectItem key={p} value={p}>{p}</SelectItem>
                     ))}
@@ -316,7 +316,7 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="z-[200]">
+                  <SelectContent position="popper" className="z-[10200]">
                     <SelectItem value="AUTO">AUTO (Recommended)</SelectItem>
                     <SelectItem value="ESC_P">ESC/POS (ESC p)</SelectItem>
                     <SelectItem value="PULSE">Pulse (DLE DC4)</SelectItem>
@@ -337,7 +337,7 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="z-[200]">
+                  <SelectContent position="popper" className="z-[10200]">
                     <SelectItem value="80mm">80mm (Standard)</SelectItem>
                     <SelectItem value="58mm">58mm (Narrow)</SelectItem>
                   </SelectContent>
@@ -357,7 +357,7 @@ export function OpenCashDrawerButton({ variant = 'button', className }: OpenCash
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="z-[200]">
+                  <SelectContent position="popper" className="z-[10200]">
                     <SelectItem value="0">Pin 0 (Most common)</SelectItem>
                     <SelectItem value="1">Pin 1</SelectItem>
                   </SelectContent>
