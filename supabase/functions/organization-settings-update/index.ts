@@ -103,6 +103,18 @@ serve(async (req) => {
     if (settings.primaryColor) updateData.primary_color = settings.primaryColor;
     if (settings.accentColor) updateData.accent_color = settings.accentColor;
     if (settings.logoUrl) updateData.logo_url = settings.logoUrl;
+    
+    // Handle QR code URLs (allow explicit null to clear)
+    if (settings.duitnowQrUrl !== undefined) updateData.duitnow_qr_url = settings.duitnowQrUrl;
+    if (settings.tngQrUrl !== undefined) updateData.tng_qr_url = settings.tngQrUrl;
+
+    // Only update if there's something to update
+    if (Object.keys(updateData).length === 0) {
+      return new Response(
+        JSON.stringify({ organization: org }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Update organization
     const { data: updated, error: updateError } = await supabase
