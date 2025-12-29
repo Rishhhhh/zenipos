@@ -274,29 +274,37 @@ export default function POS() {
   }, [speedMode, nfc_card_id, autoNfcCard, setNFCCardId]);
 
   // NFC-first flow: Direct to table selection after card scan
-  // In Speed Mode: Skip NFC card selection entirely, go straight to table selection
+  // In Speed Mode: ALWAYS prompt for table selection on new order (no auto-takeaway)
   useEffect(() => {
     console.log('🔍 POS Flow Check:', { nfc_card_id, order_type, table_id, speedMode });
     
-    // EXIT EARLY: If everything is set, don't show any modals
-    if (nfc_card_id && order_type && (order_type === 'takeaway' || table_id)) {
-      console.log('✅ All values set, no modal needed');
-      return;
-    }
-    
-    // Speed Mode: Skip NFC modal, wait for auto-assign, then show table selection
+    // Speed Mode: Skip NFC modal, wait for auto-assign, then ALWAYS show table selection
     if (speedMode) {
       // Close NFC modal if somehow open
       if (showNFCCardSelect) {
         setShowNFCCardSelect(false);
       }
       
-      // If NFC card is auto-assigned (or we don't need one), show table selection
-      if (nfc_card_id && (!order_type || (order_type === 'dine_in' && !table_id))) {
-        console.log('⚡ Speed Mode: Opening table selection');
+      // Speed Mode: Always prompt for table selection when no order_type is set
+      // This ensures user can select different tables for different orders
+      if (nfc_card_id && !order_type) {
+        console.log('⚡ Speed Mode: Opening table selection for new order');
         const timer = setTimeout(() => setShowTableSelect(true), 50);
         return () => clearTimeout(timer);
       }
+      
+      // Also prompt if dine_in but no table selected
+      if (nfc_card_id && order_type === 'dine_in' && !table_id) {
+        console.log('⚡ Speed Mode: Opening table selection (dine-in needs table)');
+        const timer = setTimeout(() => setShowTableSelect(true), 50);
+        return () => clearTimeout(timer);
+      }
+      return;
+    }
+    
+    // EXIT EARLY: If everything is set, don't show any modals
+    if (nfc_card_id && order_type && (order_type === 'takeaway' || table_id)) {
+      console.log('✅ All values set, no modal needed');
       return;
     }
     
