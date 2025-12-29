@@ -8,11 +8,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useRef } from 'react';
 import { createPaymentProvider } from '@/lib/payments/PaymentProvider';
 import { getCashDrawerSettings, kickCashDrawer } from '@/lib/hardware/cashDrawer';
-import { QrCode, Banknote, Loader2, FileText, Delete } from 'lucide-react';
+import { QrCode, Banknote, Loader2, FileText, Delete, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generate58mmReceipt } from '@/lib/print/receiptGenerator';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 type PaymentProviderType = 'duitnow' | 'tng' | 'stripe' | 'billplz';
 
@@ -25,7 +26,7 @@ interface PaymentModalProps {
   onPaymentSuccess: (orderId?: string, method?: string, total?: number, change?: number) => Promise<void>;
   // Customer display broadcast functions
   customerDisplayId?: string | null;
-  onBroadcastPayment?: (displayId: string, qrUrl?: string) => void;
+  onBroadcastPayment?: (displayId: string, qrUrl?: string, qrImageUrl?: string, paymentMethod?: string) => void;
   onBroadcastComplete?: (displayId: string, change?: number) => void;
 }
 
@@ -41,6 +42,7 @@ export function PaymentModal({
   onBroadcastComplete,
 }: PaymentModalProps) {
   const { toast } = useToast();
+  const { organization } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('cash');
   const [qrProvider, setQrProvider] = useState<PaymentProviderType>('duitnow');
   const [cashReceived, setCashReceived] = useState('');
@@ -48,6 +50,7 @@ export function PaymentModal({
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [enableEInvoice, setEnableEInvoice] = useState(false);
+  const [organizationQRs, setOrganizationQRs] = useState<{ duitnow_qr_url?: string; tng_qr_url?: string } | null>(null);
   
   // Cash drawer auto-open tracking
   const hasAutoOpenedRef = useRef<boolean>(false);
@@ -95,7 +98,26 @@ export function PaymentModal({
   ];
 
   // BUILD VERSION - check console to confirm latest code is running
-  const BUILD_VERSION = '2025-01-21T01:00:00Z';
+  const BUILD_VERSION = '2025-01-21T02:00:00Z';
+  
+  // Fetch organization QR codes
+  useEffect(() => {
+    const fetchOrgQRs = async () => {
+      if (!organization?.id) return;
+      
+      const { data } = await supabase
+        .from('organizations')
+        .select('duitnow_qr_url, tng_qr_url')
+        .eq('id', organization.id)
+        .single();
+      
+      if (data) {
+        setOrganizationQRs(data);
+      }
+    };
+    
+    fetchOrgQRs();
+  }, [organization?.id]);
   
   // Track payment initiation - NO cash drawer kick here!
   useEffect(() => {
@@ -132,6 +154,29 @@ export function PaymentModal({
   }, [open]);
 
   const handleGenerateQR = async () => {
+    // Check if we have an uploaded static QR image
+    const staticQRUrl = qrProvider === 'duitnow' 
+      ? organizationQRs?.duitnow_qr_url 
+      : organizationQRs?.tng_qr_url;
+    
+    if (staticQRUrl) {
+      // Use static uploaded QR image
+      setQrCodeUrl(staticQRUrl);
+      setTransactionId(`static_${Date.now()}`);
+      
+      // Broadcast to customer display with static image
+      if (customerDisplayId && onBroadcastPayment) {
+        onBroadcastPayment(customerDisplayId, undefined, staticQRUrl, qrProvider);
+      }
+      
+      toast({
+        title: 'QR Code Displayed',
+        description: 'Customer can scan the QR code. Click "Payment Received" when done.',
+      });
+      return;
+    }
+    
+    // Fallback: Generate dynamic QR via payment provider
     setIsProcessing(true);
     try {
       const provider = createPaymentProvider(qrProvider);
@@ -147,7 +192,7 @@ export function PaymentModal({
         
         // Broadcast to customer display
         if (customerDisplayId && onBroadcastPayment) {
-          onBroadcastPayment(customerDisplayId, result.qr_code_url);
+          onBroadcastPayment(customerDisplayId, result.qr_code_url, undefined, qrProvider);
         }
         
         // Start polling for payment verification
@@ -164,6 +209,12 @@ export function PaymentModal({
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Manual payment confirmation for static QR codes
+  const handleManualPaymentConfirm = async () => {
+    setIsProcessing(true);
+    await completePayment(`manual_qr_${Date.now()}`, qrProvider);
   };
 
   const pollPaymentStatus = async (provider: any, txnId: string) => {
@@ -477,16 +528,36 @@ export function PaymentModal({
               Generate QR Code
             </Button>
           ) : (
-            <div className="flex flex-col items-center py-8">
-              <QrCode className="h-48 w-48 text-primary mb-4" />
-              <p className="text-sm text-muted-foreground mb-2">
-                Scan with banking app
+            <div className="flex flex-col items-center py-6 gap-4">
+              {/* Show uploaded QR image or placeholder */}
+              {organizationQRs?.[qrProvider === 'duitnow' ? 'duitnow_qr_url' : 'tng_qr_url'] ? (
+                <img 
+                  src={qrCodeUrl!} 
+                  alt={`${qrProvider} QR Code`}
+                  className="w-48 h-48 object-contain border rounded-lg"
+                />
+              ) : (
+                <QrCode className="h-48 w-48 text-primary" />
+              )}
+              <Badge>{qrProvider === 'duitnow' ? 'DuitNow' : "Touch 'n Go"}</Badge>
+              <p className="text-sm text-muted-foreground">
+                Customer scanning QR code...
               </p>
-              <Badge>{qrProvider.toUpperCase()}</Badge>
-              <p className="text-xs text-muted-foreground mt-4">
-                Waiting for payment confirmation...
-              </p>
-              <Loader2 className="h-6 w-6 animate-spin mt-2" />
+              
+              {/* Manual confirmation button for static QR */}
+              <Button
+                onClick={handleManualPaymentConfirm}
+                disabled={isProcessing}
+                className="w-full h-14 text-lg mt-2"
+                size="lg"
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-5 w-5 mr-2" />
+                )}
+                Payment Received
+              </Button>
             </div>
           )}
         </TabsContent>
