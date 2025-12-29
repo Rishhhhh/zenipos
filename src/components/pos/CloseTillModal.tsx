@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Loader2, Wallet, TrendingUp, AlertTriangle, CheckCircle, Banknote, Coins, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,21 +26,22 @@ interface CloseTillModalProps {
   onSuccess: () => void;
 }
 
-// RM denominations including coins
-const DENOMINATIONS = [
-  { value: 100, label: 'RM 100' },
-  { value: 50, label: 'RM 50' },
-  { value: 20, label: 'RM 20' },
-  { value: 10, label: 'RM 10' },
-  { value: 5, label: 'RM 5' },
-  { value: 1, label: 'RM 1' },
-  { value: 0.50, label: '50 sen' },
-  { value: 0.20, label: '20 sen' },
-  { value: 0.10, label: '10 sen' },
-  { value: 0.05, label: '5 sen' },
+const NOTES = [
+  { value: 100, label: 'RM 100', color: 'bg-emerald-500/10 border-emerald-500/30' },
+  { value: 50, label: 'RM 50', color: 'bg-teal-500/10 border-teal-500/30' },
+  { value: 20, label: 'RM 20', color: 'bg-amber-500/10 border-amber-500/30' },
+  { value: 10, label: 'RM 10', color: 'bg-rose-500/10 border-rose-500/30' },
+  { value: 5, label: 'RM 5', color: 'bg-green-500/10 border-green-500/30' },
+  { value: 1, label: 'RM 1', color: 'bg-blue-500/10 border-blue-500/30' },
 ];
 
-// Variance threshold in RM - amounts exceeding this require explanation
+const COINS = [
+  { value: 0.50, label: '50¢' },
+  { value: 0.20, label: '20¢' },
+  { value: 0.10, label: '10¢' },
+  { value: 0.05, label: '5¢' },
+];
+
 const VARIANCE_THRESHOLD = 2.00;
 
 export function CloseTillModal({
@@ -54,35 +54,14 @@ export function CloseTillModal({
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [denominations, setDenominations] = useState<Record<number, number>>({
-    100: 0,
-    50: 0,
-    20: 0,
-    10: 0,
-    5: 0,
-    1: 0,
-    0.50: 0,
-    0.20: 0,
-    0.10: 0,
-    0.05: 0,
+    100: 0, 50: 0, 20: 0, 10: 0, 5: 0, 1: 0,
+    0.50: 0, 0.20: 0, 0.10: 0, 0.05: 0,
   });
   const [varianceReason, setVarianceReason] = useState('');
-
-  const updateDenomination = (value: number, count: string) => {
-    const numCount = Math.max(0, parseInt(count) || 0);
-    setDenominations((prev) => ({ ...prev, [value]: numCount }));
-  };
-
-  const actualCashCounted = DENOMINATIONS.reduce(
-    (sum, denom) => sum + denom.value * (denominations[denom.value] || 0),
-    0
-  );
-
-  // Phase 4: Fetch real-time expected cash from database
   const [calculatedExpectedCash, setCalculatedExpectedCash] = useState(tillSession?.expected_cash || 0);
 
   useEffect(() => {
     if (tillSession?.id && open) {
-      // Fetch directly via SQL query since RPC types may not be updated yet
       supabase
         .from('till_sessions')
         .select('expected_cash')
@@ -90,12 +69,21 @@ export function CloseTillModal({
         .single()
         .then(({ data, error }) => {
           if (!error && data) {
-            console.log('[CloseTillModal] Fetched expected cash:', data.expected_cash);
             setCalculatedExpectedCash(Number(data.expected_cash));
           }
         });
     }
   }, [tillSession?.id, open]);
+
+  const updateDenomination = (value: number, count: string) => {
+    const numCount = Math.max(0, parseInt(count) || 0);
+    setDenominations((prev) => ({ ...prev, [value]: numCount }));
+  };
+
+  const actualCashCounted = [...NOTES, ...COINS].reduce(
+    (sum, denom) => sum + denom.value * (denominations[denom.value] || 0),
+    0
+  );
 
   const expectedCash = calculatedExpectedCash || tillSession?.expected_cash || 0;
   const openingFloat = tillSession?.opening_float || 0;
@@ -118,7 +106,7 @@ export function CloseTillModal({
       toast({
         variant: 'destructive',
         title: 'Reason Required',
-        description: `Please provide a reason for the variance exceeding RM ${VARIANCE_THRESHOLD.toFixed(2)}`,
+        description: `Please explain the variance exceeding RM ${VARIANCE_THRESHOLD.toFixed(2)}`,
       });
       return;
     }
@@ -155,124 +143,205 @@ export function CloseTillModal({
     <GlassModal
       open={open}
       onOpenChange={onOpenChange}
-      title="📊 Close Till Session"
+      title="Close Till Session"
       description="Count your cash and end your shift"
       size="lg"
       variant="default"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Shift Summary */}
-        <div className="bg-muted/30 p-4 rounded-lg space-y-2">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Shift Summary
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-muted-foreground">Opening Balance:</span>
-              <p className="font-semibold text-lg">RM {openingFloat.toFixed(2)}</p>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Shift Summary Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-muted/50 border border-border p-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Wallet className="h-4 w-4" />
+              <span className="text-xs font-medium">Opening Float</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">Expected Cash:</span>
-              <p className="font-semibold text-lg text-primary">RM {expectedCash.toFixed(2)}</p>
+            <p className="text-xl font-bold tabular-nums">RM {openingFloat.toFixed(2)}</p>
+          </div>
+          <div className="rounded-xl bg-primary/10 border border-primary/20 p-3">
+            <div className="flex items-center gap-2 text-primary mb-1">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs font-medium">Expected Cash</span>
             </div>
+            <p className="text-xl font-bold text-primary tabular-nums">RM {expectedCash.toFixed(2)}</p>
           </div>
         </div>
 
-        {/* Cash Count */}
-        <div className="bg-muted/30 p-4 rounded-lg space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Wallet className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Count Your Cash</h3>
+        {/* Notes Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Banknote className="h-4 w-4" />
+            <span>Count Notes</span>
           </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {NOTES.map((denom) => {
+              const count = denominations[denom.value] || 0;
+              const subtotal = denom.value * count;
+              return (
+                <div
+                  key={denom.value}
+                  className={`relative rounded-xl border p-3 transition-all ${denom.color} ${
+                    count > 0 ? 'ring-1 ring-primary/50' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-sm">{denom.label}</span>
+                    {count > 0 && (
+                      <span className="text-xs font-medium text-primary">
+                        RM {subtotal.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-sm">×</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={count || ''}
+                      onChange={(e) => updateDenomination(denom.value, e.target.value)}
+                      className="h-9 text-center font-medium bg-background/80"
+                      disabled={isSubmitting}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-          {DENOMINATIONS.map((denom) => (
-            <div key={denom.value} className="grid grid-cols-[1fr,auto,auto] items-center gap-3">
-              <Label htmlFor={`close-denom-${denom.value}`} className="text-base">
-                {denom.label}
-              </Label>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">×</span>
-                <Input
-                  id={`close-denom-${denom.value}`}
-                  type="number"
-                  min="0"
-                  value={denominations[denom.value]}
-                  onChange={(e) => updateDenomination(denom.value, e.target.value)}
-                  className="w-20 text-center"
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="text-right font-medium min-w-[80px]">
-                RM {(denom.value * denominations[denom.value]).toFixed(2)}
-              </div>
-            </div>
-          ))}
+        {/* Coins Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Coins className="h-4 w-4" />
+            <span>Count Coins</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {COINS.map((denom) => {
+              const count = denominations[denom.value] || 0;
+              return (
+                <div
+                  key={denom.value}
+                  className={`relative rounded-xl border border-border bg-muted/30 p-2.5 transition-all ${
+                    count > 0 ? 'ring-1 ring-primary/50 bg-primary/5' : ''
+                  }`}
+                >
+                  <div className="text-center mb-1.5">
+                    <span className="font-medium text-sm">{denom.label}</span>
+                  </div>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={count || ''}
+                    onChange={(e) => updateDenomination(denom.value, e.target.value)}
+                    className="h-8 text-center text-sm font-medium bg-background/80"
+                    disabled={isSubmitting}
+                    placeholder="0"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-          <div className="border-t pt-3 mt-4">
+        {/* Total & Variance Section */}
+        <div className="space-y-3">
+          {/* Actual Cash Total */}
+          <div className="rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold">Actual Cash Counted:</span>
-              <span className="text-2xl font-bold text-primary">
+              <div>
+                <p className="text-sm text-muted-foreground">Actual Cash Counted</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">
+                  {Object.values(denominations).filter(v => v > 0).length} denomination(s)
+                </p>
+              </div>
+              <p className="text-3xl font-bold text-primary tabular-nums">
                 RM {actualCashCounted.toFixed(2)}
-              </span>
+              </p>
             </div>
           </div>
+
+          {/* Variance Display */}
+          {actualCashCounted > 0 && (
+            <div
+              className={`rounded-xl border p-4 flex items-center justify-between ${
+                variance === 0
+                  ? 'bg-green-500/10 border-green-500/30'
+                  : hasSignificantVariance
+                  ? 'bg-destructive/10 border-destructive/30'
+                  : 'bg-amber-500/10 border-amber-500/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {variance === 0 ? (
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                ) : variance > 0 ? (
+                  <ArrowUpRight className="h-5 w-5 text-amber-500" />
+                ) : (
+                  <ArrowDownRight className="h-5 w-5 text-destructive" />
+                )}
+                <div>
+                  <p className="font-medium text-sm">
+                    {variance === 0
+                      ? 'Perfectly Balanced'
+                      : variance > 0
+                      ? 'Cash Over'
+                      : 'Cash Short'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {hasSignificantVariance ? 'Explanation required' : 'Within acceptable range'}
+                  </p>
+                </div>
+              </div>
+              <p className={`text-xl font-bold tabular-nums ${
+                variance === 0 ? 'text-green-500' : hasSignificantVariance ? 'text-destructive' : 'text-amber-500'
+              }`}>
+                {variance > 0 ? '+' : ''}RM {variance.toFixed(2)}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Variance Display */}
-        {actualCashCounted > 0 && (
-          <Alert variant={hasSignificantVariance ? 'destructive' : 'default'}>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">
-                  Variance: {variance > 0 ? '+' : ''}RM {variance.toFixed(2)} 
-                  {variance > 0 ? ' (Over)' : variance < 0 ? ' (Short)' : ' (Balanced)'}
-                </span>
-                {hasSignificantVariance ? (
-                  <span className="text-xs">⚠️ Reason required</span>
-                ) : (
-                  <span className="text-xs">✓ Within acceptable range</span>
-                )}
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Variance Reason (if needed) */}
+        {/* Variance Reason */}
         {hasSignificantVariance && actualCashCounted > 0 && (
-          <div>
-            <Label htmlFor="variance-reason">Reason for Variance (Required)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="variance-reason" className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              Variance Explanation Required
+            </Label>
             <Textarea
               id="variance-reason"
               value={varianceReason}
               onChange={(e) => setVarianceReason(e.target.value)}
-              placeholder="Explain the reason for the variance..."
-              className="mt-2"
-              rows={3}
+              placeholder="Explain the reason for the cash variance..."
+              className="min-h-[80px] resize-none"
               disabled={isSubmitting}
             />
           </div>
         )}
 
-        <div className="flex gap-2">
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-2">
           <Button
             type="button"
             variant="outline"
-            className="flex-1"
+            className="flex-1 h-11"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            className="flex-1" 
+          <Button
+            type="submit"
+            className="flex-1 h-11 font-semibold gap-2"
             disabled={isSubmitting || actualCashCounted <= 0 || (hasSignificantVariance && !varianceReason.trim())}
           >
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Close Till ✅
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle className="h-4 w-4" />
+            )}
+            Close Till
           </Button>
         </div>
       </form>

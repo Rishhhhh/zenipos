@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2, Wallet, Banknote, Coins } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DenominationPresetSelector } from './DenominationPresetSelector';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,18 +24,21 @@ interface OpenTillModalProps {
   }) => Promise<any>;
 }
 
-// RM denominations including coins
-const DENOMINATIONS = [
-  { value: 100, label: 'RM 100' },
-  { value: 50, label: 'RM 50' },
-  { value: 20, label: 'RM 20' },
-  { value: 10, label: 'RM 10' },
-  { value: 5, label: 'RM 5' },
-  { value: 1, label: 'RM 1' },
-  { value: 0.50, label: '50 sen' },
-  { value: 0.20, label: '20 sen' },
-  { value: 0.10, label: '10 sen' },
-  { value: 0.05, label: '5 sen' },
+// RM denominations - Notes first, then coins
+const NOTES = [
+  { value: 100, label: 'RM 100', color: 'bg-emerald-500/10 border-emerald-500/30' },
+  { value: 50, label: 'RM 50', color: 'bg-teal-500/10 border-teal-500/30' },
+  { value: 20, label: 'RM 20', color: 'bg-amber-500/10 border-amber-500/30' },
+  { value: 10, label: 'RM 10', color: 'bg-rose-500/10 border-rose-500/30' },
+  { value: 5, label: 'RM 5', color: 'bg-green-500/10 border-green-500/30' },
+  { value: 1, label: 'RM 1', color: 'bg-blue-500/10 border-blue-500/30' },
+];
+
+const COINS = [
+  { value: 0.50, label: '50¢' },
+  { value: 0.20, label: '20¢' },
+  { value: 0.10, label: '10¢' },
+  { value: 0.05, label: '5¢' },
 ];
 
 export function OpenTillModal({
@@ -52,19 +54,10 @@ export function OpenTillModal({
   const { employee, organization } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [denominations, setDenominations] = useState<Record<number, number>>({
-    100: 0,
-    50: 0,
-    20: 0,
-    10: 0,
-    5: 0,
-    1: 0,
-    0.50: 0,
-    0.20: 0,
-    0.10: 0,
-    0.05: 0,
+    100: 0, 50: 0, 20: 0, 10: 0, 5: 0, 1: 0,
+    0.50: 0, 0.20: 0, 0.10: 0, 0.05: 0,
   });
 
-  // Fetch default preset on open
   const { data: defaultPreset } = useQuery({
     queryKey: ['default-denomination-preset', employeeId, 'opening'],
     queryFn: async () => {
@@ -76,13 +69,12 @@ export function OpenTillModal({
         .in('preset_type', ['opening', 'both'])
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: open && !!employeeId,
   });
 
-  // Auto-load default preset when modal opens
   useEffect(() => {
     if (open && defaultPreset?.denominations) {
       const numericDenoms: Record<number, number> = {};
@@ -103,7 +95,7 @@ export function OpenTillModal({
     setDenominations((prev) => ({ ...prev, [value]: numCount }));
   };
 
-  const totalOpeningBalance = DENOMINATIONS.reduce(
+  const totalOpeningBalance = [...NOTES, ...COINS].reduce(
     (sum, denom) => sum + denom.value * (denominations[denom.value] || 0),
     0
   );
@@ -151,7 +143,6 @@ export function OpenTillModal({
     <GlassModal
       open={open}
       onOpenChange={(value) => {
-        // Prevent closing without completing - till is mandatory
         if (!value) {
           toast({
             variant: 'destructive',
@@ -163,69 +154,136 @@ export function OpenTillModal({
         onOpenChange(value);
       }}
       title="Open Till Session"
-      description={`Good day, ${employeeName}! Please count your opening cash.`}
+      description={`Welcome, ${employeeName}! Count your opening float.`}
       size="lg"
       variant="default"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-muted/30 p-4 rounded-lg space-y-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Denomination Breakdown</h3>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Preset Controls */}
+        {organization?.id && (
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Wallet className="h-4 w-4" />
+              <span>Quick Actions</span>
             </div>
-            {organization?.id && (
-              <DenominationPresetSelector
-                employeeId={employeeId}
-                organizationId={organization.id}
-                branchId={employee?.branch_id}
-                presetType="opening"
-                currentDenominations={denominations}
-                onSelectPreset={handlePresetSelect}
-              />
-            )}
+            <DenominationPresetSelector
+              employeeId={employeeId}
+              organizationId={organization.id}
+              branchId={employee?.branch_id}
+              presetType="opening"
+              currentDenominations={denominations}
+              onSelectPreset={handlePresetSelect}
+            />
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-2">
-            {DENOMINATIONS.map((denom) => (
-              <div key={denom.value} className="flex items-center gap-2">
-                <Label htmlFor={`denom-${denom.value}`} className="text-sm min-w-[60px]">
-                  {denom.label}
-                </Label>
-                <span className="text-muted-foreground text-sm">×</span>
-                <Input
-                  id={`denom-${denom.value}`}
-                  type="number"
-                  min="0"
-                  value={denominations[denom.value] || ''}
-                  onChange={(e) => updateDenomination(denom.value, e.target.value)}
-                  className="w-16 text-center h-8"
-                  disabled={isSubmitting}
-                  placeholder="0"
-                />
-                <span className="text-sm font-medium min-w-[70px] text-right">
-                  RM {(denom.value * (denominations[denom.value] || 0)).toFixed(2)}
-                </span>
-              </div>
-            ))}
+        {/* Notes Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Banknote className="h-4 w-4" />
+            <span>Notes</span>
           </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {NOTES.map((denom) => {
+              const count = denominations[denom.value] || 0;
+              const subtotal = denom.value * count;
+              return (
+                <div
+                  key={denom.value}
+                  className={`relative rounded-xl border p-3 transition-all ${denom.color} ${
+                    count > 0 ? 'ring-1 ring-primary/50' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-sm">{denom.label}</span>
+                    {count > 0 && (
+                      <span className="text-xs font-medium text-primary">
+                        RM {subtotal.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-sm">×</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={count || ''}
+                      onChange={(e) => updateDenomination(denom.value, e.target.value)}
+                      className="h-9 text-center font-medium bg-background/80"
+                      disabled={isSubmitting}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-          <div className="border-t pt-3 mt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold">Total Opening Balance:</span>
-              <span className="text-2xl font-bold text-primary">
+        {/* Coins Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Coins className="h-4 w-4" />
+            <span>Coins</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {COINS.map((denom) => {
+              const count = denominations[denom.value] || 0;
+              return (
+                <div
+                  key={denom.value}
+                  className={`relative rounded-xl border border-border bg-muted/30 p-2.5 transition-all ${
+                    count > 0 ? 'ring-1 ring-primary/50 bg-primary/5' : ''
+                  }`}
+                >
+                  <div className="text-center mb-1.5">
+                    <span className="font-medium text-sm">{denom.label}</span>
+                  </div>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={count || ''}
+                    onChange={(e) => updateDenomination(denom.value, e.target.value)}
+                    className="h-8 text-center text-sm font-medium bg-background/80"
+                    disabled={isSubmitting}
+                    placeholder="0"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Total Section */}
+        <div className="rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Opening Float</p>
+              <p className="text-xs text-muted-foreground/70 mt-0.5">
+                {Object.values(denominations).filter(v => v > 0).length} denomination(s) counted
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-primary tabular-nums">
                 RM {totalOpeningBalance.toFixed(2)}
-              </span>
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button type="submit" className="w-full" disabled={isSubmitting || totalOpeningBalance <= 0}>
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Open Till & Start Shift
-          </Button>
-        </div>
+        {/* Submit Button */}
+        <Button 
+          type="submit" 
+          className="w-full h-12 text-base font-semibold gap-2" 
+          disabled={isSubmitting || totalOpeningBalance <= 0}
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Wallet className="h-5 w-5" />
+          )}
+          Open Till & Start Shift
+        </Button>
       </form>
     </GlassModal>
   );

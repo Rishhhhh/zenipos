@@ -2,18 +2,18 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Save, Star, Trash2, Loader2, FolderOpen } from 'lucide-react';
+import { Save, Star, Trash2, Loader2, ChevronDown, Bookmark, Settings2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -48,7 +48,6 @@ export function DenominationPresetSelector({
   const [newPresetName, setNewPresetName] = useState('');
   const [savePopoverOpen, setSavePopoverOpen] = useState(false);
 
-  // Fetch presets for this employee
   const { data: presets, isLoading } = useQuery({
     queryKey: ['denomination-presets', employeeId, presetType],
     queryFn: async () => {
@@ -65,16 +64,13 @@ export function DenominationPresetSelector({
     },
   });
 
-  // Save preset mutation
   const savePreset = useMutation({
     mutationFn: async ({ name, makeDefault }: { name: string; makeDefault: boolean }) => {
-      // Convert denominations to string keys for JSONB storage
       const denomsForStorage: Record<string, number> = {};
       Object.entries(currentDenominations).forEach(([key, value]) => {
         denomsForStorage[key] = value;
       });
 
-      // If making default, unset other defaults first
       if (makeDefault && presets?.length) {
         await supabase
           .from('denomination_presets')
@@ -106,7 +102,6 @@ export function DenominationPresetSelector({
     },
   });
 
-  // Delete preset mutation
   const deletePreset = useMutation({
     mutationFn: async (presetId: string) => {
       const { error } = await supabase
@@ -125,16 +120,13 @@ export function DenominationPresetSelector({
     },
   });
 
-  // Set as default mutation
   const setAsDefault = useMutation({
     mutationFn: async (presetId: string) => {
-      // Unset all defaults first
       await supabase
         .from('denomination_presets')
         .update({ is_default: false })
         .eq('employee_id', employeeId);
 
-      // Set new default
       const { error } = await supabase
         .from('denomination_presets')
         .update({ is_default: true })
@@ -151,117 +143,73 @@ export function DenominationPresetSelector({
     },
   });
 
-  const handleSelectPreset = (presetId: string) => {
-    const preset = presets?.find((p) => p.id === presetId);
-    if (preset) {
-      // Convert string keys back to numbers
-      const numericDenoms: Record<number, number> = {};
-      Object.entries(preset.denominations).forEach(([key, value]) => {
-        numericDenoms[parseFloat(key)] = value as number;
-      });
-      onSelectPreset(numericDenoms);
-      toast({ title: 'Preset Loaded', description: `"${preset.name}" applied` });
-    }
+  const handleSelectPreset = (preset: DenominationPreset) => {
+    const numericDenoms: Record<number, number> = {};
+    Object.entries(preset.denominations).forEach(([key, value]) => {
+      numericDenoms[parseFloat(key)] = value as number;
+    });
+    onSelectPreset(numericDenoms);
+    toast({ title: 'Preset Loaded', description: `"${preset.name}" applied` });
   };
 
   const hasCurrentDenominations = Object.values(currentDenominations).some((v) => v > 0);
+  const hasPresets = presets && presets.length > 0;
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {/* Load Preset Dropdown */}
-      <Select onValueChange={handleSelectPreset} disabled={isLoading || !presets?.length}>
-        <SelectTrigger className="w-[160px] h-8 text-sm">
-          <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
-          <SelectValue placeholder={isLoading ? 'Loading...' : 'Load Preset'} />
-        </SelectTrigger>
-        <SelectContent>
-          {presets?.map((preset) => (
-            <SelectItem key={preset.id} value={preset.id}>
-              <div className="flex items-center gap-2">
-                {preset.is_default && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
-                <span>{preset.name}</span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Save Preset Button */}
-      <Popover open={savePopoverOpen} onOpenChange={setSavePopoverOpen}>
-        <PopoverTrigger asChild>
+    <div className="flex items-center gap-2">
+      {/* Load/Manage Presets Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={!hasCurrentDenominations}
-            className="h-8"
+            className="h-9 gap-2 bg-background border-border hover:bg-muted"
+            disabled={isLoading}
           >
-            <Save className="h-3.5 w-3.5 mr-1.5" />
-            Save Preset
+            <Bookmark className="h-4 w-4" />
+            <span className="hidden sm:inline">Presets</span>
+            {hasPresets && (
+              <span className="ml-1 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                {presets.length}
+              </span>
+            )}
+            <ChevronDown className="h-3.5 w-3.5 opacity-60" />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-64">
-          <div className="space-y-3">
-            <div className="text-sm font-medium">Save Current as Preset</div>
-            <Input
-              placeholder="Preset name (e.g. Morning Float)"
-              value={newPresetName}
-              onChange={(e) => setNewPresetName(e.target.value)}
-              className="h-8"
-            />
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={!newPresetName.trim() || savePreset.isPending}
-                onClick={() => savePreset.mutate({ name: newPresetName.trim(), makeDefault: false })}
-                className="flex-1"
-              >
-                {savePreset.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                Save
-              </Button>
-              <Button
-                size="sm"
-                disabled={!newPresetName.trim() || savePreset.isPending}
-                onClick={() => savePreset.mutate({ name: newPresetName.trim(), makeDefault: true })}
-                className="flex-1"
-              >
-                <Star className="h-3 w-3 mr-1" />
-                Save as Default
-              </Button>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Quick actions for existing presets */}
-      {presets && presets.length > 0 && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground">
-              Manage ({presets.length})
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72">
-            <div className="space-y-2">
-              <div className="text-sm font-medium mb-2">Saved Presets</div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64 bg-popover border-border z-50">
+          {hasPresets ? (
+            <>
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Quick Load
+              </div>
               {presets.map((preset) => (
-                <div key={preset.id} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/50">
+                <DropdownMenuItem
+                  key={preset.id}
+                  onClick={() => handleSelectPreset(preset)}
+                  className="flex items-center justify-between gap-2 cursor-pointer"
+                >
                   <div className="flex items-center gap-2">
-                    {preset.is_default && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />}
-                    <span className="text-sm">{preset.name}</span>
+                    {preset.is_default ? (
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    ) : (
+                      <Bookmark className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="font-medium">{preset.name}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
                     {!preset.is_default && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => setAsDefault.mutate(preset.id)}
-                        disabled={setAsDefault.isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAsDefault.mutate(preset.id);
+                        }}
                       >
-                        <Star className="h-3.5 w-3.5" />
+                        <Star className="h-3 w-3" />
                       </Button>
                     )}
                     <Button
@@ -269,18 +217,80 @@ export function DenominationPresetSelector({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 text-destructive hover:text-destructive"
-                      onClick={() => deletePreset.mutate(preset.id)}
-                      disabled={deletePreset.isPending}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deletePreset.mutate(preset.id);
+                      }}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
-                </div>
+                </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+            </>
+          ) : (
+            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+              <Settings2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              <p>No presets saved yet</p>
+              <p className="text-xs mt-1">Save your current count as a preset</p>
             </div>
-          </PopoverContent>
-        </Popover>
-      )}
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Save Preset Button */}
+      <Popover open={savePopoverOpen} onOpenChange={setSavePopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={!hasCurrentDenominations}
+            className="h-9 gap-2"
+          >
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Save</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 bg-popover border-border z-50" align="end">
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-sm">Save as Preset</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Quick-load this count next time
+              </p>
+            </div>
+            <Input
+              placeholder="e.g. Morning Float RM200"
+              value={newPresetName}
+              onChange={(e) => setNewPresetName(e.target.value)}
+              className="h-10"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!newPresetName.trim() || savePreset.isPending}
+                onClick={() => savePreset.mutate({ name: newPresetName.trim(), makeDefault: false })}
+                className="h-9"
+              >
+                {savePreset.isPending && <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />}
+                Save
+              </Button>
+              <Button
+                size="sm"
+                disabled={!newPresetName.trim() || savePreset.isPending}
+                onClick={() => savePreset.mutate({ name: newPresetName.trim(), makeDefault: true })}
+                className="h-9 gap-1.5"
+              >
+                <Star className="h-3.5 w-3.5" />
+                Default
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
