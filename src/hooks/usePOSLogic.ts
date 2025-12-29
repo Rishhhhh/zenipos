@@ -352,7 +352,13 @@ export function usePOSLogic() {
       // Close confirmation modal
       setShowOrderConfirmation(false);
       
-      clearCartItems();
+      // Speed Mode: Reset for new order (clears items/table but keeps NFC card)
+      // This triggers table selection prompt for next order
+      if (speedMode) {
+        useCartStore.getState().resetForNewOrder();
+      } else {
+        clearCartItems();
+      }
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error: any) => {

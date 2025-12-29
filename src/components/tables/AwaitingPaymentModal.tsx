@@ -54,7 +54,7 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
             menu_items(name)
           )
         `)
-        .eq('status', 'delivered')
+        .in('status', ['delivered', 'payment'])
         .order('delivered_at', { ascending: true });
 
       // Only filter by branch if one is selected
