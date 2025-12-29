@@ -83,12 +83,15 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
       }
     },
     onSuccess: () => {
+      // Close modal FIRST to prevent flash of "no active shift" state
+      onOpenChange(false);
+      
       toast({
         title: 'Clocked Out',
         description: 'Shift has been closed successfully',
       });
       
-      // Clear shift from context
+      // Then clear shift and invalidate queries
       clearShift();
       
       queryClient.invalidateQueries({ queryKey: ['active-shift'] });
@@ -96,7 +99,6 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
       queryClient.invalidateQueries({ queryKey: ['active-till-session'] });
       
       onSuccess();
-      onOpenChange(false);
     },
     onError: (error: any) => {
       toast({
