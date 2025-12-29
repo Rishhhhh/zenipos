@@ -22,17 +22,18 @@ interface EmployeeClockOutModalProps {
 export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId, onSuccess }: EmployeeClockOutModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { activeTillSession, closeTillSession, isLoading: tillLoading } = useTillSession();
+  const { activeTillSession, closeTillSession, isLoading: tillLoading, refreshSession } = useTillSession();
   const { activeShift, clearShift, isLoading: shiftLoading, refreshShift } = useShift();
   const [breakMinutes, setBreakMinutes] = useState(0);
   const [showCloseTill, setShowCloseTill] = useState(false);
 
-  // Eagerly refresh shift when modal opens to ensure we have latest data
+  // Eagerly refresh shift AND till session when modal opens to ensure we have latest data
   useEffect(() => {
     if (open) {
       refreshShift();
+      refreshSession(); // Also refresh till session to prevent race condition
     }
-  }, [open, refreshShift]);
+  }, [open, refreshShift, refreshSession]);
 
   // Use shiftId from props if provided, otherwise from context
   const shiftId = propShiftId || activeShift?.id;
@@ -56,10 +57,8 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
         throw new Error('No active shift to close');
       }
 
-      // Double-check till is closed
-      if (activeTillSession && activeTillSession.status === 'open') {
-        throw new Error('Please close your till before clocking out');
-      }
+      // The UI now guarantees till is closed before calling mutate
+      // No need for redundant check that causes race condition errors
 
       // Update shift with clock-out time
       const { error: updateError } = await supabase
@@ -115,6 +114,15 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
   };
 
   const handleClockOutAttempt = () => {
+    // Wait for till context to finish loading before making decision
+    if (tillLoading) {
+      toast({
+        title: 'Please wait',
+        description: 'Loading till session data...',
+      });
+      return;
+    }
+    
     // Check if till is open - MUST close before clocking out
     if (activeTillSession && activeTillSession.status === 'open') {
       setShowCloseTill(true);
