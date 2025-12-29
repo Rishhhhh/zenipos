@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useBranch } from '@/contexts/BranchContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { queryClient } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +11,12 @@ import { formatDistance } from 'date-fns';
 import { useState } from 'react';
 import { PaymentModal } from '@/components/pos/PaymentModal';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PrintPreviewModal } from '@/components/pos/PrintPreviewModal';
+import { useToast } from '@/hooks/use-toast';
+import { qzPrintReceiptEscpos, getConfiguredPrinterName } from '@/lib/print/qzEscposReceipt';
+import { buildReceiptText80mm } from '@/lib/print/receiptText80mm';
+import { BrowserPrintService } from '@/lib/print/BrowserPrintService';
+import { getCashDrawerSettings } from '@/lib/hardware/cashDrawer';
 
 interface AwaitingPaymentModalProps {
   open: boolean;
@@ -18,8 +25,12 @@ interface AwaitingPaymentModalProps {
 
 export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModalProps) {
   const { currentBranch } = useBranch();
+  const { organization } = useAuth();
+  const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [previewOrderData, setPreviewOrderData] = useState<any>(null);
 
   const { data: deliveredOrders, isLoading, error } = useQuery({
     queryKey: ['delivered-orders', currentBranch?.id],
@@ -71,12 +82,135 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (orderId?: string, paymentMethod?: string, totalAmount?: number, changeGiven?: number) => {
+    const cashReceived = totalAmount ? (totalAmount + (changeGiven || 0)) : undefined;
+    
+    console.log('💰 [AwaitingPaymentModal] Payment success:', { orderId, paymentMethod, totalAmount, changeGiven });
+    
+    // Fetch order with full details for receipt
+    if (orderId) {
+      try {
+        const { data: order, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            tables!table_id(label),
+            order_items(
+              id,
+              quantity,
+              unit_price,
+              notes,
+              modifiers,
+              menu_items(id, name, station_id)
+            )
+          `)
+          .eq('id', orderId)
+          .single();
+
+        if (!error && order) {
+          // Build items for receipt
+          const receiptItems = (order.order_items || []).map((item: any) => ({
+            name: item.menu_items?.name || 'Unknown',
+            quantity: item.quantity,
+            price: item.unit_price,
+            total: item.quantity * item.unit_price,
+          }));
+
+          const subtotal = order.subtotal || order.total;
+          const tax = order.tax || 0;
+          const total = order.total;
+
+          // Try QZ Tray printing first
+          const printerName = getConfiguredPrinterName();
+          const drawerSettings = getCashDrawerSettings();
+          
+          if (printerName) {
+            try {
+              const receiptText = buildReceiptText80mm({
+                orgName: organization?.name || 'Restaurant',
+                branchName: currentBranch?.name,
+                branchAddress: currentBranch?.address,
+                order: {
+                  id: orderId,
+                  order_number: orderId.substring(0, 8),
+                  tables: order.tables,
+                  order_items: receiptItems.map((it: any) => ({
+                    name: it.name,
+                    quantity: it.quantity,
+                    total: it.total,
+                  })),
+                  subtotal,
+                  tax,
+                  total,
+                  paid_at: new Date().toISOString(),
+                },
+                paymentMethod: paymentMethod?.toUpperCase() || 'CASH',
+                cashReceived,
+                changeGiven: changeGiven || 0,
+              });
+
+              await qzPrintReceiptEscpos({
+                printerName,
+                receiptText,
+                cut: true,
+                openDrawer: paymentMethod === 'cash' && drawerSettings.enabled,
+              });
+              
+              console.log('✅ [AwaitingPaymentModal] Receipt printed via QZ Tray');
+            } catch (printError) {
+              console.warn('⚠️ QZ Tray print failed, falling back to browser:', printError);
+              // Fallback to browser print
+              await BrowserPrintService.print80mmReceipt({
+                restaurantName: organization?.name || 'Restaurant',
+                address: currentBranch?.address,
+                phone: currentBranch?.phone,
+                orderNumber: orderId.substring(0, 8),
+                tableLabel: order.tables?.label,
+                orderType: order.order_type || 'takeaway',
+                timestamp: new Date(),
+                items: receiptItems,
+                subtotal,
+                tax,
+                total,
+                paymentMethod: paymentMethod?.toUpperCase() || 'CASH',
+                cashReceived,
+                changeGiven: changeGiven || 0,
+              });
+            }
+          }
+
+          // Set preview data for print preview modal
+          setPreviewOrderData({
+            orderId,
+            orderNumber: orderId.substring(0, 8),
+            items: order.order_items || [],
+            subtotal,
+            tax,
+            total,
+            timestamp: new Date().toISOString(),
+            paymentMethod: paymentMethod?.toUpperCase() || 'CASH',
+            cashReceived,
+            changeGiven: changeGiven || 0,
+          });
+          setShowPrintPreview(true);
+        }
+      } catch (err) {
+        console.error('❌ [AwaitingPaymentModal] Error fetching order for receipt:', err);
+      }
+    }
+
     setShowPaymentModal(false);
     setSelectedOrder(null);
+    
     // Invalidate to refresh the list
     queryClient.invalidateQueries({ queryKey: ['delivered-orders'] });
     queryClient.invalidateQueries({ queryKey: ['today-metrics'] });
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
+    
+    toast({
+      title: 'Payment Complete',
+      description: 'Receipt printed. Ready for next order.',
+    });
   };
 
   return (
@@ -192,6 +326,18 @@ export function AwaitingPaymentModal({ open, onOpenChange }: AwaitingPaymentModa
           orderNumber={selectedOrder.id.slice(0, 8)}
           total={selectedOrder.total}
           onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {previewOrderData && (
+        <PrintPreviewModal
+          open={showPrintPreview}
+          onOpenChange={setShowPrintPreview}
+          mode="customer"
+          orderData={previewOrderData}
+          orgName={organization?.name}
+          branchName={currentBranch?.name}
+          onSendToPrinter={() => setShowPrintPreview(false)}
         />
       )}
     </>
