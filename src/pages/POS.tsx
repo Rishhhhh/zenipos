@@ -368,14 +368,33 @@ export default function POS() {
             </Badge>
           )}
 
-          {/* Order Type Badge (Dine In / Takeaway) */}
+          {/* Order Type Badge (Dine In / Takeaway) - CLICKABLE */}
           {order_type && (
-            <Badge
-              variant={order_type === 'takeaway' ? 'secondary' : 'default'}
-              className="text-sm px-3 py-1.5"
+            <Button
+              variant="outline"
+              size="sm"
+              className={`h-8 px-3 gap-1.5 ${
+                order_type === 'takeaway' 
+                  ? 'bg-amber-500/10 border-amber-500/50 text-amber-600 hover:bg-amber-500/20' 
+                  : 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/20'
+              }`}
+              onClick={() => {
+                // Speed Mode: Always allow changing order type without confirmation
+                if (speedMode) {
+                  useCartStore.getState().resetForNewOrder();
+                  setShowTableSelect(true);
+                } else if (items.length > 0) {
+                  if (confirm('Changing order type will clear cart. Continue?')) {
+                    clearCart();
+                    setShowTableSelect(true);
+                  }
+                } else {
+                  setShowTableSelect(true);
+                }
+              }}
             >
               {order_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine In'}
-            </Badge>
+            </Button>
           )}
 
           {/* Table Badge (only for dine-in) */}

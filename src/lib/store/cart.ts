@@ -49,6 +49,7 @@ interface CartState {
   updateItemModifiers: (id: string, modifiers: CartModifier[]) => void;
   clearCart: () => void;
   clearCartItems: () => void;
+  resetForNewOrder: () => void;
   applyPromotions: (results: EvaluationResult[]) => void;
   clearPromotions: () => void;
   
@@ -181,6 +182,21 @@ export const useCartStore = create<CartState>((set, get) => ({
     appliedPromotions: []
     // Preserve: table_id, nfc_card_id, order_type, table labels
   }),
+  
+  // Speed Mode: Reset for new order - clears items/table/type but KEEPS NFC card
+  resetForNewOrder: () => set((state) => ({
+    items: [],
+    sessionId: crypto.randomUUID(),
+    appliedPromotions: [],
+    table_id: null,
+    tableId: null,
+    tableName: null,
+    tableLabelShort: null,
+    order_type: null,
+    // KEEP NFC card for speed mode continuity
+    nfc_card_id: state.nfc_card_id,
+    nfcCardUid: state.nfcCardUid,
+  })),
   
   applyPromotions: (results) => set({ appliedPromotions: results }),
   
