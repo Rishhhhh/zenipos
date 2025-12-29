@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 interface PaymentDisplayProps {
   total: number;
   qrCodeUrl?: string;
+  qrImageUrl?: string; // Static uploaded QR image
   isComplete?: boolean;
   change?: number;
   paymentMethod?: 'cash' | 'qr' | 'duitnow' | 'tng';
@@ -20,7 +21,8 @@ const roundToNearest10Sen = (amount: number): number => {
 
 export function PaymentDisplay({ 
   total, 
-  qrCodeUrl, 
+  qrCodeUrl,
+  qrImageUrl,
   isComplete, 
   change,
   paymentMethod,
@@ -132,7 +134,7 @@ export function PaymentDisplay({
             )}
           </div>
 
-          {qrCodeUrl ? (
+          {(qrCodeUrl || qrImageUrl) ? (
             <div className="flex flex-col items-center gap-6">
               {/* Provider Badge */}
               {(paymentMethod === 'duitnow' || paymentMethod === 'tng') && (
@@ -142,18 +144,26 @@ export function PaymentDisplay({
                 </Badge>
               )}
               
-              {/* QR Code */}
+              {/* QR Code - Use uploaded image if available, fallback to generated */}
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-white p-6 rounded-2xl shadow-xl border-4 border-primary/20"
               >
-                <QRCodeSVG 
-                  value={qrCodeUrl}
-                  size={240}
-                  level="H"
-                  includeMargin={true}
-                />
+                {qrImageUrl ? (
+                  <img 
+                    src={qrImageUrl} 
+                    alt={`${paymentMethod === 'duitnow' ? 'DuitNow' : "Touch 'n Go"} QR Code`}
+                    className="w-60 h-60 object-contain"
+                  />
+                ) : qrCodeUrl ? (
+                  <QRCodeSVG 
+                    value={qrCodeUrl}
+                    size={240}
+                    level="H"
+                    includeMargin={true}
+                  />
+                ) : null}
               </motion.div>
               
               <div className="space-y-2">

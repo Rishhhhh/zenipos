@@ -27,6 +27,8 @@ interface DisplaySession {
   orderItems?: OrderItem[];
   paymentMethod?: string;
   orderId?: string;
+  // Static QR image from organization settings
+  paymentQRImageUrl?: string;
 }
 
 export function useCustomerDisplaySync(displaySessionId: string) {
@@ -142,6 +144,7 @@ export function useCustomerDisplaySync(displaySessionId: string) {
               orderItems: Array.isArray(newData.order_items) ? (newData.order_items as unknown as OrderItem[]) : [],
               paymentMethod: newData.payment_method,
               orderId: newData.order_id,
+              paymentQRImageUrl: newData.payment_qr_image_url,
             });
             setLastSync(new Date());
           }
@@ -191,6 +194,7 @@ export function useBroadcastToCustomerDisplay() {
         order_items: update.orderItems || [],
         payment_method: update.paymentMethod || null,
         order_id: update.orderId || null,
+        payment_qr_image_url: update.paymentQRImageUrl || null,
         last_activity: new Date().toISOString(),
       };
       
@@ -247,12 +251,14 @@ export function useBroadcastToCustomerDisplay() {
   }, [cart.sessionId, cart.nfcCardUid, cart.tableLabelShort, cart.items, cart.getSubtotal, cart.getTax, cart.getTotal, cart.getDiscount, broadcastUpdate]);
 
   // Immediate broadcasts (not debounced - one-time actions)
-  const broadcastPayment = useCallback((displaySessionId: string, qrCodeUrl?: string) => {
+  const broadcastPayment = useCallback((displaySessionId: string, qrCodeUrl?: string, qrImageUrl?: string, paymentMethod?: string) => {
     broadcastUpdate(displaySessionId, {
       mode: 'payment',
       posSessionId: cart.sessionId,
       total: cart.getTotal(),
       paymentQR: qrCodeUrl,
+      paymentQRImageUrl: qrImageUrl,
+      paymentMethod,
     });
   }, [cart.sessionId, cart.getTotal, broadcastUpdate]);
 

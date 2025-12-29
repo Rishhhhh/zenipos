@@ -188,6 +188,8 @@ export default function CustomerScreen() {
           <PaymentDisplay
             total={displaySession.total || 0}
             qrCodeUrl={displaySession.paymentQR}
+            qrImageUrl={displaySession.paymentQRImageUrl}
+            paymentMethod={displaySession.paymentMethod as any}
             isComplete={false}
           />
         );

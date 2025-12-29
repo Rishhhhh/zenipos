@@ -598,6 +598,7 @@ export type Database = {
           order_items: Json | null
           payment_method: string | null
           payment_qr: string | null
+          payment_qr_image_url: string | null
           pos_session_id: string | null
           session_id: string
           subtotal: number | null
@@ -618,6 +619,7 @@ export type Database = {
           order_items?: Json | null
           payment_method?: string | null
           payment_qr?: string | null
+          payment_qr_image_url?: string | null
           pos_session_id?: string | null
           session_id: string
           subtotal?: number | null
@@ -638,6 +640,7 @@ export type Database = {
           order_items?: Json | null
           payment_method?: string | null
           payment_qr?: string | null
+          payment_qr_image_url?: string | null
           pos_session_id?: string | null
           session_id?: string
           subtotal?: number | null
@@ -2719,6 +2722,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           date_format: string | null
+          duitnow_qr_url: string | null
           id: string
           is_active: boolean | null
           login_email: string | null
@@ -2734,6 +2738,7 @@ export type Database = {
           settings: Json | null
           slug: string
           timezone: string | null
+          tng_qr_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2743,6 +2748,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           date_format?: string | null
+          duitnow_qr_url?: string | null
           id?: string
           is_active?: boolean | null
           login_email?: string | null
@@ -2758,6 +2764,7 @@ export type Database = {
           settings?: Json | null
           slug: string
           timezone?: string | null
+          tng_qr_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2767,6 +2774,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           date_format?: string | null
+          duitnow_qr_url?: string | null
           id?: string
           is_active?: boolean | null
           login_email?: string | null
@@ -2782,6 +2790,7 @@ export type Database = {
           settings?: Json | null
           slug?: string
           timezone?: string | null
+          tng_qr_url?: string | null
           updated_at?: string | null
         }
         Relationships: []

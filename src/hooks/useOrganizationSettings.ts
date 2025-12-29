@@ -14,6 +14,8 @@ interface UpdateSettingsRequest {
   logoUrl?: string;
   currentPassword?: string;
   newPassword?: string;
+  duitnowQrUrl?: string | null;
+  tngQrUrl?: string | null;
 }
 
 export function useOrganizationSettings() {

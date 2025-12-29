@@ -3,6 +3,7 @@ import { GeneralSettingsPanel } from '@/components/admin/settings/GeneralSetting
 import { BrandingSettingsPanel } from '@/components/admin/settings/BrandingSettingsPanel';
 import { SecuritySettingsPanel } from '@/components/admin/settings/SecuritySettingsPanel';
 import { BillingPlaceholderPanel } from '@/components/admin/settings/BillingPlaceholderPanel';
+import { PaymentQRSettingsPanel } from '@/components/admin/settings/PaymentQRSettingsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building, ExternalLink } from 'lucide-react';
@@ -19,9 +20,10 @@ export default function OrganizationSettings() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
+          <TabsTrigger value="payment">Payment</TabsTrigger>
           <TabsTrigger value="branches">Branches</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
@@ -33,6 +35,10 @@ export default function OrganizationSettings() {
 
         <TabsContent value="branding" className="space-y-6">
           <BrandingSettingsPanel />
+        </TabsContent>
+
+        <TabsContent value="payment" className="space-y-6">
+          <PaymentQRSettingsPanel />
         </TabsContent>
 
         <TabsContent value="branches" className="space-y-6">
