@@ -36,32 +36,39 @@ serve(async (req) => {
       throw new Error('Missing organizationId');
     }
 
-    // Verify user has owner role for this organization
-    const { data: userRole, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role, employee_id')
-      .eq('user_id', user.id)
-      .eq('role', 'owner')
-      .single();
-
-    if (roleError || !userRole) {
-      return new Response(
-        JSON.stringify({ error: 'Only owners can update organization settings' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      );
-    }
-
-    // Verify organization ownership
+    // Get organization first
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('*')
       .eq('id', organizationId)
-      .eq('owner_id', user.id)
       .single();
 
     if (orgError || !org) {
       return new Response(
-        JSON.stringify({ error: 'Organization not found or access denied' }),
+        JSON.stringify({ error: 'Organization not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    // Check if user is the organization owner OR has admin/owner role via employees
+    const isOwner = org.owner_id === user.id;
+    
+    let hasAdminRole = false;
+    if (!isOwner) {
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('role')
+        .eq('auth_user_id', user.id)
+        .eq('organization_id', organizationId)
+        .in('role', ['owner', 'admin'])
+        .maybeSingle();
+      
+      hasAdminRole = !!employee;
+    }
+
+    if (!isOwner && !hasAdminRole) {
+      return new Response(
+        JSON.stringify({ error: 'Only owners or admins can update organization settings' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
