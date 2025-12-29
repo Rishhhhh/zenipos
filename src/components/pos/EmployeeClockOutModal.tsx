@@ -10,24 +10,30 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CloseTillModal } from './CloseTillModal';
 import { useTillSession } from '@/contexts/TillSessionContext';
+import { useShift } from '@/contexts/ShiftContext';
 
 interface EmployeeClockOutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  shiftId: string;
+  shiftId?: string | null;
   onSuccess: () => void;
 }
 
-export function EmployeeClockOutModal({ open, onOpenChange, shiftId, onSuccess }: EmployeeClockOutModalProps) {
+export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId, onSuccess }: EmployeeClockOutModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeTillSession, closeTillSession } = useTillSession();
+  const { activeShift, clearShift } = useShift();
   const [breakMinutes, setBreakMinutes] = useState(0);
   const [showCloseTill, setShowCloseTill] = useState(false);
+
+  // Use shiftId from props if provided, otherwise from context
+  const shiftId = propShiftId || activeShift?.id;
 
   const { data: shiftSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['shift-summary', shiftId],
     queryFn: async () => {
+      if (!shiftId) return null;
       const { data, error } = await supabase.rpc('get_shift_summary', {
         shift_id_param: shiftId,
       });
@@ -39,6 +45,10 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId, onSuccess }
 
   const clockOut = useMutation({
     mutationFn: async () => {
+      if (!shiftId) {
+        throw new Error('No active shift to close');
+      }
+
       // Double-check till is closed
       if (activeTillSession && activeTillSession.status === 'open') {
         throw new Error('Please close your till before clocking out');
@@ -71,9 +81,14 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId, onSuccess }
         title: 'Clocked Out',
         description: 'Shift has been closed successfully',
       });
+      
+      // Clear shift from context
+      clearShift();
+      
       queryClient.invalidateQueries({ queryKey: ['active-shift'] });
       queryClient.invalidateQueries({ queryKey: ['shifts'] });
       queryClient.invalidateQueries({ queryKey: ['active-till-session'] });
+      
       onSuccess();
       onOpenChange(false);
     },
@@ -102,6 +117,32 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId, onSuccess }
   };
 
   const tillIsOpen = activeTillSession && activeTillSession.status === 'open';
+
+  // No active shift warning
+  if (!shiftId && open) {
+    return (
+      <GlassModal
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Clock Out"
+        description="No active shift found"
+        size="md"
+        variant="default"
+      >
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            You don't have an active shift to close. Please clock in first.
+          </AlertDescription>
+        </Alert>
+        <div className="flex justify-end mt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </div>
+      </GlassModal>
+    );
+  }
 
   return (
     <>
