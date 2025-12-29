@@ -1,29 +1,26 @@
-import { useState } from 'react';
 import { AppHeader } from './AppHeader';
 import { useModalManager } from '@/hooks/useModalManager';
+import { useShift } from '@/contexts/ShiftContext';
 
 export function HeaderWithClockIn() {
-  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
-  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
-  const [shiftElapsed, setShiftElapsed] = useState<string>('00:00');
+  const { activeShift, shiftElapsed, refreshShift, clearShift } = useShift();
   const { openModal } = useModalManager();
 
   return (
     <AppHeader
-      currentShiftId={currentShiftId}
+      currentShiftId={activeShift?.id || null}
       shiftElapsed={shiftElapsed}
       onClockIn={() => openModal('employeeClockIn', {
-        onSuccess: (employee: any, shiftId: string) => {
-          setCurrentEmployee(employee);
-          setCurrentShiftId(shiftId);
+        onSuccess: async () => {
+          // Refresh shift context to pick up the new shift
+          await refreshShift();
         },
       })}
       onClockOut={() => openModal('employeeClockOut', {
-        shiftId: currentShiftId,
+        shiftId: activeShift?.id,
         onSuccess: () => {
-          setCurrentEmployee(null);
-          setCurrentShiftId(null);
-          setShiftElapsed('00:00');
+          // Clear shift from context
+          clearShift();
         },
       })}
     />

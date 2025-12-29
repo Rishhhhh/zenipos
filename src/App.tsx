@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useModalManager } from "./hooks/useModalManager";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +10,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BranchProvider } from "./contexts/BranchContext";
 import { TillSessionProvider } from "./contexts/TillSessionContext";
+import { ShiftProvider } from "./contexts/ShiftContext";
 import { ModalProvider } from "./contexts/ModalContext";
 import { WidgetRefreshProvider } from "./contexts/WidgetRefreshContext";
 import { OrgProtectedRoute } from "./components/auth/OrgProtectedRoute";
@@ -83,33 +84,11 @@ const Register = lazy(() => import("./pages/Register"));
 const BranchSetup = lazy(() => import("./pages/setup/BranchSetup"));
 const KDSDebugPanel = lazy(() => import("./pages/admin/KDSDebugPanel"));
 
-// POS with integrated clock in/out
+// POS with integrated clock in/out - uses ShiftContext for global state
 function POSWithHeader() {
-  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
-  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
-  const [shiftElapsed, setShiftElapsed] = useState<string>('00:00');
-  const { openModal } = useModalManager();
-
   return (
     <>
-      <AppHeader
-        currentShiftId={currentShiftId}
-        shiftElapsed={shiftElapsed}
-        onClockIn={() => openModal('employeeClockIn', {
-          onSuccess: (employee: any, shiftId: string) => {
-            setCurrentEmployee(employee);
-            setCurrentShiftId(shiftId);
-          },
-        })}
-        onClockOut={() => openModal('employeeClockOut', {
-          shiftId: currentShiftId,
-          onSuccess: () => {
-            setCurrentEmployee(null);
-            setCurrentShiftId(null);
-            setShiftElapsed('00:00');
-          },
-        })}
-      />
+      <HeaderWithClockIn />
       <POS />
     </>
   );
@@ -181,8 +160,9 @@ const MainApp = () => (
   <AuthProvider>
     <BranchProvider>
       <TillSessionProvider>
-        <WidgetRefreshProvider>
-          <ModalProvider>
+        <ShiftProvider>
+          <WidgetRefreshProvider>
+            <ModalProvider>
             <TooltipProvider>
               <Suspense fallback={
                 <div className="flex items-center justify-center min-h-screen">
@@ -605,9 +585,10 @@ const MainApp = () => (
             </TooltipProvider>
           </ModalProvider>
         </WidgetRefreshProvider>
-      </TillSessionProvider>
-    </BranchProvider>
-  </AuthProvider>
+      </ShiftProvider>
+    </TillSessionProvider>
+  </BranchProvider>
+</AuthProvider>
 );
 
 // Root App component that handles customer screen routing separately
