@@ -11,6 +11,7 @@ import {
   Clock,
   Award,
   Activity,
+  Workflow,
 } from "lucide-react";
 
 // All widgets are lazy loaded with Suspense wrappers
@@ -26,6 +27,7 @@ import { LaborCostWidget } from "@/components/dashboard/widgets/LaborCostWidget"
 import { EightySixWidget } from "@/components/dashboard/widgets/EightySixWidget";
 import { PendingModsWidget } from "@/components/dashboard/widgets/PendingModsWidget";
 import { WebVitalsWidget } from "@/components/dashboard/widgets/WebVitalsWidget";
+import { LiveFlowWidget } from "@/components/dashboard/widgets/LiveFlowWidget";
 
 export interface WidgetDefinition {
   id: string;
@@ -256,6 +258,25 @@ export const WIDGET_CATALOG: Record<string, WidgetDefinition[]> = {
       fixedSize: 'M',
       defaultSize: { cols: 8, rows: 7 },
       moduleRoute: "/admin/performance",
+      capabilities: {
+        supportedDisplayTypes: ['cards'],
+        dataType: 'status-list',
+        hasCompactMode: true,
+      },
+    },
+  ],
+  operations: [
+    {
+      id: "live-flow",
+      component: LiveFlowWidget,
+      name: "Restaurant Flow",
+      description: "Live snapshot of restaurant operations - dine-in, kitchen, payments",
+      icon: Workflow,
+      roles: ["manager", "owner"],
+      category: "operations",
+      fixedSize: 'L_WIDE',
+      defaultSize: { cols: 14, rows: 4 },
+      moduleRoute: "/kds",
       capabilities: {
         supportedDisplayTypes: ['cards'],
         dataType: 'status-list',

@@ -299,8 +299,8 @@ export const MANAGER_MOBILE_LAYOUT: BentoLayout = {
 };
 
 /**
- * OWNER LAYOUT (10-12 analytical widgets)
- * Focus: Business analytics, performance metrics, comprehensive oversight
+ * OWNER LAYOUT (streamlined operational dashboard)
+ * Focus: Sales analytics, revenue trends, live restaurant flow
  */
 export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
   role: 'owner',
@@ -311,9 +311,9 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
     minHeight: '100%',
     areas: [
       ['sales', 'sales', 'revenue', 'revenue'],
-      ['orders', 'shifts', 'revenue', 'revenue'],
-      ['labor', 'top-items', 'top-items', 'loyalty'],
-      ['low-stock', 'web-vitals', 'web-vitals', 'web-vitals']
+      ['sales', 'sales', 'revenue', 'revenue'],
+      ['live-flow', 'live-flow', 'live-flow', 'live-flow'],
+      ['top-items', 'top-items', 'loyalty', 'low-stock']
     ]
   },
   widgets: [
@@ -321,7 +321,7 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
       id: 'sales',
       area: 'sales',
       colSpan: 2,
-      rowSpan: 1,
+      rowSpan: 2,
       isMinimized: false
     },
     {
@@ -332,23 +332,9 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'active-orders',
-      area: 'orders',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'active-shifts',
-      area: 'shifts',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'labor-cost',
-      area: 'labor',
-      colSpan: 1,
+      id: 'live-flow',
+      area: 'live-flow',
+      colSpan: 4,
       rowSpan: 1,
       isMinimized: false
     },
@@ -370,13 +356,6 @@ export const OWNER_DESKTOP_LAYOUT: BentoLayout = {
       id: 'low-stock',
       area: 'low-stock',
       colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'web-vitals',
-      area: 'web-vitals',
-      colSpan: 3,
       rowSpan: 1,
       isMinimized: false
     }
@@ -387,16 +366,15 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
   role: 'owner',
   gridTemplate: {
     columns: 'repeat(2, 1fr)',
-    rows: 'repeat(6, 1fr)',
+    rows: 'repeat(5, 1fr)',
     gap: '0.875rem',
     minHeight: '100%',
     areas: [
       ['sales', 'sales'],
+      ['sales', 'sales'],
       ['revenue', 'revenue'],
-      ['orders', 'shifts'],
-      ['labor', 'top-items'],
-      ['low-stock', 'loyalty'],
-      ['web-vitals', 'web-vitals']
+      ['live-flow', 'live-flow'],
+      ['top-items', 'loyalty']
     ]
   },
   widgets: [
@@ -404,7 +382,7 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
       id: 'sales',
       area: 'sales',
       colSpan: 2,
-      rowSpan: 1,
+      rowSpan: 2,
       isMinimized: false
     },
     {
@@ -415,23 +393,9 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'active-orders',
-      area: 'orders',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'active-shifts',
-      area: 'shifts',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'labor-cost',
-      area: 'labor',
-      colSpan: 1,
+      id: 'live-flow',
+      area: 'live-flow',
+      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     },
@@ -443,23 +407,9 @@ export const OWNER_TABLET_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'low-stock',
-      area: 'low-stock',
-      colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
       id: 'loyalty-stats',
       area: 'loyalty',
       colSpan: 1,
-      rowSpan: 1,
-      isMinimized: false
-    },
-    {
-      id: 'web-vitals',
-      area: 'web-vitals',
-      colSpan: 2,
       rowSpan: 1,
       isMinimized: false
     }
@@ -475,8 +425,8 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
     minHeight: 'auto',
     areas: [
       ['sales'],
+      ['live-flow'],
       ['revenue'],
-      ['orders'],
       ['top-items'],
       ['loyalty']
     ]
@@ -490,15 +440,15 @@ export const OWNER_MOBILE_LAYOUT: BentoLayout = {
       isMinimized: false
     },
     {
-      id: 'revenue-chart',
-      area: 'revenue',
+      id: 'live-flow',
+      area: 'live-flow',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false
     },
     {
-      id: 'active-orders',
-      area: 'orders',
+      id: 'revenue-chart',
+      area: 'revenue',
       colSpan: 1,
       rowSpan: 1,
       isMinimized: false
