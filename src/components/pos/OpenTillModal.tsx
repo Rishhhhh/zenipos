@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DenominationPresetSelector } from './DenominationPresetSelector';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface OpenTillModalProps {
   open: boolean;
@@ -45,6 +49,7 @@ export function OpenTillModal({
   onOpenTill,
 }: OpenTillModalProps) {
   const { toast } = useToast();
+  const { employee, organization } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [denominations, setDenominations] = useState<Record<number, number>>({
     100: 0,
@@ -58,6 +63,40 @@ export function OpenTillModal({
     0.10: 0,
     0.05: 0,
   });
+
+  // Fetch default preset on open
+  const { data: defaultPreset } = useQuery({
+    queryKey: ['default-denomination-preset', employeeId, 'opening'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('denomination_presets')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .eq('is_default', true)
+        .in('preset_type', ['opening', 'both'])
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+      return data;
+    },
+    enabled: open && !!employeeId,
+  });
+
+  // Auto-load default preset when modal opens
+  useEffect(() => {
+    if (open && defaultPreset?.denominations) {
+      const numericDenoms: Record<number, number> = {};
+      Object.entries(defaultPreset.denominations).forEach(([key, value]) => {
+        numericDenoms[parseFloat(key)] = value as number;
+      });
+      setDenominations((prev) => ({ ...prev, ...numericDenoms }));
+      toast({ title: 'Default Preset Loaded', description: `"${defaultPreset.name}" applied` });
+    }
+  }, [open, defaultPreset, toast]);
+
+  const handlePresetSelect = (presetDenominations: Record<number, number>) => {
+    setDenominations((prev) => ({ ...prev, ...presetDenominations }));
+  };
 
   const updateDenomination = (value: number, count: string) => {
     const numCount = Math.max(0, parseInt(count) || 0);
@@ -130,9 +169,21 @@ export function OpenTillModal({
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-muted/30 p-4 rounded-lg space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Wallet className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Denomination Breakdown</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Denomination Breakdown</h3>
+            </div>
+            {organization?.id && (
+              <DenominationPresetSelector
+                employeeId={employeeId}
+                organizationId={organization.id}
+                branchId={employee?.branch_id}
+                presetType="opening"
+                currentDenominations={denominations}
+                onSelectPreset={handlePresetSelect}
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-2">

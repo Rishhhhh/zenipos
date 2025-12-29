@@ -742,6 +742,67 @@ export type Database = {
         }
         Relationships: []
       }
+      denomination_presets: {
+        Row: {
+          branch_id: string | null
+          created_at: string | null
+          denominations: Json
+          employee_id: string
+          id: string
+          is_default: boolean | null
+          name: string
+          organization_id: string
+          preset_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string | null
+          denominations?: Json
+          employee_id: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          organization_id: string
+          preset_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string | null
+          denominations?: Json
+          employee_id?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          organization_id?: string
+          preset_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "denomination_presets_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "denomination_presets_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "denomination_presets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_health_log: {
         Row: {
           created_at: string | null

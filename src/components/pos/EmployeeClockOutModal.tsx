@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,10 +22,17 @@ interface EmployeeClockOutModalProps {
 export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId, onSuccess }: EmployeeClockOutModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { activeTillSession, closeTillSession } = useTillSession();
-  const { activeShift, clearShift } = useShift();
+  const { activeTillSession, closeTillSession, isLoading: tillLoading } = useTillSession();
+  const { activeShift, clearShift, isLoading: shiftLoading, refreshShift } = useShift();
   const [breakMinutes, setBreakMinutes] = useState(0);
   const [showCloseTill, setShowCloseTill] = useState(false);
+
+  // Eagerly refresh shift when modal opens to ensure we have latest data
+  useEffect(() => {
+    if (open) {
+      refreshShift();
+    }
+  }, [open, refreshShift]);
 
   // Use shiftId from props if provided, otherwise from context
   const shiftId = propShiftId || activeShift?.id;
@@ -117,9 +124,29 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
   };
 
   const tillIsOpen = activeTillSession && activeTillSession.status === 'open';
+  const isContextLoading = shiftLoading || tillLoading;
 
-  // No active shift warning
-  if (!shiftId && open) {
+  // Show loading state while contexts are loading
+  if (isContextLoading && open) {
+    return (
+      <GlassModal
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Clock Out"
+        description="Loading shift data..."
+        size="md"
+        variant="default"
+      >
+        <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-muted-foreground">Loading shift data...</span>
+        </div>
+      </GlassModal>
+    );
+  }
+
+  // No active shift warning (only show after loading completes)
+  if (!shiftId && open && !isContextLoading) {
     return (
       <GlassModal
         open={open}
