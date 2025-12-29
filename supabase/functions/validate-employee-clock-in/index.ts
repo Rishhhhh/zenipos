@@ -79,12 +79,15 @@ serve(async (req) => {
     console.log('Employee found:', { id: employee.id, name: employee.name, role: employee.role });
 
     // Check for active shift
-    const { data: activeShift } = await supabaseAdmin.rpc('get_active_shift', {
+    const { data: activeShift, error: shiftError } = await supabaseAdmin.rpc('get_active_shift', {
       employee_id_param: employee.id
     });
 
-    if (activeShift) {
-      console.log('Employee already has active shift');
+    console.log('Active shift check result:', { activeShift, shiftError, hasActiveShift: activeShift && activeShift.length > 0 });
+
+    // RPC returns an array - check if it has any entries
+    if (activeShift && activeShift.length > 0) {
+      console.log('Employee already has active shift:', activeShift[0].shift_id);
       return new Response(
         JSON.stringify({ valid: false, error: 'Employee already has an active shift' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
