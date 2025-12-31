@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useRef } from 'react';
 import { createPaymentProvider } from '@/lib/payments/PaymentProvider';
 import { getCashDrawerSettings, kickCashDrawer } from '@/lib/hardware/cashDrawer';
-import { QrCode, Banknote, Loader2, FileText, Delete, ImageIcon } from 'lucide-react';
+import { QrCode, Banknote, Loader2, FileText, Delete, Smartphone, CheckCircle, ImageOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generate58mmReceipt } from '@/lib/print/receiptGenerator';
@@ -150,8 +150,29 @@ export function PaymentModal({
   useEffect(() => {
     if (!open) {
       hasAutoOpenedRef.current = false;
+      setQrCodeUrl(null);
     }
   }, [open]);
+
+  // Auto-broadcast QR to customer display when QR provider changes or switching to QR tab
+  useEffect(() => {
+    if (paymentMethod !== 'qr' || !open) return;
+    
+    const qrImageUrl = qrProvider === 'duitnow' 
+      ? organizationQRs?.duitnow_qr_url 
+      : organizationQRs?.tng_qr_url;
+    
+    if (!qrImageUrl) {
+      setQrCodeUrl(null);
+      return;
+    }
+    
+    // Auto-broadcast to customer display immediately
+    if (customerDisplayId && onBroadcastPayment) {
+      onBroadcastPayment(customerDisplayId, undefined, qrImageUrl, qrProvider);
+    }
+    setQrCodeUrl(qrImageUrl);
+  }, [qrProvider, paymentMethod, open, organizationQRs, customerDisplayId, onBroadcastPayment]);
 
   const handleGenerateQR = async () => {
     // Check if we have an uploaded static QR image
@@ -481,7 +502,7 @@ export function PaymentModal({
         </Label>
       </div>
 
-      <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
+      <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'cash' | 'qr')}>
         <TabsList className="grid w-full grid-cols-2 h-14">
           <TabsTrigger value="cash" className="text-base h-12">
             <Banknote className="h-5 w-5 mr-2" />
@@ -493,8 +514,9 @@ export function PaymentModal({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="qr" className="space-y-4">
-          <div className="flex gap-2">
+        <TabsContent value="qr" className="space-y-4 py-4">
+          {/* Provider Selection */}
+          <div className="grid grid-cols-2 gap-3">
             <Button
               variant={qrProvider === 'duitnow' ? 'default' : 'outline'}
               onClick={() => setQrProvider('duitnow')}
@@ -513,53 +535,44 @@ export function PaymentModal({
             </Button>
           </div>
 
-          {!qrCodeUrl ? (
-            <Button
-              onClick={handleGenerateQR}
-              disabled={isProcessing}
-              className="w-full h-16 text-lg"
-              size="lg"
-            >
-              {isProcessing ? (
-                <Loader2 className="h-6 w-6 mr-2 animate-spin" />
-              ) : (
-                <QrCode className="h-6 w-6 mr-2" />
-              )}
-              Generate QR Code
-            </Button>
-          ) : (
-            <div className="flex flex-col items-center py-6 gap-4">
-              {/* Show uploaded QR image or placeholder */}
-              {organizationQRs?.[qrProvider === 'duitnow' ? 'duitnow_qr_url' : 'tng_qr_url'] ? (
-                <img 
-                  src={qrCodeUrl!} 
-                  alt={`${qrProvider} QR Code`}
-                  className="w-48 h-48 object-contain border rounded-lg"
-                />
-              ) : (
-                <QrCode className="h-48 w-48 text-primary" />
-              )}
-              <Badge>{qrProvider === 'duitnow' ? 'DuitNow' : "Touch 'n Go"}</Badge>
-              <p className="text-sm text-muted-foreground">
-                Customer scanning QR code...
+          {/* Status Display - NO QR shown here, it's on customer display */}
+          {qrCodeUrl ? (
+            <div className="flex flex-col items-center py-8 gap-4 border rounded-xl bg-muted/30">
+              <Smartphone className="w-16 h-16 text-primary animate-pulse" />
+              <p className="text-xl font-semibold text-center">
+                QR Code Displayed on Customer Screen
               </p>
-              
-              {/* Manual confirmation button for static QR */}
-              <Button
-                onClick={handleManualPaymentConfirm}
-                disabled={isProcessing}
-                className="w-full h-14 text-lg mt-2"
-                size="lg"
-              >
-                {isProcessing ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <ImageIcon className="h-5 w-5 mr-2" />
-                )}
-                Payment Received
-              </Button>
+              <p className="text-sm text-muted-foreground text-center">
+                Waiting for customer to scan and pay...
+              </p>
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-8 gap-4 border rounded-xl bg-destructive/10">
+              <ImageOff className="w-16 h-16 text-destructive" />
+              <p className="text-center text-destructive font-medium">
+                No QR Code Configured
+              </p>
+              <p className="text-sm text-muted-foreground text-center">
+                Upload QR code in Settings → Payment
+              </p>
             </div>
           )}
+
+          {/* Payment Received Button */}
+          <Button
+            onClick={handleManualPaymentConfirm}
+            disabled={isProcessing || !qrCodeUrl}
+            className="w-full h-16 text-xl font-bold"
+            size="lg"
+          >
+            {isProcessing ? (
+              <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+            ) : (
+              <CheckCircle className="h-6 w-6 mr-2" />
+            )}
+            Payment Received
+          </Button>
         </TabsContent>
 
         <TabsContent value="cash" className="py-4">
