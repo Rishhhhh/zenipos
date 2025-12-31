@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { GlassModal } from '@/components/modals/GlassModal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Wallet, TrendingUp, AlertTriangle, CheckCircle, Banknote, Coins, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TouchDenominationPad } from './TouchDenominationPad';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CloseTillModalProps {
@@ -75,9 +75,8 @@ export function CloseTillModal({
     }
   }, [tillSession?.id, open]);
 
-  const updateDenomination = (value: number, count: string) => {
-    const numCount = Math.max(0, parseInt(count) || 0);
-    setDenominations((prev) => ({ ...prev, [value]: numCount }));
+  const handleDenominationChange = (value: number, count: number) => {
+    setDenominations((prev) => ({ ...prev, [value]: count }));
   };
 
   const actualCashCounted = [...NOTES, ...COINS].reduce(
@@ -171,77 +170,32 @@ export function CloseTillModal({
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Banknote className="h-4 w-4" />
-            <span>Count Notes</span>
+            <span>Tap to count notes</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {NOTES.map((denom) => {
-              const count = denominations[denom.value] || 0;
-              const subtotal = denom.value * count;
-              return (
-                <div
-                  key={denom.value}
-                  className={`relative rounded-xl border p-3 transition-all ${denom.color} ${
-                    count > 0 ? 'ring-1 ring-primary/50' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-sm">{denom.label}</span>
-                    {count > 0 && (
-                      <span className="text-xs font-medium text-primary">
-                        RM {subtotal.toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">×</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={count || ''}
-                      onChange={(e) => updateDenomination(denom.value, e.target.value)}
-                      className="h-9 text-center font-medium bg-background/80"
-                      disabled={isSubmitting}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <TouchDenominationPad
+            denominations={NOTES}
+            values={denominations}
+            onValueChange={handleDenominationChange}
+            disabled={isSubmitting}
+            columns={3}
+            variant="notes"
+          />
         </div>
 
         {/* Coins Section */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Coins className="h-4 w-4" />
-            <span>Count Coins</span>
+            <span>Tap to count coins</span>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {COINS.map((denom) => {
-              const count = denominations[denom.value] || 0;
-              return (
-                <div
-                  key={denom.value}
-                  className={`relative rounded-xl border border-border bg-muted/30 p-2.5 transition-all ${
-                    count > 0 ? 'ring-1 ring-primary/50 bg-primary/5' : ''
-                  }`}
-                >
-                  <div className="text-center mb-1.5">
-                    <span className="font-medium text-sm">{denom.label}</span>
-                  </div>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={count || ''}
-                    onChange={(e) => updateDenomination(denom.value, e.target.value)}
-                    className="h-8 text-center text-sm font-medium bg-background/80"
-                    disabled={isSubmitting}
-                    placeholder="0"
-                  />
-                </div>
-              );
-            })}
-          </div>
+          <TouchDenominationPad
+            denominations={COINS}
+            values={denominations}
+            onValueChange={handleDenominationChange}
+            disabled={isSubmitting}
+            columns={4}
+            variant="coins"
+          />
         </div>
 
         {/* Total & Variance Section */}
