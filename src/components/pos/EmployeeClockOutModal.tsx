@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Clock, Package, DollarSign, AlertTriangle, Wallet, Banknote } from 'lucide-react';
+import { Loader2, Clock, Package, DollarSign, AlertTriangle, Wallet, Banknote, ShieldCheck, Delete } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,17 +26,87 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
   const { activeShift, clearShift, isLoading: shiftLoading, refreshShift } = useShift();
   const [breakMinutes, setBreakMinutes] = useState(0);
   const [showCloseTill, setShowCloseTill] = useState(false);
+  
+  // Manager PIN authorization state
+  const [pinAuthorized, setPinAuthorized] = useState(false);
+  const [authorizingManagerId, setAuthorizingManagerId] = useState<string | null>(null);
+  const [managerPin, setManagerPin] = useState('');
+  const [isValidatingPin, setIsValidatingPin] = useState(false);
+
+  // Reset PIN authorization when modal closes
+  useEffect(() => {
+    if (!open) {
+      setPinAuthorized(false);
+      setAuthorizingManagerId(null);
+      setManagerPin('');
+    }
+  }, [open]);
 
   // Eagerly refresh shift AND till session when modal opens to ensure we have latest data
   useEffect(() => {
     if (open) {
       refreshShift();
-      refreshSession(); // Also refresh till session to prevent race condition
+      refreshSession();
     }
   }, [open, refreshShift, refreshSession]);
 
   // Use shiftId from props if provided, otherwise from context
   const shiftId = propShiftId || activeShift?.id;
+
+  // Validate manager PIN
+  const handlePinSubmit = async () => {
+    if (managerPin.length !== 6) return;
+    
+    setIsValidatingPin(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-manager-pin', {
+        body: { pin: managerPin },
+      });
+
+      if (error || !data?.valid) {
+        throw new Error('Invalid manager PIN');
+      }
+
+      const employee = data.employee;
+      
+      // Check if employee has manager or admin role
+      if (!['admin', 'manager', 'owner'].includes(employee.role)) {
+        throw new Error('Only managers/admins can authorize clock out');
+      }
+
+      toast({
+        title: 'Authorized',
+        description: `Clock out authorized by ${employee.name}`,
+      });
+
+      setPinAuthorized(true);
+      setAuthorizingManagerId(employee.id);
+      setManagerPin('');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Authorization Failed',
+        description: error.message,
+      });
+      setManagerPin('');
+    } finally {
+      setIsValidatingPin(false);
+    }
+  };
+
+  const handlePinDigit = (digit: string) => {
+    if (managerPin.length < 6) {
+      setManagerPin(prev => prev + digit);
+    }
+  };
+
+  const handlePinBackspace = () => {
+    setManagerPin(prev => prev.slice(0, -1));
+  };
+
+  const handlePinClear = () => {
+    setManagerPin('');
+  };
 
   const { data: shiftSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['shift-summary', shiftId],
@@ -181,6 +251,119 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
     );
   }
 
+  // PIN Authorization Screen (shown first)
+  if (!pinAuthorized) {
+    return (
+      <GlassModal
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Manager Authorization Required"
+        description="Enter manager/admin PIN to authorize clock out"
+        size="md"
+        variant="default"
+      >
+        <div className="space-y-6">
+          {/* PIN Display */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <ShieldCheck className="w-8 h-8 text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Only managers or admins can authorize employee clock out
+            </p>
+          </div>
+
+          {/* PIN Dots Display */}
+          <div className="flex justify-center gap-3">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
+                  i < managerPin.length
+                    ? 'bg-primary border-primary scale-110'
+                    : 'border-muted-foreground/30'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Touch Numpad */}
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+              <Button
+                key={num}
+                type="button"
+                variant="outline"
+                className="h-16 text-2xl font-semibold hover:bg-primary/10 active:scale-95 transition-transform"
+                onClick={() => handlePinDigit(String(num))}
+                disabled={isValidatingPin}
+              >
+                {num}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-16 text-lg text-muted-foreground hover:text-foreground"
+              onClick={handlePinClear}
+              disabled={isValidatingPin}
+            >
+              Clear
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-16 text-2xl font-semibold hover:bg-primary/10 active:scale-95 transition-transform"
+              onClick={() => handlePinDigit('0')}
+              disabled={isValidatingPin}
+            >
+              0
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-16 hover:text-foreground"
+              onClick={handlePinBackspace}
+              disabled={isValidatingPin}
+            >
+              <Delete className="w-6 h-6" />
+            </Button>
+          </div>
+
+          {/* Authorize Button */}
+          <Button
+            onClick={handlePinSubmit}
+            className="w-full h-14 text-lg font-semibold"
+            disabled={isValidatingPin || managerPin.length !== 6}
+          >
+            {isValidatingPin ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="h-5 w-5 mr-2" />
+                Authorize Clock Out
+              </>
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => onOpenChange(false)}
+            disabled={isValidatingPin}
+          >
+            Cancel
+          </Button>
+        </div>
+      </GlassModal>
+    );
+  }
+
+  // Clock Out Form (shown after PIN authorization)
   return (
     <>
       <GlassModal
@@ -192,6 +375,14 @@ export function EmployeeClockOutModal({ open, onOpenChange, shiftId: propShiftId
         variant="default"
       >
         <div className="space-y-4">
+          {/* Authorization Badge */}
+          <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+            <ShieldCheck className="w-4 h-4 text-green-600" />
+            <span className="text-sm text-green-700 dark:text-green-400">
+              Authorized by manager
+            </span>
+          </div>
+
           {/* Alert if till is open - MANDATORY to close */}
           {tillIsOpen && (
             <Alert variant="destructive">
