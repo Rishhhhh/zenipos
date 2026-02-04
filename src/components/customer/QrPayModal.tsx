@@ -45,7 +45,7 @@ export function QrPayModal({
         ) : (
           <>
             <QrCode className="h-48 w-48 text-primary mb-4" />
-            <p className="text-2xl font-bold mb-2">${amount.toFixed(2)}</p>
+            <p className="text-2xl font-bold mb-2">RM {amount.toFixed(2)}</p>
             <p className="text-sm text-muted-foreground mb-4">
               Scan with your banking app
             </p>
