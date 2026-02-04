@@ -139,7 +139,7 @@ export default function Admin() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Revenue</p>
-                  <p className="text-3xl font-bold text-foreground">${stats?.revenue.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-foreground">RM {stats?.revenue.toFixed(2)}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-success" />
                     <span className="text-xs text-success">+8%</span>
